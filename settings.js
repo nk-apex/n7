@@ -13,14 +13,14 @@ export default {
       main: "https://github.com/7silent-wolf/silentwolf",
       
       // Remote repository (where updates come from)
-      upstream: " https://github.com/7-s-w/k",
+      upstream: "https://github.com/7w07f/w7",
       
       // Backup owner repository (if needed)
       owner: "https://github.com/7silent-wolf/silentwolf"
     },
     
     // ZIP update URL (fallback method)
-    zipUrl: "https://github.com/7-s-w/k/archive/refs/heads/main.zip",
+    zipUrl: "https://github.com/7w07f/w7/archive/refs/heads/main.zip",
     
     // Timeout settings (in milliseconds)
     timeouts: {

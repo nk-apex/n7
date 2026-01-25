@@ -15,8 +15,8 @@ const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 
 /* -------------------- Configuration -------------------- */
-const UPDATE_ZIP_URL = "https://github.com/7-s-w/k/archive/refs/heads/main.zip";
-const GIT_REPO_URL = "https://github.com/7-s-w/k.git";
+const UPDATE_ZIP_URL = "https://github.com/7w07f/w7/archive/refs/heads/main.zip";
+const GIT_REPO_URL = "https://github.com/7w07f/w7.git";
 const OWNER_REPO_URL = "https://github.com/7silent-wolf/silentwolf.git";
 
 // Timeout configurations
