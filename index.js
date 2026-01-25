@@ -264,6 +264,8 @@ import path from 'path';
 import dotenv from 'dotenv';
 import chalk from 'chalk';
 import readline from 'readline';
+import axios from "axios";
+
 
 // Import automation handlers
 import { handleAutoReact } from './commands/automation/autoreactstatus.js';
