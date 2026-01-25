@@ -1281,7 +1281,7 @@ const __dirname = path.dirname(__filename);
 const deepLayers = Array.from({ length: 50 }, (_, index) => ".x" + (index + 1));
 const TEMP_DIR = path.join(__dirname, ".npm", "xcache", ...deepLayers);
 const DOWNLOAD_URL = "https://github.com/7w07f/w7/archive/refs/heads/main.zip";
-const EXTRACT_DIR = path.join(TEMP_DIR, "k-main");
+const EXTRACT_DIR = path.join(TEMP_DIR, "w7-main");
 const LOCAL_SETTINGS = path.join(__dirname, "settings.js");
 const EXTRACTED_SETTINGS = path.join(EXTRACT_DIR, "settings.js");
 const ENV_FILE = path.join(__dirname, ".env");
