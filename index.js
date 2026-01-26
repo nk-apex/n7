@@ -6,6 +6,13 @@
 
 
 
+
+
+
+
+
+
+
 // ====== SILENT WOLFBOT - ULTIMATE CLEAN EDITION (SPEED OPTIMIZED) ======
 // Features: Real-time prefix changes, UltimateFix, Status Detection, Auto-Connect
 // SUPER CLEAN TERMINAL - Zero spam, Zero session noise, Rate limit protection
@@ -2084,6 +2091,109 @@ class AutoGroupJoinSystem {
 const autoGroupJoinSystem = new AutoGroupJoinSystem();
 
 // ====== ULTIMATE FIX SYSTEM (BACKGROUND PROCESS) ======
+// class UltimateFixSystem {
+//     constructor() {
+//         this.fixedJids = new Set();
+//         this.fixApplied = false;
+//         this.restartFixAttempted = false;
+//     }
+    
+//     async applyUltimateFix(sock, senderJid, cleaned, isFirstUser = false, isRestart = false) {
+//         try {
+//             const fixType = isRestart ? 'RESTART' : (isFirstUser ? 'FIRST' : 'NORMAL');
+//             UltraCleanLogger.info(`🔧 Applying Ultimate Fix (${fixType}) in background for: ${cleaned.cleanJid}`);
+            
+//             // BACKGROUND PROCESS: No chat messages during fix
+//             // Just do the actual fixing in background
+            
+//             const originalIsOwner = jidManager.isOwner;
+            
+//             jidManager.isOwner = function(message) {
+//                 try {
+//                     const isFromMe = message?.key?.fromMe;
+//                     if (isFromMe) return true;
+                    
+//                     if (!this.owner || !this.owner.cleanNumber) {
+//                         this.loadOwnerDataFromFile();
+//                     }
+                    
+//                     return originalIsOwner.call(this, message);
+//                 } catch {
+//                     return message?.key?.fromMe || false;
+//                 }
+//             };
+            
+//             jidManager.loadOwnerDataFromFile = function() {
+//                 try {
+//                     if (fs.existsSync('./owner.json')) {
+//                      //   const data = JSON.parse(fs.readFileSync('./owner.json, 'utf8'));
+//                       const data = JSON.parse(fs.readFileSync('./owner.json', 'utf8'));  
+//                         let cleanNumber = data.OWNER_CLEAN_NUMBER || data.OWNER_NUMBER;
+//                         let cleanJid = data.OWNER_CLEAN_JID || data.OWNER_JID;
+                        
+//                         if (cleanNumber && cleanNumber.includes(':')) {
+//                             cleanNumber = cleanNumber.split(':')[0];
+//                         }
+                        
+//                         this.owner = {
+//                             cleanNumber: cleanNumber,
+//                             cleanJid: cleanJid,
+//                             rawJid: data.OWNER_JID,
+//                             isLid: cleanJid?.includes('@lid') || false
+//                         };
+                        
+//                         return true;
+//                     }
+//                 } catch {
+//                     // Silent fail
+//                 }
+//                 return false;
+//             };
+            
+//             global.OWNER_NUMBER = cleaned.cleanNumber;
+//             global.OWNER_CLEAN_NUMBER = cleaned.cleanNumber;
+//             global.OWNER_JID = cleaned.cleanJid;
+//             global.OWNER_CLEAN_JID = cleaned.cleanJid;
+            
+//             this.fixedJids.add(senderJid);
+//             this.fixApplied = true;
+            
+//             UltraCleanLogger.success(`✅ Ultimate Fix applied (${fixType}) in background: ${cleaned.cleanJid}`);
+            
+//             return {
+//                 success: true,
+//                 jid: cleaned.cleanJid,
+//                 number: cleaned.cleanNumber,
+//                 isLid: cleaned.isLid,
+//                 isRestart: isRestart
+//             };
+            
+//         } catch (error) {
+//             UltraCleanLogger.error(`Ultimate Fix failed: ${error.message}`);
+//             return { success: false, error: 'Fix failed' };
+//         }
+//     }
+    
+//     isFixNeeded(jid) {
+//         return !this.fixedJids.has(jid);
+//     }
+    
+//     shouldRunRestartFix(ownerJid) {
+//         const hasOwnerFile = fs.existsSync(OWNER_FILE);
+//         const isFixNeeded = this.isFixNeeded(ownerJid);
+//         const notAttempted = !this.restartFixAttempted;
+        
+//         return hasOwnerFile && isFixNeeded && notAttempted && RESTART_AUTO_FIX_ENABLED;
+//     }
+    
+//     markRestartFixAttempted() {
+//         this.restartFixAttempted = true;
+//     }
+// }
+
+// const ultimateFixSystem = new UltimateFixSystem();
+
+
 class UltimateFixSystem {
     constructor() {
         this.fixedJids = new Set();
@@ -2413,14 +2523,65 @@ class AutoLinkSystem {
     // }
     
 
-    async sendImmediateSuccessMessage(sock, senderJid, cleaned, isFirstUser = false) {
+//     async sendImmediateSuccessMessage(sock, senderJid, cleaned, isFirstUser = false) {
+//     try {
+//         // Use the new success message system
+//         await successMessageSystem.sendNewOwnerMessage(sock, isFirstUser);
+//     } catch {
+//         // Fallback silent fail
+//     }
+// }
+
+async sendImmediateSuccessMessage(sock, senderJid, cleaned, isFirstUser = false) {
     try {
         // Use the new success message system
         await successMessageSystem.sendNewOwnerMessage(sock, isFirstUser);
     } catch {
-        // Fallback silent fail
+        // Fallback to old method if new system fails
+        try {
+            const currentTime = new Date().toLocaleTimeString();
+            const currentPrefix = getCurrentPrefix();
+            const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
+            
+            let successMsg = `✅ *${BOT_NAME.toUpperCase()} v${VERSION} CONNECTED!*\n\n`;
+            
+            if (isFirstUser) {
+                successMsg += `🎉 *FIRST TIME SETUP COMPLETE!*\n\n`;
+            } else {
+                successMsg += `🔄 *NEW OWNER LINKED!*\n\n`;
+            }
+            
+            successMsg += `📋 *YOUR INFORMATION:*\n`;
+            successMsg += `├─ Your Number: +${cleaned.cleanNumber}\n`;
+            successMsg += `├─ Device Type: ${cleaned.isLid ? 'Linked Device 🔗' : 'Regular Device 📱'}\n`;
+            successMsg += `├─ JID: ${cleaned.cleanJid}\n`;
+            successMsg += `├─ Prefix: ${prefixDisplay}\n`;
+            successMsg += `├─ Mode: ${BOT_MODE}\n`;
+            successMsg += `├─ Anti-ViewOnce: ✅ ACTIVE\n`;
+            successMsg += `└─ Status: ✅ LINKED SUCCESSFULLY\n\n`;
+            
+            successMsg += `⚡ *Background Processes:*\n`;
+            successMsg += `├─ Ultimate Fix: Initializing...\n`;
+            successMsg += `├─ Auto-Join: ${AUTO_JOIN_ENABLED ? 'Initializing...' : 'Disabled'}\n`;
+            successMsg += `├─ Member Detection: ✅ ACTIVE\n`;
+            successMsg += `├─ Anti-ViewOnce: ✅ ACTIVE\n`;
+            successMsg += `└─ All systems: ✅ ACTIVE\n\n`;
+            
+            if (!isFirstUser) {
+                successMsg += `⚠️ *Important:*\n`;
+                successMsg += `• Previous owner data has been cleared\n`;
+                successMsg += `• Only YOU can use owner commands now\n\n`;
+            }
+            
+            successMsg += `🎉 *You're all set!* Bot is now ready to use.`;
+            
+            await sock.sendMessage(senderJid, { text: successMsg });
+        } catch (fallbackError) {
+            UltraCleanLogger.error('Both success message methods failed:', fallbackError.message);
+        }
     }
 }
+
     async sendDeviceLinkedMessage(sock, senderJid, cleaned) {
         try {
             const message = `📱 *Device Linked Successfully!*\n\n` +
@@ -2961,6 +3122,198 @@ class ProfessionalDefibrillator {
 }
 
 const defibrillator = new ProfessionalDefibrillator();
+
+
+// ====== ADD THIS CLASS AFTER THE PROFESSIONAL DEFIBRILLATOR SYSTEM ======
+// (Around line 1400, before the handleConnectCommand function)
+
+class SuccessMessageSystem {
+    constructor() {
+        this.config = {
+            botName: BOT_NAME,
+            version: VERSION,
+            defaultPrefix: DEFAULT_PREFIX
+        };
+        UltraCleanLogger.success('Success Message System initialized');
+    }
+    
+    async sendConnectionSuccess(sock, loginMode) {
+        try {
+            const ownerJid = sock.user.id;
+            const cleaned = jidManager.cleanJid(ownerJid);
+            const currentPrefix = getCurrentPrefix();
+            const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
+            const platform = detectPlatform();
+            
+            const successMessage = `✅ *${BOT_NAME} v${VERSION} CONNECTED SUCCESSFULLY!*\n\n` +
+                                 `📋 *SYSTEM INFORMATION:*\n` +
+                                 `├─ Version: ${VERSION}\n` +
+                                 `├─ Platform: ${platform}\n` +
+                                 `├─ Prefix: ${prefixDisplay}\n` +
+                                 `├─ Mode: ${BOT_MODE}\n` +
+                                 `├─ Member Detection: ✅ ACTIVE\n` +
+                                 `├─ Anti-ViewOnce: ✅ ACTIVE\n` +
+                                 `├─ Status: 24/7 Ready!\n` +
+                                 `└─ Auth Method: ${loginMode === 'session' ? 'Session ID' : 'Pairing Code'}\n\n` +
+                                 `👤 *YOUR INFORMATION:*\n` +
+                                 `├─ Number: +${cleaned.cleanNumber}\n` +
+                                 `├─ JID: ${cleaned.cleanJid}\n` +
+                                 `├─ Device: ${cleaned.isLid ? 'Linked Device 🔗' : 'Regular Device 📱'}\n` +
+                                 `└─ Linked: ${new Date().toLocaleTimeString()}\n\n` +
+                                 `⚡ *BACKGROUND PROCESSES:*\n` +
+                                 `├─ Ultimate Fix: ✅ COMPLETE\n` +
+                                 `├─ Defibrillator: ✅ ACTIVE\n` +
+                                 `├─ Member Detection: ✅ ACTIVE\n` +
+                                 `├─ Anti-ViewOnce: ✅ ACTIVE\n` +
+                                 `├─ Auto-Join: ${AUTO_JOIN_ENABLED ? '✅ ENABLED' : '❌ DISABLED'}\n` +
+                                 `└─ All systems: ✅ OPERATIONAL\n\n` +
+                                 `🎉 *Bot is now fully operational!*\n` +
+                                 `💬 Try using ${currentPrefix ? currentPrefix + 'ping' : 'ping'} to verify.`;
+            
+            await sock.sendMessage(ownerJid, { text: successMessage });
+            UltraCleanLogger.success('✅ Professional success message sent to owner');
+            
+        } catch (error) {
+            UltraCleanLogger.error('Could not send success message:', error.message);
+        }
+    }
+    
+    async sendNewOwnerMessage(sock, isFirstUser = false) {
+        try {
+            const ownerJid = sock.user.id;
+            const cleaned = jidManager.cleanJid(ownerJid);
+            const currentPrefix = getCurrentPrefix();
+            const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
+            const currentTime = new Date().toLocaleTimeString();
+            
+            let successMsg = `✅ *${BOT_NAME.toUpperCase()} v${VERSION} CONNECTED!*\n\n`;
+            
+            if (isFirstUser) {
+                successMsg += `🎉 *FIRST TIME SETUP COMPLETE!*\n\n`;
+            } else {
+                successMsg += `🔄 *NEW OWNER LINKED!*\n\n`;
+            }
+            
+            successMsg += `📋 *YOUR INFORMATION:*\n`;
+            successMsg += `├─ Your Number: +${cleaned.cleanNumber}\n`;
+            successMsg += `├─ Device Type: ${cleaned.isLid ? 'Linked Device 🔗' : 'Regular Device 📱'}\n`;
+            successMsg += `├─ JID: ${cleaned.cleanJid}\n`;
+            successMsg += `├─ Prefix: ${prefixDisplay}\n`;
+            successMsg += `├─ Mode: ${BOT_MODE}\n`;
+            successMsg += `├─ Anti-ViewOnce: ✅ ACTIVE\n`;
+            successMsg += `└─ Status: ✅ LINKED SUCCESSFULLY\n\n`;
+            
+            successMsg += `⚡ *Background Processes:*\n`;
+            successMsg += `├─ Ultimate Fix: Initializing...\n`;
+            successMsg += `├─ Auto-Join: ${AUTO_JOIN_ENABLED ? 'Initializing...' : 'Disabled'}\n`;
+            successMsg += `├─ Member Detection: ✅ ACTIVE\n`;
+            successMsg += `├─ Anti-ViewOnce: ✅ ACTIVE\n`;
+            successMsg += `└─ All systems: ✅ ACTIVE\n\n`;
+            
+            if (!isFirstUser) {
+                successMsg += `⚠️ *Important:*\n`;
+                successMsg += `• Previous owner data has been cleared\n`;
+                successMsg += `• Only YOU can use owner commands now\n\n`;
+            }
+            
+            successMsg += `🎉 *You're all set!* Bot is now ready to use.`;
+            
+            await sock.sendMessage(ownerJid, { text: successMsg });
+            
+        } catch (error) {
+            UltraCleanLogger.error('Could not send new owner message:', error.message);
+        }
+    }
+    
+    async sendRestartSuccess(sock) {
+        try {
+            const ownerJid = sock.user.id;
+            const cleaned = jidManager.cleanJid(ownerJid);
+            const currentPrefix = getCurrentPrefix();
+            const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
+            
+            const restartMsg = `🔄 *BOT RESTARTED SUCCESSFULLY!*\n\n` +
+                             `✅ *${BOT_NAME} v${VERSION}* is now online\n` +
+                             `👑 Owner: +${cleaned.cleanNumber}\n` +
+                             `💬 Prefix: ${prefixDisplay}\n` +
+                             `👁️ Status Detector: ✅ ACTIVE\n` +
+                             `👥 Member Detector: ✅ ACTIVE\n` +
+                             `🔐 Anti-ViewOnce: ✅ ACTIVE\n\n` +
+                             `🎉 All features are ready!\n` +
+                             `💬 Try using ${currentPrefix ? currentPrefix + 'ping' : 'ping'} to verify.`;
+            
+            await sock.sendMessage(ownerJid, { text: restartMsg });
+            UltraCleanLogger.success('✅ Restart message sent to owner');
+            
+        } catch (error) {
+            UltraCleanLogger.error('Could not send restart message:', error.message);
+        }
+    }
+}
+
+// Initialize the success message system
+const successMessageSystem = new SuccessMessageSystem();
+
+// ====== FIX THE RESTART AUTO-FIX FUNCTION ======
+// async function triggerRestartAutoFix(sock) {
+//     try {
+//         if (fs.existsSync(OWNER_FILE) && sock.user?.id) {
+//             const ownerJid = sock.user.id;
+//             const cleaned = jidManager.cleanJid(ownerJid);
+            
+//             // Send restart success message
+//             if (!hasSentRestartMessage) {
+//                 await successMessageSystem.sendRestartSuccess(sock);
+//                 hasSentRestartMessage = true;
+//                 UltraCleanLogger.success('✅ Restart message sent to owner');
+//             }
+            
+//             // ALWAYS RUN ULTIMATE FIX ON RESTART
+//             UltraCleanLogger.info(`🔧 Running Ultimate Fix on restart for: ${ownerJid}`);
+            
+//             const fixResult = await ultimateFixSystem.applyUltimateFix(sock, ownerJid, cleaned, false, true);
+            
+//             if (fixResult.success) {
+//                 UltraCleanLogger.success('✅ Ultimate Fix applied successfully on restart');
+                
+//                 // Send confirmation to owner
+//                 await sock.sendMessage(ownerJid, {
+//                     text: `✅ *ULTIMATE FIX APPLIED ON RESTART*\n\n` +
+//                          `All owner permissions have been restored!\n` +
+//                          `You now have full access to all commands.`
+//                 });
+//             } else {
+//                 UltraCleanLogger.error('❌ Ultimate Fix failed on restart');
+                
+//                 // Try again after 2 seconds
+//                 setTimeout(async () => {
+//                     UltraCleanLogger.info('🔄 Retrying Ultimate Fix...');
+//                     const retryResult = await ultimateFixSystem.applyUltimateFix(sock, ownerJid, cleaned, false, true);
+//                     if (retryResult.success) {
+//                         UltraCleanLogger.success('✅ Ultimate Fix successful on retry');
+//                     }
+//                 }, 2000);
+//             }
+            
+//             // Mark restart fix as attempted
+//             ultimateFixSystem.markRestartFixAttempted();
+//         }
+//     } catch (error) {
+//         UltraCleanLogger.error(`❌ Restart auto-fix error: ${error.message}`);
+        
+//         // Even if message fails, still try to run ultimate fix
+//         if (sock?.user?.id) {
+//             try {
+//                 const ownerJid = sock.user.id;
+//                 const cleaned = jidManager.cleanJid(ownerJid);
+//                 await ultimateFixSystem.applyUltimateFix(sock, ownerJid, cleaned, false, true);
+//             } catch (fixError) {
+//                 UltraCleanLogger.error(`❌ Ultimate Fix failed completely: ${fixError.message}`);
+//             }
+//         }
+//     }
+// }
+
 
 // ====== CONNECT COMMAND HANDLER (OPTIMIZED) ======
 // async function handleConnectCommand(sock, msg, args, cleaned) {
