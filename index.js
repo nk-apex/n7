@@ -13,10 +13,13 @@
 
 
 
+
+
+
 // ====== SILENT WOLFBOT - ULTIMATE CLEAN EDITION (SPEED OPTIMIZED) ======
 // Features: Real-time prefix changes, UltimateFix, Status Detection, Auto-Connect
 // SUPER CLEAN TERMINAL - Zero spam, Zero session noise, Rate limit protection
-// Date: 2024 | Version: 1.1.3 (PREFIXLESS & NEW MEMBER DETECTION)
+// Date: 2024 | Version: 1.1.5 (PREFIXLESS & NEW MEMBER DETECTION)
 // New: Session ID authentication from process.env.SESSION_ID
 // New: WOLF-BOT session format support (WOLF-BOT:eyJ...)
 // New: Professional success messaging like WOLFBOT
@@ -32,23 +35,7 @@
 // 5. All original features preserved 100%
 
 // ====== ULTIMATE CONSOLE INTERCEPTOR (OPTIMIZED) ======
-
-
-
-
-
-
-
 //Silent Wolf
-
-
-
-
-
-
-
-
-
 
 const originalConsoleMethods = {
     log: console.log,
@@ -146,46 +133,33 @@ const suppressPatterns = [
     'received error',
     'sessionerror',
     'bad mac',
-    'stream errored',
-    // General noise
-    'timeout',
-    'transaction',
-    'failed to decrypt',
-    'received error',
-    'bad mac',
     'stream errored'
 ];
 
 // OPTIMIZED: Faster filter function with early returns
-// OPTIMIZED: Cache frequently checked patterns
 const shouldShowLog = (args) => {
     if (args.length === 0) return true;
     
     const firstArg = args[0];
-    if (typeof firstArg !== 'string') return true; // Only filter strings
+    if (typeof firstArg !== 'string') return true;
     
     const lowerMsg = firstArg.toLowerCase();
     
-    // Fast escape for common non-baileys logs
+    // Fast escape for important logs
     if (lowerMsg.includes('defibrillator') || 
         lowerMsg.includes('command') || 
         lowerMsg.includes('✅') || 
         lowerMsg.includes('❌') ||
         lowerMsg.includes('👥') ||
-        lowerMsg.includes('👤')) {
+        lowerMsg.includes('👤') ||
+        lowerMsg.includes('📊') ||
+        lowerMsg.includes('🔧') ||
+        lowerMsg.includes('🐺') ||
+        lowerMsg.includes('🚀')) {
         return true;
     }
     
-    // Quick bailout if it's not baileys related
-    if (!lowerMsg.includes('baileys') && 
-        !lowerMsg.includes('signal') && 
-        !lowerMsg.includes('session') && 
-        !lowerMsg.includes('buffer') && 
-        !lowerMsg.includes('key')) {
-        return true;
-    }
-    
-    // Only check specific patterns if it seems like baileys noise
+    // Check if it's baileys noise
     const noisyPatterns = [
         'closing session', 'sessionentry', 'registrationid',
         'currentratchet', 'buffer', '05 ', '0x', 'failed to decrypt'
@@ -194,7 +168,7 @@ const shouldShowLog = (args) => {
     return !noisyPatterns.some(pattern => lowerMsg.includes(pattern));
 };
 
-// Override ALL console methods
+// Override console methods
 for (const method of Object.keys(originalConsoleMethods)) {
     if (typeof console[method] === 'function') {
         console[method] = function(...args) {
@@ -205,7 +179,7 @@ for (const method of Object.keys(originalConsoleMethods)) {
     }
 }
 
-// ====== PROCESS-LEVEL FILTERING ======
+// Process-level filtering
 function setupProcessFilter() {
     const originalStdoutWrite = process.stdout.write;
     const originalStderrWrite = process.stderr.write;
@@ -228,7 +202,6 @@ function setupProcessFilter() {
         const chunkStr = chunk.toString();
         const lowerChunk = chunkStr.toLowerCase();
         
-        // OPTIMIZED: Single loop with early return
         for (const pattern of sessionPatterns) {
             if (lowerChunk.includes(pattern)) {
                 return false;
@@ -254,7 +227,7 @@ function setupProcessFilter() {
     };
 }
 
-// Set environment variables before s
+// Set environment variables
 process.env.DEBUG = '';
 process.env.NODE_ENV = 'production';
 process.env.BAILEYS_LOG_LEVEL = 'fatal';
@@ -263,7 +236,7 @@ process.env.BAILEYS_DISABLE_LOG = 'true';
 process.env.DISABLE_BAILEYS_LOG = 'true';
 process.env.PINO_DISABLE = 'true';
 
-// Now  other modules
+// Import modules
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
@@ -273,55 +246,42 @@ import chalk from 'chalk';
 import readline from 'readline';
 import axios from "axios";
 
-
 // Import automation handlers
 import { handleAutoReact } from './commands/automation/autoreactstatus.js';
 import { handleAutoView } from './commands/automation/autoviewstatus.js';
 import { initializeAutoJoin } from './commands/group/add.js';
 import antidemote from './commands/group/antidemote.js';
 import banCommand from './commands/group/ban.js';
-// Add this import (around line 10-20 with other imports)
-
 
 // ====== ENVIRONMENT SETUP ======
 dotenv.config({ path: './.env' });
 
-
-
-
-
-
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // ====== VIEW-ONCE DETECTION SYSTEM ======
 async function detectAndSaveViewOnce(sock, msg) {
     try {
-        // Check if anti-viewonce is enabled
         let config = { enabled: false };
         try {
             if (fs.existsSync('./antiviewonce_config.json')) {
                 config = JSON.parse(fs.readFileSync('./antiviewonce_config.json', 'utf8'));
             }
         } catch {
-            return; // Config doesn't exist or is invalid
+            return;
         }
         
         if (!config.enabled || !config.ownerJid) {
-            return; // System disabled or no owner set
+            return;
         }
         
         const message = msg.message;
         
-        // Check for view-once image
         if (message.imageMessage?.viewOnce) {
             await handleViewOnceMedia(sock, msg, 'image', message.imageMessage, config.ownerJid);
-        }
-        // Check for view-once video
-        else if (message.videoMessage?.viewOnce) {
+        } else if (message.videoMessage?.viewOnce) {
             await handleViewOnceMedia(sock, msg, 'video', message.videoMessage, config.ownerJid);
-        }
-        // Check for view-once audio
-        else if (message.audioMessage?.viewOnce) {
+        } else if (message.audioMessage?.viewOnce) {
             await handleViewOnceMedia(sock, msg, 'audio', message.audioMessage, config.ownerJid);
         }
     } catch (error) {
@@ -337,7 +297,6 @@ async function handleViewOnceMedia(sock, msg, type, media, ownerJid) {
         
         console.log(`🔐 Detected view-once ${type} from ${senderShort}`);
         
-        // Download the media
         const stream = await sock.downloadMediaMessage(media);
         let buffer = Buffer.from([]);
         for await (const chunk of stream) {
@@ -346,10 +305,8 @@ async function handleViewOnceMedia(sock, msg, type, media, ownerJid) {
         
         const sizeKB = Math.round(buffer.length / 1024);
         
-        // Send notification to terminal
         console.log(`📤 Sending view-once ${type} (${sizeKB}KB) to owner...`);
         
-        // Send to owner
         const infoText = `🔐 *VIEW-ONCE CAPTURED*\n\n` +
                        `*From:* ${senderShort}\n` +
                        `*Type:* ${type}\n` +
@@ -359,7 +316,6 @@ async function handleViewOnceMedia(sock, msg, type, media, ownerJid) {
         
         await sock.sendMessage(ownerJid, { text: infoText });
         
-        // Send the media
         const mediaOptions = {
             caption: `📁 View-once ${type} from ${senderShort}\n📝 ${caption || 'No caption'}`,
             fileName: `viewonce_${type}_${Date.now()}.${type === 'image' ? 'jpg' : type === 'video' ? 'mp4' : 'mp3'}`
@@ -384,37 +340,10 @@ async function handleViewOnceMedia(sock, msg, type, media, ownerJid) {
     }
 }
 
-
-
-
-
-
-
-
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// ====== ANTI-VIEWONCE CONFIGURATION ======
-const ANTIVIEWONCE_SAVE_DIR = './data/viewonce_messages';
-const ANTIVIEWONCE_PRIVATE_DIR = './data/viewonce_private';
-const ANTIVIEWONCE_HISTORY_FILE = join(ANTIVIEWONCE_SAVE_DIR, 'history.json');
-const ANTIVIEWONCE_CONFIG_FILE = './antiviewonce_config.json';
-const ANTIVIEWONCE_VERSION = '1.0.0';
-
-// Default anti-viewonce configuration
-const DEFAULT_ANTIVIEWONCE_CONFIG = {
-    mode: 'private', // 'auto', 'private', 'off'
-    autoSave: true,
-    ownerJid: '',
-    enabled: true,
-    maxHistory: 500
-};
-
 // ====== CONFIGURATION ======
 const SESSION_DIR = './session';
 const BOT_NAME = process.env.BOT_NAME || 'WOLFBOT';
-const VERSION = '1.1.3'; // Updated version for prefixless & new member detection & anti-viewonce
+const VERSION = '1.1.5';
 const DEFAULT_PREFIX = process.env.PREFIX || '.';
 const OWNER_FILE = './owner.json';
 const PREFIX_CONFIG_FILE = './prefix_config.json';
@@ -428,29 +357,26 @@ const WELCOME_DATA_FILE = './data/welcome_data.json';
 const AUTO_CONNECT_ON_LINK = true;
 const AUTO_CONNECT_ON_START = true;
 
-// SPEED OPTIMIZATION: Reduced delays
+// SPEED OPTIMIZATION
 const RATE_LIMIT_ENABLED = true;
-const MIN_COMMAND_DELAY = 1000; // Reduced from 2000ms
-const STICKER_DELAY = 2000; // Reduced from 3000ms
+const MIN_COMMAND_DELAY = 1000;
+const STICKER_DELAY = 2000;
 
-// ====== AUTO-JOIN GROUP CONFIGURATION ======
-const AUTO_JOIN_ENABLED = true; // Set to true to enable auto-join
-const AUTO_JOIN_DELAY = 5000; // 5 seconds delay before auto-join
-const SEND_WELCOME_MESSAGE = true; // Send welcome message to new users
+// Auto-join group configuration
+const AUTO_JOIN_ENABLED = true;
+const AUTO_JOIN_DELAY = 5000;
+const SEND_WELCOME_MESSAGE = true;
 const GROUP_LINK = 'https://chat.whatsapp.com/G3RopQF1UcSD7AeoVsd6PG';
 const GROUP_INVITE_CODE = GROUP_LINK.split('/').pop();
 const GROUP_NAME = 'WolfBot Community';
 const AUTO_JOIN_LOG_FILE = './auto_join_log.json';
 
-// ====== SILENCE BAILEYS COMPLETELY ======
+// ====== SILENCE BAILEYS ======
 function silenceBaileysCompletely() {
-    // Silence pino which Baileys uses internally
     try {
         const pino = require('pino');
         pino({ level: 'silent', enabled: false });
-    } catch {
-        // Ignore
-    }
+    } catch {}
 }
 silenceBaileysCompletely();
 
@@ -458,12 +384,11 @@ silenceBaileysCompletely();
 console.clear();
 setupProcessFilter();
 
-// Advanced log suppression - ULTRA CLEAN EDITION (OPTIMIZED)
+// Ultra clean logger
 class UltraCleanLogger {
     static log(...args) {
         const message = args.join(' ').toLowerCase();
         
-        // OPTIMIZED: Faster pattern checking
         const suppressPatterns = [
             'buffer',
             'timeout',
@@ -520,14 +445,12 @@ class UltraCleanLogger {
             'signalgroup'
         ];
         
-        // OPTIMIZED: Single loop with early exit
         for (const pattern of suppressPatterns) {
             if (message.includes(pattern)) {
                 return;
             }
         }
         
-        // Clean formatting for allowed logs
         const timestamp = chalk.gray(`[${new Date().toLocaleTimeString()}]`);
         const cleanArgs = args.map(arg => 
             typeof arg === 'string' ? arg.replace(/\n\s+/g, ' ') : arg
@@ -598,7 +521,6 @@ console.error = UltraCleanLogger.error;
 console.info = UltraCleanLogger.info;
 console.warn = UltraCleanLogger.warning;
 console.debug = () => {};
-console.critical = UltraCleanLogger.critical;
 
 // Add custom methods
 global.logSuccess = UltraCleanLogger.success;
@@ -610,7 +532,7 @@ global.logGroup = UltraCleanLogger.group;
 global.logMember = UltraCleanLogger.member;
 global.logAntiViewOnce = UltraCleanLogger.antiviewonce;
 
-// ====== ULTRA SILENT BAILEYS LOGGER ======
+// Ultra silent baileys logger
 const ultraSilentLogger = {
     level: 'silent',
     trace: () => {},
@@ -627,551 +549,22 @@ const ultraSilentLogger = {
     command: () => {}
 };
 
-// ====== ANTI-VIEWONCE SYSTEM ======
-class AntiViewOnceSystem {
-    constructor(sock) {
-        this.sock = sock;
-        this.config = this.loadConfig();
-        this.detectedMessages = [];
-        this.setupDirectories();
-        this.loadHistory();
-        
-        // Check if downloadContentFromMessage is available
-        let downloadFunc;
-        try {
-            import('@whiskeysockets/baileys').then(baileys => {
-                downloadFunc = baileys.downloadContentFromMessage;
-            }).catch(() => {
-                downloadFunc = null;
-            });
-        } catch {
-            downloadFunc = null;
-        }
-        
-        this.downloadContentFromMessage = downloadFunc;
-        
-        UltraCleanLogger.success('🔐 Anti-ViewOnce System initialized');
-    }
-    
-    setupDirectories() {
-        try {
-            if (!fs.existsSync(ANTIVIEWONCE_SAVE_DIR)) {
-                fs.mkdirSync(ANTIVIEWONCE_SAVE_DIR, { recursive: true });
-                UltraCleanLogger.info(`📁 Created: ${ANTIVIEWONCE_SAVE_DIR}`);
-            }
-            
-            if (!fs.existsSync(ANTIVIEWONCE_PRIVATE_DIR)) {
-                fs.mkdirSync(ANTIVIEWONCE_PRIVATE_DIR, { recursive: true });
-                UltraCleanLogger.info(`📁 Created: ${ANTIVIEWONCE_PRIVATE_DIR}`);
-            }
-        } catch (error) {
-            UltraCleanLogger.error(`Directory setup error: ${error.message}`);
-        }
-    }
-    
-    loadConfig() {
-        try {
-            if (fs.existsSync(ANTIVIEWONCE_CONFIG_FILE)) {
-                const config = JSON.parse(fs.readFileSync(ANTIVIEWONCE_CONFIG_FILE, 'utf8'));
-                UltraCleanLogger.info('🔧 Loaded anti-viewonce config');
-                return config;
-            }
-        } catch (error) {
-            UltraCleanLogger.warning(`Config load warning: ${error.message}`);
-        }
-        
-        // Save default config
-        this.saveConfig(DEFAULT_ANTIVIEWONCE_CONFIG);
-        return DEFAULT_ANTIVIEWONCE_CONFIG;
-    }
-    
-    saveConfig(config) {
-        try {
-            fs.writeFileSync(ANTIVIEWONCE_CONFIG_FILE, JSON.stringify(config, null, 2));
-            UltraCleanLogger.info('💾 Anti-viewonce config saved');
-        } catch (error) {
-            UltraCleanLogger.error(`Config save error: ${error.message}`);
-        }
-    }
-    
-    loadHistory() {
-        try {
-            if (fs.existsSync(ANTIVIEWONCE_HISTORY_FILE)) {
-                const data = JSON.parse(fs.readFileSync(ANTIVIEWONCE_HISTORY_FILE, 'utf8'));
-                this.detectedMessages = data.messages || [];
-                UltraCleanLogger.info(`📊 Loaded ${this.detectedMessages.length} viewonce records`);
-            }
-        } catch (error) {
-            UltraCleanLogger.warning(`History load warning: ${error.message}`);
-        }
-    }
-    
-    saveHistory() {
-        try {
-            const data = {
-                messages: this.detectedMessages.slice(-this.config.maxHistory),
-                updatedAt: new Date().toISOString(),
-                total: this.detectedMessages.length,
-                mode: this.config.mode
-            };
-            fs.writeFileSync(ANTIVIEWONCE_HISTORY_FILE, JSON.stringify(data, null, 2));
-        } catch (error) {
-            UltraCleanLogger.warning(`History save warning: ${error.message}`);
-        }
-    }
-    
-    getFileExtension(mimetype) {
-        const extensions = {
-            'image/jpeg': 'jpg',
-            'image/jpg': 'jpg',
-            'image/png': 'png',
-            'image/gif': 'gif',
-            'image/webp': 'webp',
-            'video/mp4': 'mp4',
-            'video/3gp': '3gp',
-            'video/quicktime': 'mov',
-            'video/webm': 'webm',
-            'audio/mpeg': 'mp3',
-            'audio/mp4': 'm4a',
-            'audio/ogg': 'ogg',
-            'audio/webm': 'webm',
-            'audio/aac': 'aac',
-            'audio/opus': 'opus'
-        };
-        return extensions[mimetype] || 'bin';
-    }
-    
-    generateFilename(sender, type, timestamp, mimetype) {
-        const date = new Date(timestamp * 1000);
-        const dateStr = date.toISOString().split('T')[0];
-        const timeStr = date.toTimeString().split(' ')[0].replace(/:/g, '-');
-        const senderShort = sender.split('@')[0].replace(/[^0-9]/g, '').slice(-8);
-        const ext = this.getFileExtension(mimetype);
-        return `${dateStr}_${timeStr}_${senderShort}_${type}.${ext}`;
-    }
-    
-    async downloadBuffer(msg, type) {
-        try {
-            if (!this.downloadContentFromMessage) {
-                // Try to import dynamically
-                const baileys = await import('@whiskeysockets/baileys');
-                this.downloadContentFromMessage = baileys.downloadContentFromMessage;
-            }
-            
-            const stream = await this.downloadContentFromMessage(msg, type);
-            let buffer = Buffer.from([]);
-            for await (const chunk of stream) {
-                buffer = Buffer.concat([buffer, chunk]);
-            }
-            return buffer;
-        } catch (error) {
-            UltraCleanLogger.error(`Download error: ${error.message}`);
-            return null;
-        }
-    }
-    
-    async saveMediaToFile(buffer, filename, isPrivate = false) {
-        try {
-            const savePath = isPrivate ? ANTIVIEWONCE_PRIVATE_DIR : ANTIVIEWONCE_SAVE_DIR;
-            const filepath = join(savePath, filename);
-            
-            fs.writeFileSync(filepath, buffer);
-            
-            const sizeKB = Math.round(buffer.length / 1024);
-            UltraCleanLogger.success(`💾 Saved: ${filename} (${sizeKB}KB) to ${isPrivate ? 'private' : 'public'} folder`);
-            
-            return filepath;
-        } catch (error) {
-            UltraCleanLogger.error(`Save error: ${error.message}`);
-            return null;
-        }
-    }
-    
-    detectViewOnceType(message) {
-        if (message.imageMessage?.viewOnce) {
-            return {
-                type: 'image',
-                media: message.imageMessage,
-                caption: message.imageMessage.caption || ''
-            };
-        } else if (message.videoMessage?.viewOnce) {
-            return {
-                type: 'video',
-                media: message.videoMessage,
-                caption: message.videoMessage.caption || ''
-            };
-        } else if (message.audioMessage?.viewOnce) {
-            return {
-                type: 'audio',
-                media: message.audioMessage,
-                caption: ''
-            };
-        }
-        return null;
-    }
-    
-    showTerminalNotification(sender, type, size, caption, isPrivate = false) {
-        const senderShort = sender.split('@')[0];
-        const sizeKB = Math.round(size / 1024);
-        const time = new Date().toLocaleTimeString();
-        
-        const typeEmoji = {
-            'image': '🖼️',
-            'video': '🎬',
-            'audio': '🎵'
-        }[type] || '📁';
-        
-        const modeTag = isPrivate ? '[PRIVATE]' : '[AUTO]';
-        const captionText = caption ? ` - "${caption.substring(0, 30)}${caption.length > 30 ? '...' : ''}"` : '';
-        
-        logAntiViewOnce(`${modeTag} ${typeEmoji} VIEW-ONCE DETECTED`);
-        logAntiViewOnce(`   👤 From: ${senderShort}`);
-        logAntiViewOnce(`   📦 Type: ${type} (${sizeKB}KB)`);
-        logAntiViewOnce(`   📝 Caption: ${captionText || 'None'}`);
-        logAntiViewOnce(`   🕒 Time: ${time}`);
-    }
-    
-    async handleViewOnceDetection(msg) {
-        try {
-            if (!this.config.enabled || this.config.mode === 'off') return null;
-            
-            const message = msg.message;
-            if (!message) return null;
-            
-            const viewOnceData = this.detectViewOnceType(message);
-            if (!viewOnceData) return null;
-            
-            const { type, media, caption } = viewOnceData;
-            const chatId = msg.key.remoteJid;
-            const sender = msg.key.participant || msg.key.remoteJid;
-            const messageId = msg.key.id;
-            const timestamp = msg.messageTimestamp || Math.floor(Date.now() / 1000);
-            
-            UltraCleanLogger.info(`🔍 Detected view-once ${type} from ${sender.split('@')[0]}`);
-            
-            // Download the media
-            const buffer = await this.downloadBuffer(media, type);
-            if (!buffer) {
-                UltraCleanLogger.error('❌ Download failed');
-                return null;
-            }
-            
-            const mimetype = media.mimetype || this.getDefaultMimeType(type);
-            const filename = this.generateFilename(sender, type, timestamp, mimetype);
-            
-            // Save based on mode
-            let savedPath = null;
-            let isPrivateSave = false;
-            
-            if (this.config.mode === 'private' && this.config.ownerJid) {
-                // Save to private folder and send to owner
-                savedPath = await this.saveMediaToFile(buffer, filename, true);
-                isPrivateSave = true;
-                
-                // Send to owner
-                await this.sendToOwner(sender, type, buffer, caption, filename);
-                
-            } else if (this.config.mode === 'auto') {
-                // Save to public folder
-                savedPath = await this.saveMediaToFile(buffer, filename, false);
-            }
-            
-            // Create record
-            const record = {
-                id: messageId,
-                sender: sender,
-                chatId: chatId,
-                type: type,
-                size: buffer.length,
-                caption: caption,
-                timestamp: timestamp,
-                detectedAt: new Date().toISOString(),
-                saved: !!savedPath,
-                mode: this.config.mode,
-                filename: savedPath ? filename : null,
-                isPrivate: isPrivateSave
-            };
-            
-            // Add to history
-            this.detectedMessages.push(record);
-            if (this.detectedMessages.length > this.config.maxHistory * 2) {
-                this.detectedMessages = this.detectedMessages.slice(-this.config.maxHistory);
-            }
-            
-            // Show terminal notification
-            this.showTerminalNotification(sender, type, buffer.length, caption, isPrivateSave);
-            
-            // Save history occasionally
-            if (Math.random() < 0.1) { // 10% chance
-                this.saveHistory();
-            }
-            
-            return record;
-            
-        } catch (error) {
-            UltraCleanLogger.error(`View-once handling error: ${error.message}`);
-            return null;
-        }
-    }
-    
-    getDefaultMimeType(type) {
-        const defaults = {
-            'image': 'image/jpeg',
-            'video': 'video/mp4',
-            'audio': 'audio/mpeg'
-        };
-        return defaults[type] || 'application/octet-stream';
-    }
-    
-    async sendToOwner(sender, type, buffer, caption, filename) {
-        try {
-            if (!this.config.ownerJid) {
-                UltraCleanLogger.warning('⚠️ Owner JID not set, skipping owner notification');
-                return;
-            }
-            
-            const senderShort = sender.split('@')[0];
-            const sizeKB = Math.round(buffer.length / 1024);
-            
-            // Send info message
-            const infoText = `🔐 *PRIVATE VIEW-ONCE CAPTURED*\n\n` +
-                           `*From:* ${senderShort}\n` +
-                           `*Type:* ${type}\n` +
-                           `*Size:* ${sizeKB}KB\n` +
-                           `*Caption:* ${caption || 'None'}\n` +
-                           `*Time:* ${new Date().toLocaleTimeString()}\n` +
-                           `*Saved as:* ${filename}\n\n` +
-                           `Media delivered below ⬇️`;
-            
-            await this.sock.sendMessage(this.config.ownerJid, { text: infoText });
-            
-            // Send the media
-            const mediaOptions = {
-                caption: `📁 ${type} from ${senderShort}\n📝 ${caption || 'No caption'}`,
-                fileName: filename
-            };
-            
-            switch (type) {
-                case 'image':
-                    await this.sock.sendMessage(this.config.ownerJid, { 
-                        image: buffer, 
-                        ...mediaOptions 
-                    });
-                    break;
-                case 'video':
-                    await this.sock.sendMessage(this.config.ownerJid, { 
-                        video: buffer, 
-                        ...mediaOptions 
-                    });
-                    break;
-                case 'audio':
-                    await this.sock.sendMessage(this.config.ownerJid, { 
-                        audio: buffer, 
-                        ...mediaOptions 
-                    });
-                    break;
-            }
-            
-            UltraCleanLogger.info(`📤 Sent ${type} to owner`);
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Owner send error: ${error.message}`);
-        }
-    }
-    
-    async handleManualRecovery(msg) {
-        try {
-            const chatId = msg.key.remoteJid;
-            const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-            
-            if (!quoted) {
-                await this.sock.sendMessage(chatId, {
-                    text: '❌ Reply to a view-once message'
-                }, { quoted: msg });
-                return;
-            }
-            
-            const viewOnceData = this.detectViewOnceType(quoted);
-            if (!viewOnceData) {
-                await this.sock.sendMessage(chatId, {
-                    text: '❌ Not a view-once message'
-                }, { quoted: msg });
-                return;
-            }
-            
-            const { type, media, caption } = viewOnceData;
-            
-            await this.sock.sendMessage(chatId, {
-                text: `🔍 Downloading ${type}...`
-            }, { quoted: msg });
-            
-            const buffer = await this.downloadBuffer(media, type);
-            if (!buffer) {
-                await this.sock.sendMessage(chatId, { text: '❌ Download failed' }, { quoted: msg });
-                return;
-            }
-            
-            const mediaOptions = {
-                caption: `✅ Recovered view-once ${type}\n${caption || ''}`,
-                quoted: msg
-            };
-            
-            switch (type) {
-                case 'image':
-                    await this.sock.sendMessage(chatId, { image: buffer, ...mediaOptions });
-                    break;
-                case 'video':
-                    await this.sock.sendMessage(chatId, { video: buffer, ...mediaOptions });
-                    break;
-                case 'audio':
-                    await this.sock.sendMessage(chatId, { audio: buffer, ...mediaOptions });
-                    break;
-            }
-            
-            UltraCleanLogger.success(`🔄 Manual recovery of ${type} completed`);
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Recovery error: ${error.message}`);
-        }
-    }
-    
-    getStats() {
-        const stats = {
-            total: this.detectedMessages.length,
-            byType: { image: 0, video: 0, audio: 0 },
-            totalSize: 0
-        };
-        
-        for (const msg of this.detectedMessages) {
-            if (stats.byType[msg.type] !== undefined) {
-                stats.byType[msg.type]++;
-            }
-            stats.totalSize += msg.size || 0;
-        }
-        
-        return {
-            ...stats,
-            totalSizeKB: Math.round(stats.totalSize / 1024),
-            mode: this.config.mode,
-            enabled: this.config.enabled,
-            autoSave: this.config.autoSave
-        };
-    }
-    
-    updateConfig(newConfig) {
-        this.config = { ...this.config, ...newConfig };
-        this.saveConfig(this.config);
-        return this.config;
-    }
-}
+// Anti-viewonce configuration
+const ANTIVIEWONCE_SAVE_DIR = './data/viewonce_messages';
+const ANTIVIEWONCE_PRIVATE_DIR = './data/viewonce_private';
+const ANTIVIEWONCE_HISTORY_FILE = join(ANTIVIEWONCE_SAVE_DIR, 'history.json');
+const ANTIVIEWONCE_CONFIG_FILE = './antiviewonce_config.json';
+const ANTIVIEWONCE_VERSION = '1.0.0';
 
-let antiViewOnceSystem = null;
+const DEFAULT_ANTIVIEWONCE_CONFIG = {
+    mode: 'private',
+    autoSave: true,
+    ownerJid: '',
+    enabled: true,
+    maxHistory: 500
+};
 
-// ====== RATE LIMIT PROTECTION SYSTEM (OPTIMIZED) ======
-class RateLimitProtection {
-    constructor() {
-        this.commandTimestamps = new Map();
-        this.userCooldowns = new Map();
-        this.globalCooldown = Date.now();
-        this.stickerSendTimes = new Map();
-        // OPTIMIZED: Cleanup interval
-        setInterval(() => this.cleanup(), 60000);
-    }
-    
-    canSendCommand(chatId, userId, command) {
-        if (!RATE_LIMIT_ENABLED) return { allowed: true };
-        
-        const now = Date.now();
-        const userKey = `${userId}_${command}`;
-        const chatKey = `${chatId}_${command}`;
-        
-        // Check user cooldown
-        if (this.userCooldowns.has(userKey)) {
-            const lastTime = this.userCooldowns.get(userKey);
-            const timeDiff = now - lastTime;
-            
-            if (timeDiff < MIN_COMMAND_DELAY) {
-                const remaining = Math.ceil((MIN_COMMAND_DELAY - timeDiff) / 1000);
-                return { 
-                    allowed: false, 
-                    reason: `Please wait ${remaining}s before using ${command} again.`
-                };
-            }
-        }
-        
-        // Check chat cooldown
-        if (this.commandTimestamps.has(chatKey)) {
-            const lastTime = this.commandTimestamps.get(chatKey);
-            const timeDiff = now - lastTime;
-            
-            if (timeDiff < MIN_COMMAND_DELAY) {
-                const remaining = Math.ceil((MIN_COMMAND_DELAY - timeDiff) / 1000);
-                return { 
-                    allowed: false, 
-                    reason: `Command cooldown: ${remaining}s remaining.`
-                };
-            }
-        }
-        
-        // OPTIMIZED: Faster global cooldown check
-        if (now - this.globalCooldown < 250) { // Reduced from 500ms
-            return { 
-                allowed: false, 
-                reason: 'System is busy. Please try again in a moment.'
-            };
-        }
-        
-        // Update timestamps
-        this.userCooldowns.set(userKey, now);
-        this.commandTimestamps.set(chatKey, now);
-        this.globalCooldown = now;
-        
-        return { allowed: true };
-    }
-    
-    async waitForSticker(chatId) {
-        if (!RATE_LIMIT_ENABLED) {
-            await this.delay(STICKER_DELAY);
-            return;
-        }
-        
-        const now = Date.now();
-        const lastSticker = this.stickerSendTimes.get(chatId) || 0;
-        const timeDiff = now - lastSticker;
-        
-        if (timeDiff < STICKER_DELAY) {
-            const waitTime = STICKER_DELAY - timeDiff;
-            await this.delay(waitTime);
-        }
-        
-        this.stickerSendTimes.set(chatId, Date.now());
-    }
-    
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    
-    cleanup() {
-        const now = Date.now();
-        const fiveMinutes = 5 * 60 * 1000;
-        
-        for (const [key, timestamp] of this.userCooldowns.entries()) {
-            if (now - timestamp > fiveMinutes) {
-                this.userCooldowns.delete(key);
-            }
-        }
-        
-        for (const [key, timestamp] of this.commandTimestamps.entries()) {
-            if (now - timestamp > fiveMinutes) {
-                this.commandTimestamps.delete(key);
-            }
-        }
-    }
-}
-
-const rateLimiter = new RateLimitProtection();
-
-// ====== DYNAMIC PREFIX SYSTEM WITH PREFIXLESS SUPPORT ======
+// ====== DYNAMIC PREFIX SYSTEM ======
 let prefixCache = DEFAULT_PREFIX;
 let prefixHistory = [];
 let isPrefixless = false;
@@ -1258,7 +651,6 @@ function updatePrefixImmediately(newPrefix) {
     const isNone = newPrefix === 'none' || newPrefix === '""' || newPrefix === "''" || newPrefix === '';
     
     if (isNone) {
-        // Enable prefixless mode
         isPrefixless = true;
         prefixCache = '';
         
@@ -1276,27 +668,22 @@ function updatePrefixImmediately(newPrefix) {
         
         const trimmedPrefix = newPrefix.trim();
         
-        // Update memory cache
         prefixCache = trimmedPrefix;
         isPrefixless = false;
         
         UltraCleanLogger.info(`Prefix changed to: "${trimmedPrefix}"`);
     }
     
-    // Update global variables
     if (typeof global !== 'undefined') {
         global.prefix = getCurrentPrefix();
         global.CURRENT_PREFIX = getCurrentPrefix();
         global.isPrefixless = isPrefixless;
     }
     
-    // Update environment
     process.env.PREFIX = getCurrentPrefix();
     
-    // Save to files
     savePrefixToFile(newPrefix);
     
-    // Add to history
     prefixHistory.push({
         oldPrefix: oldIsPrefixless ? 'none' : oldPrefix,
         newPrefix: isPrefixless ? 'none' : prefixCache,
@@ -1306,12 +693,10 @@ function updatePrefixImmediately(newPrefix) {
         time: Date.now()
     });
     
-    // Keep only last 10
     if (prefixHistory.length > 10) {
         prefixHistory = prefixHistory.slice(-10);
     }
     
-    // Update terminal header
     updateTerminalHeader();
     
     UltraCleanLogger.success(`Prefix updated: "${oldIsPrefixless ? 'none' : oldPrefix}" → "${isPrefixless ? 'none (prefixless)' : prefixCache}"`);
@@ -1325,41 +710,7 @@ function updatePrefixImmediately(newPrefix) {
     };
 }
 
-function updateTerminalHeader() {
-    const currentPrefix = getCurrentPrefix();
-    const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
-    
-    console.clear();
-    console.log(chalk.cyan(`
-╔══════════════════════════════════════════════════════════════════════╗
-║   🐺 ${chalk.bold(`${BOT_NAME.toUpperCase()} v${VERSION} (PREFIXLESS & MEMBER DETECTION)`)}             
-║   💬 Prefix  : ${prefixDisplay}
-║   🔧 Auto Fix: ✅ ENABLED
-║   🔄 Real-time Prefix: ✅ ENABLED
-║   👁️ Status Detector: ✅ ACTIVE
-║   👥 Member Detector: ✅ ACTIVE
-║   🔐 Anti-ViewOnce: ✅ ACTIVE
-║   🛡️ Rate Limit Protection: ✅ ACTIVE
-║   🔗 Auto-Connect on Link: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}
-║   🔄 Auto-Connect on Start: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}
-║   🔐 Login Methods: Pairing Code | Session ID | Clean Start
-║   📱 Session Support: WOLF-BOT: format & Base64
-║   🔗 Auto-Join to Group: ${AUTO_JOIN_ENABLED ? '✅ ENABLED' : '❌ DISABLED'}
-║   📊 Log Level: ULTRA CLEAN (Zero spam)
-║   🔊 Console: ✅ COMPLETELY FILTERED
-║   ⚡ SPEED: ✅ OPTIMIZED (FAST RESPONSE)
-║   🎯 Background Auth: ✅ ENABLED
-║   🎉 Welcome System: ✅ ENABLED
-╚══════════════════════════════════════════════════════════════════════╝
-`));
-}
-
-// Initialize with loaded prefix
-prefixCache = loadPrefixFromFiles();
-isPrefixless = prefixCache === '' ? true : false;
-updateTerminalHeader();
-
-// ====== PLATFORM DETECTION ======
+// Platform detection
 function detectPlatform() {
     if (process.env.PANEL) return 'Panel';
     if (process.env.HEROKU) return 'Heroku';
@@ -1395,12 +746,11 @@ let RESTART_AUTO_FIX_ENABLED = true;
 let hasSentRestartMessage = false;
 let hasAutoConnectedOnStart = false;
 let hasSentWelcomeMessage = false;
-
-// Add these two lines:
 let initialCommandsLoaded = false;
 let commandsLoaded = false;
+let hasSentConnectionMessage = false; // NEW: Track if connection message sent
 
-// ====== UTILITY FUNCTIONS ======
+// Utility functions
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ====== JID/LID HANDLING SYSTEM ======
@@ -1514,7 +864,6 @@ class JidManager {
             return false;
         }
         
-        // OPTIMIZED: Faster checks with early returns
         if (this.ownerJids.has(cleaned.cleanJid) || this.ownerJids.has(senderJid)) {
             return true;
         }
@@ -1614,8 +963,8 @@ const jidManager = new JidManager();
 class NewMemberDetector {
     constructor() {
         this.enabled = true;
-        this.detectedMembers = new Map(); // groupId -> array of member events
-        this.groupMembersCache = new Map(); // groupId -> Set of member IDs
+        this.detectedMembers = new Map();
+        this.groupMembersCache = new Map();
         this.loadDetectionData();
         
         UltraCleanLogger.success('New Member Detector initialized');
@@ -1649,7 +998,6 @@ class NewMemberDetector {
                 data.detectedMembers[groupId] = members;
             }
             
-            // Ensure data directory exists
             if (!fs.existsSync('./data')) {
                 fs.mkdirSync('./data', { recursive: true });
             }
@@ -1670,20 +1018,16 @@ class NewMemberDetector {
             if (action === 'add' || action === 'invite') {
                 const participants = groupUpdate.participants || [];
                 
-                // Get group metadata
                 const metadata = await sock.groupMetadata(groupId);
                 const groupName = metadata.subject || 'Unknown Group';
                 
-                // Get current cached members
                 let cachedMembers = this.groupMembersCache.get(groupId) || new Set();
                 
-                // Identify new members
                 const newMembers = [];
                 for (const participant of participants) {
                     const userJid = participant;
                     
                     if (!cachedMembers.has(userJid)) {
-                        // New member detected
                         try {
                             const userInfo = await sock.onWhatsApp(userJid);
                             const userName = userInfo[0]?.name || userJid.split('@')[0];
@@ -1701,7 +1045,6 @@ class NewMemberDetector {
                             
                             cachedMembers.add(userJid);
                             
-                            // Show terminal notification
                             this.showMemberNotification(groupName, userName, userNumber, action);
                             
                         } catch (error) {
@@ -1710,21 +1053,17 @@ class NewMemberDetector {
                     }
                 }
                 
-                // Update cache
                 this.groupMembersCache.set(groupId, cachedMembers);
                 
-                // Save new members to history
                 if (newMembers.length > 0) {
                     const groupEvents = this.detectedMembers.get(groupId) || [];
                     groupEvents.push(...newMembers);
-                    this.detectedMembers.set(groupId, groupEvents.slice(-50)); // Keep last 50 events
+                    this.detectedMembers.set(groupId, groupEvents.slice(-50));
                     
-                    // Auto-save periodically
-                    if (Math.random() < 0.2) { // 20% chance to save on each detection
+                    if (Math.random() < 0.2) {
                         this.saveDetectionData();
                     }
                     
-                    // Check if welcome system is enabled for this group
                     await this.checkWelcomeSystem(sock, groupId, newMembers);
                     
                     return newMembers;
@@ -1749,7 +1088,6 @@ class NewMemberDetector {
     
     async checkWelcomeSystem(sock, groupId, newMembers) {
         try {
-            // Load welcome data
             const welcomeData = this.loadWelcomeData();
             const groupWelcome = welcomeData.groups?.[groupId];
             
@@ -1765,16 +1103,13 @@ class NewMemberDetector {
     
     async sendWelcomeMessage(sock, groupId, userId, message) {
         try {
-            // Get user info
             const userInfo = await sock.onWhatsApp(userId);
             const userName = userInfo[0]?.name || userId.split('@')[0];
             
-            // Get group info
             const metadata = await sock.groupMetadata(groupId);
             const memberCount = metadata.participants.length;
             const groupName = metadata.subject || "Our Group";
             
-            // Replace variables in message
             const welcomeText = this.replaceWelcomeVariables(message, {
                 name: userName,
                 group: groupName,
@@ -1782,16 +1117,13 @@ class NewMemberDetector {
                 mention: `@${userId.split('@')[0]}`
             });
             
-            // Get user's profile picture
             let profilePic = null;
             try {
                 profilePic = await sock.profilePictureUrl(userId, 'image');
             } catch {
-                // Use default avatar if no profile picture
                 profilePic = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
             }
             
-            // Create welcome message with profile picture
             await sock.sendMessage(groupId, {
                 image: { url: profilePic },
                 caption: welcomeText,
@@ -1801,7 +1133,6 @@ class NewMemberDetector {
                 }
             });
             
-            // Update last welcome time in welcome data
             const welcomeData = this.loadWelcomeData();
             if (welcomeData.groups?.[groupId]) {
                 welcomeData.groups[groupId].lastWelcome = Date.now();
@@ -1841,7 +1172,6 @@ class NewMemberDetector {
     
     saveWelcomeData(data) {
         try {
-            // Ensure data directory exists
             if (!fs.existsSync('./data')) {
                 fs.mkdirSync('./data', { recursive: true });
             }
@@ -1975,7 +1305,6 @@ class AutoGroupJoinSystem {
         try {
             UltraCleanLogger.info(`🔄 Attempting to auto-add ${isOwner ? 'owner' : 'user'} ${userJid} to group...`);
             
-            // Try to get group info first
             let groupId;
             try {
                 groupId = await sock.groupAcceptInvite(GROUP_INVITE_CODE);
@@ -1985,11 +1314,9 @@ class AutoGroupJoinSystem {
                 throw new Error('Could not access group with invite code');
             }
             
-            // Add user to the group
             await sock.groupParticipantsUpdate(groupId, [userJid], 'add');
             UltraCleanLogger.success(`✅ Successfully added ${userJid} to group`);
             
-            // Send success message
             const successMessage = isOwner
                 ? `✅ *SUCCESSFULLY JOINED!*\n\n` +
                   `You have been automatically added to the group!\n` +
@@ -2005,7 +1332,6 @@ class AutoGroupJoinSystem {
         } catch (error) {
             UltraCleanLogger.error(`❌ Auto-add failed for ${userJid}: ${error.message}`);
             
-            // Send manual join instructions
             const manualMessage = isOwner
                 ? `⚠️ *MANUAL JOIN REQUIRED*\n\n` +
                   `Could not auto-add you to the group.\n\n` +
@@ -2090,110 +1416,7 @@ class AutoGroupJoinSystem {
 
 const autoGroupJoinSystem = new AutoGroupJoinSystem();
 
-// ====== ULTIMATE FIX SYSTEM (BACKGROUND PROCESS) ======
-// class UltimateFixSystem {
-//     constructor() {
-//         this.fixedJids = new Set();
-//         this.fixApplied = false;
-//         this.restartFixAttempted = false;
-//     }
-    
-//     async applyUltimateFix(sock, senderJid, cleaned, isFirstUser = false, isRestart = false) {
-//         try {
-//             const fixType = isRestart ? 'RESTART' : (isFirstUser ? 'FIRST' : 'NORMAL');
-//             UltraCleanLogger.info(`🔧 Applying Ultimate Fix (${fixType}) in background for: ${cleaned.cleanJid}`);
-            
-//             // BACKGROUND PROCESS: No chat messages during fix
-//             // Just do the actual fixing in background
-            
-//             const originalIsOwner = jidManager.isOwner;
-            
-//             jidManager.isOwner = function(message) {
-//                 try {
-//                     const isFromMe = message?.key?.fromMe;
-//                     if (isFromMe) return true;
-                    
-//                     if (!this.owner || !this.owner.cleanNumber) {
-//                         this.loadOwnerDataFromFile();
-//                     }
-                    
-//                     return originalIsOwner.call(this, message);
-//                 } catch {
-//                     return message?.key?.fromMe || false;
-//                 }
-//             };
-            
-//             jidManager.loadOwnerDataFromFile = function() {
-//                 try {
-//                     if (fs.existsSync('./owner.json')) {
-//                      //   const data = JSON.parse(fs.readFileSync('./owner.json, 'utf8'));
-//                       const data = JSON.parse(fs.readFileSync('./owner.json', 'utf8'));  
-//                         let cleanNumber = data.OWNER_CLEAN_NUMBER || data.OWNER_NUMBER;
-//                         let cleanJid = data.OWNER_CLEAN_JID || data.OWNER_JID;
-                        
-//                         if (cleanNumber && cleanNumber.includes(':')) {
-//                             cleanNumber = cleanNumber.split(':')[0];
-//                         }
-                        
-//                         this.owner = {
-//                             cleanNumber: cleanNumber,
-//                             cleanJid: cleanJid,
-//                             rawJid: data.OWNER_JID,
-//                             isLid: cleanJid?.includes('@lid') || false
-//                         };
-                        
-//                         return true;
-//                     }
-//                 } catch {
-//                     // Silent fail
-//                 }
-//                 return false;
-//             };
-            
-//             global.OWNER_NUMBER = cleaned.cleanNumber;
-//             global.OWNER_CLEAN_NUMBER = cleaned.cleanNumber;
-//             global.OWNER_JID = cleaned.cleanJid;
-//             global.OWNER_CLEAN_JID = cleaned.cleanJid;
-            
-//             this.fixedJids.add(senderJid);
-//             this.fixApplied = true;
-            
-//             UltraCleanLogger.success(`✅ Ultimate Fix applied (${fixType}) in background: ${cleaned.cleanJid}`);
-            
-//             return {
-//                 success: true,
-//                 jid: cleaned.cleanJid,
-//                 number: cleaned.cleanNumber,
-//                 isLid: cleaned.isLid,
-//                 isRestart: isRestart
-//             };
-            
-//         } catch (error) {
-//             UltraCleanLogger.error(`Ultimate Fix failed: ${error.message}`);
-//             return { success: false, error: 'Fix failed' };
-//         }
-//     }
-    
-//     isFixNeeded(jid) {
-//         return !this.fixedJids.has(jid);
-//     }
-    
-//     shouldRunRestartFix(ownerJid) {
-//         const hasOwnerFile = fs.existsSync(OWNER_FILE);
-//         const isFixNeeded = this.isFixNeeded(ownerJid);
-//         const notAttempted = !this.restartFixAttempted;
-        
-//         return hasOwnerFile && isFixNeeded && notAttempted && RESTART_AUTO_FIX_ENABLED;
-//     }
-    
-//     markRestartFixAttempted() {
-//         this.restartFixAttempted = true;
-//     }
-// }
-
-// const ultimateFixSystem = new UltimateFixSystem();
-
-
+// ====== ULTIMATE FIX SYSTEM ======
 class UltimateFixSystem {
     constructor() {
         this.fixedJids = new Set();
@@ -2205,9 +1428,6 @@ class UltimateFixSystem {
         try {
             const fixType = isRestart ? 'RESTART' : (isFirstUser ? 'FIRST' : 'NORMAL');
             UltraCleanLogger.info(`🔧 Applying Ultimate Fix (${fixType}) in background for: ${cleaned.cleanJid}`);
-            
-            // BACKGROUND PROCESS: No chat messages during fix
-            // Just do the actual fixing in background
             
             const originalIsOwner = jidManager.isOwner;
             
@@ -2229,8 +1449,7 @@ class UltimateFixSystem {
             jidManager.loadOwnerDataFromFile = function() {
                 try {
                     if (fs.existsSync('./owner.json')) {
-                     //   const data = JSON.parse(fs.readFileSync('./owner.json, 'utf8'));
-                      const data = JSON.parse(fs.readFileSync('./owner.json', 'utf8'));  
+                        const data = JSON.parse(fs.readFileSync('./owner.json', 'utf8'));
                         let cleanNumber = data.OWNER_CLEAN_NUMBER || data.OWNER_NUMBER;
                         let cleanJid = data.OWNER_CLEAN_JID || data.OWNER_JID;
                         
@@ -2353,7 +1572,7 @@ class AutoConnectOnStart {
 
 const autoConnectOnStart = new AutoConnectOnStart();
 
-// ====== AUTO-LINKING SYSTEM WITH AUTO-CONNECT (OPTIMIZED) ======
+// ====== AUTO-LINKING SYSTEM ======
 class AutoLinkSystem {
     constructor() {
         this.linkAttempts = new Map();
@@ -2477,67 +1696,7 @@ class AutoLinkSystem {
         }
     }
     
-    // async sendImmediateSuccessMessage(sock, senderJid, cleaned, isFirstUser = false) {
-    //     try {
-    //         const currentTime = new Date().toLocaleTimeString();
-    //         const currentPrefix = getCurrentPrefix();
-    //         const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
-            
-    //         let successMsg = `✅ *${BOT_NAME.toUpperCase()} v${VERSION} CONNECTED!*\n\n`;
-            
-    //         if (isFirstUser) {
-    //             successMsg += `🎉 *FIRST TIME SETUP COMPLETE!*\n\n`;
-    //         } else {
-    //             successMsg += `🔄 *NEW OWNER LINKED!*\n\n`;
-    //         }
-            
-    //         successMsg += `📋 *YOUR INFORMATION:*\n`;
-    //         successMsg += `├─ Your Number: +${cleaned.cleanNumber}\n`;
-    //         successMsg += `├─ Device Type: ${cleaned.isLid ? 'Linked Device 🔗' : 'Regular Device 📱'}\n`;
-    //         successMsg += `├─ JID: ${cleaned.cleanJid}\n`;
-    //         successMsg += `├─ Prefix: ${prefixDisplay}\n`;
-    //         successMsg += `├─ Mode: ${BOT_MODE}\n`;
-    //         successMsg += `├─ Anti-ViewOnce: ✅ ACTIVE\n`;
-    //         successMsg += `└─ Status: ✅ LINKED SUCCESSFULLY\n\n`;
-            
-    //         successMsg += `⚡ *Background Processes:*\n`;
-    //         successMsg += `├─ Ultimate Fix: Initializing...\n`;
-    //         successMsg += `├─ Auto-Join: ${AUTO_JOIN_ENABLED ? 'Initializing...' : 'Disabled'}\n`;
-    //         successMsg += `├─ Member Detection: ✅ ACTIVE\n`;
-    //         successMsg += `├─ Anti-ViewOnce: ✅ ACTIVE\n`;
-    //         successMsg += `└─ All systems: ✅ ACTIVE\n\n`;
-            
-    //         if (!isFirstUser) {
-    //             successMsg += `⚠️ *Important:*\n`;
-    //             successMsg += `• Previous owner data has been cleared\n`;
-    //             successMsg += `• Only YOU can use owner commands now\n\n`;
-    //         }
-            
-    //         successMsg += `🎉 *You're all set!* Bot is now ready to use.`;
-            
-    //         await sock.sendMessage(senderJid, { text: successMsg });
-            
-    //     } catch {
-    //         // Silent fail
-    //     }
-    // }
-    
-
-//     async sendImmediateSuccessMessage(sock, senderJid, cleaned, isFirstUser = false) {
-//     try {
-//         // Use the new success message system
-//         await successMessageSystem.sendNewOwnerMessage(sock, isFirstUser);
-//     } catch {
-//         // Fallback silent fail
-//     }
-// }
-
-async sendImmediateSuccessMessage(sock, senderJid, cleaned, isFirstUser = false) {
-    try {
-        // Use the new success message system
-        await successMessageSystem.sendNewOwnerMessage(sock, isFirstUser);
-    } catch {
-        // Fallback to old method if new system fails
+    async sendImmediateSuccessMessage(sock, senderJid, cleaned, isFirstUser = false) {
         try {
             const currentTime = new Date().toLocaleTimeString();
             const currentPrefix = getCurrentPrefix();
@@ -2576,12 +1735,12 @@ async sendImmediateSuccessMessage(sock, senderJid, cleaned, isFirstUser = false)
             successMsg += `🎉 *You're all set!* Bot is now ready to use.`;
             
             await sock.sendMessage(senderJid, { text: successMsg });
-        } catch (fallbackError) {
-            UltraCleanLogger.error('Both success message methods failed:', fallbackError.message);
+            
+        } catch {
+            // Silent fail
         }
     }
-}
-
+    
     async sendDeviceLinkedMessage(sock, senderJid, cleaned) {
         try {
             const message = `📱 *Device Linked Successfully!*\n\n` +
@@ -2707,10 +1866,8 @@ class ProfessionalDefibrillator {
             const cpm = this.calculateCPM();
             const heartbeatDisplay = this.getHeartbeatVisual(this.heartbeatCount);
             
-            // Get member detection stats
             const memberStats = memberDetector ? memberDetector.getStats() : null;
             
-            // Get anti-viewonce stats
             const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
             
             console.log(chalk.greenBright(`
@@ -2740,69 +1897,67 @@ class ProfessionalDefibrillator {
         }
     }
     
-    // async sendOwnerHeartbeatReport(sock) {
-    //     try {
-    //         if (!sock || !this.ownerJid) return;
+    async sendOwnerHeartbeatReport(sock) {
+        try {
+            if (!sock || !this.ownerJid) return;
             
-    //         const now = Date.now();
-    //         if (now - this.lastOwnerReport < 50000) return;
+            const now = Date.now();
+            if (now - this.lastOwnerReport < 50000) return;
             
-    //         const uptime = process.uptime();
-    //         const hours = Math.floor(uptime / 3600);
-    //         const minutes = Math.floor((uptime % 3600) / 60);
+            const uptime = process.uptime();
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
             
-    //         const memoryUsage = process.memoryUsage();
-    //         const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
+            const memoryUsage = process.memoryUsage();
+            const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
             
-    //         const currentPrefix = getCurrentPrefix();
-    //         const platform = detectPlatform();
-    //         const isConnected = sock && sock.user && sock.user.id;
+            const currentPrefix = getCurrentPrefix();
+            const platform = detectPlatform();
+            const isConnected = sock && sock.user && sock.user.id;
             
-    //         const cpm = this.calculateCPM();
-    //         const availability = this.calculateAvailability();
+            const cpm = this.calculateCPM();
+            const availability = this.calculateAvailability();
             
-    //         // Get member detection stats
-    //         const memberStats = memberDetector ? memberDetector.getStats() : null;
+            const memberStats = memberDetector ? memberDetector.getStats() : null;
             
-    //         // Get anti-viewonce stats
-    //         const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
+            const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
             
-    //         let statusEmoji = "🟢";
-    //         let statusText = "Excellent";
+            let statusEmoji = "🟢";
+            let statusText = "Excellent";
             
-    //         if (memoryMB > 300) {
-    //             statusEmoji = "🟡";
-    //             statusText = "Good";
-    //         }
+            if (memoryMB > 300) {
+                statusEmoji = "🟡";
+                statusText = "Good";
+            }
             
-    //         if (memoryMB > 500) {
-    //             statusEmoji = "🔴";
-    //             statusText = "Warning";
-    //         }
+            if (memoryMB > 500) {
+                statusEmoji = "🔴";
+                statusText = "Warning";
+            }
             
-    //         const reportMessage = `📊 *${BOT_NAME} HEARTBEAT REPORT*\n\n` +
-    //                             `⏰ *Uptime:* ${hours}h ${minutes}m\n` +
-    //                             `💾 *Memory:* ${memoryMB}MB ${statusEmoji}\n` +
-    //                             `📊 *Commands:* ${this.commandStats.total}\n` +
-    //                             `👥 *Members Detected:* ${memberStats ? memberStats.totalEvents : 0}\n` +
-    //                             `🔐 *ViewOnce Captured:* ${antiviewonceStats ? antiviewonceStats.total : 0}\n` +
-    //                             `⚡ *CPM:* ${cpm}/min\n` +
-    //                             `📈 *Availability:* ${availability}%\n` +
-    //                             `💬 *Prefix:* "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\n` +
-    //                             `🔗 *Status:* ${isConnected ? 'Connected ✅' : 'Disconnected ❌'}\n` +
-    //                             `🏗️ *Platform:* ${platform}\n` +
-    //                             `🩺 *Health:* ${statusText}\n\n` +
-    //                             `_Last updated: ${new Date().toLocaleTimeString()}_`;
+            const reportMessage = `📊 *${BOT_NAME} HEARTBEAT REPORT*\n\n` +
+                                `⏰ *Uptime:* ${hours}h ${minutes}m\n` +
+                                `💾 *Memory:* ${memoryMB}MB ${statusEmoji}\n` +
+                                `📊 *Commands:* ${this.commandStats.total}\n` +
+                                `👥 *Members Detected:* ${memberStats ? memberStats.totalEvents : 0}\n` +
+                                `🔐 *ViewOnce Captured:* ${antiviewonceStats ? antiviewonceStats.total : 0}\n` +
+                                `⚡ *CPM:* ${cpm}/min\n` +
+                                `📈 *Availability:* ${availability}%\n` +
+                                `💬 *Prefix:* "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\n` +
+                                `🔗 *Status:* ${isConnected ? 'Connected ✅' : 'Disconnected ❌'}\n` +
+                                `🏗️ *Platform:* ${platform}\n` +
+                                `🩺 *Health:* ${statusText}\n\n` +
+                                `_Last updated: ${new Date().toLocaleTimeString()}_`;
             
-    //         await sock.sendMessage(this.ownerJid, { text: reportMessage });
+            await sock.sendMessage(this.ownerJid, { text: reportMessage });
             
-    //         this.lastOwnerReport = now;
-    //         UltraCleanLogger.info('Owner heartbeat report sent');
+            this.lastOwnerReport = now;
+            UltraCleanLogger.info('Owner heartbeat report sent');
             
-    //     } catch (error) {
-    //         UltraCleanLogger.error(`Owner report error: ${error.message}`);
-    //     }
-    // }
+        } catch (error) {
+            UltraCleanLogger.error(`Owner report error: ${error.message}`);
+        }
+    }
     
     async sendStartupReport(sock) {
         try {
@@ -3123,276 +2278,530 @@ class ProfessionalDefibrillator {
 
 const defibrillator = new ProfessionalDefibrillator();
 
-
-// ====== ADD THIS CLASS AFTER THE PROFESSIONAL DEFIBRILLATOR SYSTEM ======
-// (Around line 1400, before the handleConnectCommand function)
-
-class SuccessMessageSystem {
-    constructor() {
-        this.config = {
-            botName: BOT_NAME,
-            version: VERSION,
-            defaultPrefix: DEFAULT_PREFIX
+// ====== ANTI-VIEWONCE SYSTEM ======
+class AntiViewOnceSystem {
+    constructor(sock) {
+        this.sock = sock;
+        this.config = this.loadConfig();
+        this.detectedMessages = [];
+        this.setupDirectories();
+        this.loadHistory();
+        
+        let downloadFunc;
+        try {
+            import('@whiskeysockets/baileys').then(baileys => {
+                downloadFunc = baileys.downloadContentFromMessage;
+            }).catch(() => {
+                downloadFunc = null;
+            });
+        } catch {
+            downloadFunc = null;
+        }
+        
+        this.downloadContentFromMessage = downloadFunc;
+        
+        UltraCleanLogger.success('🔐 Anti-ViewOnce System initialized');
+    }
+    
+    setupDirectories() {
+        try {
+            if (!fs.existsSync(ANTIVIEWONCE_SAVE_DIR)) {
+                fs.mkdirSync(ANTIVIEWONCE_SAVE_DIR, { recursive: true });
+                UltraCleanLogger.info(`📁 Created: ${ANTIVIEWONCE_SAVE_DIR}`);
+            }
+            
+            if (!fs.existsSync(ANTIVIEWONCE_PRIVATE_DIR)) {
+                fs.mkdirSync(ANTIVIEWONCE_PRIVATE_DIR, { recursive: true });
+                UltraCleanLogger.info(`📁 Created: ${ANTIVIEWONCE_PRIVATE_DIR}`);
+            }
+        } catch (error) {
+            UltraCleanLogger.error(`Directory setup error: ${error.message}`);
+        }
+    }
+    
+    loadConfig() {
+        try {
+            if (fs.existsSync(ANTIVIEWONCE_CONFIG_FILE)) {
+                const config = JSON.parse(fs.readFileSync(ANTIVIEWONCE_CONFIG_FILE, 'utf8'));
+                UltraCleanLogger.info('🔧 Loaded anti-viewonce config');
+                return config;
+            }
+        } catch (error) {
+            UltraCleanLogger.warning(`Config load warning: ${error.message}`);
+        }
+        
+        this.saveConfig(DEFAULT_ANTIVIEWONCE_CONFIG);
+        return DEFAULT_ANTIVIEWONCE_CONFIG;
+    }
+    
+    saveConfig(config) {
+        try {
+            fs.writeFileSync(ANTIVIEWONCE_CONFIG_FILE, JSON.stringify(config, null, 2));
+            UltraCleanLogger.info('💾 Anti-viewonce config saved');
+        } catch (error) {
+            UltraCleanLogger.error(`Config save error: ${error.message}`);
+        }
+    }
+    
+    loadHistory() {
+        try {
+            if (fs.existsSync(ANTIVIEWONCE_HISTORY_FILE)) {
+                const data = JSON.parse(fs.readFileSync(ANTIVIEWONCE_HISTORY_FILE, 'utf8'));
+                this.detectedMessages = data.messages || [];
+                UltraCleanLogger.info(`📊 Loaded ${this.detectedMessages.length} viewonce records`);
+            }
+        } catch (error) {
+            UltraCleanLogger.warning(`History load warning: ${error.message}`);
+        }
+    }
+    
+    saveHistory() {
+        try {
+            const data = {
+                messages: this.detectedMessages.slice(-this.config.maxHistory),
+                updatedAt: new Date().toISOString(),
+                total: this.detectedMessages.length,
+                mode: this.config.mode
+            };
+            fs.writeFileSync(ANTIVIEWONCE_HISTORY_FILE, JSON.stringify(data, null, 2));
+        } catch (error) {
+            UltraCleanLogger.warning(`History save warning: ${error.message}`);
+        }
+    }
+    
+    getFileExtension(mimetype) {
+        const extensions = {
+            'image/jpeg': 'jpg',
+            'image/jpg': 'jpg',
+            'image/png': 'png',
+            'image/gif': 'gif',
+            'image/webp': 'webp',
+            'video/mp4': 'mp4',
+            'video/3gp': '3gp',
+            'video/quicktime': 'mov',
+            'video/webm': 'webm',
+            'audio/mpeg': 'mp3',
+            'audio/mp4': 'm4a',
+            'audio/ogg': 'ogg',
+            'audio/webm': 'webm',
+            'audio/aac': 'aac',
+            'audio/opus': 'opus'
         };
-        UltraCleanLogger.success('Success Message System initialized');
+        return extensions[mimetype] || 'bin';
     }
     
-    async sendConnectionSuccess(sock, loginMode) {
+    generateFilename(sender, type, timestamp, mimetype) {
+        const date = new Date(timestamp * 1000);
+        const dateStr = date.toISOString().split('T')[0];
+        const timeStr = date.toTimeString().split(' ')[0].replace(/:/g, '-');
+        const senderShort = sender.split('@')[0].replace(/[^0-9]/g, '').slice(-8);
+        const ext = this.getFileExtension(mimetype);
+        return `${dateStr}_${timeStr}_${senderShort}_${type}.${ext}`;
+    }
+    
+    async downloadBuffer(msg, type) {
         try {
-            const ownerJid = sock.user.id;
-            const cleaned = jidManager.cleanJid(ownerJid);
-            const currentPrefix = getCurrentPrefix();
-            const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
-            const platform = detectPlatform();
+            if (!this.downloadContentFromMessage) {
+                const baileys = await import('@whiskeysockets/baileys');
+                this.downloadContentFromMessage = baileys.downloadContentFromMessage;
+            }
             
-            const successMessage = `✅ *${BOT_NAME} v${VERSION} CONNECTED SUCCESSFULLY!*\n\n` +
-                                 `📋 *SYSTEM INFORMATION:*\n` +
-                                 `├─ Version: ${VERSION}\n` +
-                                 `├─ Platform: ${platform}\n` +
-                                 `├─ Prefix: ${prefixDisplay}\n` +
-                                 `├─ Mode: ${BOT_MODE}\n` +
-                                 `├─ Member Detection: ✅ ACTIVE\n` +
-                                 `├─ Anti-ViewOnce: ✅ ACTIVE\n` +
-                                 `├─ Status: 24/7 Ready!\n` +
-                                 `└─ Auth Method: ${loginMode === 'session' ? 'Session ID' : 'Pairing Code'}\n\n` +
-                                 `👤 *YOUR INFORMATION:*\n` +
-                                 `├─ Number: +${cleaned.cleanNumber}\n` +
-                                 `├─ JID: ${cleaned.cleanJid}\n` +
-                                 `├─ Device: ${cleaned.isLid ? 'Linked Device 🔗' : 'Regular Device 📱'}\n` +
-                                 `└─ Linked: ${new Date().toLocaleTimeString()}\n\n` +
-                                 `⚡ *BACKGROUND PROCESSES:*\n` +
-                                 `├─ Ultimate Fix: ✅ COMPLETE\n` +
-                                 `├─ Defibrillator: ✅ ACTIVE\n` +
-                                 `├─ Member Detection: ✅ ACTIVE\n` +
-                                 `├─ Anti-ViewOnce: ✅ ACTIVE\n` +
-                                 `├─ Auto-Join: ${AUTO_JOIN_ENABLED ? '✅ ENABLED' : '❌ DISABLED'}\n` +
-                                 `└─ All systems: ✅ OPERATIONAL\n\n` +
-                                 `🎉 *Bot is now fully operational!*\n` +
-                                 `💬 Try using ${currentPrefix ? currentPrefix + 'ping' : 'ping'} to verify.`;
-            
-            await sock.sendMessage(ownerJid, { text: successMessage });
-            UltraCleanLogger.success('✅ Professional success message sent to owner');
-            
+            const stream = await this.downloadContentFromMessage(msg, type);
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) {
+                buffer = Buffer.concat([buffer, chunk]);
+            }
+            return buffer;
         } catch (error) {
-            UltraCleanLogger.error('Could not send success message:', error.message);
+            UltraCleanLogger.error(`Download error: ${error.message}`);
+            return null;
         }
     }
     
-    async sendNewOwnerMessage(sock, isFirstUser = false) {
+    async saveMediaToFile(buffer, filename, isPrivate = false) {
         try {
-            const ownerJid = sock.user.id;
-            const cleaned = jidManager.cleanJid(ownerJid);
-            const currentPrefix = getCurrentPrefix();
-            const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
-            const currentTime = new Date().toLocaleTimeString();
+            const savePath = isPrivate ? ANTIVIEWONCE_PRIVATE_DIR : ANTIVIEWONCE_SAVE_DIR;
+            const filepath = join(savePath, filename);
             
-            let successMsg = `✅ *${BOT_NAME.toUpperCase()} v${VERSION} CONNECTED!*\n\n`;
+            fs.writeFileSync(filepath, buffer);
             
-            if (isFirstUser) {
-                successMsg += `🎉 *FIRST TIME SETUP COMPLETE!*\n\n`;
-            } else {
-                successMsg += `🔄 *NEW OWNER LINKED!*\n\n`;
-            }
+            const sizeKB = Math.round(buffer.length / 1024);
+            UltraCleanLogger.success(`💾 Saved: ${filename} (${sizeKB}KB) to ${isPrivate ? 'private' : 'public'} folder`);
             
-            successMsg += `📋 *YOUR INFORMATION:*\n`;
-            successMsg += `├─ Your Number: +${cleaned.cleanNumber}\n`;
-            successMsg += `├─ Device Type: ${cleaned.isLid ? 'Linked Device 🔗' : 'Regular Device 📱'}\n`;
-            successMsg += `├─ JID: ${cleaned.cleanJid}\n`;
-            successMsg += `├─ Prefix: ${prefixDisplay}\n`;
-            successMsg += `├─ Mode: ${BOT_MODE}\n`;
-            successMsg += `├─ Anti-ViewOnce: ✅ ACTIVE\n`;
-            successMsg += `└─ Status: ✅ LINKED SUCCESSFULLY\n\n`;
-            
-            successMsg += `⚡ *Background Processes:*\n`;
-            successMsg += `├─ Ultimate Fix: Initializing...\n`;
-            successMsg += `├─ Auto-Join: ${AUTO_JOIN_ENABLED ? 'Initializing...' : 'Disabled'}\n`;
-            successMsg += `├─ Member Detection: ✅ ACTIVE\n`;
-            successMsg += `├─ Anti-ViewOnce: ✅ ACTIVE\n`;
-            successMsg += `└─ All systems: ✅ ACTIVE\n\n`;
-            
-            if (!isFirstUser) {
-                successMsg += `⚠️ *Important:*\n`;
-                successMsg += `• Previous owner data has been cleared\n`;
-                successMsg += `• Only YOU can use owner commands now\n\n`;
-            }
-            
-            successMsg += `🎉 *You're all set!* Bot is now ready to use.`;
-            
-            await sock.sendMessage(ownerJid, { text: successMsg });
-            
+            return filepath;
         } catch (error) {
-            UltraCleanLogger.error('Could not send new owner message:', error.message);
+            UltraCleanLogger.error(`Save error: ${error.message}`);
+            return null;
         }
     }
     
-    async sendRestartSuccess(sock) {
+    detectViewOnceType(message) {
+        if (message.imageMessage?.viewOnce) {
+            return {
+                type: 'image',
+                media: message.imageMessage,
+                caption: message.imageMessage.caption || ''
+            };
+        } else if (message.videoMessage?.viewOnce) {
+            return {
+                type: 'video',
+                media: message.videoMessage,
+                caption: message.videoMessage.caption || ''
+            };
+        } else if (message.audioMessage?.viewOnce) {
+            return {
+                type: 'audio',
+                media: message.audioMessage,
+                caption: ''
+            };
+        }
+        return null;
+    }
+    
+    showTerminalNotification(sender, type, size, caption, isPrivate = false) {
+        const senderShort = sender.split('@')[0];
+        const sizeKB = Math.round(size / 1024);
+        const time = new Date().toLocaleTimeString();
+        
+        const typeEmoji = {
+            'image': '🖼️',
+            'video': '🎬',
+            'audio': '🎵'
+        }[type] || '📁';
+        
+        const modeTag = isPrivate ? '[PRIVATE]' : '[AUTO]';
+        const captionText = caption ? ` - "${caption.substring(0, 30)}${caption.length > 30 ? '...' : ''}"` : '';
+        
+        logAntiViewOnce(`${modeTag} ${typeEmoji} VIEW-ONCE DETECTED`);
+        logAntiViewOnce(`   👤 From: ${senderShort}`);
+        logAntiViewOnce(`   📦 Type: ${type} (${sizeKB}KB)`);
+        logAntiViewOnce(`   📝 Caption: ${captionText || 'None'}`);
+        logAntiViewOnce(`   🕒 Time: ${time}`);
+    }
+    
+    async handleViewOnceDetection(msg) {
         try {
-            const ownerJid = sock.user.id;
-            const cleaned = jidManager.cleanJid(ownerJid);
-            const currentPrefix = getCurrentPrefix();
-            const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
+            if (!this.config.enabled || this.config.mode === 'off') return null;
             
-            const restartMsg = `🔄 *BOT RESTARTED SUCCESSFULLY!*\n\n` +
-                             `✅ *${BOT_NAME} v${VERSION}* is now online\n` +
-                             `👑 Owner: +${cleaned.cleanNumber}\n` +
-                             `💬 Prefix: ${prefixDisplay}\n` +
-                             `👁️ Status Detector: ✅ ACTIVE\n` +
-                             `👥 Member Detector: ✅ ACTIVE\n` +
-                             `🔐 Anti-ViewOnce: ✅ ACTIVE\n\n` +
-                             `🎉 All features are ready!\n` +
-                             `💬 Try using ${currentPrefix ? currentPrefix + 'ping' : 'ping'} to verify.`;
+            const message = msg.message;
+            if (!message) return null;
             
-            await sock.sendMessage(ownerJid, { text: restartMsg });
-            UltraCleanLogger.success('✅ Restart message sent to owner');
+            const viewOnceData = this.detectViewOnceType(message);
+            if (!viewOnceData) return null;
+            
+            const { type, media, caption } = viewOnceData;
+            const chatId = msg.key.remoteJid;
+            const sender = msg.key.participant || msg.key.remoteJid;
+            const messageId = msg.key.id;
+            const timestamp = msg.messageTimestamp || Math.floor(Date.now() / 1000);
+            
+            UltraCleanLogger.info(`🔍 Detected view-once ${type} from ${sender.split('@')[0]}`);
+            
+            const buffer = await this.downloadBuffer(media, type);
+            if (!buffer) {
+                UltraCleanLogger.error('❌ Download failed');
+                return null;
+            }
+            
+            const mimetype = media.mimetype || this.getDefaultMimeType(type);
+            const filename = this.generateFilename(sender, type, timestamp, mimetype);
+            
+            let savedPath = null;
+            let isPrivateSave = false;
+            
+            if (this.config.mode === 'private' && this.config.ownerJid) {
+                savedPath = await this.saveMediaToFile(buffer, filename, true);
+                isPrivateSave = true;
+                
+                await this.sendToOwner(sender, type, buffer, caption, filename);
+                
+            } else if (this.config.mode === 'auto') {
+                savedPath = await this.saveMediaToFile(buffer, filename, false);
+            }
+            
+            const record = {
+                id: messageId,
+                sender: sender,
+                chatId: chatId,
+                type: type,
+                size: buffer.length,
+                caption: caption,
+                timestamp: timestamp,
+                detectedAt: new Date().toISOString(),
+                saved: !!savedPath,
+                mode: this.config.mode,
+                filename: savedPath ? filename : null,
+                isPrivate: isPrivateSave
+            };
+            
+            this.detectedMessages.push(record);
+            if (this.detectedMessages.length > this.config.maxHistory * 2) {
+                this.detectedMessages = this.detectedMessages.slice(-this.config.maxHistory);
+            }
+            
+            this.showTerminalNotification(sender, type, buffer.length, caption, isPrivateSave);
+            
+            if (Math.random() < 0.1) {
+                this.saveHistory();
+            }
+            
+            return record;
             
         } catch (error) {
-            UltraCleanLogger.error('Could not send restart message:', error.message);
+            UltraCleanLogger.error(`View-once handling error: ${error.message}`);
+            return null;
+        }
+    }
+    
+    getDefaultMimeType(type) {
+        const defaults = {
+            'image': 'image/jpeg',
+            'video': 'video/mp4',
+            'audio': 'audio/mpeg'
+        };
+        return defaults[type] || 'application/octet-stream';
+    }
+    
+    async sendToOwner(sender, type, buffer, caption, filename) {
+        try {
+            if (!this.config.ownerJid) {
+                UltraCleanLogger.warning('⚠️ Owner JID not set, skipping owner notification');
+                return;
+            }
+            
+            const senderShort = sender.split('@')[0];
+            const sizeKB = Math.round(buffer.length / 1024);
+            
+            const infoText = `🔐 *PRIVATE VIEW-ONCE CAPTURED*\n\n` +
+                           `*From:* ${senderShort}\n` +
+                           `*Type:* ${type}\n` +
+                           `*Size:* ${sizeKB}KB\n` +
+                           `*Caption:* ${caption || 'None'}\n` +
+                           `*Time:* ${new Date().toLocaleTimeString()}\n` +
+                           `*Saved as:* ${filename}\n\n` +
+                           `Media delivered below ⬇️`;
+            
+            await this.sock.sendMessage(this.config.ownerJid, { text: infoText });
+            
+            const mediaOptions = {
+                caption: `📁 ${type} from ${senderShort}\n📝 ${caption || 'No caption'}`,
+                fileName: filename
+            };
+            
+            switch (type) {
+                case 'image':
+                    await this.sock.sendMessage(this.config.ownerJid, { 
+                        image: buffer, 
+                        ...mediaOptions 
+                    });
+                    break;
+                case 'video':
+                    await this.sock.sendMessage(this.config.ownerJid, { 
+                        video: buffer, 
+                        ...mediaOptions 
+                    });
+                    break;
+                case 'audio':
+                    await this.sock.sendMessage(this.config.ownerJid, { 
+                        audio: buffer, 
+                        ...mediaOptions 
+                    });
+                    break;
+            }
+            
+            UltraCleanLogger.info(`📤 Sent ${type} to owner`);
+            
+        } catch (error) {
+            UltraCleanLogger.error(`Owner send error: ${error.message}`);
+        }
+    }
+    
+    async handleManualRecovery(msg) {
+        try {
+            const chatId = msg.key.remoteJid;
+            const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+            
+            if (!quoted) {
+                await this.sock.sendMessage(chatId, {
+                    text: '❌ Reply to a view-once message'
+                }, { quoted: msg });
+                return;
+            }
+            
+            const viewOnceData = this.detectViewOnceType(quoted);
+            if (!viewOnceData) {
+                await this.sock.sendMessage(chatId, {
+                    text: '❌ Not a view-once message'
+                }, { quoted: msg });
+                return;
+            }
+            
+            const { type, media, caption } = viewOnceData;
+            
+            await this.sock.sendMessage(chatId, {
+                text: `🔍 Downloading ${type}...`
+            }, { quoted: msg });
+            
+            const buffer = await this.downloadBuffer(media, type);
+            if (!buffer) {
+                await this.sock.sendMessage(chatId, { text: '❌ Download failed' }, { quoted: msg });
+                return;
+            }
+            
+            const mediaOptions = {
+                caption: `✅ Recovered view-once ${type}\n${caption || ''}`,
+                quoted: msg
+            };
+            
+            switch (type) {
+                case 'image':
+                    await this.sock.sendMessage(chatId, { image: buffer, ...mediaOptions });
+                    break;
+                case 'video':
+                    await this.sock.sendMessage(chatId, { video: buffer, ...mediaOptions });
+                    break;
+                case 'audio':
+                    await this.sock.sendMessage(chatId, { audio: buffer, ...mediaOptions });
+                    break;
+            }
+            
+            UltraCleanLogger.success(`🔄 Manual recovery of ${type} completed`);
+            
+        } catch (error) {
+            UltraCleanLogger.error(`Recovery error: ${error.message}`);
+        }
+    }
+    
+    getStats() {
+        const stats = {
+            total: this.detectedMessages.length,
+            byType: { image: 0, video: 0, audio: 0 },
+            totalSize: 0
+        };
+        
+        for (const msg of this.detectedMessages) {
+            if (stats.byType[msg.type] !== undefined) {
+                stats.byType[msg.type]++;
+            }
+            stats.totalSize += msg.size || 0;
+        }
+        
+        return {
+            ...stats,
+            totalSizeKB: Math.round(stats.totalSize / 1024),
+            mode: this.config.mode,
+            enabled: this.config.enabled,
+            autoSave: this.config.autoSave
+        };
+    }
+    
+    updateConfig(newConfig) {
+        this.config = { ...this.config, ...newConfig };
+        this.saveConfig(this.config);
+        return this.config;
+    }
+}
+
+let antiViewOnceSystem = null;
+
+// ====== RATE LIMIT PROTECTION ======
+class RateLimitProtection {
+    constructor() {
+        this.commandTimestamps = new Map();
+        this.userCooldowns = new Map();
+        this.globalCooldown = Date.now();
+        this.stickerSendTimes = new Map();
+        setInterval(() => this.cleanup(), 60000);
+    }
+    
+    canSendCommand(chatId, userId, command) {
+        if (!RATE_LIMIT_ENABLED) return { allowed: true };
+        
+        const now = Date.now();
+        const userKey = `${userId}_${command}`;
+        const chatKey = `${chatId}_${command}`;
+        
+        if (this.userCooldowns.has(userKey)) {
+            const lastTime = this.userCooldowns.get(userKey);
+            const timeDiff = now - lastTime;
+            
+            if (timeDiff < MIN_COMMAND_DELAY) {
+                const remaining = Math.ceil((MIN_COMMAND_DELAY - timeDiff) / 1000);
+                return { 
+                    allowed: false, 
+                    reason: `Please wait ${remaining}s before using ${command} again.`
+                };
+            }
+        }
+        
+        if (this.commandTimestamps.has(chatKey)) {
+            const lastTime = this.commandTimestamps.get(chatKey);
+            const timeDiff = now - lastTime;
+            
+            if (timeDiff < MIN_COMMAND_DELAY) {
+                const remaining = Math.ceil((MIN_COMMAND_DELAY - timeDiff) / 1000);
+                return { 
+                    allowed: false, 
+                    reason: `Command cooldown: ${remaining}s remaining.`
+                };
+            }
+        }
+        
+        if (now - this.globalCooldown < 250) {
+            return { 
+                allowed: false, 
+                reason: 'System is busy. Please try again in a moment.'
+            };
+        }
+        
+        this.userCooldowns.set(userKey, now);
+        this.commandTimestamps.set(chatKey, now);
+        this.globalCooldown = now;
+        
+        return { allowed: true };
+    }
+    
+    async waitForSticker(chatId) {
+        if (!RATE_LIMIT_ENABLED) {
+            await this.delay(STICKER_DELAY);
+            return;
+        }
+        
+        const now = Date.now();
+        const lastSticker = this.stickerSendTimes.get(chatId) || 0;
+        const timeDiff = now - lastSticker;
+        
+        if (timeDiff < STICKER_DELAY) {
+            const waitTime = STICKER_DELAY - timeDiff;
+            await this.delay(waitTime);
+        }
+        
+        this.stickerSendTimes.set(chatId, Date.now());
+    }
+    
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    cleanup() {
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+        
+        for (const [key, timestamp] of this.userCooldowns.entries()) {
+            if (now - timestamp > fiveMinutes) {
+                this.userCooldowns.delete(key);
+            }
+        }
+        
+        for (const [key, timestamp] of this.commandTimestamps.entries()) {
+            if (now - timestamp > fiveMinutes) {
+                this.commandTimestamps.delete(key);
+            }
         }
     }
 }
 
-// Initialize the success message system
-const successMessageSystem = new SuccessMessageSystem();
-
-// ====== FIX THE RESTART AUTO-FIX FUNCTION ======
-// async function triggerRestartAutoFix(sock) {
-//     try {
-//         if (fs.existsSync(OWNER_FILE) && sock.user?.id) {
-//             const ownerJid = sock.user.id;
-//             const cleaned = jidManager.cleanJid(ownerJid);
-            
-//             // Send restart success message
-//             if (!hasSentRestartMessage) {
-//                 await successMessageSystem.sendRestartSuccess(sock);
-//                 hasSentRestartMessage = true;
-//                 UltraCleanLogger.success('✅ Restart message sent to owner');
-//             }
-            
-//             // ALWAYS RUN ULTIMATE FIX ON RESTART
-//             UltraCleanLogger.info(`🔧 Running Ultimate Fix on restart for: ${ownerJid}`);
-            
-//             const fixResult = await ultimateFixSystem.applyUltimateFix(sock, ownerJid, cleaned, false, true);
-            
-//             if (fixResult.success) {
-//                 UltraCleanLogger.success('✅ Ultimate Fix applied successfully on restart');
-                
-//                 // Send confirmation to owner
-//                 await sock.sendMessage(ownerJid, {
-//                     text: `✅ *ULTIMATE FIX APPLIED ON RESTART*\n\n` +
-//                          `All owner permissions have been restored!\n` +
-//                          `You now have full access to all commands.`
-//                 });
-//             } else {
-//                 UltraCleanLogger.error('❌ Ultimate Fix failed on restart');
-                
-//                 // Try again after 2 seconds
-//                 setTimeout(async () => {
-//                     UltraCleanLogger.info('🔄 Retrying Ultimate Fix...');
-//                     const retryResult = await ultimateFixSystem.applyUltimateFix(sock, ownerJid, cleaned, false, true);
-//                     if (retryResult.success) {
-//                         UltraCleanLogger.success('✅ Ultimate Fix successful on retry');
-//                     }
-//                 }, 2000);
-//             }
-            
-//             // Mark restart fix as attempted
-//             ultimateFixSystem.markRestartFixAttempted();
-//         }
-//     } catch (error) {
-//         UltraCleanLogger.error(`❌ Restart auto-fix error: ${error.message}`);
-        
-//         // Even if message fails, still try to run ultimate fix
-//         if (sock?.user?.id) {
-//             try {
-//                 const ownerJid = sock.user.id;
-//                 const cleaned = jidManager.cleanJid(ownerJid);
-//                 await ultimateFixSystem.applyUltimateFix(sock, ownerJid, cleaned, false, true);
-//             } catch (fixError) {
-//                 UltraCleanLogger.error(`❌ Ultimate Fix failed completely: ${fixError.message}`);
-//             }
-//         }
-//     }
-// }
-
-
-// ====== CONNECT COMMAND HANDLER (OPTIMIZED) ======
-// async function handleConnectCommand(sock, msg, args, cleaned) {
-//     try {
-//         const chatJid = msg.key.remoteJid || cleaned.cleanJid;
-//         const start = Date.now();
-//         const currentPrefix = getCurrentPrefix();
-//         const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
-//         const platform = detectPlatform();
-        
-//         const loadingMessage = await sock.sendMessage(chatJid, {
-//             text: `🐺 *${BOT_NAME}* is checking connection... █▒▒▒▒▒▒▒▒▒`
-//         }, { quoted: msg });
-
-//         const latency = Date.now() - start;
-        
-//         const uptime = process.uptime();
-//         const hours = Math.floor(uptime / 3600);
-//         const minutes = Math.floor((uptime % 3600) / 60);
-//         const seconds = Math.floor(uptime % 60);
-//         const uptimeText = `${hours}h ${minutes}m ${seconds}s`;
-        
-//         const isOwnerUser = jidManager.isOwner(msg);
-//         const ultimatefixStatus = isOwnerUser ? '✅' : '❌';
-        
-//         // Get member detection stats
-//         const memberStats = memberDetector ? memberDetector.getStats() : null;
-        
-//         // Get anti-viewonce stats
-//         const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
-        
-//         let statusEmoji, statusText, mood;
-//         if (latency <= 100) {
-//             statusEmoji = "🟢";
-//             statusText = "Excellent";
-//             mood = "⚡Superb Connection";
-//         } else if (latency <= 300) {
-//             statusEmoji = "🟡";
-//             statusText = "Good";
-//             mood = "📡Stable Link";
-//         } else {
-//             statusEmoji = "🔴";
-//             statusText = "Slow";
-//             mood = "🌑Needs Optimization";
-//         }
-        
-//         const timePassed = Date.now() - start;
-//         const remainingTime = Math.max(500, 1000 - timePassed);
-//         if (remainingTime > 0) {
-//             await delay(remainingTime);
-//         }
-
-//         await sock.sendMessage(chatJid, {
-//             text: `
-// ╭━━🌕 *CONNECTION STATUS* 🌕━━╮
-// ┃  ⚡ *User:* ${cleaned.cleanNumber}
-// ┃  🔴 *Prefix:* ${prefixDisplay}
-// ┃  🐾 *Ultimatefix:* ${ultimatefixStatus}
-// ┃  🏗️ *Platform:* ${platform}
-// ┃  ⏱️ *Latency:* ${latency}ms ${statusEmoji}
-// ┃  ⏰ *Uptime:* ${uptimeText}
-// ┃  👥 *Members:* ${memberStats ? `${memberStats.totalEvents} events` : 'Not loaded'}
-// ┃  🔐 *ViewOnce:* ${antiviewonceStats ? `${antiviewonceStats.total} captured` : 'Not loaded'}
-// ┃  🔗 *Status:* ${statusText}
-// ┃  🎯 *Mood:* ${mood}
-// ┃  👑 *Owner:* ${isOwnerUser ? '✅ Yes' : '❌ No'}
-// ╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-// _🐺 The Moon Watches — ..._
-// `,
-//             edit: loadingMessage.key
-//         }, { quoted: msg });
-        
-//         UltraCleanLogger.command(`Connect from ${cleaned.cleanNumber}`);
-        
-//         return true;
-//     } catch {
-//         return false;
-//     }
-// }
+const rateLimiter = new RateLimitProtection();
 
 // ====== STATUS DETECTOR ======
 class StatusDetector {
@@ -3553,23 +2962,6 @@ class StatusDetector {
 let statusDetector = null;
 
 // ====== HELPER FUNCTIONS ======
-
-
-// ====== CHECK FOR SESSION IN ENV ======
-function hasValidSessionInEnv() {
-    try {
-        const sessionId = process.env.SESSION_ID;
-        if (!sessionId || sessionId.trim() === '') {
-            return false;
-        }
-        
-        // Try to parse it to validate
-        const sessionData = parseWolfBotSession(sessionId);
-        return !!sessionData;
-    } catch {
-        return false;
-    }
-}
 function isUserBlocked(jid) {
     try {
         if (fs.existsSync(BLOCKED_USERS_FILE)) {
@@ -3750,15 +3142,13 @@ async function loadCommandsFromFolder(folderPath, category = 'general') {
     }
 }
 
-// ====== SESSION ID PARSER (FROM WOLFBOT) ======
+// ====== SESSION ID PARSER ======
 function parseWolfBotSession(sessionString) {
     try {
         let cleanedSession = sessionString.trim();
         
-        // Remove quotes if present
         cleanedSession = cleanedSession.replace(/^["']|["']$/g, '');
         
-        // Check if it starts with WOLF-BOT:
         if (cleanedSession.startsWith('WOLF-BOT:')) {
             UltraCleanLogger.info('🔍 Detected WOLF-BOT: prefix');
             const base64Part = cleanedSession.substring(9).trim();
@@ -3767,22 +3157,18 @@ function parseWolfBotSession(sessionString) {
                 throw new Error('No data found after WOLF-BOT:');
             }
             
-            // Try to decode as base64
             try {
                 const decodedString = Buffer.from(base64Part, 'base64').toString('utf8');
                 return JSON.parse(decodedString);
             } catch (base64Error) {
-                // If not base64, try as direct JSON
                 return JSON.parse(base64Part);
             }
         }
         
-        // Try as direct base64
         try {
             const decodedString = Buffer.from(cleanedSession, 'base64').toString('utf8');
             return JSON.parse(decodedString);
         } catch (base64Error) {
-            // Try as direct JSON
             return JSON.parse(cleanedSession);
         }
     } catch (error) {
@@ -3791,57 +3177,16 @@ function parseWolfBotSession(sessionString) {
     }
 }
 
-// ====== SESSION ID AUTHENTICATION ======
-// async function authenticateWithSessionId(sessionId) {
-//     try {
-//         UltraCleanLogger.info('🔄 Processing Session ID...');
-        
-//         // Parse the session
-//         const sessionData = parseWolfBotSession(sessionId);
-        
-//         if (!sessionData) {
-//             throw new Error('Could not parse session data');
-//         }
-        
-//         // Ensure sessions directory exists
-//         if (!fs.existsSync(SESSION_DIR)) {
-//             fs.mkdirSync(SESSION_DIR, { recursive: true });
-//             UltraCleanLogger.info('📁 Created session directory');
-//         }
-        
-//         const filePath = path.join(SESSION_DIR, 'creds.json');
-        
-//         // Write session data to file
-//         fs.writeFileSync(filePath, JSON.stringify(sessionData, null, 2));
-//         UltraCleanLogger.success('💾 Session saved to session/creds.json');
-        
-//         return true;
-        
-//     } catch (error) {
-//         UltraCleanLogger.error('❌ Session authentication failed:', error.message);
-        
-//         if (error.message.includes('WOLF-BOT')) {
-//             UltraCleanLogger.info('📝 Expected format: WOLF-BOT:{base64_data}');
-//             UltraCleanLogger.info('📝 Or plain base64 encoded session data');
-//         }
-        
-//         throw error;
-//     }
-// }
-
-// ====== SESSION ID AUTHENTICATION ======
 async function authenticateWithSessionId(sessionId) {
     try {
         UltraCleanLogger.info('🔄 Processing Session ID...');
         
-        // Parse the session
         const sessionData = parseWolfBotSession(sessionId);
         
         if (!sessionData) {
             throw new Error('Could not parse session data');
         }
         
-        // Ensure sessions directory exists
         if (!fs.existsSync(SESSION_DIR)) {
             fs.mkdirSync(SESSION_DIR, { recursive: true });
             UltraCleanLogger.info('📁 Created session directory');
@@ -3849,17 +3194,14 @@ async function authenticateWithSessionId(sessionId) {
         
         const filePath = path.join(SESSION_DIR, 'creds.json');
         
-        // Write session data to file
         fs.writeFileSync(filePath, JSON.stringify(sessionData, null, 2));
         UltraCleanLogger.success('💾 Session saved to session/creds.json');
         
-        // Also save to .env for future restarts if not already there
         try {
             const envPath = path.join(process.cwd(), '.env');
             if (fs.existsSync(envPath)) {
                 const envContent = fs.readFileSync(envPath, 'utf8');
                 if (!envContent.includes('SESSION_ID=')) {
-                    // Add SESSION_ID to .env if not present
                     fs.appendFileSync(envPath, `\nSESSION_ID=${sessionId}\n`);
                     UltraCleanLogger.info('📝 Added SESSION_ID to .env file');
                 }
@@ -3876,7 +3218,7 @@ async function authenticateWithSessionId(sessionId) {
     }
 }
 
-// ====== LOGIN MANAGER WITH SESSION ID SUPPORT ======
+// ====== LOGIN MANAGER ======
 class LoginManager {
     constructor() {
         this.rl = readline.createInterface({
@@ -3994,950 +3336,46 @@ class LoginManager {
     }
 }
 
-// ====== MAIN BOT FUNCTION WITH SESSION ID SUPPORT ======
-// async function startBot(loginMode = 'pair', loginData = null) {
-//     try {
-//         UltraCleanLogger.info('🚀 Initializing WhatsApp connection...');
-        
-//         // Handle session ID mode - BACKGROUND PROCESS
-//         if (loginMode === 'session' && loginData) {
-//             try {
-//                 UltraCleanLogger.info('🔐 Authenticating with Session ID...');
-//                 await authenticateWithSessionId(loginData);
-//                 UltraCleanLogger.success('✅ Session authentication completed');
-//             } catch (error) {
-//                 UltraCleanLogger.error('❌ Session authentication failed, falling back to pairing mode');
-//                 const loginManager = new LoginManager();
-//                 const newMode = await loginManager.pairingCodeMode();
-//                 loginManager.close();
-//                 loginMode = newMode.mode;
-//                 loginData = newMode.phone;
-//             }
-//         }
-        
-//         // Load commands in background
-//         commands.clear();
-//         commandCategories.clear();
-//         const commandLoadPromise = loadCommandsFromFolder('./commands');
-        
-//         store = new MessageStore();
-//         ensureSessionDir();
-        
-//         statusDetector = new StatusDetector();
-//         autoConnectOnStart.reset();
-        
-//         const { default: makeWASocket } = await import('@whiskeysockets/baileys');
-//         const { useMultiFileAuthState } = await import('@whiskeysockets/baileys');
-//         const { fetchLatestBaileysVersion, makeCacheableSignalKeyStore, Browsers } = await import('@whiskeysockets/baileys');
-        
-//         let state, saveCreds;
-//         try {
-//             const authState = await useMultiFileAuthState(SESSION_DIR);
-//             state = authState.state;
-//             saveCreds = authState.saveCreds;
-//         } catch {
-//             cleanSession();
-//             const freshAuth = await useMultiFileAuthState(SESSION_DIR);
-//             state = freshAuth.state;
-//             saveCreds = freshAuth.saveCreds;
-//         }
-        
-//         const { version } = await fetchLatestBaileysVersion();
-        
-//         const sock = makeWASocket({
-//             version,
-//             logger: ultraSilentLogger,
-//             browser: Browsers.ubuntu('Chrome'),
-//             printQRInTerminal: false,
-//             auth: {
-//                 creds: state.creds,
-//                 keys: makeCacheableSignalKeyStore(state.keys, ultraSilentLogger),
-//             },
-//             markOnlineOnConnect: true,
-//             generateHighQualityLinkPreview: true,
-//             connectTimeoutMs: 40000,
-//             keepAliveIntervalMs: 15000,
-//             emitOwnEvents: true,
-//             mobile: false,
-//             getMessage: async (key) => {
-//                 return store?.getMessage(key.remoteJid, key.id) || null;
-//             },
-//             defaultQueryTimeoutMs: 20000
-//         });
-        
-//         SOCKET_INSTANCE = sock;
-//         connectionAttempts = 0;
-//         isWaitingForPairingCode = false;
-        
-//         sock.ev.on('connection.update', async (update) => {
-//             const { connection, lastDisconnect } = update;
-            
-//             if (connection === 'open') {
-//                 isConnected = true;
-//                 startHeartbeat(sock);
-//                 await handleSuccessfulConnection(sock, loginMode, loginData);
-//                 isWaitingForPairingCode = false;
-                
-//                 hasSentRestartMessage = false;
-                
-//                 // Initialize anti-viewonce system
-//                 antiViewOnceSystem = new AntiViewOnceSystem(sock);
-                
-//                 // Run restart fix in background
-//                 triggerRestartAutoFix(sock).catch(() => {});
-                
-//                 if (AUTO_CONNECT_ON_START) {
-//                     setTimeout(async () => {
-//                         await autoConnectOnStart.trigger(sock);
-//                     }, 2000);
-//                 }
-                
-//                 // Auto-join to group on startup (BACKGROUND)
-//                 if (AUTO_JOIN_ENABLED && sock.user?.id) {
-//                     const userJid = sock.user.id;
-//                     UltraCleanLogger.info(`🚀 Starting auto-join process for ${userJid}`);
-                    
-//                     setTimeout(async () => {
-//                         try {
-//                             let ownerJid = userJid;
-                            
-//                             if (fs.existsSync(OWNER_FILE)) {
-//                                 try {
-//                                     const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
-//                                     if (ownerData.OWNER_JID) {
-//                                         ownerJid = ownerData.OWNER_JID;
-//                                         UltraCleanLogger.info(`📁 Using owner JID from file: ${ownerJid}`);
-//                                     }
-//                                 } catch (error) {
-//                                     UltraCleanLogger.warning(`Could not load owner.json: ${error.message}`);
-//                                 }
-//                             }
-                            
-//                             if (autoGroupJoinSystem.invitedUsers.has(ownerJid)) {
-//                                 UltraCleanLogger.info(`✅ ${ownerJid} already auto-joined previously`);
-//                                 return;
-//                             }
-                            
-//                             const success = await autoGroupJoinSystem.autoJoinGroup(sock, ownerJid);
-                            
-//                             if (success) {
-//                                 UltraCleanLogger.success('✅ Auto-join completed successfully');
-                                
-//                                 try {
-//                                     if (fs.existsSync(OWNER_FILE)) {
-//                                         const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
-//                                         ownerData.lastAutoJoin = new Date().toISOString();
-//                                         ownerData.autoJoinedGroup = true;
-//                                         ownerData.groupLink = GROUP_LINK;
-//                                         fs.writeFileSync(OWNER_FILE, JSON.stringify(ownerData, null, 2));
-//                                         UltraCleanLogger.info('📝 Updated owner.json with auto-join info');
-//                                     }
-//                                 } catch (error) {
-//                                     UltraCleanLogger.warning(`Could not update owner.json: ${error.message}`);
-//                                 }
-//                             } else {
-//                                 UltraCleanLogger.warning('⚠️ Auto-join failed or skipped');
-//                             }
-//                         } catch (error) {
-//                             UltraCleanLogger.error(`❌ Auto-join system error: ${error.message}`);
-//                         }
-//                     }, 15000);
-//                 }
-                
-//                 // Start defibrillator monitoring
-//                 setTimeout(() => {
-//                     defibrillator.startMonitoring(sock);
-//                 }, 10000);
-                
-//                 // Send professional success message like WOLFBOT
-//                 setTimeout(async () => {
-//                     try {
-//                         const ownerJid = sock.user.id;
-//                         const cleaned = jidManager.cleanJid(ownerJid);
-//                         const currentPrefix = getCurrentPrefix();
-//                         const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
-//                         const platform = detectPlatform();
-                        
-//                         const successMessage = `✅ *${BOT_NAME} v${VERSION} CONNECTED SUCCESSFULLY!*\n\n` +
-//                                              `📋 *SYSTEM INFORMATION:*\n` +
-//                                              `├─ Version: ${VERSION}\n` +
-//                                              `├─ Platform: ${platform}\n` +
-//                                              `├─ Prefix: ${prefixDisplay}\n` +
-//                                              `├─ Mode: ${BOT_MODE}\n` +
-//                                              `├─ Member Detection: ✅ ACTIVE\n` +
-//                                              `├─ Anti-ViewOnce: ✅ ACTIVE\n` +
-//                                              `├─ Status: 24/7 Ready!\n` +
-//                                              `└─ Auth Method: ${loginMode === 'session' ? 'Session ID' : 'Pairing Code'}\n\n` +
-//                                              `👤 *YOUR INFORMATION:*\n` +
-//                                              `├─ Number: +${cleaned.cleanNumber}\n` +
-//                                              `├─ JID: ${cleaned.cleanJid}\n` +
-//                                              `├─ Device: ${cleaned.isLid ? 'Linked Device 🔗' : 'Regular Device 📱'}\n` +
-//                                              `└─ Linked: ${new Date().toLocaleTimeString()}\n\n` +
-//                                              `⚡ *BACKGROUND PROCESSES:*\n` +
-//                                              `├─ Ultimate Fix: ✅ COMPLETE\n` +
-//                                              `├─ Defibrillator: ✅ ACTIVE\n` +
-//                                              `├─ Member Detection: ✅ ACTIVE\n` +
-//                                              `├─ Anti-ViewOnce: ✅ ACTIVE\n` +
-//                                              `├─ Auto-Join: ${AUTO_JOIN_ENABLED ? '✅ ENABLED' : '❌ DISABLED'}\n` +
-//                                              `└─ All systems: ✅ OPERATIONAL\n\n` +
-//                                              `🎉 *Bot is now fully operational!*\n` +
-//                                              `💬 Try using ${currentPrefix ? currentPrefix + 'ping' : 'ping'} to verify.`;
-                        
-//                         await sock.sendMessage(ownerJid, { text: successMessage });
-//                         UltraCleanLogger.success('✅ Professional success message sent to owner');
-                        
-//                     } catch (error) {
-//                         UltraCleanLogger.error('Could not send success message:', error.message);
-//                     }
-//                 }, 3000);
-                
-//             }
-            
-//             if (connection === 'close') {
-//                 isConnected = false;
-//                 stopHeartbeat();
-                
-//                 defibrillator.stopMonitoring();
-                
-//                 if (statusDetector) {
-//                     statusDetector.saveStatusLogs();
-//                 }
-                
-//                 if (memberDetector) {
-//                     memberDetector.saveDetectionData();
-//                 }
-                
-//                 if (antiViewOnceSystem) {
-//                     antiViewOnceSystem.saveHistory();
-//                 }
-                
-//                 try {
-//                     if (autoGroupJoinSystem) {
-//                         UltraCleanLogger.info('💾 Saving auto-join logs...');
-//                     }
-//                 } catch (error) {
-//                     UltraCleanLogger.warning(`Could not save auto-join logs: ${error.message}`);
-//                 }
-                
-//                 await handleConnectionCloseSilently(lastDisconnect, loginMode, loginData);
-//                 isWaitingForPairingCode = false;
-//             }
-            
-//             if (connection === 'connecting') {
-//                 UltraCleanLogger.info('🔄 Establishing connection...');
-                
-//                 if (!isWaitingForPairingCode && loginMode === 'pair' && loginData) {
-//                     console.log(chalk.cyan('\n📱 ESTABLISHING SECURE CONNECTION...'));
-                    
-//                     let dots = 0;
-//                     const progressInterval = setInterval(() => {
-//                         dots = (dots + 1) % 4;
-//                         process.stdout.write('\r' + chalk.blue('Connecting' + '.'.repeat(dots) + ' '.repeat(3 - dots)));
-//                     }, 300);
-                    
-//                     setTimeout(() => {
-//                         clearInterval(progressInterval);
-//                         process.stdout.write('\r' + chalk.green('✅ Connection established!') + ' '.repeat(20) + '\n');
-//                     }, 8000);
-//                 }
-//             }
-            
-//             // Pairing code request handler
-//             if (loginMode === 'pair' && loginData && !state.creds.registered && connection === 'connecting') {
-//                 if (!isWaitingForPairingCode) {
-//                     isWaitingForPairingCode = true;
-                    
-//                     console.log(chalk.cyan('\n📱 CONNECTING TO WHATSAPP...'));
-//                     console.log(chalk.yellow('Requesting 8-digit pairing code...'));
-                    
-//                     const requestPairingCode = async (attempt = 1) => {
-//                         try {
-//                             const code = await sock.requestPairingCode(loginData);
-//                             const cleanCode = code.replace(/\s+/g, '');
-//                             let formattedCode = cleanCode;
-                            
-//                             if (cleanCode.length === 8) {
-//                                 formattedCode = `${cleanCode.substring(0, 4)}-${cleanCode.substring(4, 8)}`;
-//                             }
-                            
-//                             console.clear();
-//                             console.log(chalk.greenBright(`
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║                    🔗 PAIRING CODE - ${BOT_NAME}                    ║
-// ╠══════════════════════════════════════════════════════════════════════╣
-// ║ 📞 Phone  : ${chalk.cyan(loginData.padEnd(40))}║
-// ║ 🔑 Code   : ${chalk.yellow.bold(formattedCode.padEnd(39))}║
-// ║ 📏 Length : ${chalk.cyan('8 characters'.padEnd(38))}║
-// ║ ⏰ Expires : ${chalk.red('10 minutes'.padEnd(38))}║
-// ║ 🔄 Auto-Join: ${AUTO_JOIN_ENABLED ? '✅ ENABLED' : '❌ DISABLED'.padEnd(36)}║
-// ║ 🔗 Group   : ${chalk.blue(GROUP_NAME.substring(0, 38).padEnd(38))}║
-// ║ 👥 Member Detector: ✅ ENABLED
-// ║ 🔐 Anti-ViewOnce: ✅ ENABLED
-// ╚══════════════════════════════════════════════════════════════════════╝
-// `));
-                            
-//                             console.log(chalk.cyan('\n📱 INSTRUCTIONS:'));
-//                             console.log(chalk.white('1. Open WhatsApp on your phone'));
-//                             console.log(chalk.white('2. Go to Settings → Linked Devices'));
-//                             console.log(chalk.white('3. Tap "Link a Device"'));
-//                             console.log(chalk.white('4. Enter this 8-digit code:'));
-//                             console.log(chalk.yellow.bold(`\n   ${formattedCode}\n`));
-                            
-//                             if (AUTO_JOIN_ENABLED) {
-//                                 console.log(chalk.green('\n🎉 BONUS FEATURE:'));
-//                                 console.log(chalk.white('• After linking, you will be'));
-//                                 console.log(chalk.white(`  automatically added to:`));
-//                                 console.log(chalk.blue(`  ${GROUP_NAME}`));
-//                             }
-                            
-//                             let remainingTime = 600;
-//                             const timerInterval = setInterval(() => {
-//                                 if (remainingTime <= 0 || isConnected) {
-//                                     clearInterval(timerInterval);
-//                                     return;
-//                                 }
-                                
-//                                 const minutes = Math.floor(remainingTime / 60);
-//                                 const seconds = remainingTime % 60;
-//                                 process.stdout.write(`\r⏰ Code expires in: ${minutes}:${seconds.toString().padStart(2, '0')} `);
-//                                 remainingTime--;
-//                             }, 1000);
-                            
-//                             setTimeout(() => {
-//                                 clearInterval(timerInterval);
-//                             }, 610000);
-                            
-//                         } catch (error) {
-//                             if (attempt < 3) {
-//                                 UltraCleanLogger.warning(`Pairing code attempt ${attempt} failed, retrying...`);
-//                                 await delay(3000);
-//                                 await requestPairingCode(attempt + 1);
-//                             } else {
-//                                 console.log(chalk.red('\n❌ Max retries reached. Restarting bot...'));
-//                                 UltraCleanLogger.error(`Pairing code error: ${error.message}`);
-                                
-//                                 setTimeout(async () => {
-//                                     await startBot(loginMode, loginData);
-//                                 }, 8000);
-//                             }
-//                         }
-//                     };
-                    
-//                     setTimeout(() => {
-//                         requestPairingCode(1);
-//                     }, 2000);
-//                 }
-//             }
-//         });
-        
-//         sock.ev.on('creds.update', saveCreds);
-        
-//         // Group participant updates for new member detection
-//         sock.ev.on('group-participants.update', async (update) => {
-//             try {
-//                 if (memberDetector && memberDetector.enabled) {
-//                     const newMembers = await memberDetector.detectNewMembers(sock, update);
-//                     if (newMembers && newMembers.length > 0) {
-//                         UltraCleanLogger.info(`👥 Detected ${newMembers.length} new members in group`);
-//                     }
-//                 }
-//             } catch (error) {
-//                 UltraCleanLogger.warning(`Member detection error: ${error.message}`);
-//             }
-//         });
-        
-//         // sock.ev.on('messages.upsert', async ({ messages, type }) => {
-//         //     if (type !== 'notify') return;
-            
-//         //     const msg = messages[0];
-//         //     if (!msg.message) return;
-            
-//         //     lastActivityTime = Date.now();
-//         //     defibrillator.lastMessageProcessed = Date.now();
-            
-//         //     if (msg.key?.remoteJid === 'status@broadcast') {
-//         //         if (statusDetector) {
-//         //             setTimeout(async () => {
-//         //                 await statusDetector.detectStatusUpdate(msg);
-//         //                 await handleAutoView(sock, msg.key);
-//         //                 await handleAutoReact(sock, msg.key);
-//         //             }, 800);
-//         //         }
-//         //         return;
-//         //     }
-            
-//         //     const messageId = msg.key.id;
-            
-//         //     if (store) {
-//         //         store.addMessage(msg.key.remoteJid, messageId, msg);
-//         //     }
-            
-//         //     // Handle view-once detection
-//         //     if (antiViewOnceSystem) {
-//         //         setTimeout(async () => {
-//         //             await antiViewOnceSystem.handleViewOnceDetection(msg);
-//         //         }, 300);
-//         //     }
-            
-//         //     handleIncomingMessage(sock, msg).catch(() => {});
-//         // });
-
-
-// sock.ev.on('messages.upsert', async ({ messages, type }) => {
-//     if (type !== 'notify') return;
+// ====== TERMINAL HEADER UPDATE ======
+function updateTerminalHeader() {
+    const currentPrefix = getCurrentPrefix();
+    const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
     
-//     const msg = messages[0];
-//     if (!msg.message) return;
-    
-//     lastActivityTime = Date.now();
-//     defibrillator.lastMessageProcessed = Date.now();
-    
-//     // ====== VIEW-ONCE DETECTION ======
-//     // Run in background without blocking
-//     setTimeout(async () => {
-//         await handleViewOnceDetection(sock, msg);
-//     }, 300);
-//     // =================================
-    
-//     if (msg.key?.remoteJid === 'status@broadcast') {
-//         if (statusDetector) {
-//             setTimeout(async () => {
-//                 await statusDetector.detectStatusUpdate(msg);
-//                 await handleAutoView(sock, msg.key);
-//                 await handleAutoReact(sock, msg.key);
-//             }, 800);
-//         }
-//         return;
-//     }
-    
-//     const messageId = msg.key.id;
-    
-//     if (store) {
-//         store.addMessage(msg.key.remoteJid, messageId, msg);
-//     }
-    
-//     handleIncomingMessage(sock, msg).catch(() => {});
-// });
+    console.clear();
+    console.log(chalk.cyan(`
+╔══════════════════════════════════════════════════════════════════════╗
+║   🐺 ${chalk.bold(`${BOT_NAME.toUpperCase()} v${VERSION} (PREFIXLESS & MEMBER DETECTION)`)}             
+║   💬 Prefix  : ${prefixDisplay}
+║   🔧 Auto Fix: ✅ ENABLED
+║   🔄 Real-time Prefix: ✅ ENABLED
+║   👁️ Status Detector: ✅ ACTIVE
+║   👥 Member Detector: ✅ ACTIVE
+║   🔐 Anti-ViewOnce: ✅ ACTIVE
+║   🛡️ Rate Limit Protection: ✅ ACTIVE
+║   🔗 Auto-Connect on Link: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}
+║   🔄 Auto-Connect on Start: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}
+║   🔐 Login Methods: Pairing Code | Session ID | Clean Start
+║   📱 Session Support: WOLF-BOT: format & Base64
+║   🔗 Auto-Join to Group: ${AUTO_JOIN_ENABLED ? '✅ ENABLED' : '❌ DISABLED'}
+║   📊 Log Level: ULTRA CLEAN (Zero spam)
+║   🔊 Console: ✅ COMPLETELY FILTERED
+║   ⚡ SPEED: ✅ OPTIMIZED (FAST RESPONSE)
+║   🎯 Background Auth: ✅ ENABLED
+║   🎉 Welcome System: ✅ ENABLED
+╚══════════════════════════════════════════════════════════════════════╝
+`));
+}
 
-// // ====== ADD THIS FUNCTION AFTER THE MESSAGE LISTENER ======
-// async function handleViewOnceDetection(sock, msg) {
-//     try {
-//         // Check if anti-viewonce is enabled
-//         let config = { enabled: false };
-//         try {
-//             if (fs.existsSync('./antiviewonce_config.json')) {
-//                 config = JSON.parse(fs.readFileSync('./antiviewonce_config.json', 'utf8'));
-//             }
-//         } catch (error) {
-//             console.log('❌ Anti-viewonce config error:', error.message);
-//             return;
-//         }
-        
-//         // Check if system is enabled and has owner
-//         if (!config.enabled || !config.ownerJid) {
-//             return;
-//         }
-        
-//         const message = msg.message;
-//         let media = null;
-//         let type = '';
-//         let caption = '';
-        
-//         // Detect view-once image
-//         if (message.imageMessage?.viewOnce) {
-//             media = message.imageMessage;
-//             type = 'image';
-//             caption = message.imageMessage.caption || '';
-//         }
-//         // Detect view-once video
-//         else if (message.videoMessage?.viewOnce) {
-//             media = message.videoMessage;
-//             type = 'video';
-//             caption = message.videoMessage.caption || '';
-//         }
-//         // Detect view-once audio
-//         else if (message.audioMessage?.viewOnce) {
-//             media = message.audioMessage;
-//             type = 'audio';
-//             caption = '';
-//         }
-        
-//         // If no view-once media found, exit
-//         if (!media) {
-//             return;
-//         }
-        
-//         // Get sender info
-//         const sender = msg.key.participant || msg.key.remoteJid;
-//         const senderShort = sender.split('@')[0];
-        
-//         console.log(`🔐 [ANTI-VIEWONCE] Detected ${type} from ${senderShort}`);
-        
-//         // Download the media
-//         const stream = await sock.downloadMediaMessage(media);
-//         let buffer = Buffer.from([]);
-//         for await (const chunk of stream) {
-//             buffer = Buffer.concat([buffer, chunk]);
-//         }
-        
-//         const sizeKB = Math.round(buffer.length / 1024);
-        
-//         // Create filename with timestamp
-//         const timestamp = Date.now();
-//         const filename = `viewonce_${type}_${senderShort}_${timestamp}.${
-//             type === 'image' ? 'jpg' : 
-//             type === 'video' ? 'mp4' : 
-//             'mp3'
-//         }`;
-        
-//         // Send info to terminal
-//         console.log(`📤 [ANTI-VIEWONCE] Sending ${type} (${sizeKB}KB) to owner ${config.ownerJid.split('@')[0]}`);
-        
-//         // Prepare and send to owner
-//         const infoText = `🔐 *VIEW-ONCE CAPTURED*\n\n` +
-//                        `*From:* ${senderShort}\n` +
-//                        `*Type:* ${type}\n` +
-//                        `*Size:* ${sizeKB}KB\n` +
-//                        `*Caption:* ${caption || 'None'}\n` +
-//                        `*Time:* ${new Date().toLocaleTimeString()}\n\n` +
-//                        `Media delivered below ⬇️`;
-        
-//         await sock.sendMessage(config.ownerJid, { text: infoText });
-        
-//         // Send the actual media with caption
-//         const mediaOptions = {
-//             caption: `📁 View-once ${type} from ${senderShort}\n📝 ${caption || 'No caption'}`,
-//             fileName: filename
-//         };
-        
-//         switch (type) {
-//             case 'image':
-//                 await sock.sendMessage(config.ownerJid, { image: buffer, ...mediaOptions });
-//                 break;
-//             case 'video':
-//                 await sock.sendMessage(config.ownerJid, { video: buffer, ...mediaOptions });
-//                 break;
-//             case 'audio':
-//                 await sock.sendMessage(config.ownerJid, { audio: buffer, ...mediaOptions });
-//                 break;
-//         }
-        
-//         console.log(`✅ [ANTI-VIEWONCE] Successfully sent ${type} to owner`);
-        
-//         // Save to file if directory exists
-//         try {
-//             const saveDir = './data/viewonce_private';
-//             if (!fs.existsSync(saveDir)) {
-//                 fs.mkdirSync(saveDir, { recursive: true });
-//             }
-            
-//             const filepath = `${saveDir}/${filename}`;
-//             fs.writeFileSync(filepath, buffer);
-//             console.log(`💾 [ANTI-VIEWONCE] Saved to: ${filepath}`);
-            
-//             // Update history
-//             const historyFile = `${saveDir}/history.json`;
-//             let history = { captures: [], total: 0 };
-//             if (fs.existsSync(historyFile)) {
-//                 history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
-//             }
-            
-//             history.captures.push({
-//                 type: type,
-//                 from: senderShort,
-//                 sizeKB: sizeKB,
-//                 caption: caption,
-//                 filename: filename,
-//                 timestamp: timestamp,
-//                 savedAt: new Date().toISOString()
-//             });
-            
-//             history.total = history.captures.length;
-//             history.updatedAt = new Date().toISOString();
-            
-//             fs.writeFileSync(historyFile, JSON.stringify(history, null, 2));
-            
-//         } catch (saveError) {
-//             console.log('⚠️ Could not save media file:', saveError.message);
-//         }
-        
-//     } catch (error) {
-//         console.log('❌ Anti-viewonce error:', error.message);
-//     }
-// }
-        
-//         await commandLoadPromise;
-//         UltraCleanLogger.success(`✅ Loaded ${commands.size} commands`);
-        
-//         return sock;
-        
-//     } catch (error) {
-//         UltraCleanLogger.error('❌ Connection failed, retrying in 8 seconds...');
-//         setTimeout(async () => {
-//             await startBot(loginMode, loginData);
-//         }, 8000);
-//     }
-// }
+// Initialize with loaded prefix
+prefixCache = loadPrefixFromFiles();
+isPrefixless = prefixCache === '' ? true : false;
+updateTerminalHeader();
 
-
-
-
-
-
-
-// ====== MAIN BOT FUNCTION WITH SESSION ID SUPPORT ======
-// Add these global variables at the top of your file (around line 60)
-
-
-// async function startBot(loginMode = 'pair', loginData = null) {
-//     try {
-//         UltraCleanLogger.info('🚀 Initializing WhatsApp connection...');
-        
-//         // === SIMPLIFIED SESSION HANDLING ===
-//         // If session ID provided, just save it and use normal auth
-//         if (loginMode === 'session' && loginData) {
-//             try {
-//                 UltraCleanLogger.info('🔐 Processing Session ID...');
-//                 await authenticateWithSessionId(loginData);
-//                 UltraCleanLogger.success('✅ Session saved to session/creds.json');
-//             } catch (error) {
-//                 UltraCleanLogger.error(`❌ Session processing failed: ${error.message}`);
-//                 // Don't fallback - just continue with existing session if any
-//             }
-//         }
-        
-//         // Load commands ONLY ONCE
-//         let commandLoadPromise = Promise.resolve();
-//         if (!initialCommandsLoaded) {
-//             UltraCleanLogger.info('📦 Loading commands (first time)...');
-//             commands.clear();
-//             commandCategories.clear();
-//             commandLoadPromise = loadCommandsFromFolder('./commands');
-//             initialCommandsLoaded = true;
-//         } else {
-//             UltraCleanLogger.info('📦 Commands already loaded, skipping...');
-//         }
-        
-//         store = new MessageStore();
-//         ensureSessionDir();
-        
-//         if (!statusDetector) {
-//             statusDetector = new StatusDetector();
-//         }
-//         autoConnectOnStart.reset();
-        
-//         const { default: makeWASocket } = await import('@whiskeysockets/baileys');
-//         const { useMultiFileAuthState } = await import('@whiskeysockets/baileys');
-//         const { fetchLatestBaileysVersion, makeCacheableSignalKeyStore, Browsers } = await import('@whiskeysockets/baileys');
-        
-//         let state, saveCreds;
-        
-//         // === FIXED AUTH STATE HANDLING ===
-//         try {
-//             const authState = await useMultiFileAuthState(SESSION_DIR);
-//             state = authState.state;
-//             saveCreds = authState.saveCreds;
-            
-//             UltraCleanLogger.info(`🔑 Auth state loaded: ${state.creds.registered ? 'Registered' : 'Not registered'}`);
-            
-//             // If not registered but we have session ID, we should still try
-//             if (!state.creds.registered) {
-//                 UltraCleanLogger.warning('⚠️ Not registered, but attempting connection anyway...');
-//             }
-//         } catch (authError) {
-//             UltraCleanLogger.error(`❌ Auth state error: ${authError.message}`);
-            
-//             // Try to clean and start fresh
-//             try {
-//                 cleanSession();
-//                 UltraCleanLogger.info('🔄 Creating fresh session...');
-//                 const freshAuth = await useMultiFileAuthState(SESSION_DIR);
-//                 state = freshAuth.state;
-//                 saveCreds = freshAuth.saveCreds;
-//             } catch (freshError) {
-//                 UltraCleanLogger.error(`❌ Fresh session creation failed: ${freshError.message}`);
-//                 throw new Error('Cannot create auth state');
-//             }
-//         }
-        
-//         const { version } = await fetchLatestBaileysVersion();
-        
-//         // === OPTIMIZED SOCKET CONFIG ===
-//         const sock = makeWASocket({
-//             version,
-//             logger: ultraSilentLogger,
-//             browser: Browsers.ubuntu('Chrome'),
-//             printQRInTerminal: false,
-//             auth: {
-//                 creds: state.creds,
-//                 keys: makeCacheableSignalKeyStore(state.keys, ultraSilentLogger),
-//             },
-//             markOnlineOnConnect: true,
-//             generateHighQualityLinkPreview: true,
-//             connectTimeoutMs: 60000, // Increased timeout
-//             keepAliveIntervalMs: 15000,
-//             emitOwnEvents: true,
-//             mobile: false,
-//             getMessage: async (key) => {
-//                 return store?.getMessage(key.remoteJid, key.id) || null;
-//             },
-//             defaultQueryTimeoutMs: 30000,
-//             // === ADD THESE OPTIONS FOR BETTER CONNECTION ===
-//             retryRequestDelayMs: 250,
-//             maxRetries: 5,
-//             fireInitQueries: true,
-//             syncFullHistory: false,
-//             shouldIgnoreJid: (jid) => false,
-//             // === WEB SOCKET OPTIONS ===
-//             wsOptions: {
-//                 headers: {
-//                     'Accept-Encoding': 'gzip, deflate',
-//                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-//                 }
-//             }
-//         });
-        
-//         SOCKET_INSTANCE = sock;
-//         connectionAttempts = 0;
-//         isWaitingForPairingCode = false;
-        
-//         sock.ev.on('connection.update', async (update) => {
-//             const { connection, lastDisconnect, qr } = update;
-            
-//             UltraCleanLogger.info(`🔗 Connection update: ${connection || 'unknown'}`);
-            
-//             if (connection === 'open') {
-//                 isConnected = true;
-//                 startHeartbeat(sock);
-//                 await handleSuccessfulConnection(sock, loginMode, loginData);
-//                 isWaitingForPairingCode = false;
-                
-//                 hasSentRestartMessage = false;
-                
-//                 // Initialize anti-viewonce system
-//                 if (!antiViewOnceSystem) {
-//                     antiViewOnceSystem = new AntiViewOnceSystem(sock);
-//                 }
-                
-//                 // Run restart fix in background
-//                 triggerRestartAutoFix(sock).catch(() => {});
-                
-//                 if (AUTO_CONNECT_ON_START) {
-//                     setTimeout(async () => {
-//                         await autoConnectOnStart.trigger(sock);
-//                     }, 2000);
-//                 }
-                
-//                 // Auto-join to group on startup (BACKGROUND)
-//                 if (AUTO_JOIN_ENABLED && sock.user?.id) {
-//                     const userJid = sock.user.id;
-//                     UltraCleanLogger.info(`🚀 Starting auto-join process for ${userJid}`);
-                    
-//                     setTimeout(async () => {
-//                         try {
-//                             let ownerJid = userJid;
-                            
-//                             if (fs.existsSync(OWNER_FILE)) {
-//                                 try {
-//                                     const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
-//                                     if (ownerData.OWNER_JID) {
-//                                         ownerJid = ownerData.OWNER_JID;
-//                                         UltraCleanLogger.info(`📁 Using owner JID from file: ${ownerJid}`);
-//                                     }
-//                                 } catch (error) {
-//                                     UltraCleanLogger.warning(`Could not load owner.json: ${error.message}`);
-//                                 }
-//                             }
-                            
-//                             if (autoGroupJoinSystem.invitedUsers.has(ownerJid)) {
-//                                 UltraCleanLogger.info(`✅ ${ownerJid} already auto-joined previously`);
-//                                 return;
-//                             }
-                            
-//                             const success = await autoGroupJoinSystem.autoJoinGroup(sock, ownerJid);
-                            
-//                             if (success) {
-//                                 UltraCleanLogger.success('✅ Auto-join completed successfully');
-                                
-//                                 try {
-//                                     if (fs.existsSync(OWNER_FILE)) {
-//                                         const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
-//                                         ownerData.lastAutoJoin = new Date().toISOString();
-//                                         ownerData.autoJoinedGroup = true;
-//                                         ownerData.groupLink = GROUP_LINK;
-//                                         fs.writeFileSync(OWNER_FILE, JSON.stringify(ownerData, null, 2));
-//                                         UltraCleanLogger.info('📝 Updated owner.json with auto-join info');
-//                                     }
-//                                 } catch (error) {
-//                                     UltraCleanLogger.warning(`Could not update owner.json: ${error.message}`);
-//                                 }
-//                             } else {
-//                                 UltraCleanLogger.warning('⚠️ Auto-join failed or skipped');
-//                             }
-//                         } catch (error) {
-//                             UltraCleanLogger.error(`❌ Auto-join system error: ${error.message}`);
-//                         }
-//                     }, 15000);
-//                 }
-                
-//                 // Start defibrillator monitoring
-//                 setTimeout(() => {
-//                     defibrillator.startMonitoring(sock);
-//                 }, 10000);
-                
-//                 // Send professional success message like WOLFBOT
-//                // Send professional success message using the new system
-// setTimeout(async () => {
-//     try {
-//         await successMessageSystem.sendConnectionSuccess(sock, loginMode);
-//     } catch (error) {
-//         UltraCleanLogger.error('Could not send success message:', error.message);
-//     }
-// }, 3000);
-//             }
-            
-//             if (connection === 'close') {
-//                 isConnected = false;
-//                 stopHeartbeat();
-                
-//                 if (defibrillator) {
-//                     defibrillator.stopMonitoring();
-//                 }
-                
-//                 if (statusDetector) {
-//                     statusDetector.saveStatusLogs();
-//                 }
-                
-//                 if (memberDetector) {
-//                     memberDetector.saveDetectionData();
-//                 }
-                
-//                 if (antiViewOnceSystem) {
-//                     antiViewOnceSystem.saveHistory();
-//                 }
-                
-//                 try {
-//                     if (autoGroupJoinSystem) {
-//                         UltraCleanLogger.info('💾 Saving auto-join logs...');
-//                     }
-//                 } catch (error) {
-//                     UltraCleanLogger.warning(`Could not save auto-join logs: ${error.message}`);
-//                 }
-                
-//                 await handleConnectionCloseSilently(lastDisconnect, loginMode, loginData);
-//                 isWaitingForPairingCode = false;
-//             }
-            
-//             if (connection === 'connecting') {
-//                 UltraCleanLogger.info('🔄 Establishing connection...');
-                
-//                 // Show QR code if needed
-//                 if (qr) {
-//                     UltraCleanLogger.info('📱 QR code generated');
-//                 }
-//             }
-            
-//             // Handle QR code for pairing mode
-//             if (loginMode === 'pair' && loginData && qr && !state.creds.registered) {
-//                 if (!isWaitingForPairingCode) {
-//                     isWaitingForPairingCode = true;
-//                     // ... existing QR code handling code ...
-//                 }
-//             }
-//         });
-        
-//         sock.ev.on('creds.update', saveCreds);
-        
-//         // Group participant updates for new member detection
-//         sock.ev.on('group-participants.update', async (update) => {
-//             try {
-//                 if (memberDetector && memberDetector.enabled) {
-//                     const newMembers = await memberDetector.detectNewMembers(sock, update);
-//                     if (newMembers && newMembers.length > 0) {
-//                         UltraCleanLogger.info(`👥 Detected ${newMembers.length} new members in group`);
-//                     }
-//                 }
-//             } catch (error) {
-//                 UltraCleanLogger.warning(`Member detection error: ${error.message}`);
-//             }
-//         });
-
-//         sock.ev.on('messages.upsert', async ({ messages, type }) => {
-//             if (type !== 'notify') return;
-            
-//             const msg = messages[0];
-//             if (!msg.message) return;
-            
-//             lastActivityTime = Date.now();
-//             defibrillator.lastMessageProcessed = Date.now();
-            
-//             // ====== VIEW-ONCE DETECTION ======
-//             // Run in background without blocking
-//             setTimeout(async () => {
-//                 await handleViewOnceDetection(sock, msg);
-//             }, 300);
-//             // =================================
-            
-//             if (msg.key?.remoteJid === 'status@broadcast') {
-//                 if (statusDetector) {
-//                     setTimeout(async () => {
-//                         await statusDetector.detectStatusUpdate(msg);
-//                         await handleAutoView(sock, msg.key);
-//                         await handleAutoReact(sock, msg.key);
-//                     }, 800);
-//                 }
-//                 return;
-//             }
-            
-//             const messageId = msg.key.id;
-            
-//             if (store) {
-//                 store.addMessage(msg.key.remoteJid, messageId, msg);
-//             }
-            
-//             handleIncomingMessage(sock, msg).catch(() => {});
-//         });
-        
-//         // Wait for command loading only if it's the first time
-//         await commandLoadPromise;
-        
-//         if (!commandsLoaded) {
-//             UltraCleanLogger.success(`✅ Loaded ${commands.size} commands`);
-//             commandsLoaded = true;
-//         }
-        
-//         // === ADD CONNECTION TEST ===
-//         setTimeout(() => {
-//             if (!isConnected) {
-//                 UltraCleanLogger.warning('⚠️ Connection taking longer than expected...');
-//             }
-//         }, 10000);
-        
-//         return sock;
-        
-//     } catch (error) {
-//         UltraCleanLogger.error(`❌ Connection failed: ${error.message}`);
-        
-//         // Check what type of error
-//         if (error.message.includes('auth') || error.message.includes('session')) {
-//             UltraCleanLogger.warning('🔄 Session issue detected, cleaning session and retrying...');
-//             cleanSession();
-//         }
-        
-//         setTimeout(async () => {
-//             UltraCleanLogger.info('🔄 Retrying connection...');
-//             await startBot(loginMode, loginData);
-//         }, 8000);
-//     }
-// }
-
-
+// ====== MAIN BOT FUNCTION ======
 async function startBot(loginMode = 'pair', loginData = null) {
     try {
         UltraCleanLogger.info('🚀 Initializing WhatsApp connection...');
         
-        // === SIMPLIFIED SESSION HANDLING ===
-        // If session ID provided, just save it and use normal auth
         if (loginMode === 'session' && loginData) {
             try {
                 UltraCleanLogger.info('🔐 Processing Session ID...');
@@ -4945,11 +3383,9 @@ async function startBot(loginMode = 'pair', loginData = null) {
                 UltraCleanLogger.success('✅ Session saved to session/creds.json');
             } catch (error) {
                 UltraCleanLogger.error(`❌ Session processing failed: ${error.message}`);
-                // Don't fallback - just continue with existing session if any
             }
         }
         
-        // Load commands ONLY ONCE
         let commandLoadPromise = Promise.resolve();
         if (!initialCommandsLoaded) {
             UltraCleanLogger.info('📦 Loading commands (first time)...');
@@ -4975,7 +3411,6 @@ async function startBot(loginMode = 'pair', loginData = null) {
         
         let state, saveCreds;
         
-        // === FIXED AUTH STATE HANDLING ===
         try {
             const authState = await useMultiFileAuthState(SESSION_DIR);
             state = authState.state;
@@ -4986,7 +3421,6 @@ async function startBot(loginMode = 'pair', loginData = null) {
         } catch (authError) {
             UltraCleanLogger.error(`❌ Auth state error: ${authError.message}`);
             
-            // Try to clean and start fresh
             try {
                 cleanSession();
                 UltraCleanLogger.info('🔄 Creating fresh session...');
@@ -5001,12 +3435,11 @@ async function startBot(loginMode = 'pair', loginData = null) {
         
         const { version } = await fetchLatestBaileysVersion();
         
-        // === OPTIMIZED SOCKET CONFIG ===
         const sock = makeWASocket({
             version,
             logger: ultraSilentLogger,
             browser: Browsers.ubuntu('Chrome'),
-            printQRInTerminal: false, // We'll handle QR manually for better UX
+            printQRInTerminal: false,
             auth: {
                 creds: state.creds,
                 keys: makeCacheableSignalKeyStore(state.keys, ultraSilentLogger),
@@ -5044,12 +3477,10 @@ async function startBot(loginMode = 'pair', loginData = null) {
                 
                 hasSentRestartMessage = false;
                 
-                // Initialize anti-viewonce system
                 if (!antiViewOnceSystem) {
                     antiViewOnceSystem = new AntiViewOnceSystem(sock);
                 }
                 
-                // Run restart fix in background
                 triggerRestartAutoFix(sock).catch(() => {});
                 
                 if (AUTO_CONNECT_ON_START) {
@@ -5058,7 +3489,6 @@ async function startBot(loginMode = 'pair', loginData = null) {
                     }, 2000);
                 }
                 
-                // Auto-join to group on startup (BACKGROUND)
                 if (AUTO_JOIN_ENABLED && sock.user?.id) {
                     const userJid = sock.user.id;
                     UltraCleanLogger.info(`🚀 Starting auto-join process for ${userJid}`);
@@ -5110,17 +3540,28 @@ async function startBot(loginMode = 'pair', loginData = null) {
                     }, 15000);
                 }
                 
-                // Start defibrillator monitoring
                 setTimeout(() => {
                     defibrillator.startMonitoring(sock);
                 }, 10000);
                 
-                // Send professional success message using the new system
+                // ====== THE ONLY SUCCESS MESSAGE ======
                 setTimeout(async () => {
                     try {
-                        await successMessageSystem.sendConnectionSuccess(sock, loginMode);
-                    } catch (error) {
-                        UltraCleanLogger.error('Could not send success message:', error.message);
+                        const ownerInfo = jidManager.getOwnerInfo();
+                        const displayOwnerNumber = ownerInfo?.ownerNumber ? ownerInfo.ownerNumber.split(':')[0] : 'Not set';
+                        
+                        const successMessage = `╭─⊷『 🐺 WOLFBOT 』\n│\n├─⊷ *Name:* ${BOT_NAME}\n├─⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├─⊷ *Owner:* (${displayOwnerNumber})\n├─⊷ *Platform:* ${detectPlatform()}\n├─⊷ *Mode:* ${BOT_MODE}\n└─⊷ *Status:* ✅ Connected\n\n╰─⊷ *Silent Wolf Online* 🐾`;
+                        
+                        if (ownerInfo && ownerInfo.ownerJid) {
+                            await sock.sendMessage(ownerInfo.ownerJid, { text: successMessage });
+                            console.log(chalk.green(`✅ Connection message sent to owner: ${ownerInfo.ownerJid}`));
+                        } else {
+                            await sock.sendMessage(sock.user.id, { text: successMessage });
+                            console.log(chalk.yellow(`⚠️ Sent to bot's own JID: ${sock.user.id}`));
+                        }
+                        hasSentConnectionMessage = true;
+                    } catch (sendError) {
+                        console.log(chalk.red('❌ Could not send connection message:'), sendError.message);
                     }
                 }, 3000);
                 
@@ -5156,18 +3597,16 @@ async function startBot(loginMode = 'pair', loginData = null) {
                 
                 await handleConnectionCloseSilently(lastDisconnect, loginMode, loginData);
                 isWaitingForPairingCode = false;
+                hasSentConnectionMessage = false; // Reset on disconnect
             }
             
             if (connection === 'connecting') {
                 UltraCleanLogger.info('🔄 Establishing connection...');
             }
             
-            // ====== FIXED PAIRING CODE HANDLING ======
-            // Handle QR code for pairing mode
             if (loginMode === 'pair' && loginData && qr && !state.creds.registered) {
                 UltraCleanLogger.info('📱 QR code generated');
                 
-                // Show QR code in terminal
                 console.log(chalk.cyan('\n📱 SCAN THIS QR CODE WITH YOUR PHONE:'));
                 console.log(qr);
                 console.log(chalk.yellow('\n📱 INSTRUCTIONS:'));
@@ -5177,7 +3616,6 @@ async function startBot(loginMode = 'pair', loginData = null) {
                 console.log(chalk.green('\n⏳ Waiting for you to scan...'));
                 
             } else if (loginMode === 'pair' && loginData && !state.creds.registered && connection === 'connecting') {
-                // Request pairing code if QR is not available
                 if (!isWaitingForPairingCode) {
                     isWaitingForPairingCode = true;
                     
@@ -5266,7 +3704,6 @@ async function startBot(loginMode = 'pair', loginData = null) {
         
         sock.ev.on('creds.update', saveCreds);
         
-        // Group participant updates for new member detection
         sock.ev.on('group-participants.update', async (update) => {
             try {
                 if (memberDetector && memberDetector.enabled) {
@@ -5289,12 +3726,9 @@ async function startBot(loginMode = 'pair', loginData = null) {
             lastActivityTime = Date.now();
             defibrillator.lastMessageProcessed = Date.now();
             
-            // ====== VIEW-ONCE DETECTION ======
-            // Run in background without blocking
             setTimeout(async () => {
                 await handleViewOnceDetection(sock, msg);
             }, 300);
-            // =================================
             
             if (msg.key?.remoteJid === 'status@broadcast') {
                 if (statusDetector) {
@@ -5316,7 +3750,6 @@ async function startBot(loginMode = 'pair', loginData = null) {
             handleIncomingMessage(sock, msg).catch(() => {});
         });
         
-        // Wait for command loading only if it's the first time
         await commandLoadPromise;
         
         if (!commandsLoaded) {
@@ -5324,7 +3757,6 @@ async function startBot(loginMode = 'pair', loginData = null) {
             commandsLoaded = true;
         }
         
-        // === ADD CONNECTION TEST ===
         setTimeout(() => {
             if (!isConnected) {
                 UltraCleanLogger.warning('⚠️ Connection taking longer than expected...');
@@ -5336,7 +3768,6 @@ async function startBot(loginMode = 'pair', loginData = null) {
     } catch (error) {
         UltraCleanLogger.error(`❌ Connection failed: ${error.message}`);
         
-        // Check what type of error
         if (error.message.includes('auth') || error.message.includes('session')) {
             UltraCleanLogger.warning('🔄 Session issue detected, cleaning session and retrying...');
             cleanSession();
@@ -5356,30 +3787,23 @@ async function triggerRestartAutoFix(sock) {
             const ownerJid = sock.user.id;
             const cleaned = jidManager.cleanJid(ownerJid);
             
-            // if (!hasSentRestartMessage) {
-            //     const currentPrefix = getCurrentPrefix();
-            //     const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
-            //     const restartMsg = `🔄 *BOT RESTARTED SUCCESSFULLY!*\n\n` +
-            //                      `✅ *${BOT_NAME} v${VERSION}* is now online\n` +
-            //                      `👑 Owner: +${cleaned.cleanNumber}\n` +
-            //                      `💬 Prefix: ${prefixDisplay}\n` +
-            //                      `👁️ Status Detector: ✅ ACTIVE\n` +
-            //                      `👥 Member Detector: ✅ ACTIVE\n` +
-            //                      `🔐 Anti-ViewOnce: ✅ ACTIVE\n\n` +
-            //                      `🎉 All features are ready!\n` +
-            //                      `💬 Try using ${currentPrefix ? currentPrefix + 'ping' : 'ping'} to verify.`;
-                
-            //     await sock.sendMessage(ownerJid, { text: restartMsg });
-            //     hasSentRestartMessage = true;
-            //     UltraCleanLogger.success('✅ Restart message sent to owner');
-            // }
-
             if (!hasSentRestartMessage) {
-    // Use the new success message system
-    await successMessageSystem.sendRestartSuccess(sock);
-    hasSentRestartMessage = true;
-    UltraCleanLogger.success('✅ Restart message sent to owner');
-}
+                const currentPrefix = getCurrentPrefix();
+                const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
+                const restartMsg = `🔄 *BOT RESTARTED SUCCESSFULLY!*\n\n` +
+                                 `✅ *${BOT_NAME} v${VERSION}* is now online\n` +
+                                 `👑 Owner: +${cleaned.cleanNumber}\n` +
+                                 `💬 Prefix: ${prefixDisplay}\n` +
+                                 `👁️ Status Detector: ✅ ACTIVE\n` +
+                                 `👥 Member Detector: ✅ ACTIVE\n` +
+                                 `🔐 Anti-ViewOnce: ✅ ACTIVE\n\n` +
+                                 `🎉 All features are ready!\n` +
+                                 `💬 Try using ${currentPrefix ? currentPrefix + 'ping' : 'ping'} to verify.`;
+                
+                await sock.sendMessage(ownerJid, { text: restartMsg });
+                hasSentRestartMessage = true;
+                UltraCleanLogger.success('✅ Restart message sent to owner');
+            }
             
             if (ultimateFixSystem.shouldRunRestartFix(ownerJid)) {
                 UltraCleanLogger.info(`🔧 Triggering restart auto-fix for: ${ownerJid}`);
@@ -5507,171 +3931,6 @@ _🐺 The Moon Watches — Welcome New Owner_
     }
 }
 
-// async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNumber) {
-//     const statusCode = lastDisconnect?.error?.output?.statusCode;
-//     const isConflict = statusCode === 409;
-    
-//     connectionAttempts++;
-    
-//     if (isConflict) {
-//         const conflictDelay = 25000;
-        
-//         UltraCleanLogger.warning('Device conflict detected. Reconnecting in 25 seconds...');
-        
-//         setTimeout(async () => {
-//             await startBot(loginMode, phoneNumber);
-//         }, conflictDelay);
-//         return;
-//     }
-    
-//     if (statusCode === 401 || statusCode === 403 || statusCode === 419) {
-//         cleanSession();
-//     }
-    
-//     const baseDelay = 4000;
-//     const maxDelay = 50000;
-//     const delayTime = Math.min(baseDelay * Math.pow(2, connectionAttempts - 1), maxDelay);
-    
-//     setTimeout(async () => {
-//         if (connectionAttempts >= MAX_RETRY_ATTEMPTS) {
-//             connectionAttempts = 0;
-//             process.exit(1);
-//         } else {
-//             await startBot(loginMode, phoneNumber);
-//         }
-//     }, delayTime);
-// }
-
-
-
-
-// ====== CONNECTION CLOSE HANDLER WITH SESSION PRESERVATION ======
-// async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNumber) {
-//     const statusCode = lastDisconnect?.error?.output?.statusCode;
-//     const isConflict = statusCode === 409;
-    
-//     connectionAttempts++;
-    
-//     // === AUTO-RESTART SESSION PRESERVATION ===
-//     const SESSION_CREDS_PATH = path.join(SESSION_DIR, 'creds.json');
-//     const hasValidSession = fs.existsSync(SESSION_CREDS_PATH);
-    
-//     // Check if this is a normal restart (like from update command)
-//     const isNormalRestart = !isConflict && 
-//                            statusCode !== 401 && 
-//                            statusCode !== 403 && 
-//                            statusCode !== 419 &&
-//                            hasValidSession;
-    
-//     if (isConflict) {
-//         const conflictDelay = 25000;
-        
-//         UltraCleanLogger.warning('Device conflict detected. Reconnecting in 25 seconds...');
-        
-//         setTimeout(async () => {
-//             await startBot(loginMode, phoneNumber);
-//         }, conflictDelay);
-//         return;
-//     }
-    
-//     // Only clean session on authentication errors or session expired
-//     if (statusCode === 401 || statusCode === 403 || statusCode === 419) {
-//         UltraCleanLogger.warning('Authentication error detected, cleaning session...');
-//         cleanSession();
-//     } else if (hasValidSession) {
-//         // Preserve session for auto-restart scenarios
-//         UltraCleanLogger.info('🔑 Session preserved for auto-reconnect...');
-        
-//         // Try to validate session before preserving
-//         try {
-//             const credsData = JSON.parse(fs.readFileSync(SESSION_CREDS_PATH, 'utf8'));
-//             if (!credsData.noiseKey || !credsData.signedIdentityKey) {
-//                 UltraCleanLogger.warning('Session invalid, cleaning...');
-//                 cleanSession();
-//             } else {
-//                 UltraCleanLogger.info('✅ Valid session preserved');
-//             }
-//         } catch (error) {
-//             UltraCleanLogger.warning('Could not validate session, cleaning...');
-//             cleanSession();
-//         }
-//     }
-    
-//     const baseDelay = 4000;
-//     const maxDelay = 50000;
-//     const delayTime = Math.min(baseDelay * Math.pow(2, connectionAttempts - 1), maxDelay);
-    
-//     setTimeout(async () => {
-//         if (connectionAttempts >= MAX_RETRY_ATTEMPTS) {
-//             connectionAttempts = 0;
-            
-//             // On max retries, only exit if session is invalid
-//             if (!hasValidSession) {
-//                 UltraCleanLogger.critical('Max retry attempts reached. Exiting...');
-//                 process.exit(1);
-//             } else {
-//                 UltraCleanLogger.warning('Max retries reached but session preserved. Retrying...');
-//                 await startBot(loginMode, phoneNumber);
-//             }
-//         } else {
-//             // For auto-restart, try to use existing session
-//             if (isNormalRestart && loginMode === 'pair') {
-//                 UltraCleanLogger.info('🔄 Auto-restart detected, using session mode...');
-//                 await startBot('session', null);
-//             } else {
-//                 await startBot(loginMode, phoneNumber);
-//             }
-//         }
-//     }, delayTime);
-// }
-
-
-
-// async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNumber) {
-//     const statusCode = lastDisconnect?.error?.output?.statusCode;
-//     const isConflict = statusCode === 409;
-    
-//     connectionAttempts++;
-    
-//     if (isConflict) {
-//         const conflictDelay = 25000;
-        
-//         UltraCleanLogger.warning('Device conflict detected. Reconnecting in 25 seconds...');
-        
-//         setTimeout(async () => {
-//             await startBot(loginMode, phoneNumber);
-//         }, conflictDelay);
-//         return;
-//     }
-    
-//     // === AGGRESSIVE SESSION CLEANING FOR SESSION ID MODE ===
-//     if (statusCode === 401 || statusCode === 403 || statusCode === 419 || statusCode === 400) {
-//         UltraCleanLogger.warning(`Auth error (${statusCode}) detected, cleaning session...`);
-//         cleanSession();
-//     }
-    
-//     // If we have too many failed attempts, clean session anyway
-//     if (connectionAttempts >= 3) {
-//         UltraCleanLogger.warning('Multiple connection failures, cleaning session...');
-//         cleanSession();
-//     }
-    
-//     const baseDelay = 4000;
-//     const maxDelay = 50000;
-//     const delayTime = Math.min(baseDelay * Math.pow(2, connectionAttempts - 1), maxDelay);
-    
-//     setTimeout(async () => {
-//         if (connectionAttempts >= MAX_RETRY_ATTEMPTS) {
-//             connectionAttempts = 0;
-//             UltraCleanLogger.critical('Max retry attempts reached. Exiting...');
-//             process.exit(1);
-//         } else {
-//             await startBot(loginMode, phoneNumber);
-//         }
-//     }, delayTime);
-// }
-
-
 async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNumber) {
     const statusCode = lastDisconnect?.error?.output?.statusCode;
     const isConflict = statusCode === 409;
@@ -5689,13 +3948,11 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
         return;
     }
     
-    // === AGGRESSIVE SESSION CLEANING FOR SESSION ID MODE ===
     if (statusCode === 401 || statusCode === 403 || statusCode === 419 || statusCode === 400) {
         UltraCleanLogger.warning(`Auth error (${statusCode}) detected, cleaning session...`);
         cleanSession();
     }
     
-    // If we have too many failed attempts, clean session anyway
     if (connectionAttempts >= 3) {
         UltraCleanLogger.warning('Multiple connection failures, cleaning session...');
         cleanSession();
@@ -5715,7 +3972,216 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
         }
     }, delayTime);
 }
-// ====== MESSAGE HANDLER WITH PREFIXLESS SUPPORT ======
+
+// ====== VIEW-ONCE DETECTION HANDLER ======
+async function handleViewOnceDetection(sock, msg) {
+    try {
+        let config = { enabled: false };
+        try {
+            if (fs.existsSync('./antiviewonce_config.json')) {
+                config = JSON.parse(fs.readFileSync('./antiviewonce_config.json', 'utf8'));
+            }
+        } catch (error) {
+            console.log('❌ Anti-viewonce config error:', error.message);
+            return;
+        }
+        
+        if (!config.enabled || !config.ownerJid) {
+            return;
+        }
+        
+        const message = msg.message;
+        let media = null;
+        let type = '';
+        let caption = '';
+        
+        if (message.imageMessage?.viewOnce) {
+            media = message.imageMessage;
+            type = 'image';
+            caption = message.imageMessage.caption || '';
+        } else if (message.videoMessage?.viewOnce) {
+            media = message.videoMessage;
+            type = 'video';
+            caption = message.videoMessage.caption || '';
+        } else if (message.audioMessage?.viewOnce) {
+            media = message.audioMessage;
+            type = 'audio';
+            caption = '';
+        }
+        
+        if (!media) {
+            return;
+        }
+        
+        const sender = msg.key.participant || msg.key.remoteJid;
+        const senderShort = sender.split('@')[0];
+        
+        console.log(`🔐 [ANTI-VIEWONCE] Detected ${type} from ${senderShort}`);
+        
+        const stream = await sock.downloadMediaMessage(media);
+        let buffer = Buffer.from([]);
+        for await (const chunk of stream) {
+            buffer = Buffer.concat([buffer, chunk]);
+        }
+        
+        const sizeKB = Math.round(buffer.length / 1024);
+        
+        const timestamp = Date.now();
+        const filename = `viewonce_${type}_${senderShort}_${timestamp}.${
+            type === 'image' ? 'jpg' : 
+            type === 'video' ? 'mp4' : 
+            'mp3'
+        }`;
+        
+        console.log(`📤 [ANTI-VIEWONCE] Sending ${type} (${sizeKB}KB) to owner ${config.ownerJid.split('@')[0]}`);
+        
+        const infoText = `🔐 *VIEW-ONCE CAPTURED*\n\n` +
+                       `*From:* ${senderShort}\n` +
+                       `*Type:* ${type}\n` +
+                       `*Size:* ${sizeKB}KB\n` +
+                       `*Caption:* ${caption || 'None'}\n` +
+                       `*Time:* ${new Date().toLocaleTimeString()}\n\n` +
+                       `Media delivered below ⬇️`;
+        
+        await sock.sendMessage(config.ownerJid, { text: infoText });
+        
+        const mediaOptions = {
+            caption: `📁 View-once ${type} from ${senderShort}\n📝 ${caption || 'No caption'}`,
+            fileName: filename
+        };
+        
+        switch (type) {
+            case 'image':
+                await sock.sendMessage(config.ownerJid, { image: buffer, ...mediaOptions });
+                break;
+            case 'video':
+                await sock.sendMessage(config.ownerJid, { video: buffer, ...mediaOptions });
+                break;
+            case 'audio':
+                await sock.sendMessage(config.ownerJid, { audio: buffer, ...mediaOptions });
+                break;
+        }
+        
+        console.log(`✅ [ANTI-VIEWONCE] Successfully sent ${type} to owner`);
+        
+        try {
+            const saveDir = './data/viewonce_private';
+            if (!fs.existsSync(saveDir)) {
+                fs.mkdirSync(saveDir, { recursive: true });
+            }
+            
+            const filepath = `${saveDir}/${filename}`;
+            fs.writeFileSync(filepath, buffer);
+            console.log(`💾 [ANTI-VIEWONCE] Saved to: ${filepath}`);
+            
+            const historyFile = `${saveDir}/history.json`;
+            let history = { captures: [], total: 0 };
+            if (fs.existsSync(historyFile)) {
+                history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
+            }
+            
+            history.captures.push({
+                type: type,
+                from: senderShort,
+                sizeKB: sizeKB,
+                caption: caption,
+                filename: filename,
+                timestamp: timestamp,
+                savedAt: new Date().toISOString()
+            });
+            
+            history.total = history.captures.length;
+            history.updatedAt = new Date().toISOString();
+            
+            fs.writeFileSync(historyFile, JSON.stringify(history, null, 2));
+            
+        } catch (saveError) {
+            console.log('⚠️ Could not save media file:', saveError.message);
+        }
+        
+    } catch (error) {
+        console.log('❌ Anti-viewonce error:', error.message);
+    }
+}
+
+// ====== CONNECT COMMAND HANDLER ======
+async function handleConnectCommand(sock, msg, args, cleaned) {
+    try {
+        const chatJid = msg.key.remoteJid || cleaned.cleanJid;
+        const start = Date.now();
+        const currentPrefix = getCurrentPrefix();
+        const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
+        const platform = detectPlatform();
+        
+        const loadingMessage = await sock.sendMessage(chatJid, {
+            text: `🐺 *${BOT_NAME}* is checking connection... █▒▒▒▒▒▒▒▒▒`
+        }, { quoted: msg });
+
+        const latency = Date.now() - start;
+        
+        const uptime = process.uptime();
+        const hours = Math.floor(uptime / 3600);
+        const minutes = Math.floor((uptime % 3600) / 60);
+        const seconds = Math.floor(uptime % 60);
+        const uptimeText = `${hours}h ${minutes}m ${seconds}s`;
+        
+        const isOwnerUser = jidManager.isOwner(msg);
+        const ultimatefixStatus = isOwnerUser ? '✅' : '❌';
+        
+        const memberStats = memberDetector ? memberDetector.getStats() : null;
+        
+        const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
+        
+        let statusEmoji, statusText, mood;
+        if (latency <= 100) {
+            statusEmoji = "🟢";
+            statusText = "Excellent";
+            mood = "⚡Superb Connection";
+        } else if (latency <= 300) {
+            statusEmoji = "🟡";
+            statusText = "Good";
+            mood = "📡Stable Link";
+        } else {
+            statusEmoji = "🔴";
+            statusText = "Slow";
+            mood = "🌑Needs Optimization";
+        }
+        
+        const timePassed = Date.now() - start;
+        const remainingTime = Math.max(500, 1000 - timePassed);
+        if (remainingTime > 0) {
+            await delay(remainingTime);
+        }
+
+        await sock.sendMessage(chatJid, {
+            text: `
+╭━━🌕 *CONNECTION STATUS* 🌕━━╮
+┃  ⚡ *User:* ${cleaned.cleanNumber}
+┃  🔴 *Prefix:* ${prefixDisplay}
+┃  🐾 *Ultimatefix:* ${ultimatefixStatus}
+┃  🏗️ *Platform:* ${platform}
+┃  ⏱️ *Latency:* ${latency}ms ${statusEmoji}
+┃  ⏰ *Uptime:* ${uptimeText}
+┃  👥 *Members:* ${memberStats ? `${memberStats.totalEvents} events` : 'Not loaded'}
+┃  🔐 *ViewOnce:* ${antiviewonceStats ? `${antiviewonceStats.total} captured` : 'Not loaded'}
+┃  🔗 *Status:* ${statusText}
+┃  🎯 *Mood:* ${mood}
+┃  👑 *Owner:* ${isOwnerUser ? '✅ Yes' : '❌ No'}
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+_🐺 The Moon Watches — ..._
+`,
+            edit: loadingMessage.key
+        }, { quoted: msg });
+        
+        UltraCleanLogger.command(`Connect from ${cleaned.cleanNumber}`);
+        
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// ====== MESSAGE HANDLER ======
 async function handleIncomingMessage(sock, msg) {
     const startTime = Date.now();
     
@@ -5744,12 +4210,10 @@ async function handleIncomingMessage(sock, msg) {
         
         const currentPrefix = getCurrentPrefix();
         
-        // Check for commands with prefix
         let commandName = '';
         let args = [];
         
         if (!isPrefixless && textMsg.startsWith(currentPrefix)) {
-            // Regular prefix mode
             const spaceIndex = textMsg.indexOf(' ', currentPrefix.length);
             commandName = spaceIndex === -1 
                 ? textMsg.slice(currentPrefix.length).toLowerCase().trim()
@@ -5757,16 +4221,13 @@ async function handleIncomingMessage(sock, msg) {
             
             args = spaceIndex === -1 ? [] : textMsg.slice(spaceIndex).trim().split(/\s+/);
         } else if (isPrefixless) {
-            // Prefixless mode - check if message starts with any command name
             const words = textMsg.trim().split(/\s+/);
             const firstWord = words[0].toLowerCase();
             
-            // Check if first word is a command
             if (commands.has(firstWord)) {
                 commandName = firstWord;
                 args = words.slice(1);
             } else {
-                // Check for aliases
                 for (const [cmdName, command] of commands.entries()) {
                     if (command.alias && command.alias.includes(firstWord)) {
                         commandName = cmdName;
@@ -5775,7 +4236,6 @@ async function handleIncomingMessage(sock, msg) {
                     }
                 }
                 
-                // If no command found, check default commands
                 if (!commandName) {
                     const defaultCommands = ['ping', 'help', 'autojoin', 'uptime', 'statusstats', 
                                            'ultimatefix', 'prefixinfo', 'defib', 'defibrestart',
@@ -5788,7 +4248,6 @@ async function handleIncomingMessage(sock, msg) {
             }
         }
         
-        // If no command found in either mode, exit
         if (!commandName) return;
         
         const rateLimitCheck = rateLimiter.canSendCommand(chatId, senderJid, commandName);
@@ -5869,7 +4328,7 @@ async function handleIncomingMessage(sock, msg) {
     }
 }
 
-// ====== DEFAULT COMMANDS WITH PREFIXLESS SUPPORT ======
+// ====== DEFAULT COMMANDS ======
 async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix) {
     const chatId = msg.key.remoteJid;
     const isOwnerUser = jidManager.isOwner(msg);
@@ -5878,155 +4337,117 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
     
     try {
         switch (commandName) {
-            // case 'ping':
-            //     const start = Date.now();
-            //     const latency = Date.now() - start;
-                
-            //     let statusInfo = '';
-            //     if (statusDetector) {
-            //         const stats = statusDetector.getStats();
-            //         statusInfo = `👁️ Status Detector: ✅ ACTIVE\n`;
-            //         statusInfo += `📊 Detected: ${stats.totalDetected} statuses\n`;
-            //     }
-                
-            //     // Member detection stats
-            //     let memberInfo = '';
-            //     if (memberDetector) {
-            //         const memberStats = memberDetector.getStats();
-            //         memberInfo = `👥 Member Detector: ✅ ACTIVE\n`;
-            //         memberInfo += `📊 Events: ${memberStats.totalEvents}\n`;
-            //     }
-                
-            //     // Anti-viewonce stats
-            //     const antiviewonceInfo = '';
-            //     if (antiViewOnceSystem) {
-            //         const antiviewonceStats = antiViewOnceSystem.getStats();
-            //         antiviewonceInfo = `🔐 Anti-ViewOnce: ✅ ACTIVE\n`;
-            //         antiviewonceInfo += `📊 Captured: ${antiviewonceStats.total} media\n`;
-            //         antiviewonceInfo += `🎯 Mode: ${antiviewonceStats.mode}\n`;
-            //     }
-                
-            //     await sock.sendMessage(chatId, { 
-            //         text: `🏓 *Pong!*\nLatency: ${latency}ms\nPrefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\nMode: ${BOT_MODE}\nOwner: ${isOwnerUser ? 'Yes ✅' : 'No ❌'}\n${statusInfo}${memberInfo}${antiviewonceInfo}Status: Connected ✅`
-            //     }, { quoted: msg });
-            //     break;
-                
-
-
-
-case 'antiviewonce':
-case 'av':
-    if (!jidManager.isOwner(msg)) {
-        await sock.sendMessage(chatId, {
-            text: '❌ *Owner Only Command*'
-        }, { quoted: msg });
-        return;
-    }
-    
-    const action = args[0]?.toLowerCase() || 'status';
-    const ownerJid = msg.key.participant || chatId;
-    
-    switch (action) {
-        case 'on':
-        case 'enable':
-            const configOn = { 
-                enabled: true, 
-                mode: 'private', 
-                ownerJid: ownerJid,
-                lastEnabled: new Date().toISOString()
-            };
-            fs.writeFileSync('./antiviewonce_config.json', JSON.stringify(configOn, null, 2));
-            
-            await sock.sendMessage(chatId, {
-                text: `✅ *ANTI-VIEWONCE ENABLED*\n\n` +
-                     `From now on:\n` +
-                     `• View-once images will be sent to your DMs\n` +
-                     `• View-once videos will be sent to your DMs\n` +
-                     `• View-once audio will be sent to your DMs\n\n` +
-                     `📱 Send a view-once message to test!`
-            }, { quoted: msg });
-            break;
-            
-        case 'off':
-        case 'disable':
-            const configOff = { 
-                enabled: false, 
-                mode: 'off', 
-                ownerJid: ownerJid,
-                lastDisabled: new Date().toISOString()
-            };
-            fs.writeFileSync('./antiviewonce_config.json', JSON.stringify(configOff, null, 2));
-            
-            await sock.sendMessage(chatId, {
-                text: '❌ *ANTI-VIEWONCE DISABLED*\n\nNo view-once media will be captured.'
-            }, { quoted: msg });
-            break;
-            
-        case 'status':
-        case 'check':
-            let currentConfig = { enabled: false };
-            try {
-                if (fs.existsSync('./antiviewonce_config.json')) {
-                    currentConfig = JSON.parse(fs.readFileSync('./antiviewonce_config.json', 'utf8'));
+            case 'antiviewonce':
+            case 'av':
+                if (!jidManager.isOwner(msg)) {
+                    await sock.sendMessage(chatId, {
+                        text: '❌ *Owner Only Command*'
+                    }, { quoted: msg });
+                    return;
                 }
-            } catch {}
-            
-            await sock.sendMessage(chatId, {
-                text: `📊 *ANTI-VIEWONCE STATUS*\n\n` +
-                     `Status: ${currentConfig.enabled ? '✅ ON' : '❌ OFF'}\n` +
-                     `Mode: ${currentConfig.mode || 'Not set'}\n` +
-                     `Owner: ${currentConfig.ownerJid ? 'Set' : 'Not set'}\n\n` +
-                     `💡 Commands:\n` +
-                     `${prefix}av on - Enable\n` +
-                     `${prefix}av off - Disable\n` +
-                     `${prefix}av status - Check status`
-            }, { quoted: msg });
-            break;
-            
-        default:
-            await sock.sendMessage(chatId, {
-                text: `🔐 *ANTI-VIEWONCE COMMANDS*\n\n` +
-                     `${prefix}av on - Enable (send to your DMs)\n` +
-                     `${prefix}av off - Disable\n` +
-                     `${prefix}av status - Check status\n\n` +
-                     `📱 When ON: All view-once media automatically sent to your DMs!`
-            }, { quoted: msg });
-    }
-    break;
-
+                
+                const action = args[0]?.toLowerCase() || 'status';
+                const ownerJid = msg.key.participant || chatId;
+                
+                switch (action) {
+                    case 'on':
+                    case 'enable':
+                        const configOn = { 
+                            enabled: true, 
+                            mode: 'private', 
+                            ownerJid: ownerJid,
+                            lastEnabled: new Date().toISOString()
+                        };
+                        fs.writeFileSync('./antiviewonce_config.json', JSON.stringify(configOn, null, 2));
+                        
+                        await sock.sendMessage(chatId, {
+                            text: `✅ *ANTI-VIEWONCE ENABLED*\n\n` +
+                                 `From now on:\n` +
+                                 `• View-once images will be sent to your DMs\n` +
+                                 `• View-once videos will be sent to your DMs\n` +
+                                 `• View-once audio will be sent to your DMs\n\n` +
+                                 `📱 Send a view-once message to test!`
+                        }, { quoted: msg });
+                        break;
+                        
+                    case 'off':
+                    case 'disable':
+                        const configOff = { 
+                            enabled: false, 
+                            mode: 'off', 
+                            ownerJid: ownerJid,
+                            lastDisabled: new Date().toISOString()
+                        };
+                        fs.writeFileSync('./antiviewonce_config.json', JSON.stringify(configOff, null, 2));
+                        
+                        await sock.sendMessage(chatId, {
+                            text: '❌ *ANTI-VIEWONCE DISABLED*\n\nNo view-once media will be captured.'
+                        }, { quoted: msg });
+                        break;
+                        
+                    case 'status':
+                    case 'check':
+                        let currentConfig = { enabled: false };
+                        try {
+                            if (fs.existsSync('./antiviewonce_config.json')) {
+                                currentConfig = JSON.parse(fs.readFileSync('./antiviewonce_config.json', 'utf8'));
+                            }
+                        } catch {}
+                        
+                        await sock.sendMessage(chatId, {
+                            text: `📊 *ANTI-VIEWONCE STATUS*\n\n` +
+                                 `Status: ${currentConfig.enabled ? '✅ ON' : '❌ OFF'}\n` +
+                                 `Mode: ${currentConfig.mode || 'Not set'}\n` +
+                                 `Owner: ${currentConfig.ownerJid ? 'Set' : 'Not set'}\n\n` +
+                                 `💡 Commands:\n` +
+                                 `${prefix}av on - Enable\n` +
+                                 `${prefix}av off - Disable\n` +
+                                 `${prefix}av status - Check status`
+                        }, { quoted: msg });
+                        break;
+                        
+                    default:
+                        await sock.sendMessage(chatId, {
+                            text: `🔐 *ANTI-VIEWONCE COMMANDS*\n\n` +
+                                 `${prefix}av on - Enable (send to your DMs)\n` +
+                                 `${prefix}av off - Disable\n` +
+                                 `${prefix}av status - Check status\n\n` +
+                                 `📱 When ON: All view-once media automatically sent to your DMs!`
+                        }, { quoted: msg });
+                }
+                break;
 
             case 'ping':
-    const start = Date.now();
-    const latency = Date.now() - start;
-    
-    let statusInfo = '';
-    if (statusDetector) {
-        const stats = statusDetector.getStats();
-        statusInfo = `👁️ Status Detector: ✅ ACTIVE\n`;
-        statusInfo += `📊 Detected: ${stats.totalDetected} statuses\n`;
-    }
-    
-    // Member detection stats
-    let memberInfo = '';
-    if (memberDetector) {
-        const memberStats = memberDetector.getStats();
-        memberInfo = `👥 Member Detector: ✅ ACTIVE\n`;
-        memberInfo += `📊 Events: ${memberStats.totalEvents}\n`;
-    }
-    
-    // Anti-viewonce stats
-    let antiviewonceInfoPing = ''; // Changed variable name
-    if (antiViewOnceSystem) {
-        const antiviewonceStats = antiViewOnceSystem.getStats();
-        antiviewonceInfoPing = `🔐 Anti-ViewOnce: ✅ ACTIVE\n`;
-        antiviewonceInfoPing += `📊 Captured: ${antiviewonceStats.total} media\n`;
-        antiviewonceInfoPing += `🎯 Mode: ${antiviewonceStats.mode}\n`;
-    }
-    
-    await sock.sendMessage(chatId, { 
-        text: `🏓 *Pong!*\nLatency: ${latency}ms\nPrefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\nMode: ${BOT_MODE}\nOwner: ${isOwnerUser ? 'Yes ✅' : 'No ❌'}\n${statusInfo}${memberInfo}${antiviewonceInfoPing}Status: Connected ✅`
-    }, { quoted: msg });
-    break;
+                const start = Date.now();
+                const latency = Date.now() - start;
+                
+                let statusInfo = '';
+                if (statusDetector) {
+                    const stats = statusDetector.getStats();
+                    statusInfo = `👁️ Status Detector: ✅ ACTIVE\n`;
+                    statusInfo += `📊 Detected: ${stats.totalDetected} statuses\n`;
+                }
+                
+                let memberInfo = '';
+                if (memberDetector) {
+                    const memberStats = memberDetector.getStats();
+                    memberInfo = `👥 Member Detector: ✅ ACTIVE\n`;
+                    memberInfo += `📊 Events: ${memberStats.totalEvents}\n`;
+                }
+                
+                let antiviewonceInfoPing = '';
+                if (antiViewOnceSystem) {
+                    const antiviewonceStats = antiViewOnceSystem.getStats();
+                    antiviewonceInfoPing = `🔐 Anti-ViewOnce: ✅ ACTIVE\n`;
+                    antiviewonceInfoPing += `📊 Captured: ${antiviewonceStats.total} media\n`;
+                    antiviewonceInfoPing += `🎯 Mode: ${antiviewonceStats.mode}\n`;
+                }
+                
+                await sock.sendMessage(chatId, { 
+                    text: `🏓 *Pong!*\nLatency: ${latency}ms\nPrefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\nMode: ${BOT_MODE}\nOwner: ${isOwnerUser ? 'Yes ✅' : 'No ❌'}\n${statusInfo}${memberInfo}${antiviewonceInfoPing}Status: Connected ✅`
+                }, { quoted: msg });
+                break;
+                
             case 'help':
                 let helpText = `🐺 *${BOT_NAME} HELP*\n\n`;
                 helpText += `Prefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\n`;
@@ -6266,10 +4687,8 @@ case 'av':
                 const memoryUsage = process.memoryUsage();
                 const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
                 
-                // Member detection stats
                 const memberStats = memberDetector ? memberDetector.getStats() : null;
                 
-                // Anti-viewonce stats
                 const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
                 
                 let defibText = `🩺 *${BOT_NAME} DEFIBRILLATOR STATUS*\n\n`;
@@ -6324,132 +4743,6 @@ case 'av':
 }
 
 // ====== MAIN APPLICATION ======
-// async function main() {
-//     try {
-//         UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
-//         UltraCleanLogger.info(`Loaded prefix: "${isPrefixless ? 'none (prefixless)' : getCurrentPrefix()}"`);
-//         UltraCleanLogger.info(`Prefixless mode: ${isPrefixless ? '✅ ENABLED' : '❌ DISABLED'}`);
-//         UltraCleanLogger.info(`Auto-connect on link: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}`);
-//         UltraCleanLogger.info(`Auto-connect on start: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}`);
-//         UltraCleanLogger.info(`Rate limit protection: ${RATE_LIMIT_ENABLED ? '✅' : '❌'}`);
-//         UltraCleanLogger.info(`Console filtering: ✅ ULTRA CLEAN ACTIVE`);
-//         UltraCleanLogger.info(`⚡ Response speed: OPTIMIZED (Reduced delays by 50-70%)`);
-//         UltraCleanLogger.info(`🔐 Session ID support: ✅ ENABLED (WOLF-BOT: format)`);
-//         UltraCleanLogger.info(`🎯 Member Detection: ✅ ENABLED (New members in groups)`);
-//         UltraCleanLogger.info(`🔐 Anti-ViewOnce: ✅ ENABLED (Private/Auto modes)`);
-//         UltraCleanLogger.info(`👥 Welcome System: ✅ ENABLED (Auto-welcome new members)`);
-//         UltraCleanLogger.info(`🎯 Background processes: ✅ ENABLED`);
-        
-//         const loginManager = new LoginManager();
-//         const loginInfo = await loginManager.selectMode();
-//         loginManager.close();
-        
-//         const loginData = loginInfo.mode === 'session' ? loginInfo.sessionId : loginInfo.phone;
-//         await startBot(loginInfo.mode, loginData);
-        
-//     } catch (error) {
-//         UltraCleanLogger.error(`Main error: ${error.message}`);
-//         setTimeout(async () => {
-//             await main();
-//         }, 8000);
-//     }
-// }
-
-
-
-// ====== MAIN APPLICATION ======
-// ====== MAIN APPLICATION ======
-// ====== MAIN APPLICATION ======
-// async function main() {
-//     try {
-//         UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
-//         UltraCleanLogger.info(`Loaded prefix: "${isPrefixless ? 'none (prefixless)' : getCurrentPrefix()}"`);
-//         UltraCleanLogger.info(`Prefixless mode: ${isPrefixless ? '✅ ENABLED' : '❌ DISABLED'}`);
-//         UltraCleanLogger.info(`Auto-connect on link: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}`);
-//         UltraCleanLogger.info(`Auto-connect on start: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}`);
-//         UltraCleanLogger.info(`Rate limit protection: ${RATE_LIMIT_ENABLED ? '✅' : '❌'}`);
-//         UltraCleanLogger.info(`Console filtering: ✅ ULTRA CLEAN ACTIVE`);
-//         UltraCleanLogger.info(`⚡ Response speed: OPTIMIZED (Reduced delays by 50-70%)`);
-//         UltraCleanLogger.info(`🔐 Session ID support: ✅ ENABLED (WOLF-BOT: format)`);
-//         UltraCleanLogger.info(`🎯 Member Detection: ✅ ENABLED (New members in groups)`);
-//         UltraCleanLogger.info(`🔐 Anti-ViewOnce: ✅ ENABLED (Private/Auto modes)`);
-//         UltraCleanLogger.info(`👥 Welcome System: ✅ ENABLED (Auto-welcome new members)`);
-//         UltraCleanLogger.info(`🎯 Background processes: ✅ ENABLED`);
-        
-//         // === ENHANCED AUTO-LOGIN LOGIC FOR KATABUMP ===
-//         // First priority: Check for SESSION_ID in .env
-//         const sessionIdFromEnv = process.env.SESSION_ID;
-//         const SESSION_CREDS_PATH = path.join(SESSION_DIR, 'creds.json');
-//         const hasExistingSession = fs.existsSync(SESSION_CREDS_PATH);
-        
-//         // Strategy 1: Use SESSION_ID from .env if available
-//         if (sessionIdFromEnv && sessionIdFromEnv.trim() !== '') {
-//             UltraCleanLogger.info('🔐 Found SESSION_ID in .env, attempting to use it...');
-            
-//             try {
-//                 // Try to parse and authenticate with the session ID
-//                 const sessionData = parseWolfBotSession(sessionIdFromEnv);
-//                 if (sessionData) {
-//                     UltraCleanLogger.success('✅ Valid session ID found in .env');
-                    
-//                     // Authenticate and start with session mode
-//                     await authenticateWithSessionId(sessionIdFromEnv);
-//                     UltraCleanLogger.info('💾 Session authenticated, starting bot in session mode...');
-//                     await startBot('session', null);
-//                     return;
-//                 } else {
-//                     UltraCleanLogger.warning('❌ Invalid session ID in .env, falling back...');
-//                 }
-//             } catch (error) {
-//                 UltraCleanLogger.warning(`❌ Session ID authentication failed: ${error.message}`);
-//             }
-//         }
-        
-//         // Strategy 2: Check for existing session file (for auto-restart scenarios)
-//         if (hasExistingSession && !sessionIdFromEnv) {
-//             UltraCleanLogger.info('🔑 Existing session file detected, attempting auto-login...');
-            
-//             try {
-//                 const credsData = JSON.parse(fs.readFileSync(SESSION_CREDS_PATH, 'utf8'));
-                
-//                 if (credsData && credsData.noiseKey && credsData.signedIdentityKey) {
-//                     UltraCleanLogger.success('✅ Valid session file found, auto-connecting...');
-                    
-//                     // Use session mode directly without prompts
-//                     await startBot('session', null);
-//                     return;
-//                 } else {
-//                     UltraCleanLogger.warning('❌ Invalid session file, falling back...');
-//                 }
-//             } catch (sessionError) {
-//                 UltraCleanLogger.warning(`❌ Session file invalid: ${sessionError.message}`);
-//             }
-//         }
-        
-//         // Strategy 3: No valid session found, show login prompts (for fresh starts)
-//         UltraCleanLogger.info('📱 No valid session found, showing login options...');
-//         const loginManager = new LoginManager();
-//         const loginInfo = await loginManager.selectMode();
-//         loginManager.close();
-        
-//         const loginData = loginInfo.mode === 'session' ? loginInfo.sessionId : loginInfo.phone;
-//         await startBot(loginInfo.mode, loginData);
-        
-//     } catch (error) {
-//         UltraCleanLogger.error(`Main error: ${error.message}`);
-//         setTimeout(async () => {
-//             await main();
-//         }, 8000);
-//     }
-// }
-
-
-
-
-
-
-
-
 async function main() {
     try {
         UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
@@ -6466,7 +4759,6 @@ async function main() {
         UltraCleanLogger.info(`👥 Welcome System: ✅ ENABLED (Auto-welcome new members)`);
         UltraCleanLogger.info(`🎯 Background processes: ✅ ENABLED`);
         
-        // === ENHANCED AUTO-LOGIN LOGIC ===
         const sessionIdFromEnv = process.env.SESSION_ID;
         const hasEnvSession = sessionIdFromEnv && sessionIdFromEnv.trim() !== '';
         
@@ -6485,7 +4777,6 @@ async function main() {
             }
         }
         
-        // If no valid session, show login prompts
         UltraCleanLogger.info('📱 No valid session found, showing login options...');
         const loginManager = new LoginManager();
         const loginInfo = await loginManager.selectMode();
@@ -6501,90 +4792,35 @@ async function main() {
         }, 8000);
     }
 }
+
+
+
+
+
+// ====== PROCESS HANDLERS ======
 process.on('SIGINT', () => {
     console.log(chalk.yellow('\n👋 Shutting down gracefully...'));
-    
-    defibrillator.stopMonitoring();
-    
-    if (statusDetector) {
-        statusDetector.saveStatusLogs();
-    }
-    
-    if (memberDetector) {
-        memberDetector.saveDetectionData();
-    }
-    
-    if (antiViewOnceSystem) {
-        antiViewOnceSystem.saveHistory();
-    }
-    
-    if (autoGroupJoinSystem) {
-        UltraCleanLogger.info('💾 Saving auto-join logs...');
-    }
-    
     stopHeartbeat();
+    
+    if (defibrillator) {
+        defibrillator.stopMonitoring();
+    }
+    
     if (SOCKET_INSTANCE) SOCKET_INSTANCE.ws.close();
     process.exit(0);
 });
 
 process.on('uncaughtException', (error) => {
     UltraCleanLogger.error(`Uncaught exception: ${error.message}`);
+    UltraCleanLogger.error(error.stack);
 });
 
 process.on('unhandledRejection', (error) => {
     UltraCleanLogger.error(`Unhandled rejection: ${error.message}`);
 });
 
-// Activity monitor
-setInterval(() => {
-    const now = Date.now();
-    const inactivityThreshold = 5 * 60 * 1000;
-    
-    if (isConnected && (now - lastActivityTime) > inactivityThreshold) {
-        if (SOCKET_INSTANCE) {
-            SOCKET_INSTANCE.sendPresenceUpdate('available').catch(() => {});
-        }    
-    }
-}, 60000);
-
-// Auto-restart on crash
-process.on('exit', (code) => {
-    if (code !== 0 && code !== 130 && code !== 143) {
-        UltraCleanLogger.critical(`Process crashed with code ${code}`);
-        
-        const crashLog = {
-            timestamp: new Date().toISOString(),
-            exitCode: code,
-            uptime: process.uptime(),
-            memory: process.memoryUsage(),
-            defibrillatorStats: defibrillator.getStats(),
-            restartCount: defibrillator.restartCount,
-            memberDetectionStats: memberDetector ? memberDetector.getStats() : null,
-            antiViewOnceStats: antiViewOnceSystem ? antiViewOnceSystem.getStats() : null
-        };
-        
-        try {
-            fs.writeFileSync(
-                './crash_log.json',
-                JSON.stringify(crashLog, null, 2)
-            );
-        } catch {
-            // Ignore write errors
-        }
-        
-        if (defibrillator.canRestart()) {
-            UltraCleanLogger.info('Auto-restarting in 5 seconds...');
-            setTimeout(() => {
-                UltraCleanLogger.info('Starting bot...');
-                main().catch(() => {
-                    process.exit(1);
-                });
-            }, 5000);
-        }
-    }
-});
-
 // Start the bot
-main().catch(() => {
+main().catch((error) => {
+    UltraCleanLogger.critical(`Fatal error: ${error.message}`);
     process.exit(1);
 });
