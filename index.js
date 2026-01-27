@@ -16,6 +16,9 @@
 
 
 
+
+
+
 // ====== SILENT WOLFBOT - ULTIMATE CLEAN EDITION (SPEED OPTIMIZED) ======
 // Features: Real-time prefix changes, UltimateFix, Status Detection, Auto-Connect
 // SUPER CLEAN TERMINAL - Zero spam, Zero session noise, Rate limit protection
@@ -711,8 +714,8 @@ function updatePrefixImmediately(newPrefix) {
 }
 
 // Platform detection
+// Update the platform detection function
 function detectPlatform() {
-    if (process.env.PANEL) return 'Panel';
     if (process.env.HEROKU) return 'Heroku';
     if (process.env.KATABUMP) return 'Katabump';
     if (process.env.AITIMY) return 'Aitimy';
@@ -720,9 +723,9 @@ function detectPlatform() {
     if (process.env.REPLIT) return 'Replit';
     if (process.env.VERCEL) return 'Vercel';
     if (process.env.GLITCH) return 'Glitch';
+    if (process.env.PANEL) return 'Panel';
     return 'Local/VPS';
 }
-
 // ====== GLOBAL VARIABLES ======
 let OWNER_NUMBER = null;
 let OWNER_JID = null;
@@ -3250,6 +3253,167 @@ function parseWolfBotSession(sessionString) {
     }
 }
 
+
+// ====== HEROKU SESSION HANDLING ======
+function setupHerokuSession() {
+    try {
+        // Check if running on Heroku with SESSION_ID env var
+        const herokuSessionId = process.env.SESSION_ID;
+        
+        if (herokuSessionId && herokuSessionId.trim() !== '') {
+            UltraCleanLogger.success('🚀 Detected Heroku deployment with SESSION_ID');
+            
+            // Parse WOLF-BOT session format
+            if (herokuSessionId.startsWith('WOLF-BOT:')) {
+                UltraCleanLogger.info('🔐 Processing WOLF-BOT session format...');
+                
+                try {
+                    // Remove WOLF-BOT: prefix and decode
+                    const base64Part = herokuSessionId.substring(9).trim();
+                    const decodedSession = Buffer.from(base64Part, 'base64').toString('utf8');
+                    const sessionData = JSON.parse(decodedSession);
+                    
+                    // Save to session directory
+                    ensureSessionDir();
+                    const sessionPath = path.join(SESSION_DIR, 'creds.json');
+                    fs.writeFileSync(sessionPath, JSON.stringify(sessionData, null, 2));
+                    
+                    UltraCleanLogger.success(`💾 Heroku session saved to: ${sessionPath}`);
+                    
+                    // Set flag to skip login prompts
+                    process.env.HEROKU_DEPLOYMENT = 'true';
+                    process.env.AUTO_START = 'true';
+                    
+                    return true;
+                    
+                } catch (error) {
+                    UltraCleanLogger.error(`❌ Failed to parse Heroku session: ${error.message}`);
+                    return false;
+                }
+            } else {
+                UltraCleanLogger.info('🔐 Processing raw session string...');
+                
+                try {
+                    // Try direct JSON parsing
+                    const sessionData = JSON.parse(herokuSessionId);
+                    
+                    // Save to session directory
+                    ensureSessionDir();
+                    const sessionPath = path.join(SESSION_DIR, 'creds.json');
+                    fs.writeFileSync(sessionPath, JSON.stringify(sessionData, null, 2));
+                    
+                    UltraCleanLogger.success(`💾 Heroku session saved to: ${sessionPath}`);
+                    
+                    process.env.HEROKU_DEPLOYMENT = 'true';
+                    process.env.AUTO_START = 'true';
+                    
+                    return true;
+                    
+                } catch (jsonError) {
+                    UltraCleanLogger.warning(`JSON parse failed, trying base64: ${jsonError.message}`);
+                    
+                    try {
+                        // Try base64 decoding
+                        const decodedSession = Buffer.from(herokuSessionId, 'base64').toString('utf8');
+                        const sessionData = JSON.parse(decodedSession);
+                        
+                        ensureSessionDir();
+                        const sessionPath = path.join(SESSION_DIR, 'creds.json');
+                        fs.writeFileSync(sessionPath, JSON.stringify(sessionData, null, 2));
+                        
+                        UltraCleanLogger.success(`💾 Heroku session saved (base64): ${sessionPath}`);
+                        
+                        process.env.HEROKU_DEPLOYMENT = 'true';
+                        process.env.AUTO_START = 'true';
+                        
+                        return true;
+                        
+                    } catch (base64Error) {
+                        UltraCleanLogger.error(`❌ All Heroku session parsing attempts failed`);
+                        return false;
+                    }
+                }
+            }
+        }
+        
+        return false;
+        
+    } catch (error) {
+        UltraCleanLogger.error(`Heroku setup error: ${error.message}`);
+        return false;
+    }
+}
+
+
+// ====== HEROKU HEALTH CHECK ======
+function setupHerokuHealthCheck() {
+    // Heroku needs a health check endpoint to prevent sleeping
+    if (process.env.HEROKU || process.env.PORT) {
+        try {
+            const http = require('http');
+            
+            const server = http.createServer((req, res) => {
+                if (req.url === '/health') {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        status: 'ok',
+                        bot: BOT_NAME,
+                        version: VERSION,
+                        uptime: process.uptime(),
+                        platform: 'Heroku',
+                        timestamp: new Date().toISOString()
+                    }));
+                } else {
+                    res.writeHead(200);
+                    res.end(`${BOT_NAME} is running on Heroku`);
+                }
+            });
+            
+            const PORT = process.env.PORT || 3000;
+            server.listen(PORT, () => {
+                UltraCleanLogger.success(`🌐 Heroku health check server listening on port ${PORT}`);
+                UltraCleanLogger.info(`🔗 Health check URL: http://localhost:${PORT}/health`);
+            });
+            
+        } catch (error) {
+            UltraCleanLogger.warning(`Could not start health check server: ${error.message}`);
+        }
+    }
+}
+
+// ====== HEROKU KEEP-ALIVE ======
+function setupHerokuKeepAlive() {
+    if (process.env.HEROKU) {
+        UltraCleanLogger.info('🔧 Setting up Heroku keep-alive system...');
+        
+        // Auto-restart prevention
+        let restartCount = 0;
+        const maxDailyRestarts = 5;
+        
+        // Periodic activity to prevent sleeping
+        setInterval(() => {
+            UltraCleanLogger.info('💓 Heroku keep-alive pulse');
+            lastActivityTime = Date.now();
+        }, 20 * 60 * 1000); // Every 20 minutes
+        
+        // Memory monitoring for Heroku
+        setInterval(() => {
+            const memoryUsage = process.memoryUsage();
+            const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
+            
+            if (memoryMB > 450) {
+                UltraCleanLogger.warning(`⚠️ High memory usage on Heroku: ${memoryMB}MB`);
+                
+                // Force garbage collection if available
+                if (global.gc) {
+                    global.gc();
+                    UltraCleanLogger.info('🧹 Forced garbage collection');
+                }
+            }
+        }, 5 * 60 * 1000); // Every 5 minutes
+    }
+}
+
 async function authenticateWithSessionId(sessionId) {
     try {
         UltraCleanLogger.info('🔄 Processing Session ID...');
@@ -3633,7 +3797,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         const ownerInfo = jidManager.getOwnerInfo();
                         const displayOwnerNumber = ownerInfo?.ownerNumber ? ownerInfo.ownerNumber.split(':')[0] : 'Not set';
                         
-                        const successMessage = `╭─⊷『 🐺 WOLFBOT 』\n│\n├─⊷ *Name:* ${BOT_NAME}\n├─⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├─⊷ *Owner:* (${displayOwnerNumber})\n├─⊷ *Platform:* ${detectPlatform()}\n├─⊷ *Mode:* ${BOT_MODE}\n└─⊷ *Status:* ✅ Connected\n\n╰─⊷ *Silent Wolf Online* 🐾`;
+                        const successMessage = `╭⊷『 🐺 WOLFBOT 』\n│\n├⊷ *Name:* ${BOT_NAME}\n├⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├⊷ *Owner:* (${displayOwnerNumber})\n├⊷ *Platform:* ${detectPlatform()}\n├⊷ *Mode:* ${BOT_MODE}\n└⊷ *Status:* ✅ Connected\n\n╰⊷ *Silent Wolf Online* 🐾`;
                         
                         if (ownerInfo && ownerInfo.ownerJid) {
                             await sock.sendMessage(ownerInfo.ownerJid, { text: successMessage });
@@ -4853,12 +5017,155 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
     }
 }
 
-// ====== MAIN APPLICATION ======
+// // ====== MAIN APPLICATION ======
+// // ====== MAIN APPLICATION ======
+// // ====== MAIN APPLICATION ======
+// async function main() {
+//     try {
+//         UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
+//         UltraCleanLogger.info(`Loaded prefix: "${isPrefixless ? 'none (prefixless)' : getCurrentPrefix()}"`);
+//         UltraCleanLogger.info(`Prefixless mode: ${isPrefixless ? '✅ ENABLED' : '❌ DISABLED'}`);
+//         UltraCleanLogger.info(`Auto-connect on link: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}`);
+//         UltraCleanLogger.info(`Auto-connect on start: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}`);
+//         UltraCleanLogger.info(`Rate limit protection: ${RATE_LIMIT_ENABLED ? '✅' : '❌'}`);
+//         UltraCleanLogger.info(`Console filtering: ✅ ULTRA CLEAN ACTIVE`);
+//         UltraCleanLogger.info(`⚡ Response speed: OPTIMIZED (Reduced delays by 50-70%)`);
+//         UltraCleanLogger.info(`🔐 Session ID support: ✅ ENABLED (WOLF-BOT: format)`);
+//         UltraCleanLogger.info(`🎯 Member Detection: ✅ ENABLED (New members in groups)`);
+//         UltraCleanLogger.info(`🔐 Anti-ViewOnce: ✅ ENABLED (Private/Auto modes)`);
+//         UltraCleanLogger.info(`👥 Welcome System: ✅ ENABLED (Auto-welcome new members)`);
+//         UltraCleanLogger.info(`🎯 Background processes: ✅ ENABLED`);
+
+//         // ====== AGGRESSIVE AUTO-RECONNECT LOGIC ======
+//         // 1. First try to load existing session directory
+//         const sessionDirExists = fs.existsSync(SESSION_DIR);
+//         const credsExist = fs.existsSync(path.join(SESSION_DIR, 'creds.json'));
+        
+//         if (sessionDirExists && credsExist) {
+//             UltraCleanLogger.success('🔐 Found session directory with creds.json, attempting auto-reconnect...');
+            
+//             try {
+//                 // Try to read the session file
+//                 const sessionData = JSON.parse(fs.readFileSync(path.join(SESSION_DIR, 'creds.json'), 'utf8'));
+                
+//                 // Check for basic required fields (more lenient check)
+//                 if (sessionData && (sessionData.noiseKey || sessionData.signedIdentityKey || sessionData.creds)) {
+//                     UltraCleanLogger.success('✅ Session file looks valid, auto-connecting...');
+//                     await startBot('auto', null);
+//                     return;
+//                 } else {
+//                     UltraCleanLogger.warning('⚠️ Session file exists but may be corrupted');
+//                 }
+//             } catch (sessionError) {
+//                 UltraCleanLogger.error(`❌ Error loading session: ${sessionError.message}`);
+//             }
+//         }
+        
+//         // 2. Check for SESSION_ID in .env as secondary option
+//         const sessionIdFromEnv = process.env.SESSION_ID;
+//         const hasEnvSession = sessionIdFromEnv && sessionIdFromEnv.trim() !== '';
+        
+//         if (hasEnvSession) {
+//             UltraCleanLogger.info('🔐 Found SESSION_ID in .env, attempting auto-login...');
+            
+//             try {
+//                 const sessionData = parseWolfBotSession(sessionIdFromEnv);
+//                 if (sessionData) {
+//                     UltraCleanLogger.success('✅ Valid session ID found in .env, auto-connecting...');
+//                     await startBot('session', sessionIdFromEnv);
+//                     return;
+//                 }
+//             } catch (error) {
+//                 UltraCleanLogger.warning(`❌ Session ID validation failed: ${error.message}`);
+//             }
+//         }
+        
+//         // 3. If no session found, check if we should attempt pairing with saved phone
+//         const ownerFileExists = fs.existsSync(OWNER_FILE);
+//         if (ownerFileExists) {
+//             try {
+//                 const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
+//                 if (ownerData.OWNER_NUMBER) {
+//                     UltraCleanLogger.info(`📱 Found saved owner number: ${ownerData.OWNER_NUMBER}, attempting to reconnect...`);
+                    
+//                     // Try to reconnect with saved phone number
+//                     await startBot('pair', ownerData.OWNER_NUMBER);
+//                     return;
+//                 }
+//             } catch (error) {
+//                 UltraCleanLogger.warning(`Could not load owner data: ${error.message}`);
+//             }
+//         }
+        
+//         // 4. If all else fails, show login options
+//         UltraCleanLogger.info('📱 No valid session found, showing login options...');
+//         const loginManager = new LoginManager();
+//         const loginInfo = await loginManager.selectMode();
+//         loginManager.close();
+        
+//         const loginData = loginInfo.mode === 'session' ? loginInfo.sessionId : loginInfo.phone;
+//         await startBot(loginInfo.mode, loginData);
+        
+//     } catch (error) {
+//         UltraCleanLogger.error(`Main error: ${error.message}`);
+//         setTimeout(async () => {
+//             await main();
+//         }, 8000);
+//     }
+// }
+
+
+
+
+
+
+
 // ====== MAIN APPLICATION ======
 // ====== MAIN APPLICATION ======
 async function main() {
     try {
         UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
+        
+        // ====== HEROKU INITIALIZATION ======
+        UltraCleanLogger.info(`🌐 Environment: ${process.env.NODE_ENV || 'production'}`);
+        UltraCleanLogger.info(`🔧 Platform: ${detectPlatform()}`);
+        
+        // Initialize Heroku systems
+        setupHerokuHealthCheck();
+        setupHerokuKeepAlive();
+        
+        // ====== HEROKU DETECTION & SETUP ======
+        const isHeroku = process.env.HEROKU || process.env.DYNO || false;
+        const herokuSessionId = process.env.SESSION_ID;
+        
+        if (isHeroku) {
+            UltraCleanLogger.info(`🏗️ Platform: Heroku`);
+            UltraCleanLogger.info(`📦 Dyno: ${process.env.DYNO || 'Unknown'}`);
+            
+            // Check if we have SESSION_ID from Heroku Config Vars
+            if (herokuSessionId && herokuSessionId.trim() !== '') {
+                UltraCleanLogger.success('🔐 Heroku SESSION_ID detected');
+                
+                // Setup Heroku session automatically
+                const herokuSetupSuccess = setupHerokuSession();
+                
+                if (herokuSetupSuccess) {
+                    UltraCleanLogger.success('✅ Heroku session configured successfully');
+                    UltraCleanLogger.info('🔄 Starting bot with Heroku session...');
+                    
+                    // Auto-start with Heroku session
+                    await startBot('auto', null);
+                    return;
+                } else {
+                    UltraCleanLogger.warning('⚠️ Heroku session setup failed, falling back to normal login');
+                }
+            } else {
+                UltraCleanLogger.warning('⚠️ Heroku detected but no SESSION_ID found');
+                UltraCleanLogger.info('💡 Add SESSION_ID to Heroku Config Vars for auto-login');
+            }
+        }
+        
+        // Show bot features
         UltraCleanLogger.info(`Loaded prefix: "${isPrefixless ? 'none (prefixless)' : getCurrentPrefix()}"`);
         UltraCleanLogger.info(`Prefixless mode: ${isPrefixless ? '✅ ENABLED' : '❌ DISABLED'}`);
         UltraCleanLogger.info(`Auto-connect on link: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}`);
@@ -4871,8 +5178,8 @@ async function main() {
         UltraCleanLogger.info(`🔐 Anti-ViewOnce: ✅ ENABLED (Private/Auto modes)`);
         UltraCleanLogger.info(`👥 Welcome System: ✅ ENABLED (Auto-welcome new members)`);
         UltraCleanLogger.info(`🎯 Background processes: ✅ ENABLED`);
-
-        // ====== AGGRESSIVE AUTO-RECONNECT LOGIC ======
+        
+        // ====== AUTO-RECONNECT LOGIC ======
         // 1. First try to load existing session directory
         const sessionDirExists = fs.existsSync(SESSION_DIR);
         const credsExist = fs.existsSync(path.join(SESSION_DIR, 'creds.json'));
@@ -4897,11 +5204,11 @@ async function main() {
             }
         }
         
-        // 2. Check for SESSION_ID in .env as secondary option
+        // 2. Check for SESSION_ID in .env as secondary option (skip if already processed on Heroku)
         const sessionIdFromEnv = process.env.SESSION_ID;
         const hasEnvSession = sessionIdFromEnv && sessionIdFromEnv.trim() !== '';
         
-        if (hasEnvSession) {
+        if (hasEnvSession && !isHeroku) { // Don't double-process on Heroku
             UltraCleanLogger.info('🔐 Found SESSION_ID in .env, attempting auto-login...');
             
             try {
@@ -4933,7 +5240,21 @@ async function main() {
             }
         }
         
-        // 4. If all else fails, show login options
+        // 4. If all else fails, show login options (skip on Heroku)
+        if (isHeroku) {
+            UltraCleanLogger.error('❌ Heroku deployment failed: No valid session found');
+            UltraCleanLogger.info('💡 Please add a valid SESSION_ID to Heroku Config Vars');
+            UltraCleanLogger.info('💡 Or redeploy with the "Deploy to Heroku" button');
+            
+            // Keep process alive for logs but don't show login prompts
+            setInterval(() => {
+                UltraCleanLogger.warning('⏳ Waiting for valid session configuration...');
+            }, 30000);
+            
+            return;
+        }
+        
+        // 5. Show login options for non-Heroku deployments
         UltraCleanLogger.info('📱 No valid session found, showing login options...');
         const loginManager = new LoginManager();
         const loginInfo = await loginManager.selectMode();
@@ -4944,9 +5265,21 @@ async function main() {
         
     } catch (error) {
         UltraCleanLogger.error(`Main error: ${error.message}`);
-        setTimeout(async () => {
-            await main();
-        }, 8000);
+        
+        // Handle restarts based on platform
+        if (process.env.HEROKU) {
+            // Longer delay on Heroku to avoid rapid restarts
+            UltraCleanLogger.warning('🔄 Heroku restart scheduled in 30 seconds...');
+            setTimeout(async () => {
+                await main();
+            }, 30000);
+        } else {
+            // Faster restart for local/panel deployments
+            UltraCleanLogger.warning('🔄 Restarting in 8 seconds...');
+            setTimeout(async () => {
+                await main();
+            }, 8000);
+        }
     }
 }
 // ====== PROCESS HANDLERS ======
