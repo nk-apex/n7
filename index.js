@@ -1,3 +1,5 @@
+//INNER-PEACE - SILENT WOLF
+
 
 
 
@@ -4188,13 +4190,7 @@ _🐺 The Moon Watches — Welcome New Owner_
     } else if (isAutoReconnect) {
         // Send auto-reconnect notification to owner
         try {
-            const reconnectMessage = `🔄 *${BOT_NAME} AUTO-RECONNECTED!*\n\n` +
-                                   `✅ Bot has automatically reconnected after restart\n` +
-                                   `⏰ Time: ${currentTime}\n` +
-                                   `🔗 Method: Saved Session\n` +
-                                   `🎛️ Mode: ${BOT_MODE}\n` +
-                                   `💬 Prefix: ${prefixDisplay}\n\n` +
-                                   `🎉 All features are restored and ready!`;
+            const reconnectMessage = ``;
             
             if (ownerInfo.ownerJid) {
                 await sock.sendMessage(ownerInfo.ownerJid, { text: reconnectMessage });
