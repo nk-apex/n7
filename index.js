@@ -718,6 +718,20 @@ function updatePrefixImmediately(newPrefix) {
 }
 
 // Platform detection
+// function detectPlatform() {
+//     if (process.env.PANEL) return 'Panel';
+//     if (process.env.HEROKU) return 'Heroku';
+//     if (process.env.KATABUMP) return 'Katabump';
+//     if (process.env.AITIMY) return 'Aitimy';
+//     if (process.env.RENDER) return 'Render';
+//     if (process.env.REPLIT) return 'Replit';
+//     if (process.env.VERCEL) return 'Vercel';
+//     if (process.env.GLITCH) return 'Glitch';
+//     return 'Local/VPS';
+// }
+
+
+// Platform detection with headless check
 function detectPlatform() {
     if (process.env.PANEL) return 'Panel';
     if (process.env.HEROKU) return 'Heroku';
@@ -728,6 +742,32 @@ function detectPlatform() {
     if (process.env.VERCEL) return 'Vercel';
     if (process.env.GLITCH) return 'Glitch';
     return 'Local/VPS';
+}
+
+// Check if platform is headless (no terminal)
+function isHeadlessPlatform() {
+    return process.env.HEROKU || process.env.RENDER || process.env.VERCEL || 
+           process.env.REPLIT || process.env.GLITCH || process.env.KATABUMP || 
+           process.env.AITIMY || process.env.PANEL;
+}
+
+// Add session source detection
+function getSessionSource() {
+    if (fs.existsSync('./session/creds.json')) {
+        return { source: 'session_file', exists: true };
+    }
+    
+    // Check for Heroku config var
+    if (process.env.HEROKU && process.env.SESSION_ID && process.env.SESSION_ID.trim() !== '') {
+        return { source: 'heroku_config_var', exists: true, value: process.env.SESSION_ID };
+    }
+    
+    // Check for other headless platforms
+    if (isHeadlessPlatform() && process.env.SESSION_ID && process.env.SESSION_ID.trim() !== '') {
+        return { source: 'env_variable', exists: true, value: process.env.SESSION_ID };
+    }
+    
+    return { source: 'none', exists: false };
 }
 
 // ====== GLOBAL VARIABLES ======
@@ -3528,41 +3568,48 @@ prefixCache = loadPrefixFromFiles();
 isPrefixless = prefixCache === '' ? true : false;
 updateTerminalHeader();
 
-// // ====== MAIN BOT FUNCTION ======
-// async function startBot(loginMode = 'pair', loginData = null) {
-//     try {
-//         UltraCleanLogger.info('🚀 Initializing WhatsApp connection...');
-        
-//         if (loginMode === 'session' && loginData) {
-//             try {
-//                 UltraCleanLogger.info('🔐 Processing Session ID...');
-//                 await authenticateWithSessionId(loginData);
-//                 UltraCleanLogger.success('✅ Session saved to session/creds.json');
-//             } catch (error) {
-//                 UltraCleanLogger.error(`❌ Session processing failed: ${error.message}`);
-//             }
-//         }
 async function startBot(loginMode = 'pair', loginData = null) {
     try {
         UltraCleanLogger.info('🚀 Initializing WhatsApp connection...');
         
-        // Handle auto mode (skip login if session exists or env session)
-        if (loginMode === 'auto') {
-            UltraCleanLogger.info('⚡ Auto-connect mode: Using existing session');
+        const sessionInfo = getSessionSource();
+        const isHeadless = isHeadlessPlatform();
+        const platform = detectPlatform();
+        
+        UltraCleanLogger.info(`📁 Session source: ${sessionInfo.source}`);
+        UltraCleanLogger.info(`🏗️ Platform mode: ${isHeadless ? 'Headless' : 'Interactive'}`);
+        
+        // Handle headless platforms (Heroku, Render, Vercel, etc.)
+        if (isHeadless && loginMode === 'auto') {
+            UltraCleanLogger.info(`☁️ ${platform}: Running in headless auto-connect mode`);
             
-            // Check if we need to process env session
-            const hasSessionFile = fs.existsSync('./session/creds.json');
-            const hasEnvSession = process.env.SESSION_ID && process.env.SESSION_ID.trim() !== '';
-            
-            if (!hasSessionFile && hasEnvSession) {
-                UltraCleanLogger.info('🔐 Processing SESSION_ID from .env for auto-restart...');
+            // Process session from environment if no file exists
+            if (!fs.existsSync('./session/creds.json') && sessionInfo.exists) {
+                UltraCleanLogger.info(`🔐 Creating session from ${sessionInfo.source}...`);
                 try {
-                    await authenticateWithSessionId(process.env.SESSION_ID);
-                    UltraCleanLogger.success('✅ Session created from .env');
+                    await authenticateWithSessionId(sessionInfo.value);
+                    UltraCleanLogger.success(`✅ Session created for ${platform}`);
+                    
+                    // Log platform-specific info
+                    if (platform === 'Heroku') {
+                        UltraCleanLogger.info('☁️ Heroku: Session ready from config vars');
+                    }
                 } catch (error) {
-                    UltraCleanLogger.error(`❌ Failed to process .env session: ${error.message}`);
-                    // Fall back to regular login
-                    loginMode = 'pair';
+                    UltraCleanLogger.error(`❌ ${platform}: Failed to create session: ${error.message}`);
+                    
+                    if (platform === 'Heroku') {
+                        UltraCleanLogger.error('💡 Heroku troubleshooting:');
+                        UltraCleanLogger.error('1. Check SESSION_ID in Config Vars');
+                        UltraCleanLogger.error('2. Format: WOLF-BOT:eyJ... or base64');
+                        UltraCleanLogger.error('3. Verify it"s valid WhatsApp session');
+                    }
+                    
+                    // For headless platforms, keep retrying
+                    UltraCleanLogger.info(`🔄 ${platform}: Will retry connection...`);
+                    setTimeout(async () => {
+                        await startBot('auto', null);
+                    }, 10000);
+                    return;
                 }
             }
         } 
@@ -3570,13 +3617,14 @@ async function startBot(loginMode = 'pair', loginData = null) {
             try {
                 UltraCleanLogger.info('🔐 Processing Session ID...');
                 await authenticateWithSessionId(loginData);
-                UltraCleanLogger.success('✅ Session saved to session/creds.json');
+                UltraCleanLogger.success('✅ Session saved');
             } catch (error) {
                 UltraCleanLogger.error(`❌ Session processing failed: ${error.message}`);
             }
         }
         
         // Rest of your code continues...
+
         
         let commandLoadPromise = Promise.resolve();
         if (!initialCommandsLoaded) {
@@ -3972,7 +4020,12 @@ async function startBot(loginMode = 'pair', loginData = null) {
     }
 }
 
-// ====== RESTART AUTO-FIX TRIGGER ======
+
+
+
+
+
+
 async function triggerRestartAutoFix(sock) {
     try {
         if (fs.existsSync(OWNER_FILE) && sock.user?.id) {
@@ -4934,48 +4987,45 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
     }
 }
 
-// // ====== MAIN APPLICATION ======
+
 // async function main() {
 //     try {
-//         UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
-//         UltraCleanLogger.info(`Loaded prefix: "${isPrefixless ? 'none (prefixless)' : getCurrentPrefix()}"`);
-//         UltraCleanLogger.info(`Prefixless mode: ${isPrefixless ? '✅ ENABLED' : '❌ DISABLED'}`);
-//         UltraCleanLogger.info(`Auto-connect on link: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}`);
-//         UltraCleanLogger.info(`Auto-connect on start: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}`);
-//         UltraCleanLogger.info(`Rate limit protection: ${RATE_LIMIT_ENABLED ? '✅' : '❌'}`);
-//         UltraCleanLogger.info(`Console filtering: ✅ ULTRA CLEAN ACTIVE`);
-//         UltraCleanLogger.info(`⚡ Response speed: OPTIMIZED (Reduced delays by 50-70%)`);
-//         UltraCleanLogger.info(`🔐 Session ID support: ✅ ENABLED (WOLF-BOT: format)`);
-//         UltraCleanLogger.info(`🎯 Member Detection: ✅ ENABLED (New members in groups)`);
-//         UltraCleanLogger.info(`🔐 Anti-ViewOnce: ✅ ENABLED (Private/Auto modes)`);
-//         UltraCleanLogger.info(`👥 Welcome System: ✅ ENABLED (Auto-welcome new members)`);
-//         UltraCleanLogger.info(`🎯 Background processes: ✅ ENABLED`);
+//         // Check for auto-restart conditions
+//         const sessionExists = fs.existsSync('./session/creds.json');
+//         const hasEnvSession = process.env.SESSION_ID && process.env.SESSION_ID.trim() !== '';
         
-//         const sessionIdFromEnv = process.env.SESSION_ID;
-//         const hasEnvSession = sessionIdFromEnv && sessionIdFromEnv.trim() !== '';
-        
-//         if (hasEnvSession) {
-//             UltraCleanLogger.info('🔐 Found SESSION_ID in .env, attempting auto-login...');
+//         if (sessionExists || hasEnvSession) {
+//             // AUTO-RESTART MODE
+//             UltraCleanLogger.success(`🔄 ${BOT_NAME} AUTO-RESTART MODE`);
             
-//             try {
-//                 const sessionData = parseWolfBotSession(sessionIdFromEnv);
-//                 if (sessionData) {
-//                     UltraCleanLogger.success('✅ Valid session ID found in .env, auto-connecting...');
-//                     await startBot('session', sessionIdFromEnv);
-//                     return;
-//                 }
-//             } catch (error) {
-//                 UltraCleanLogger.warning(`❌ Session ID validation failed: ${error.message}`);
+//             if (hasEnvSession && !sessionExists) {
+//                 UltraCleanLogger.info('📁 No session file, but SESSION_ID found in .env');
+//                 UltraCleanLogger.info('🔐 Will create session from .env on auto-connect');
+//             } else if (sessionExists) {
+//                 UltraCleanLogger.info('✅ Session file detected');
 //             }
+            
+//             UltraCleanLogger.info('📦 Auto-loading commands...');
+//             UltraCleanLogger.info('🔗 Auto-connecting to WhatsApp...');
+            
+//             // Handle auto-restart recovery
+//             await restartRecovery.handleAutoRestart();
+            
+//             // Start bot in auto mode
+//             await startBot('auto', null);
+            
+//         } else {
+//             // FIRST TIME SETUP MODE
+//             UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} - FIRST TIME SETUP`);
+//             UltraCleanLogger.info('📱 No session found, showing login options...');
+            
+//             const loginManager = new LoginManager();
+//             const loginInfo = await loginManager.selectMode();
+//             loginManager.close();
+            
+//             const loginData = loginInfo.mode === 'session' ? loginInfo.sessionId : loginInfo.phone;
+//             await startBot(loginInfo.mode, loginData);
 //         }
-        
-//         UltraCleanLogger.info('📱 No valid session found, showing login options...');
-//         const loginManager = new LoginManager();
-//         const loginInfo = await loginManager.selectMode();
-//         loginManager.close();
-        
-//         const loginData = loginInfo.mode === 'session' ? loginInfo.sessionId : loginInfo.phone;
-//         await startBot(loginInfo.mode, loginData);
         
 //     } catch (error) {
 //         UltraCleanLogger.error(`Main error: ${error.message}`);
@@ -4986,57 +5036,88 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
 // }
 
 
-// ====== MAIN APPLICATION ======
+// ====== PROCESS HANDLERS ======
+
 // ====== MAIN APPLICATION ======
 async function main() {
     try {
-        // Check for auto-restart conditions
-        const sessionExists = fs.existsSync('./session/creds.json');
-        const hasEnvSession = process.env.SESSION_ID && process.env.SESSION_ID.trim() !== '';
+        const sessionInfo = getSessionSource();
+        const isHeadless = isHeadlessPlatform();
+        const platform = detectPlatform();
         
-        if (sessionExists || hasEnvSession) {
-            // AUTO-RESTART MODE
-            UltraCleanLogger.success(`🔄 ${BOT_NAME} AUTO-RESTART MODE`);
+        UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION}`);
+        UltraCleanLogger.info(`🏗️ Platform: ${platform} ${isHeadless ? '(Headless)' : ''}`);
+        UltraCleanLogger.info(`📁 Session source: ${sessionInfo.source}`);
+        
+        // HEROKU/HEADLESS LOGIC - Auto-connect if session found
+        if (isHeadless && sessionInfo.exists) {
+            UltraCleanLogger.success(`☁️ ${platform}: Headless mode detected with session`);
+            UltraCleanLogger.info('🔗 Auto-connecting without terminal interaction...');
             
-            if (hasEnvSession && !sessionExists) {
-                UltraCleanLogger.info('📁 No session file, but SESSION_ID found in .env');
-                UltraCleanLogger.info('🔐 Will create session from .env on auto-connect');
-            } else if (sessionExists) {
-                UltraCleanLogger.info('✅ Session file detected');
+            // For Heroku specifically
+            if (platform === 'Heroku') {
+                UltraCleanLogger.info('☁️ Heroku: Running in headless auto-mode');
+                UltraCleanLogger.info('💡 Session will be loaded from config vars');
             }
-            
-            UltraCleanLogger.info('📦 Auto-loading commands...');
-            UltraCleanLogger.info('🔗 Auto-connecting to WhatsApp...');
             
             // Handle auto-restart recovery
             await restartRecovery.handleAutoRestart();
             
             // Start bot in auto mode
             await startBot('auto', null);
-            
-        } else {
-            // FIRST TIME SETUP MODE
-            UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} - FIRST TIME SETUP`);
-            UltraCleanLogger.info('📱 No session found, showing login options...');
-            
-            const loginManager = new LoginManager();
-            const loginInfo = await loginManager.selectMode();
-            loginManager.close();
-            
-            const loginData = loginInfo.mode === 'session' ? loginInfo.sessionId : loginInfo.phone;
-            await startBot(loginInfo.mode, loginData);
+            return;
         }
+        
+        // HEROKU/HEADLESS LOGIC - No session found
+        if (isHeadless && !sessionInfo.exists) {
+            UltraCleanLogger.error(`❌ ${platform}: No session found in headless mode!`);
+            UltraCleanLogger.error('💡 For Heroku/Render/Vercel:');
+            UltraCleanLogger.error('1. Set SESSION_ID environment variable');
+            UltraCleanLogger.error('2. Use WOLF-BOT: format or base64 encoded session');
+            UltraCleanLogger.error('3. Restart the dyno/app');
+            
+            if (platform === 'Heroku') {
+                UltraCleanLogger.error('\n🔧 Heroku Commands:');
+                UltraCleanLogger.error('heroku config:set SESSION_ID="WOLF-BOT:eyJ..."');
+                UltraCleanLogger.error('heroku restart');
+            }
+            
+            // Keep trying in headless mode
+            UltraCleanLogger.info('🔄 Will retry in 10 seconds...');
+            await delay(10000);
+            await main();
+            return;
+        }
+        
+        // LOCAL/VPS WITH TERMINAL - Normal flow
+        UltraCleanLogger.info('💻 Running in terminal mode with interactive login');
+        
+        const loginManager = new LoginManager();
+        const loginInfo = await loginManager.selectMode();
+        loginManager.close();
+        
+        const loginData = loginInfo.mode === 'session' ? loginInfo.sessionId : loginInfo.phone;
+        await startBot(loginInfo.mode, loginData);
         
     } catch (error) {
         UltraCleanLogger.error(`Main error: ${error.message}`);
-        setTimeout(async () => {
+        
+        // If headless, keep retrying
+        if (isHeadlessPlatform()) {
+            UltraCleanLogger.error('🔄 Headless platform: Retrying in 5 seconds...');
+            await delay(5000);
             await main();
-        }, 8000);
+        } else {
+            UltraCleanLogger.error('🔄 Local/VPS: Restarting in 8 seconds...');
+            setTimeout(async () => {
+                await main();
+            }, 8000);
+        }
     }
 }
 
 
-// ====== PROCESS HANDLERS ======
+
 process.on('SIGINT', () => {
     console.log(chalk.yellow('\n👋 Shutting down gracefully...'));
     stopHeartbeat();
