@@ -11,6 +11,11 @@
 
 
 
+
+
+
+
+
 // ====== SILENT WOLFBOT - ULTIMATE CLEAN EDITION (SPEED OPTIMIZED) ======
 // Features: Real-time prefix changes, UltimateFix, Status Detection, Auto-Connect
 // SUPER CLEAN TERMINAL - Zero spam, Zero session noise, Rate limit protection
@@ -347,18 +352,6 @@ const BOT_MODE_FILE = './bot_mode.json';
 const WHITELIST_FILE = './whitelist.json';
 const BLOCKED_USERS_FILE = './blocked_users.json';
 const WELCOME_DATA_FILE = './data/welcome_data.json';
-// ====== AUTO-RESTART DETECTION ======
-// ====== AUTO-RESTART DETECTION ======
-const SESSION_FILE = './session/creds.json';
-const SESSION_EXISTS = fs.existsSync(SESSION_FILE);
-const SESSION_ID_ENV = process.env.SESSION_ID;
-
-if (SESSION_EXISTS || SESSION_ID_ENV) {
-    console.log(chalk.green('🔄 Detected existing session/SESSION_ID - Auto-restart mode enabled'));
-    console.log(chalk.gray('• Commands will auto-load'));
-    console.log(chalk.gray('• Connection will auto-start'));
-    console.log(chalk.gray('• No login required'));
-}
 
 // Auto-connect features
 const AUTO_CONNECT_ON_LINK = true;
@@ -718,20 +711,6 @@ function updatePrefixImmediately(newPrefix) {
 }
 
 // Platform detection
-// function detectPlatform() {
-//     if (process.env.PANEL) return 'Panel';
-//     if (process.env.HEROKU) return 'Heroku';
-//     if (process.env.KATABUMP) return 'Katabump';
-//     if (process.env.AITIMY) return 'Aitimy';
-//     if (process.env.RENDER) return 'Render';
-//     if (process.env.REPLIT) return 'Replit';
-//     if (process.env.VERCEL) return 'Vercel';
-//     if (process.env.GLITCH) return 'Glitch';
-//     return 'Local/VPS';
-// }
-
-
-// Platform detection with headless check
 function detectPlatform() {
     if (process.env.PANEL) return 'Panel';
     if (process.env.HEROKU) return 'Heroku';
@@ -742,32 +721,6 @@ function detectPlatform() {
     if (process.env.VERCEL) return 'Vercel';
     if (process.env.GLITCH) return 'Glitch';
     return 'Local/VPS';
-}
-
-// Check if platform is headless (no terminal)
-function isHeadlessPlatform() {
-    return process.env.HEROKU || process.env.RENDER || process.env.VERCEL || 
-           process.env.REPLIT || process.env.GLITCH || process.env.KATABUMP || 
-           process.env.AITIMY || process.env.PANEL;
-}
-
-// Add session source detection
-function getSessionSource() {
-    if (fs.existsSync('./session/creds.json')) {
-        return { source: 'session_file', exists: true };
-    }
-    
-    // Check for Heroku config var
-    if (process.env.HEROKU && process.env.SESSION_ID && process.env.SESSION_ID.trim() !== '') {
-        return { source: 'heroku_config_var', exists: true, value: process.env.SESSION_ID };
-    }
-    
-    // Check for other headless platforms
-    if (isHeadlessPlatform() && process.env.SESSION_ID && process.env.SESSION_ID.trim() !== '') {
-        return { source: 'env_variable', exists: true, value: process.env.SESSION_ID };
-    }
-    
-    return { source: 'none', exists: false };
 }
 
 // ====== GLOBAL VARIABLES ======
@@ -795,157 +748,7 @@ let hasAutoConnectedOnStart = false;
 let hasSentWelcomeMessage = false;
 let initialCommandsLoaded = false;
 let commandsLoaded = false;
-let hasSentConnectionMessage = false;
- // NEW: Track if connection message sent
-
-
-//  // ====== RESTART AUTO-RECOVERY SYSTEM ======
-// class RestartRecovery {
-//     constructor() {
-//         this.lastRestartTime = Date.now();
-//         this.restartCount = 0;
-//         this.maxRestarts = 5;
-//         this.restartWindow = 300000; // 5 minutes
-//     }
-    
-//     async handleAutoRestart() {
-//         try {
-//             // Check if session exists
-//             if (!fs.existsSync('./session/creds.json')) {
-//                 UltraCleanLogger.warning('⚠️ No session found, cannot auto-restart');
-//                 return false;
-//             }
-            
-//             // Load settings
-//             const settings = this.loadSettings();
-            
-//             UltraCleanLogger.info(`🔁 Auto-restart initiated (Session exists)`);
-            
-//             // Load commands immediately
-//             if (!initialCommandsLoaded) {
-//                 UltraCleanLogger.info('📦 Pre-loading commands for restart...');
-//                 commands.clear();
-//                 commandCategories.clear();
-//                 await loadCommandsFromFolder('./commands');
-//                 initialCommandsLoaded = true;
-//                 commandsLoaded = true;
-//                 UltraCleanLogger.success(`✅ Pre-loaded ${commands.size} commands`);
-//             }
-            
-//             return true;
-            
-//         } catch (error) {
-//             UltraCleanLogger.error(`Auto-restart error: ${error.message}`);
-//             return false;
-//         }
-//     }
-    
-//     loadSettings() {
-//         const settings = {
-//             prefix: DEFAULT_PREFIX,
-//             botName: BOT_NAME,
-//             version: VERSION
-//         };
-        
-//         // Load from files if they exist
-//         try {
-//             if (fs.existsSync(PREFIX_CONFIG_FILE)) {
-//                 const prefixConfig = JSON.parse(fs.readFileSync(PREFIX_CONFIG_FILE, 'utf8'));
-//                 settings.prefix = prefixConfig.prefix || DEFAULT_PREFIX;
-//             }
-            
-//             if (fs.existsSync(BOT_SETTINGS_FILE)) {
-//                 const botSettings = JSON.parse(fs.readFileSync(BOT_SETTINGS_FILE, 'utf8'));
-//                 settings.botName = botSettings.botName || BOT_NAME;
-//             }
-//         } catch (error) {
-//             UltraCleanLogger.warning(`Settings load error: ${error.message}`);
-//         }
-        
-//         return settings;
-//     }
-// }
-
-
-
-class RestartRecovery {
-    constructor() {
-        this.lastRestartTime = Date.now();
-        this.restartCount = 0;
-        this.maxRestarts = 5;
-        this.restartWindow = 300000; // 5 minutes
-    }
-    
-    async handleAutoRestart() {
-        try {
-            // Check if session exists OR SESSION_ID in env
-            const hasSessionFile = fs.existsSync('./session/creds.json');
-            const hasEnvSession = process.env.SESSION_ID && process.env.SESSION_ID.trim() !== '';
-            
-            if (!hasSessionFile && !hasEnvSession) {
-                UltraCleanLogger.warning('⚠️ No session found, cannot auto-restart');
-                return false;
-            }
-            
-            // If env session exists but no file, process it
-            if (hasEnvSession && !hasSessionFile) {
-                UltraCleanLogger.info('🔐 Processing SESSION_ID from .env...');
-                try {
-                    await authenticateWithSessionId(process.env.SESSION_ID);
-                    UltraCleanLogger.success('✅ Session created from .env');
-                } catch (error) {
-                    UltraCleanLogger.error(`❌ Failed to process .env session: ${error.message}`);
-                    return false;
-                }
-            }
-            
-            UltraCleanLogger.info(`🔁 Auto-restart initiated (Session exists)`);
-            
-            // Load commands immediately
-            if (!initialCommandsLoaded) {
-                UltraCleanLogger.info('📦 Pre-loading commands for restart...');
-                commands.clear();
-                commandCategories.clear();
-                await loadCommandsFromFolder('./commands');
-                initialCommandsLoaded = true;
-                commandsLoaded = true;
-                UltraCleanLogger.success(`✅ Pre-loaded ${commands.size} commands`);
-            }
-            
-            return true;
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Auto-restart error: ${error.message}`);
-            return false;
-        }
-    }
-    
-    loadSettings() {
-        const settings = {
-            prefix: DEFAULT_PREFIX,
-            botName: BOT_NAME,
-            version: VERSION
-        };
-        
-        // Load from files if they exist
-        try {
-            if (fs.existsSync(PREFIX_CONFIG_FILE)) {
-                const prefixConfig = JSON.parse(fs.readFileSync(PREFIX_CONFIG_FILE, 'utf8'));
-                settings.prefix = prefixConfig.prefix || DEFAULT_PREFIX;
-            }
-            
-            if (fs.existsSync(BOT_SETTINGS_FILE)) {
-                const botSettings = JSON.parse(fs.readFileSync(BOT_SETTINGS_FILE, 'utf8'));
-                settings.botName = botSettings.botName || BOT_NAME;
-            }
-        } catch (error) {
-            UltraCleanLogger.warning(`Settings load error: ${error.message}`);
-        }
-        
-        return settings;
-    }
-}
-const restartRecovery = new RestartRecovery();
+let hasSentConnectionMessage = false; // NEW: Track if connection message sent
 
 // Utility functions
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -3236,17 +3039,57 @@ function ensureSessionDir() {
     }
 }
 
-function cleanSession() {
+// Replace the cleanSession function with this:
+function cleanSession(preserveExisting = false) {
     try {
+        if (preserveExisting && fs.existsSync(SESSION_DIR)) {
+            // Backup existing session if it exists
+            const backupDir = './session_backup';
+            if (!fs.existsSync(backupDir)) {
+                fs.mkdirSync(backupDir, { recursive: true });
+            }
+            
+            // Copy session files to backup
+            const files = fs.readdirSync(SESSION_DIR);
+            for (const file of files) {
+                const source = path.join(SESSION_DIR, file);
+                const dest = path.join(backupDir, file);
+                fs.copyFileSync(source, dest);
+            }
+            UltraCleanLogger.info('📁 Existing session backed up');
+        }
+        
         if (fs.existsSync(SESSION_DIR)) {
             fs.rmSync(SESSION_DIR, { recursive: true, force: true });
         }
+        
+        // Restore backup if needed
+        if (preserveExisting) {
+            const backupDir = './session_backup';
+            if (fs.existsSync(backupDir)) {
+                if (!fs.existsSync(SESSION_DIR)) {
+                    fs.mkdirSync(SESSION_DIR, { recursive: true });
+                }
+                
+                const files = fs.readdirSync(backupDir);
+                for (const file of files) {
+                    const source = path.join(backupDir, file);
+                    const dest = path.join(SESSION_DIR, file);
+                    fs.copyFileSync(source, dest);
+                }
+                
+                // Clean up backup
+                fs.rmSync(backupDir, { recursive: true, force: true });
+                UltraCleanLogger.info('📁 Session restored from backup');
+            }
+        }
+        
         return true;
-    } catch {
+    } catch (error) {
+        UltraCleanLogger.error(`Session cleanup error: ${error.message}`);
         return false;
     }
 }
-
 class MessageStore {
     constructor() {
         this.messages = new Map();
@@ -3336,6 +3179,39 @@ async function loadCommandsFromFolder(folderPath, category = 'general') {
         }
     } catch {
         // Silent fail
+    }
+}
+// Add this function near the other helper functions
+function checkSessionValidity() {
+    try {
+        const sessionPath = path.join(SESSION_DIR, 'creds.json');
+        
+        if (!fs.existsSync(sessionPath)) {
+            return { valid: false, reason: 'No session file' };
+        }
+        
+        const sessionData = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
+        
+        // Check for required Baileys session fields
+        const requiredFields = ['noiseKey', 'signedIdentityKey', 'pairingEphemeralKeyPair'];
+        for (const field of requiredFields) {
+            if (!sessionData[field]) {
+                return { valid: false, reason: `Missing field: ${field}` };
+            }
+        }
+        
+        // Check if session is expired (older than 90 days)
+        const sessionAge = Date.now() - (sessionData.registrationId || 0);
+        const maxAge = 90 * 24 * 60 * 60 * 1000; // 90 days in milliseconds
+        
+        if (sessionAge > maxAge) {
+            return { valid: false, reason: 'Session expired' };
+        }
+        
+        return { valid: true, data: sessionData };
+        
+    } catch (error) {
+        return { valid: false, reason: `Error: ${error.message}` };
     }
 }
 
@@ -3568,63 +3444,30 @@ prefixCache = loadPrefixFromFiles();
 isPrefixless = prefixCache === '' ? true : false;
 updateTerminalHeader();
 
-async function startBot(loginMode = 'pair', loginData = null) {
+// ====== MAIN BOT FUNCTION ======
+async function startBot(loginMode = 'auto', loginData = null) {
     try {
         UltraCleanLogger.info('🚀 Initializing WhatsApp connection...');
         
-        const sessionInfo = getSessionSource();
-        const isHeadless = isHeadlessPlatform();
-        const platform = detectPlatform();
-        
-        UltraCleanLogger.info(`📁 Session source: ${sessionInfo.source}`);
-        UltraCleanLogger.info(`🏗️ Platform mode: ${isHeadless ? 'Headless' : 'Interactive'}`);
-        
-        // Handle headless platforms (Heroku, Render, Vercel, etc.)
-        if (isHeadless && loginMode === 'auto') {
-            UltraCleanLogger.info(`☁️ ${platform}: Running in headless auto-connect mode`);
-            
-            // Process session from environment if no file exists
-            if (!fs.existsSync('./session/creds.json') && sessionInfo.exists) {
-                UltraCleanLogger.info(`🔐 Creating session from ${sessionInfo.source}...`);
-                try {
-                    await authenticateWithSessionId(sessionInfo.value);
-                    UltraCleanLogger.success(`✅ Session created for ${platform}`);
-                    
-                    // Log platform-specific info
-                    if (platform === 'Heroku') {
-                        UltraCleanLogger.info('☁️ Heroku: Session ready from config vars');
-                    }
-                } catch (error) {
-                    UltraCleanLogger.error(`❌ ${platform}: Failed to create session: ${error.message}`);
-                    
-                    if (platform === 'Heroku') {
-                        UltraCleanLogger.error('💡 Heroku troubleshooting:');
-                        UltraCleanLogger.error('1. Check SESSION_ID in Config Vars');
-                        UltraCleanLogger.error('2. Format: WOLF-BOT:eyJ... or base64');
-                        UltraCleanLogger.error('3. Verify it"s valid WhatsApp session');
-                    }
-                    
-                    // For headless platforms, keep retrying
-                    UltraCleanLogger.info(`🔄 ${platform}: Will retry connection...`);
-                    setTimeout(async () => {
-                        await startBot('auto', null);
-                    }, 10000);
-                    return;
-                }
-            }
-        } 
-        else if (loginMode === 'session' && loginData) {
+        // Handle different login modes
+        if (loginMode === 'session' && loginData) {
             try {
                 UltraCleanLogger.info('🔐 Processing Session ID...');
                 await authenticateWithSessionId(loginData);
-                UltraCleanLogger.success('✅ Session saved');
+                UltraCleanLogger.success('✅ Session saved to session/creds.json');
             } catch (error) {
                 UltraCleanLogger.error(`❌ Session processing failed: ${error.message}`);
             }
         }
         
-        // Rest of your code continues...
-
+        // For 'auto' mode, ensure session directory exists
+        if (loginMode === 'auto') {
+            ensureSessionDir();
+            UltraCleanLogger.info('🔄 Loading existing session from storage...');
+        }
+        
+        // Rest of your existing startBot function remains the same...
+        // ... (keep all the existing code from line 1861)
         
         let commandLoadPromise = Promise.resolve();
         if (!initialCommandsLoaded) {
@@ -3790,7 +3633,7 @@ async function startBot(loginMode = 'pair', loginData = null) {
                         const ownerInfo = jidManager.getOwnerInfo();
                         const displayOwnerNumber = ownerInfo?.ownerNumber ? ownerInfo.ownerNumber.split(':')[0] : 'Not set';
                         
-                        const successMessage = `╭⊷『 🐺 WOLFBOT 』\n│\n├⊷ *Name:* ${BOT_NAME}\n├⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├⊷ *Owner:* (${displayOwnerNumber})\n├⊷ *Platform:* ${detectPlatform()}\n├⊷ *Mode:* ${BOT_MODE}\n└⊷ *Status:* ✅ Connected\n\n╰⊷ *Silent Wolf Online* 🐾`;
+                        const successMessage = `╭─⊷『 🐺 WOLFBOT 』\n│\n├─⊷ *Name:* ${BOT_NAME}\n├─⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├─⊷ *Owner:* (${displayOwnerNumber})\n├─⊷ *Platform:* ${detectPlatform()}\n├─⊷ *Mode:* ${BOT_MODE}\n└─⊷ *Status:* ✅ Connected\n\n╰─⊷ *Silent Wolf Online* 🐾`;
                         
                         if (ownerInfo && ownerInfo.ownerJid) {
                             await sock.sendMessage(ownerInfo.ownerJid, { text: successMessage });
@@ -4020,12 +3863,7 @@ async function startBot(loginMode = 'pair', loginData = null) {
     }
 }
 
-
-
-
-
-
-
+// ====== RESTART AUTO-FIX TRIGGER ======
 async function triggerRestartAutoFix(sock) {
     try {
         if (fs.existsSync(OWNER_FILE) && sock.user?.id) {
@@ -4068,7 +3906,6 @@ async function triggerRestartAutoFix(sock) {
     }
 }
 
-// ====== CONNECTION HANDLERS ======
 async function handleSuccessfulConnection(sock, loginMode, loginData) {
     const currentTime = new Date().toLocaleTimeString();
     
@@ -4076,6 +3913,7 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
     OWNER_NUMBER = OWNER_JID.split('@')[0];
     
     const isFirstConnection = !fs.existsSync(OWNER_FILE);
+    const isAutoReconnect = loginMode === 'auto';
     
     if (isFirstConnection) {
         jidManager.setNewOwner(OWNER_JID, false);
@@ -4090,11 +3928,20 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
     
     updateTerminalHeader();
     
+    let connectionMethod = '';
+    if (loginMode === 'auto') {
+        connectionMethod = 'AUTO-RECONNECT';
+    } else if (loginMode === 'session') {
+        connectionMethod = 'SESSION ID';
+    } else {
+        connectionMethod = 'PAIR CODE';
+    }
+    
     console.log(chalk.greenBright(`
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                    🐺 ${chalk.bold('WOLFBOT ONLINE')} - v${VERSION} (PREFIXLESS & MEMBER DETECTION) ║
 ╠══════════════════════════════════════════════════════════════════════╣
-║  ✅ Connected successfully!                            
+║  ✅ ${isAutoReconnect ? 'Auto-reconnected' : 'Connected'} successfully!                            
 ║  👑 Owner : +${ownerInfo.ownerNumber}
 ║  🔧 Clean JID : ${ownerInfo.ownerJid}
 ║  🔗 LID : ${ownerInfo.ownerLid || 'Not set'}
@@ -4103,7 +3950,7 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
 ║  🔥 Status : ${chalk.redBright('24/7 Ready!')}         
 ║  💬 Prefix : ${prefixDisplay}
 ║  🎛️ Mode   : ${BOT_MODE}
-║  🔐 Method : ${chalk.cyan(loginMode === 'pair' ? 'PAIR CODE' : 'SESSION ID')}  
+║  🔐 Method : ${chalk.cyan(connectionMethod)}  
 ║  📊 Commands: ${commands.size} commands loaded
 ║  🔧 AUTO ULTIMATE FIX : ✅ ENABLED
 ║  👁️ STATUS DETECTOR  : ✅ ACTIVE
@@ -4112,7 +3959,7 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
 ║  🛡️ RATE LIMIT PROTECTION : ✅ ACTIVE
 ║  🔗 AUTO-CONNECT ON LINK: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}
 ║  🔄 AUTO-CONNECT ON START: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}
-║  🔐 SESSION MODE: ${loginMode === 'session' ? '✅ USED' : '❌ NOT USED'}
+║  🔐 AUTO-RECONNECT : ✅ ENABLED
 ║  🏗️ Platform : ${platform}
 ║  🔊 CONSOLE FILTER : ✅ ULTRA CLEAN ACTIVE
 ║  ⚡ RESPONSE SPEED : ✅ OPTIMIZED
@@ -4121,7 +3968,8 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
 ╚══════════════════════════════════════════════════════════════════════╝
 `));
     
-    if (isFirstConnection && !hasSentWelcomeMessage) {
+    // Only send welcome message if not auto-reconnecting
+    if (!isAutoReconnect && isFirstConnection && !hasSentWelcomeMessage) {
         try {
             const start = Date.now();
             const cleaned = jidManager.cleanJid(OWNER_JID);
@@ -4172,6 +4020,24 @@ _🐺 The Moon Watches — Welcome New Owner_
             }, 1200);
         } catch {
             // Silent fail
+        }
+    } else if (isAutoReconnect) {
+        // Send auto-reconnect notification to owner
+        try {
+            const reconnectMessage = `🔄 *${BOT_NAME} AUTO-RECONNECTED!*\n\n` +
+                                   `✅ Bot has automatically reconnected after restart\n` +
+                                   `⏰ Time: ${currentTime}\n` +
+                                   `🔗 Method: Saved Session\n` +
+                                   `🎛️ Mode: ${BOT_MODE}\n` +
+                                   `💬 Prefix: ${prefixDisplay}\n\n` +
+                                   `🎉 All features are restored and ready!`;
+            
+            if (ownerInfo.ownerJid) {
+                await sock.sendMessage(ownerInfo.ownerJid, { text: reconnectMessage });
+                UltraCleanLogger.success('✅ Auto-reconnect notification sent to owner');
+            }
+        } catch (error) {
+            UltraCleanLogger.warning('⚠️ Could not send auto-reconnect notification');
         }
     }
 }
@@ -4987,111 +4853,88 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
     }
 }
 
-
-// async function main() {
-//     try {
-//         // Check for auto-restart conditions
-//         const sessionExists = fs.existsSync('./session/creds.json');
-//         const hasEnvSession = process.env.SESSION_ID && process.env.SESSION_ID.trim() !== '';
-        
-//         if (sessionExists || hasEnvSession) {
-//             // AUTO-RESTART MODE
-//             UltraCleanLogger.success(`🔄 ${BOT_NAME} AUTO-RESTART MODE`);
-            
-//             if (hasEnvSession && !sessionExists) {
-//                 UltraCleanLogger.info('📁 No session file, but SESSION_ID found in .env');
-//                 UltraCleanLogger.info('🔐 Will create session from .env on auto-connect');
-//             } else if (sessionExists) {
-//                 UltraCleanLogger.info('✅ Session file detected');
-//             }
-            
-//             UltraCleanLogger.info('📦 Auto-loading commands...');
-//             UltraCleanLogger.info('🔗 Auto-connecting to WhatsApp...');
-            
-//             // Handle auto-restart recovery
-//             await restartRecovery.handleAutoRestart();
-            
-//             // Start bot in auto mode
-//             await startBot('auto', null);
-            
-//         } else {
-//             // FIRST TIME SETUP MODE
-//             UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} - FIRST TIME SETUP`);
-//             UltraCleanLogger.info('📱 No session found, showing login options...');
-            
-//             const loginManager = new LoginManager();
-//             const loginInfo = await loginManager.selectMode();
-//             loginManager.close();
-            
-//             const loginData = loginInfo.mode === 'session' ? loginInfo.sessionId : loginInfo.phone;
-//             await startBot(loginInfo.mode, loginData);
-//         }
-        
-//     } catch (error) {
-//         UltraCleanLogger.error(`Main error: ${error.message}`);
-//         setTimeout(async () => {
-//             await main();
-//         }, 8000);
-//     }
-// }
-
-
-// ====== PROCESS HANDLERS ======
-
+// ====== MAIN APPLICATION ======
+// ====== MAIN APPLICATION ======
 // ====== MAIN APPLICATION ======
 async function main() {
     try {
-        const sessionInfo = getSessionSource();
-        const isHeadless = isHeadlessPlatform();
-        const platform = detectPlatform();
+        UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
+        UltraCleanLogger.info(`Loaded prefix: "${isPrefixless ? 'none (prefixless)' : getCurrentPrefix()}"`);
+        UltraCleanLogger.info(`Prefixless mode: ${isPrefixless ? '✅ ENABLED' : '❌ DISABLED'}`);
+        UltraCleanLogger.info(`Auto-connect on link: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}`);
+        UltraCleanLogger.info(`Auto-connect on start: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}`);
+        UltraCleanLogger.info(`Rate limit protection: ${RATE_LIMIT_ENABLED ? '✅' : '❌'}`);
+        UltraCleanLogger.info(`Console filtering: ✅ ULTRA CLEAN ACTIVE`);
+        UltraCleanLogger.info(`⚡ Response speed: OPTIMIZED (Reduced delays by 50-70%)`);
+        UltraCleanLogger.info(`🔐 Session ID support: ✅ ENABLED (WOLF-BOT: format)`);
+        UltraCleanLogger.info(`🎯 Member Detection: ✅ ENABLED (New members in groups)`);
+        UltraCleanLogger.info(`🔐 Anti-ViewOnce: ✅ ENABLED (Private/Auto modes)`);
+        UltraCleanLogger.info(`👥 Welcome System: ✅ ENABLED (Auto-welcome new members)`);
+        UltraCleanLogger.info(`🎯 Background processes: ✅ ENABLED`);
+
+        // ====== AGGRESSIVE AUTO-RECONNECT LOGIC ======
+        // 1. First try to load existing session directory
+        const sessionDirExists = fs.existsSync(SESSION_DIR);
+        const credsExist = fs.existsSync(path.join(SESSION_DIR, 'creds.json'));
         
-        UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION}`);
-        UltraCleanLogger.info(`🏗️ Platform: ${platform} ${isHeadless ? '(Headless)' : ''}`);
-        UltraCleanLogger.info(`📁 Session source: ${sessionInfo.source}`);
-        
-        // HEROKU/HEADLESS LOGIC - Auto-connect if session found
-        if (isHeadless && sessionInfo.exists) {
-            UltraCleanLogger.success(`☁️ ${platform}: Headless mode detected with session`);
-            UltraCleanLogger.info('🔗 Auto-connecting without terminal interaction...');
+        if (sessionDirExists && credsExist) {
+            UltraCleanLogger.success('🔐 Found session directory with creds.json, attempting auto-reconnect...');
             
-            // For Heroku specifically
-            if (platform === 'Heroku') {
-                UltraCleanLogger.info('☁️ Heroku: Running in headless auto-mode');
-                UltraCleanLogger.info('💡 Session will be loaded from config vars');
+            try {
+                // Try to read the session file
+                const sessionData = JSON.parse(fs.readFileSync(path.join(SESSION_DIR, 'creds.json'), 'utf8'));
+                
+                // Check for basic required fields (more lenient check)
+                if (sessionData && (sessionData.noiseKey || sessionData.signedIdentityKey || sessionData.creds)) {
+                    UltraCleanLogger.success('✅ Session file looks valid, auto-connecting...');
+                    await startBot('auto', null);
+                    return;
+                } else {
+                    UltraCleanLogger.warning('⚠️ Session file exists but may be corrupted');
+                }
+            } catch (sessionError) {
+                UltraCleanLogger.error(`❌ Error loading session: ${sessionError.message}`);
             }
-            
-            // Handle auto-restart recovery
-            await restartRecovery.handleAutoRestart();
-            
-            // Start bot in auto mode
-            await startBot('auto', null);
-            return;
         }
         
-        // HEROKU/HEADLESS LOGIC - No session found
-        if (isHeadless && !sessionInfo.exists) {
-            UltraCleanLogger.error(`❌ ${platform}: No session found in headless mode!`);
-            UltraCleanLogger.error('💡 For Heroku/Render/Vercel:');
-            UltraCleanLogger.error('1. Set SESSION_ID environment variable');
-            UltraCleanLogger.error('2. Use WOLF-BOT: format or base64 encoded session');
-            UltraCleanLogger.error('3. Restart the dyno/app');
+        // 2. Check for SESSION_ID in .env as secondary option
+        const sessionIdFromEnv = process.env.SESSION_ID;
+        const hasEnvSession = sessionIdFromEnv && sessionIdFromEnv.trim() !== '';
+        
+        if (hasEnvSession) {
+            UltraCleanLogger.info('🔐 Found SESSION_ID in .env, attempting auto-login...');
             
-            if (platform === 'Heroku') {
-                UltraCleanLogger.error('\n🔧 Heroku Commands:');
-                UltraCleanLogger.error('heroku config:set SESSION_ID="WOLF-BOT:eyJ..."');
-                UltraCleanLogger.error('heroku restart');
+            try {
+                const sessionData = parseWolfBotSession(sessionIdFromEnv);
+                if (sessionData) {
+                    UltraCleanLogger.success('✅ Valid session ID found in .env, auto-connecting...');
+                    await startBot('session', sessionIdFromEnv);
+                    return;
+                }
+            } catch (error) {
+                UltraCleanLogger.warning(`❌ Session ID validation failed: ${error.message}`);
             }
-            
-            // Keep trying in headless mode
-            UltraCleanLogger.info('🔄 Will retry in 10 seconds...');
-            await delay(10000);
-            await main();
-            return;
         }
         
-        // LOCAL/VPS WITH TERMINAL - Normal flow
-        UltraCleanLogger.info('💻 Running in terminal mode with interactive login');
+        // 3. If no session found, check if we should attempt pairing with saved phone
+        const ownerFileExists = fs.existsSync(OWNER_FILE);
+        if (ownerFileExists) {
+            try {
+                const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
+                if (ownerData.OWNER_NUMBER) {
+                    UltraCleanLogger.info(`📱 Found saved owner number: ${ownerData.OWNER_NUMBER}, attempting to reconnect...`);
+                    
+                    // Try to reconnect with saved phone number
+                    await startBot('pair', ownerData.OWNER_NUMBER);
+                    return;
+                }
+            } catch (error) {
+                UltraCleanLogger.warning(`Could not load owner data: ${error.message}`);
+            }
+        }
         
+        // 4. If all else fails, show login options
+        UltraCleanLogger.info('📱 No valid session found, showing login options...');
         const loginManager = new LoginManager();
         const loginInfo = await loginManager.selectMode();
         loginManager.close();
@@ -5101,23 +4944,12 @@ async function main() {
         
     } catch (error) {
         UltraCleanLogger.error(`Main error: ${error.message}`);
-        
-        // If headless, keep retrying
-        if (isHeadlessPlatform()) {
-            UltraCleanLogger.error('🔄 Headless platform: Retrying in 5 seconds...');
-            await delay(5000);
+        setTimeout(async () => {
             await main();
-        } else {
-            UltraCleanLogger.error('🔄 Local/VPS: Restarting in 8 seconds...');
-            setTimeout(async () => {
-                await main();
-            }, 8000);
-        }
+        }, 8000);
     }
 }
-
-
-
+// ====== PROCESS HANDLERS ======
 process.on('SIGINT', () => {
     console.log(chalk.yellow('\n👋 Shutting down gracefully...'));
     stopHeartbeat();
