@@ -127,11 +127,11 @@ export default {
             }
 
             // Warn if bot is not admin for certain modes
-            if (!botIsAdmin && (mode === 'delete' || mode === 'kick')) {
-                await sock.sendMessage(chatId, { 
-                    text: '⚠️ *Warning:* I need admin permissions for delete/kick modes!\n\nPlease make me an admin for these features to work properly.' 
-                }, { quoted: msg });
-            }
+            // if (!botIsAdmin && (mode === 'delete' || mode === 'kick')) {
+            //     await sock.sendMessage(chatId, { 
+            //         text: '⚠️ *Warning:* I need admin permissions for delete/kick modes!\n\nPlease make me an admin for these features to work properly.' 
+            //     }, { quoted: msg });
+            // }
 
             // Warn if bot is not superadmin for kick mode
             if (!botIsSuperAdmin && mode === 'kick') {
@@ -176,7 +176,7 @@ export default {
             }).join('\n');
 
             await sock.sendMessage(chatId, { 
-                text: `✅ *Anti-Video enabled!*\n\nMode: *${mode.toUpperCase()}*\n${modeDescriptions[mode]}\n\nBlocked video types:\n${typesText}\n\nAdmins are exempt from this rule.\n\nTo disable: \`.antivideo off\`` 
+                text: `✅ *Anti-Video enabled!*\n\nMode: *${mode.toUpperCase()}*\n` 
             }, { quoted: msg });
 
         } 

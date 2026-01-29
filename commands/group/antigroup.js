@@ -249,12 +249,12 @@ export default {
                 }, { quoted: msg });
             }
 
-            // Warn if bot is not admin for certain modes
-            if (!botIsAdmin && (mode === 'delete' || mode === 'kick')) {
-                await sock.sendMessage(chatId, { 
-                    text: '⚠️ *Warning:* I need admin permissions for delete/kick modes!\n\nPlease make me an admin for these features to work properly.' 
-                }, { quoted: msg });
-            }
+            // // Warn if bot is not admin for certain modes
+            // if (!botIsAdmin && (mode === 'delete' || mode === 'kick')) {
+            //     await sock.sendMessage(chatId, { 
+            //         text: '⚠️ *Warning:* I need admin permissions for delete/kick modes!\n\nPlease make me an admin for these features to work properly.' 
+            //     }, { quoted: msg });
+            // }
 
             // Warn if bot is not superadmin for kick mode
             if (!botIsSuperAdmin && mode === 'kick') {

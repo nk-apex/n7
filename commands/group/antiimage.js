@@ -736,12 +736,12 @@ export default {
                 }, { quoted: msg });
             }
 
-            // Warn if bot is not admin for certain modes
-            if (!botIsAdmin && (mode === 'delete' || mode === 'kick')) {
-                await sock.sendMessage(chatId, { 
-                    text: '⚠️ *Warning:* I need admin permissions for delete/kick modes!\n\nPlease make me an admin for these features to work properly.' 
-                }, { quoted: msg });
-            }
+            // // Warn if bot is not admin for certain modes
+            // if (!botIsAdmin && (mode === 'delete' || mode === 'kick')) {
+            //     await sock.sendMessage(chatId, { 
+            //         text: '⚠️ *Warning:* I need admin permissions for delete/kick modes!\n\nPlease make me an admin for these features to work properly.' 
+            //     }, { quoted: msg });
+            // }
 
             // Warn if bot is not superadmin for kick mode
             if (!botIsSuperAdmin && mode === 'kick') {
@@ -779,7 +779,7 @@ export default {
             };
 
             await sock.sendMessage(chatId, { 
-                text: `✅ *Anti-Image enabled!*\n\nMode: *${mode.toUpperCase()}*\n${modeDescriptions[mode]}\n\nAdmins are exempt from this rule.\n\nTo disable: \`.antiimage off\`` 
+                text: `✅ *Anti-Image enabled!*\n\nMode: *${mode.toUpperCase()}*\n` 
             }, { quoted: msg });
 
         } 
