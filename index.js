@@ -367,14 +367,14 @@ const RATE_LIMIT_ENABLED = true;
 const MIN_COMMAND_DELAY = 1000;
 const STICKER_DELAY = 2000;
 
-// Auto-join group configuration
-const AUTO_JOIN_ENABLED = true;
-const AUTO_JOIN_DELAY = 5000;
-const SEND_WELCOME_MESSAGE = true;
-const GROUP_LINK = 'https://chat.whatsapp.com/G3RopQF1UcSD7AeoVsd6PG';
-const GROUP_INVITE_CODE = GROUP_LINK.split('/').pop();
-const GROUP_NAME = 'WolfBot Community';
-const AUTO_JOIN_LOG_FILE = './auto_join_log.json';
+// // Auto-join group configuration
+// const AUTO_JOIN_ENABLED = true;
+// const AUTO_JOIN_DELAY = 5000;
+// const SEND_WELCOME_MESSAGE = true;
+// const GROUP_LINK = 'https://chat.whatsapp.com/G3RopQF1UcSD7AeoVsd6PG';
+// const GROUP_INVITE_CODE = GROUP_LINK.split('/').pop();
+// const GROUP_NAME = 'WolfBot Community';
+// const AUTO_JOIN_LOG_FILE = './auto_join_log.json';
 
 // ====== SILENCE BAILEYS ======
 function silenceBaileysCompletely() {
@@ -1272,218 +1272,220 @@ class NewMemberDetector {
 const memberDetector = new NewMemberDetector();
 
 // ====== AUTO GROUP JOIN SYSTEM ======
-class AutoGroupJoinSystem {
-    constructor() {
-        this.initialized = false;
-        this.invitedUsers = new Set();
-        this.loadInvitedUsers();
-        UltraCleanLogger.success('Auto-Join System initialized');
-    }
+// class AutoGroupJoinSystem {
+//     constructor() {
+//         this.initialized = false;
+//         this.invitedUsers = new Set();
+//         this.loadInvitedUsers();
+//         UltraCleanLogger.success('Auto-Join System initialized');
+//     }
 
-    loadInvitedUsers() {
-        try {
-            if (fs.existsSync(AUTO_JOIN_LOG_FILE)) {
-                const data = JSON.parse(fs.readFileSync(AUTO_JOIN_LOG_FILE, 'utf8'));
-                data.users.forEach(user => this.invitedUsers.add(user));
-                UltraCleanLogger.info(`📊 Loaded ${this.invitedUsers.size} previously invited users`);
-            }
-        } catch (error) {
-            // Silent fail
-        }
-    }
+//     loadInvitedUsers() {
+//         try {
+//             if (fs.existsSync(AUTO_JOIN_LOG_FILE)) {
+//                 const data = JSON.parse(fs.readFileSync(AUTO_JOIN_LOG_FILE, 'utf8'));
+//                 data.users.forEach(user => this.invitedUsers.add(user));
+//                 UltraCleanLogger.info(`📊 Loaded ${this.invitedUsers.size} previously invited users`);
+//             }
+//         } catch (error) {
+//             // Silent fail
+//         }
+//     }
 
-    saveInvitedUser(userJid) {
-        try {
-            this.invitedUsers.add(userJid);
+//     saveInvitedUser(userJid) {
+//         try {
+//             this.invitedUsers.add(userJid);
             
-            let data = { 
-                users: [], 
-                lastUpdated: new Date().toISOString(),
-                totalInvites: 0
-            };
+//             let data = { 
+//                 users: [], 
+//                 lastUpdated: new Date().toISOString(),
+//                 totalInvites: 0
+//             };
             
-            if (fs.existsSync(AUTO_JOIN_LOG_FILE)) {
-                data = JSON.parse(fs.readFileSync(AUTO_JOIN_LOG_FILE, 'utf8'));
-            }
+//             if (fs.existsSync(AUTO_JOIN_LOG_FILE)) {
+//                 data = JSON.parse(fs.readFileSync(AUTO_JOIN_LOG_FILE, 'utf8'));
+//             }
             
-            if (!data.users.includes(userJid)) {
-                data.users.push(userJid);
-                data.totalInvites = data.users.length;
-                data.lastUpdated = new Date().toISOString();
-                fs.writeFileSync(AUTO_JOIN_LOG_FILE, JSON.stringify(data, null, 2));
-                UltraCleanLogger.success(`✅ Saved invited user: ${userJid}`);
-            }
-        } catch (error) {
-            UltraCleanLogger.error(`❌ Error saving invited user: ${error.message}`);
-        }
-    }
+//             if (!data.users.includes(userJid)) {
+//                 data.users.push(userJid);
+//                 data.totalInvites = data.users.length;
+//                 data.lastUpdated = new Date().toISOString();
+//                 fs.writeFileSync(AUTO_JOIN_LOG_FILE, JSON.stringify(data, null, 2));
+//                 UltraCleanLogger.success(`✅ Saved invited user: ${userJid}`);
+//             }
+//         } catch (error) {
+//             UltraCleanLogger.error(`❌ Error saving invited user: ${error.message}`);
+//         }
+//     }
 
-    isOwner(userJid, jidManager) {
-        if (!jidManager.owner || !jidManager.owner.cleanNumber) return false;
-        return userJid === jidManager.owner.cleanJid || 
-               userJid === jidManager.owner.rawJid ||
-               userJid.includes(jidManager.owner.cleanNumber);
-    }
+//     isOwner(userJid, jidManager) {
+//         if (!jidManager.owner || !jidManager.owner.cleanNumber) return false;
+//         return userJid === jidManager.owner.cleanJid || 
+//                userJid === jidManager.owner.rawJid ||
+//                userJid.includes(jidManager.owner.cleanNumber);
+//     }
 
-    async sendWelcomeMessage(sock, userJid) {
-        if (!SEND_WELCOME_MESSAGE) return;
+//     async sendWelcomeMessage(sock, userJid) {
+//         if (!SEND_WELCOME_MESSAGE) return;
         
-        try {
-            await sock.sendMessage(userJid, {
-                text: `🎉 *WELCOME TO WOLFBOT!*\n\n` +
-                      `Thank you for connecting with WolfBot! 🤖\n\n` +
-                      `✨ *Features Available:*\n` +
-                      `• Multiple command categories\n` +
-                      `• Group management tools\n` +
-                      `• Media downloading\n` +
-                      `• Anti-ViewOnce system\n` +
-                      `• And much more!\n\n` +
-                      `You're being automatically invited to join our official community group...\n` +
-                      `Please wait a moment... ⏳`
-            });
-        } catch (error) {
-            UltraCleanLogger.error(`❌ Could not send welcome message: ${error.message}`);
-        }
-    }
+//         try {
+//             await sock.sendMessage(userJid, {
+//                 text: `🎉 *WELCOME TO WOLFBOT!*\n\n` +
+//                       `Thank you for connecting with WolfBot! 🤖\n\n` +
+//                       `✨ *Features Available:*\n` +
+//                       `• Multiple command categories\n` +
+//                       `• Group management tools\n` +
+//                       `• Media downloading\n` +
+//                       `• Anti-ViewOnce system\n` +
+//                       `• And much more!\n\n` +
+//                       `You're being automatically invited to join our official community group...\n` +
+//                       `Please wait a moment... ⏳`
+//             });
+//         } catch (error) {
+//             UltraCleanLogger.error(`❌ Could not send welcome message: ${error.message}`);
+//         }
+//     }
 
-    async sendGroupInvitation(sock, userJid, isOwner = false) {
-        try {
-            const message = isOwner 
-                ? `👑 *OWNER AUTO-JOIN*\n\n` +
-                  `You are being automatically added to the group...\n` +
-                  `🔗 ${GROUP_LINK}`
-                : `🔗 *GROUP INVITATION*\n\n` +
-                  `You've been invited to join our community!\n\n` +
-                  `*Group Name:* ${GROUP_NAME}\n` +
-                  `*Features:*\n` +
-                  `• Bot support & updates\n` +
-                  `• Community chat\n` +
-                  `• Exclusive features\n` +
-                  `• Anti-ViewOnce protection\n\n` +
-                  `Click to join: ${GROUP_LINK}`;
+//     async sendGroupInvitation(sock, userJid, isOwner = false) {
+//         try {
+//             const message = isOwner 
+//                 ? `👑 *OWNER AUTO-JOIN*\n\n` +
+//                   `You are being automatically added to the group...\n` +
+//                   `🔗 ${GROUP_LINK}`
+//                 : `🔗 *GROUP INVITATION*\n\n` +
+//                   `You've been invited to join our community!\n\n` +
+//                   `*Group Name:* ${GROUP_NAME}\n` +
+//                   `*Features:*\n` +
+//                   `• Bot support & updates\n` +
+//                   `• Community chat\n` +
+//                   `• Exclusive features\n` +
+//                   `• Anti-ViewOnce protection\n\n` +
+//                   `Click to join: ${GROUP_LINK}`;
             
-            await sock.sendMessage(userJid, { text: message });
-            return true;
-        } catch (error) {
-            UltraCleanLogger.error(`❌ Could not send group invitation: ${error.message}`);
-            return false;
-        }
-    }
+//             await sock.sendMessage(userJid, { text: message });
+//             return true;
+//         } catch (error) {
+//             UltraCleanLogger.error(`❌ Could not send group invitation: ${error.message}`);
+//             return false;
+//         }
+//     }
 
-    async attemptAutoAdd(sock, userJid, isOwner = false) {
-        try {
-            UltraCleanLogger.info(`🔄 Attempting to auto-add ${isOwner ? 'owner' : 'user'} ${userJid} to group...`);
+//     async attemptAutoAdd(sock, userJid, isOwner = false) {
+//         try {
+//             UltraCleanLogger.info(`🔄 Attempting to auto-add ${isOwner ? 'owner' : 'user'} ${userJid} to group...`);
             
-            let groupId;
-            try {
-                groupId = await sock.groupAcceptInvite(GROUP_INVITE_CODE);
-                UltraCleanLogger.success(`✅ Successfully accessed group: ${groupId}`);
-            } catch (inviteError) {
-                UltraCleanLogger.warning(`⚠️ Could not accept invite, trying direct add: ${inviteError.message}`);
-                throw new Error('Could not access group with invite code');
-            }
+//             let groupId;
+//             try {
+//                 groupId = await sock.groupAcceptInvite(GROUP_INVITE_CODE);
+//                 UltraCleanLogger.success(`✅ Successfully accessed group: ${groupId}`);
+//             } catch (inviteError) {
+//                 UltraCleanLogger.warning(`⚠️ Could not accept invite, trying direct add: ${inviteError.message}`);
+//                 throw new Error('Could not access group with invite code');
+//             }
             
-            await sock.groupParticipantsUpdate(groupId, [userJid], 'add');
-            UltraCleanLogger.success(`✅ Successfully added ${userJid} to group`);
+//             await sock.groupParticipantsUpdate(groupId, [userJid], 'add');
+//             UltraCleanLogger.success(`✅ Successfully added ${userJid} to group`);
             
-            const successMessage = isOwner
-                ? `✅ *SUCCESSFULLY JOINED!*\n\n` +
-                  `You have been automatically added to the group!\n` +
-                  `The bot is now fully operational there. 🎉`
-                : `✅ *WELCOME TO THE GROUP!*\n\n` +
-                  `You have been successfully added to ${GROUP_NAME}!\n` +
-                  `Please introduce yourself when you join. 👋`;
+//             const successMessage = isOwner
+//                 ? `✅ *SUCCESSFULLY JOINED!*\n\n` +
+//                   `You have been automatically added to the group!\n` +
+//                   `The bot is now fully operational there. 🎉`
+//                 : `✅ *WELCOME TO THE GROUP!*\n\n` +
+//                   `You have been successfully added to ${GROUP_NAME}!\n` +
+//                   `Please introduce yourself when you join. 👋`;
             
-            await sock.sendMessage(userJid, { text: successMessage });
+//             await sock.sendMessage(userJid, { text: successMessage });
             
-            return true;
+//             return true;
             
-        } catch (error) {
-            UltraCleanLogger.error(`❌ Auto-add failed for ${userJid}: ${error.message}`);
+//         } catch (error) {
+//             UltraCleanLogger.error(`❌ Auto-add failed for ${userJid}: ${error.message}`);
             
-            const manualMessage = isOwner
-                ? `⚠️ *MANUAL JOIN REQUIRED*\n\n` +
-                  `Could not auto-add you to the group.\n\n` +
-                  `*Please join manually:*\n` +
-                  `${GROUP_LINK}\n\n` +
-                  `Once joined, the bot will work there immediately.`
-                : `⚠️ *MANUAL JOIN REQUIRED*\n\n` +
-                  `Could not auto-add you to the group.\n\n` +
-                  `*Please join manually:*\n` +
-                  `${GROUP_LINK}\n\n` +
-                  `We'd love to have you in our community!`;
+//             const manualMessage = isOwner
+//                 ? `⚠️ *MANUAL JOIN REQUIRED*\n\n` +
+//                   `Could not auto-add you to the group.\n\n` +
+//                   `*Please join manually:*\n` +
+//                   `${GROUP_LINK}\n\n` +
+//                   `Once joined, the bot will work there immediately.`
+//                 : `⚠️ *MANUAL JOIN REQUIRED*\n\n` +
+//                   `Could not auto-add you to the group.\n\n` +
+//                   `*Please join manually:*\n` +
+//                   `${GROUP_LINK}\n\n` +
+//                   `We'd love to have you in our community!`;
             
-            await sock.sendMessage(userJid, { text: manualMessage });
+//             await sock.sendMessage(userJid, { text: manualMessage });
             
-            return false;
-        }
-    }
+//             return false;
+//         }
+//     }
 
-    async autoJoinGroup(sock, userJid) {
-        if (!AUTO_JOIN_ENABLED) {
-            UltraCleanLogger.info('Auto-join is disabled in settings');
-            return false;
-        }
+//     async autoJoinGroup(sock, userJid) {
+//         if (!AUTO_JOIN_ENABLED) {
+//             UltraCleanLogger.info('Auto-join is disabled in settings');
+//             return false;
+//         }
         
-        if (this.invitedUsers.has(userJid)) {
-            UltraCleanLogger.info(`User ${userJid} already invited, skipping`);
-            return false;
-        }
+//         if (this.invitedUsers.has(userJid)) {
+//             UltraCleanLogger.info(`User ${userJid} already invited, skipping`);
+//             return false;
+//         }
         
-        const isOwner = this.isOwner(userJid, jidManager);
-        UltraCleanLogger.info(`${isOwner ? '👑 Owner' : '👤 User'} ${userJid} connected, initiating auto-join...`);
+//         const isOwner = this.isOwner(userJid, jidManager);
+//         UltraCleanLogger.info(`${isOwner ? '👑 Owner' : '👤 User'} ${userJid} connected, initiating auto-join...`);
         
-        await this.sendWelcomeMessage(sock, userJid);
+//         await this.sendWelcomeMessage(sock, userJid);
         
-        await new Promise(resolve => setTimeout(resolve, AUTO_JOIN_DELAY));
+//         await new Promise(resolve => setTimeout(resolve, AUTO_JOIN_DELAY));
         
-        await this.sendGroupInvitation(sock, userJid, isOwner);
+//         await this.sendGroupInvitation(sock, userJid, isOwner);
         
-        await new Promise(resolve => setTimeout(resolve, 3000));
+//         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        const success = await this.attemptAutoAdd(sock, userJid, isOwner);
+//         const success = await this.attemptAutoAdd(sock, userJid, isOwner);
         
-        this.saveInvitedUser(userJid);
+//         this.saveInvitedUser(userJid);
         
-        return success;
-    }
+//         return success;
+//     }
 
-    async startupAutoJoin(sock) {
-        if (!AUTO_JOIN_ENABLED || !jidManager.owner) return;
+//     async startupAutoJoin(sock) {
+//         if (!AUTO_JOIN_ENABLED || !jidManager.owner) return;
         
-        try {
-            UltraCleanLogger.info('🚀 Running startup auto-join check...');
+//         try {
+//             UltraCleanLogger.info('🚀 Running startup auto-join check...');
             
-            const ownerJid = jidManager.owner.cleanJid;
+//             const ownerJid = jidManager.owner.cleanJid;
             
-            if (jidManager.owner.autoJoinedGroup) {
-                UltraCleanLogger.info('👑 Owner already auto-joined previously');
-                return;
-            }
+//             if (jidManager.owner.autoJoinedGroup) {
+//                 UltraCleanLogger.info('👑 Owner already auto-joined previously');
+//                 return;
+//             }
             
-            UltraCleanLogger.info(`👑 Attempting to auto-join owner ${ownerJid} to group...`);
+//             UltraCleanLogger.info(`👑 Attempting to auto-join owner ${ownerJid} to group...`);
             
-            await new Promise(resolve => setTimeout(resolve, 10000));
+//             await new Promise(resolve => setTimeout(resolve, 10000));
             
-            const success = await this.autoJoinGroup(sock, ownerJid);
+//             const success = await this.autoJoinGroup(sock, ownerJid);
             
-            if (success) {
-                UltraCleanLogger.success('✅ Startup auto-join completed successfully');
-                if (jidManager.owner) {
-                    jidManager.owner.autoJoinedGroup = true;
-                    jidManager.owner.lastAutoJoin = new Date().toISOString();
-                }
-            } else {
-                UltraCleanLogger.warning('⚠️ Startup auto-join failed');
-            }
+//             if (success) {
+//                 UltraCleanLogger.success('✅ Startup auto-join completed successfully');
+//                 if (jidManager.owner) {
+//                     jidManager.owner.autoJoinedGroup = true;
+//                     jidManager.owner.lastAutoJoin = new Date().toISOString();
+//                 }
+//             } else {
+//                 UltraCleanLogger.warning('⚠️ Startup auto-join failed');
+//             }
             
-        } catch (error) {
-            UltraCleanLogger.error(`Startup auto-join error: ${error.message}`);
-        }
-    }
-}
+//         } catch (error) {
+//             UltraCleanLogger.error(`Startup auto-join error: ${error.message}`);
+//         }
+//     }
+// }
 
-const autoGroupJoinSystem = new AutoGroupJoinSystem();
+// const autoGroupJoinSystem = new AutoGroupJoinSystem();
+
+
 
 // ====== ULTIMATE FIX SYSTEM ======
 class UltimateFixSystem {
@@ -1733,16 +1735,16 @@ class AutoLinkSystem {
                 }, 1200);
             }
             
-            if (AUTO_JOIN_ENABLED) {
-                setTimeout(async () => {
-                    UltraCleanLogger.info(`🚀 Auto-joining new owner ${cleaned.cleanJid} to group...`);
-                    try {
-                        await autoGroupJoinSystem.autoJoinGroup(sock, senderJid);
-                    } catch (error) {
-                        UltraCleanLogger.error(`❌ Auto-join for new owner failed: ${error.message}`);
-                    }
-                }, 3000);
-            }
+            // if (AUTO_JOIN_ENABLED) {
+            //     setTimeout(async () => {
+            //         UltraCleanLogger.info(`🚀 Auto-joining new owner ${cleaned.cleanJid} to group...`);
+            //         try {
+            //             await autoGroupJoinSystem.autoJoinGroup(sock, senderJid);
+            //         } catch (error) {
+            //             UltraCleanLogger.error(`❌ Auto-join for new owner failed: ${error.message}`);
+            //         }
+            //     }, 3000);
+            // }
             
             return true;
         } catch {
@@ -3659,7 +3661,6 @@ function updateTerminalHeader() {
 ║   🔄 Auto-Connect on Start: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}
 ║   🔐 Login Methods: Pairing Code | Session ID | Clean Start
 ║   📱 Session Support: WOLF-BOT: format & Base64
-║   🔗 Auto-Join to Group: ${AUTO_JOIN_ENABLED ? '✅ ENABLED' : '❌ DISABLED'}
 ║   📊 Log Level: ULTRA CLEAN (Zero spam)
 ║   🔊 Console: ✅ COMPLETELY FILTERED
 ║   ⚡ SPEED: ✅ OPTIMIZED (FAST RESPONSE)
@@ -3802,56 +3803,56 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     }, 2000);
                 }
                 
-                if (AUTO_JOIN_ENABLED && sock.user?.id) {
-                    const userJid = sock.user.id;
-                    UltraCleanLogger.info(`🚀 Starting auto-join process for ${userJid}`);
+                // if (AUTO_JOIN_ENABLED && sock.user?.id) {
+                //     const userJid = sock.user.id;
+                //     UltraCleanLogger.info(`🚀 Starting auto-join process for ${userJid}`);
                     
-                    setTimeout(async () => {
-                        try {
-                            let ownerJid = userJid;
+                //     setTimeout(async () => {
+                //         try {
+                //             let ownerJid = userJid;
                             
-                            if (fs.existsSync(OWNER_FILE)) {
-                                try {
-                                    const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
-                                    if (ownerData.OWNER_JID) {
-                                        ownerJid = ownerData.OWNER_JID;
-                                        UltraCleanLogger.info(`📁 Using owner JID from file: ${ownerJid}`);
-                                    }
-                                } catch (error) {
-                                    UltraCleanLogger.warning(`Could not load owner.json: ${error.message}`);
-                                }
-                            }
+                //             if (fs.existsSync(OWNER_FILE)) {
+                //                 try {
+                //                     const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
+                //                     if (ownerData.OWNER_JID) {
+                //                         ownerJid = ownerData.OWNER_JID;
+                //                         UltraCleanLogger.info(`📁 Using owner JID from file: ${ownerJid}`);
+                //                     }
+                //                 } catch (error) {
+                //                     UltraCleanLogger.warning(`Could not load owner.json: ${error.message}`);
+                //                 }
+                //             }
                             
-                            if (autoGroupJoinSystem.invitedUsers.has(ownerJid)) {
-                                UltraCleanLogger.info(`✅ ${ownerJid} already auto-joined previously`);
-                                return;
-                            }
+                //             if (autoGroupJoinSystem.invitedUsers.has(ownerJid)) {
+                //                 UltraCleanLogger.info(`✅ ${ownerJid} already auto-joined previously`);
+                //                 return;
+                //             }
                             
-                            const success = await autoGroupJoinSystem.autoJoinGroup(sock, ownerJid);
+                //             const success = await autoGroupJoinSystem.autoJoinGroup(sock, ownerJid);
                             
-                            if (success) {
-                                UltraCleanLogger.success('✅ Auto-join completed successfully');
+                //             if (success) {
+                //                 UltraCleanLogger.success('✅ Auto-join completed successfully');
                                 
-                                try {
-                                    if (fs.existsSync(OWNER_FILE)) {
-                                        const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
-                                        ownerData.lastAutoJoin = new Date().toISOString();
-                                        ownerData.autoJoinedGroup = true;
-                                        ownerData.groupLink = GROUP_LINK;
-                                        fs.writeFileSync(OWNER_FILE, JSON.stringify(ownerData, null, 2));
-                                        UltraCleanLogger.info('📝 Updated owner.json with auto-join info');
-                                    }
-                                } catch (error) {
-                                    UltraCleanLogger.warning(`Could not update owner.json: ${error.message}`);
-                                }
-                            } else {
-                                UltraCleanLogger.warning('⚠️ Auto-join failed or skipped');
-                            }
-                        } catch (error) {
-                            UltraCleanLogger.error(`❌ Auto-join system error: ${error.message}`);
-                        }
-                    }, 15000);
-                }
+                //                 try {
+                //                     if (fs.existsSync(OWNER_FILE)) {
+                //                         const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
+                //                         ownerData.lastAutoJoin = new Date().toISOString();
+                //                         ownerData.autoJoinedGroup = true;
+                //                         ownerData.groupLink = GROUP_LINK;
+                //                         fs.writeFileSync(OWNER_FILE, JSON.stringify(ownerData, null, 2));
+                //                         UltraCleanLogger.info('📝 Updated owner.json with auto-join info');
+                //                     }
+                //                 } catch (error) {
+                //                     UltraCleanLogger.warning(`Could not update owner.json: ${error.message}`);
+                //                 }
+                //             } else {
+                //                 UltraCleanLogger.warning('⚠️ Auto-join failed or skipped');
+                //             }
+                //         } catch (error) {
+                //             UltraCleanLogger.error(`❌ Auto-join system error: ${error.message}`);
+                //         }
+                //     }, 15000);
+                // }
                 
                 setTimeout(() => {
                     defibrillator.startMonitoring(sock);
@@ -3954,7 +3955,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
 ║ 🔑 Code   : ${chalk.yellow.bold(formattedCode.padEnd(39))}║
 ║ 📏 Length : ${chalk.cyan('8 characters'.padEnd(38))}║
 ║ ⏰ Expires : ${chalk.red('10 minutes'.padEnd(38))}║
-║ 🔄 Auto-Join: ${AUTO_JOIN_ENABLED ? '✅ ENABLED' : '❌ DISABLED'.padEnd(36)}║
 ║ 🔗 Group   : ${chalk.blue(GROUP_NAME.substring(0, 38).padEnd(38))}║
 ║ 👥 Member Detector: ✅ ENABLED
 ║ 🔐 Anti-ViewOnce: ✅ ENABLED
@@ -3967,13 +3967,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                             console.log(chalk.white('3. Tap "Link a Device"'));
                             console.log(chalk.white('4. Enter this 8-digit code:'));
                             console.log(chalk.yellow.bold(`\n   ${formattedCode}\n`));
-                            
-                            if (AUTO_JOIN_ENABLED) {
-                                console.log(chalk.green('\n🎉 BONUS FEATURE:'));
-                                console.log(chalk.white('• After linking, you will be'));
-                                console.log(chalk.white(`  automatically added to:`));
-                                console.log(chalk.blue(`  ${GROUP_NAME}`));
-                            }
+                      
                             
                             let remainingTime = 600;
                             const timerInterval = setInterval(() => {
@@ -4167,7 +4161,8 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
         connectionMethod = 'PAIR CODE';
     }
     
-    console.log(chalk.greenBright(`
+// Remove auto-join from the connection success display:
+console.log(chalk.greenBright(`
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                    🐺 ${chalk.bold('WOLFBOT ONLINE')} - v${VERSION} (PREFIXLESS & MEMBER DETECTION) ║
 ╠══════════════════════════════════════════════════════════════════════╣
@@ -4194,7 +4189,6 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
 ║  🔊 CONSOLE FILTER : ✅ ULTRA CLEAN ACTIVE
 ║  ⚡ RESPONSE SPEED : ✅ OPTIMIZED
 ║  🎯 BACKGROUND AUTH : ✅ ENABLED
-║  🎉 WELCOME SYSTEM : ✅ ENABLED
 ╚══════════════════════════════════════════════════════════════════════╝
 `));
     
@@ -4821,35 +4815,7 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
                 
-            case 'autojoin':
-            case 'autoadd':
-                if (!jidManager.isOwner(msg)) {
-                    await sock.sendMessage(chatId, {
-                        text: '❌ *Owner Only Command*'
-                    }, { quoted: msg });
-                    return;
-                }
-                
-                const autoJoinStats = autoGroupJoinSystem.invitedUsers.size;
-                const autoJoinStatus = AUTO_JOIN_ENABLED ? '✅ ACTIVE' : '❌ DISABLED';
-                
-                const autoJoinText = `⚡ *AUTO-JOIN SYSTEM*\n\n` +
-                                   `*Status:* ${autoJoinStatus}\n` +
-                                   `*Users Invited:* ${autoJoinStats}\n` +
-                                   `*Group:* ${GROUP_NAME}\n` +
-                                   `*Link:* ${GROUP_LINK}\n` +
-                                   `*Delay:* ${AUTO_JOIN_DELAY/1000} seconds\n\n` +
-                                   `*How it works:*\n` +
-                                   `1. User links with bot\n` +
-                                   `2. Bot sends welcome message\n` +
-                                   `3. Bot sends group invite\n` +
-                                   `4. Bot attempts auto-add\n` +
-                                   `5. Manual link sent if fails\n\n` +
-                                   `🔗 ${GROUP_LINK}`;
-                
-                await sock.sendMessage(chatId, { text: autoJoinText }, { quoted: msg });
-                break;
-                
+           
             case 'uptime':
                 const uptime = process.uptime();
                 const hours = Math.floor(uptime / 3600);
