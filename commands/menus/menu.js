@@ -9310,7 +9310,6 @@ case 4: {
 
 
 
-
 case 5: {
   // First, get the bot name BEFORE showing loading message
   const getBotName = () => {
@@ -9646,85 +9645,129 @@ case 5: {
     return 'v1.0.0';
   };
   
+  // ========== IMPROVED DEPLOYMENT PLATFORM DETECTION ==========
   const getDeploymentPlatform = () => {
-    // Detect deployment platform
-    if (process.env.REPL_ID || process.env.REPLIT_DB_URL) {
-      return {
-        name: 'Replit',
-        status: 'Active',
-        icon: '🌀'
-      };
-    } else if (process.env.HEROKU_APP_NAME) {
+    // Check Heroku FIRST (most specific env variables)
+    if (process.env.HEROKU_APP_NAME || 
+        process.env.DYNO || 
+        process.env.HEROKU_API_KEY ||
+        (process.env.PORT && process.env.PORT !== '3000' && process.env.PORT !== '8080')) {
       return {
         name: 'Heroku',
         status: 'Active',
         icon: '🦸'
       };
-    } else if (process.env.RENDER_SERVICE_ID) {
+    }
+    // Check Render
+    else if (process.env.RENDER_SERVICE_ID || 
+             process.env.RENDER_SERVICE_NAME ||
+             process.env.RENDER) {
       return {
         name: 'Render',
         status: 'Active',
         icon: '⚡'
       };
-    } else if (process.env.RAILWAY_ENVIRONMENT) {
+    }
+    // Check Railway
+    else if (process.env.RAILWAY_ENVIRONMENT ||
+             process.env.RAILWAY_PROJECT_NAME ||
+             process.env.RAILWAY_SERVICE_NAME) {
       return {
         name: 'Railway',
         status: 'Active',
         icon: '🚂'
       };
-    } else if (process.env.VERCEL) {
+    }
+    // Check Replit
+    else if (process.env.REPL_ID || 
+             process.env.REPLIT_DB_URL ||
+             process.env.REPLIT_USER ||
+             process.env.REPL_SLUG) {
+      return {
+        name: 'Replit',
+        status: 'Active',
+        icon: '🌀'
+      };
+    }
+    // Check Vercel
+    else if (process.env.VERCEL || 
+             process.env.VERCEL_ENV ||
+             process.env.VERCEL_URL) {
       return {
         name: 'Vercel',
         status: 'Active',
         icon: '▲'
       };
-    } else if (process.env.GLITCH_PROJECT_REMIX) {
+    }
+    // Check Glitch
+    else if (process.env.GLITCH_PROJECT_REMIX ||
+             process.env.PROJECT_REMIX_CHAIN ||
+             process.env.GLITCH) {
       return {
         name: 'Glitch',
         status: 'Active',
         icon: '🎏'
       };
-    } else if (process.env.KOYEB) {
+    }
+    // Check Koyeb
+    else if (process.env.KOYEB_APP ||
+             process.env.KOYEB_REGION ||
+             process.env.KOYEB_SERVICE) {
       return {
         name: 'Koyeb',
         status: 'Active',
         icon: '☁️'
       };
-    } else if (process.env.CYCLIC_URL) {
+    }
+    // Check Cyclic
+    else if (process.env.CYCLIC_URL ||
+             process.env.CYCLIC_APP_ID ||
+             process.env.CYCLIC_DB) {
       return {
         name: 'Cyclic',
         status: 'Active',
         icon: '🔄'
       };
-    } else if (process.env.PANEL) {
+    }
+    // Check Panel/Pterodactyl
+    else if (process.env.PANEL ||
+             process.env.PTERODACTYL ||
+             process.env.NODE_ENV === 'production' && 
+             (process.platform === 'linux' && !process.env.SSH_CONNECTION)) {
       return {
-        name: 'PteroPanel',
+        name: 'Panel/VPS',
         status: 'Active',
         icon: '🖥️'
       };
-    } else if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT) {
+    }
+    // Check SSH/VPS
+    else if (process.env.SSH_CONNECTION || 
+             process.env.SSH_CLIENT ||
+             (process.platform === 'linux' && process.env.USER === 'root')) {
       return {
         name: 'VPS/SSH',
         status: 'Active',
         icon: '🖥️'
       };
-    } else if (process.platform === 'win32') {
+    }
+    // Check OS
+    else if (process.platform === 'win32') {
       return {
         name: 'Windows PC',
         status: 'Active',
         icon: '💻'
-      };
-    } else if (process.platform === 'linux') {
-      return {
-        name: 'Linux VPS',
-        status: 'Active',
-        icon: '🐧'
       };
     } else if (process.platform === 'darwin') {
       return {
         name: 'MacOS',
         status: 'Active',
         icon: '🍎'
+      };
+    } else if (process.platform === 'linux') {
+      return {
+        name: 'Linux Local',
+        status: 'Active',
+        icon: '🐧'
       };
     } else {
       return {
@@ -9758,39 +9801,87 @@ case 5: {
   const botMode = getBotMode();
   const deploymentPlatform = getDeploymentPlatform();
   
-  // ========== ADDED HELPER FUNCTIONS FOR SYSTEM METRICS ==========
+  // ========== IMPROVED REAL-TIME SYSTEM METRICS ==========
   const formatUptime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    return `${hours}h ${minutes}m ${secs}s`;
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${secs}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`;
+    } else {
+      return `${secs}s`;
+    }
   };
   
+  // REAL RAM USAGE CALCULATION
   const getRAMUsage = () => {
-    const used = process.memoryUsage().heapUsed / 1024 / 1024;
-    const total = os.totalmem() / 1024 / 1024 / 1024;
-    const percent = (used / (total * 1024)) * 100;
-    return Math.round(percent);
+    try {
+      const mem = process.memoryUsage();
+      const used = mem.heapUsed / 1024 / 1024; // MB
+      const total = mem.heapTotal / 1024 / 1024; // MB
+      
+      // For system total RAM (if available)
+      let systemTotal = os.totalmem() / 1024 / 1024; // MB
+      let systemFree = os.freemem() / 1024 / 1024; // MB
+      let systemUsed = systemTotal - systemFree;
+      let systemPercent = (systemUsed / systemTotal) * 100;
+      
+      // Process RAM percentage
+      let processPercent = (used / total) * 100;
+      
+      // Return both process and system info
+      return {
+        process: {
+          used: Math.round(used * 100) / 100,
+          total: Math.round(total * 100) / 100,
+          percent: Math.round(processPercent)
+        },
+        system: {
+          used: Math.round(systemUsed * 100) / 100,
+          total: Math.round(systemTotal * 100) / 100,
+          free: Math.round(systemFree * 100) / 100,
+          percent: Math.round(systemPercent)
+        }
+      };
+    } catch (error) {
+      return {
+        process: { used: 0, total: 0, percent: 0 },
+        system: { used: 0, total: 0, free: 0, percent: 0 }
+      };
+    }
   };
   
-  // ========== SIMPLIFIED MENU WITH FADED EFFECT ==========
+  // Get real RAM usage
+  const ramUsage = getRAMUsage();
+  
+  // Calculate speed/ping
+  const startTime = Date.now();
+  // Simulate a small calculation to measure speed
+  let dummyCalc = 0;
+  for (let i = 0; i < 1000000; i++) {
+    dummyCalc += Math.random();
+  }
+  const endTime = Date.now();
+  const responseTime = endTime - startTime;
+  
+  // ========== UPDATED MENU WITH CURVED FORMAT ==========
   let infoSection = `╭─⊷ *${currentBotName} MENU*
 │
-├─⊷ *📊 BOT INFO*
-│  ├⊷ *User:* ${m.pushName || "Anonymous"}
-│  ├⊷ *Date:* ${currentDate}
-│  ├⊷ *Time:* ${currentTime}
-│  ├⊷ *Owner:* ${ownerName}
-│  ├⊷ *Mode:* ${botMode}
-│  ├⊷ *Prefix:* [ ${botPrefix} ]
-│  ├⊷ *Version:* ${botVersion}
-│  ├⊷ *Platform:* ${deploymentPlatform.name}
-│  └⊷ *Status:* ${deploymentPlatform.status}
-│
-├─⊷ *📈 SYSTEM STATUS*
-│  ├⊷ *Uptime:* ${formatUptime(process.uptime())}
-│  ├⊷ *RAM Usage:* ${getRAMUsage()}%
-│  └⊷ *Speed:* ${(performance.now() - performance.now()).toFixed(2)}ms
+│  ╭─⊷ *User:* ${m.pushName || "Anonymous"}
+│  ├─⊷ *Date:* ${currentDate}
+│  ├─⊷ *Time:* ${currentTime}
+│  ├─⊷ *Owner:* ${ownerName}
+│  ├─⊷ *Mode:* ${botMode}
+│  ├─⊷ *Prefix:* [ ${botPrefix} ]
+│  ├─⊷ *Version:* ${botVersion}
+│  ├─⊷ *Platform:* ${deploymentPlatform.name}
+│  ├─⊷ *Status:* ${deploymentPlatform.status}
+│  ├─⊷ *Uptime:* ${formatUptime(process.uptime())}
+│  ├─⊷ *RAM Usage:* ${ramUsage.process.percent}% (${ramUsage.process.used}MB/${ramUsage.process.total}MB)
+│  ╰─⊷ *Speed:* ${responseTime}ms
 │
 ╰─⊷`;
 
@@ -10082,7 +10173,6 @@ case 5: {
   console.log(`✅ ${currentBotName} menu sent with faded effect and box style`);
   break;
 }
-
 
 
 
