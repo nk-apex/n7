@@ -1476,7 +1476,7 @@ case 1: {
   const ramUsage = getRAMUsage();
   
   // ========== UPDATED MENU WITH CURVED FORMAT ==========
-  let infoSection = `╭─⊷ ${currentBotName} *MENU*
+  let infoSection = `╭─⌈ \`${currentBotName}\` ⌋
 │  ╭⊷ *User:* ${m.pushName || "Anonymous"}
 │  ├⊷ *Owner:* ${ownerName}
 │  ├⊷ *Mode:* ${botMode}
@@ -1488,7 +1488,6 @@ case 1: {
 │  ├⊷ *RAM Usage:* ${ramUsage.percent}%
 │  │  ${ramUsage.bar}
 │  ╰⊷ *Memory:* ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB
-│
 ╰─⊷`;
 
   // Apply faded effect to the info section
@@ -5276,7 +5275,7 @@ case 5: {
   const ramUsage = getRAMUsage();
   
   // ========== UPDATED MENU WITH CURVED FORMAT ==========
-  let infoSection = `╭─⊷ ${currentBotName} *MENU*
+  let infoSection = `╭─⌈ \`${currentBotName}\` ⌋
 │  ╭⊷ *User:* ${m.pushName || "Anonymous"}
 │  ├⊷ *Owner:* ${ownerName}
 │  ├⊷ *Mode:* ${botMode}
@@ -5288,7 +5287,6 @@ case 5: {
 │  ├⊷ *RAM Usage:* ${ramUsage.percent}%
 │  │  ${ramUsage.bar}
 │  ╰⊷ *Memory:* ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB
-│
 ╰─⊷`;
 
   // Apply faded effect to the info section
