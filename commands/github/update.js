@@ -868,6 +868,9 @@
 
 
 
+
+
+
 import { exec } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
@@ -878,7 +881,6 @@ import https from "https";
 import http from "http";
 import { createRequire } from 'module';
 import { createWriteStream } from "fs";
-import os from "os";
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -895,6 +897,7 @@ const DOWNLOAD_TIMEOUT = 120000;
 const EXTRACTION_TIMEOUT = 180000;
 const COPY_TIMEOUT = 300000;
 const PRESERVE_TIMEOUT = 30000;
+const GIT_CLEAN_TIMEOUT = 60000;
 
 // Cache for hot-reloaded modules
 const moduleCache = new Map();
@@ -948,197 +951,341 @@ async function checkRepoSize() {
   }
 }
 
-/* -------------------- FRESH UPDATE (NO HISTORY - DEFAULT) -------------------- */
-async function updateFreshNoHistory() {
+/* -------------------- Deep Git History Cleaner -------------------- */
+async function deepCleanGitHistory(options = {}) {
+  console.log('🚀 Starting deep Git history cleanup...');
+  
+  const {
+    preserveBranches = true,
+    maxHistoryDepth = 10,
+    keepRecentCommits = 50
+  } = options;
+  
   try {
-    console.log('🚀 Starting FRESH update (NO HISTORY)...');
+    // Get current state
+    const currentBranch = await run('git rev-parse --abbrev-ref HEAD').catch(() => 'main');
+    const currentCommit = await run('git rev-parse HEAD');
     
-    // Get size before
-    const sizeBefore = await checkRepoSize();
-    console.log(`Current size: ${sizeBefore.sizeMB} MB`);
+    // List all branches
+    const branchesOutput = await run('git branch -a');
+    const branches = branchesOutput.split('\n')
+      .map(b => b.trim())
+      .filter(b => b && !b.includes('detached') && !b.includes('->'))
+      .map(b => b.replace('* ', '').replace('remotes/', ''));
     
-    // Backup essential files to memory
-    const configs = {};
-    const essentialFiles = ['.env', 'config.json', 'settings.js', 'baileys_store.json'];
+    console.log(`Found ${branches.length} branches: ${branches.join(', ')}`);
     
-    for (const file of essentialFiles) {
-      const filePath = path.join(process.cwd(), file);
-      if (fs.existsSync(filePath)) {
-        try {
-          configs[file] = await fsPromises.readFile(filePath, 'utf8');
-          console.log(`📦 Saved to memory: ${file}`);
-        } catch (e) {
-          console.warn(`Could not read ${file}:`, e.message);
-        }
-      }
+    // Preserve essential files
+    const { preserveDir, preserved } = await preserveEssentialFiles();
+    console.log(`Preserved ${preserved.length} items`);
+    
+    // Create a temporary directory for fresh start
+    const tempDir = path.join(process.cwd(), 'tmp_git_fresh');
+    if (fs.existsSync(tempDir)) {
+      await fsPromises.rm(tempDir, { recursive: true, force: true });
     }
-    
-    // Backup session/data directories to temp
-    const tempDir = path.join(os.tmpdir(), `wolf-session-${Date.now()}`);
     await fsPromises.mkdir(tempDir, { recursive: true });
     
-    const essentialDirs = ['session', 'data', 'logs', 'assets'];
-    for (const dir of essentialDirs) {
-      const dirPath = path.join(process.cwd(), dir);
-      if (fs.existsSync(dirPath)) {
-        try {
-          await copyDirectoryFast(dirPath, path.join(tempDir, dir));
-          console.log(`📦 Backed up directory: ${dir}`);
-        } catch (e) {
-          console.warn(`Could not backup ${dir}:`, e.message);
-        }
-      }
-    }
-    
-    // Save node_modules status
-    const hasNodeModules = fs.existsSync(path.join(process.cwd(), 'node_modules'));
-    
-    // Remove ALL files except .git (keep git to avoid reinitialization)
-    console.log('Cleaning directory for fresh update...');
-    const allItems = await fsPromises.readdir(process.cwd());
-    for (const item of allItems) {
-      if (item === '.git' || item === 'tmp_preserve_fast' || item === 'tmp_update_fast') continue;
+    // Copy only essential files to temp directory
+    const essentialFiles = await getEssentialFiles();
+    for (const file of essentialFiles) {
+      const srcPath = path.join(process.cwd(), file);
+      const destPath = path.join(tempDir, file);
       
-      const itemPath = path.join(process.cwd(), item);
+      if (fs.existsSync(srcPath)) {
+        const destDir = path.dirname(destPath);
+        await fsPromises.mkdir(destDir, { recursive: true });
+        await fsPromises.copyFile(srcPath, destPath);
+      }
+    }
+    
+    // Backup .git folder (just in case)
+    const gitBackup = path.join(process.cwd(), '.git_backup_' + Date.now());
+    if (fs.existsSync(path.join(process.cwd(), '.git'))) {
       try {
-        const stat = await fsPromises.stat(itemPath);
-        if (stat.isDirectory()) {
-          await fsPromises.rm(itemPath, { recursive: true, force: true });
-        } else {
-          await fsPromises.unlink(itemPath);
-        }
-      } catch (e) {
-        console.warn(`Could not remove ${item}:`, e.message);
+        await fsPromises.rename(path.join(process.cwd(), '.git'), gitBackup);
+      } catch {
+        console.log('Could not backup .git folder');
       }
     }
     
-    // Clone fresh from source (depth=1 - NO HISTORY)
-    const freshClone = path.join(os.tmpdir(), `wolf-clone-${Date.now()}`);
-    console.log(`Cloning fresh from ${GIT_REPO_URL} (depth=1)...`);
-    
-    await run(`git clone --depth 1 ${GIT_REPO_URL} "${freshClone}"`);
-    
-    // Copy all files except .git
-    console.log('Copying fresh files...');
-    const freshItems = await fsPromises.readdir(freshClone);
-    for (const item of freshItems) {
-      if (item === '.git') continue;
-      
-      const src = path.join(freshClone, item);
-      const dest = path.join(process.cwd(), item);
-      try {
-        const stat = await fsPromises.stat(src);
-        if (stat.isDirectory()) {
-          await copyDirectoryFast(src, dest);
-        } else {
-          await fsPromises.copyFile(src, dest);
-        }
-      } catch (e) {
-        console.warn(`Could not copy ${item}:`, e.message);
-      }
-    }
-    
-    // Restore configs from memory
-    console.log('Restoring configs...');
-    for (const [file, content] of Object.entries(configs)) {
-      try {
-        await fsPromises.writeFile(path.join(process.cwd(), file), content, 'utf8');
-        console.log(`✅ Restored: ${file}`);
-      } catch (e) {
-        console.warn(`Could not restore ${file}:`, e.message);
-      }
-    }
-    
-    // Restore directories
-    console.log('Restoring directories...');
-    for (const dir of essentialDirs) {
-      const backupPath = path.join(tempDir, dir);
-      if (fs.existsSync(backupPath)) {
-        const destPath = path.join(process.cwd(), dir);
-        try {
-          if (fs.existsSync(destPath)) {
-            await fsPromises.rm(destPath, { recursive: true, force: true });
-          }
-          await copyDirectoryFast(backupPath, destPath);
-          console.log(`✅ Restored directory: ${dir}`);
-        } catch (e) {
-          console.warn(`Could not restore ${dir}:`, e.message);
-        }
-      }
-    }
-    
-    // Clean temp directories
-    await fsPromises.rm(tempDir, { recursive: true, force: true }).catch(() => {});
-    await fsPromises.rm(freshClone, { recursive: true, force: true }).catch(() => {});
-    
-    // Single commit - amend current commit (NO NEW HISTORY)
-    console.log('Creating single commit (no history)...');
-    await run('git add -A');
+    // Remove old .git completely
     try {
-      await run('git commit --amend --no-edit --allow-empty');
-    } catch {
-      // If no previous commit, create new one
-      await run('git commit -m "Fresh update"');
+      await fsPromises.rm(path.join(process.cwd(), '.git'), { recursive: true, force: true });
+    } catch (error) {
+      console.log('Old .git folder already removed or inaccessible');
     }
     
-    // Clean git to keep size minimal
-    await run('git reflog expire --expire=now --all').catch(() => {});
-    await run('git gc --prune=now --aggressive').catch(() => {});
+    // Initialize fresh repository
+    console.log('Initializing fresh Git repository...');
+    await run('git init');
+    await run('git config user.email "bot@silentwolf.com"');
+    await run('git config user.name "SilentWolf Bot"');
     
-    // Get size after
-    const sizeAfter = await checkRepoSize();
-    const sizeDiff = (parseFloat(sizeAfter.sizeMB) - parseFloat(sizeBefore.sizeMB)).toFixed(2);
+    // Copy files back from temp directory
+    console.log('Restoring essential files...');
+    const copyResult = await copyDirectoryContents(tempDir, process.cwd());
     
-    console.log(`✅ Fresh update complete! Size: ${sizeAfter.sizeMB} MB (${sizeDiff >= 0 ? '+' : ''}${sizeDiff} MB)`);
+    // Add and commit
+    await run('git add .');
+    await run(`git commit -m "🚀 Fresh repository - optimized size\n\n• Cleared all history\n• Preserved ${preserved.length} essential items\n• Maintained branch: ${currentBranch}\n• Timestamp: ${new Date().toISOString()}"`);
+    
+    // Create main branch
+    await run(`git branch -M ${currentBranch}`);
+    
+    // Create other branches if preserving branches
+    if (preserveBranches && branches.length > 1) {
+      for (const branch of branches) {
+        if (branch !== currentBranch && !branch.includes('origin/')) {
+          try {
+            await run(`git checkout -b ${branch} ${currentBranch}`);
+            console.log(`Created branch: ${branch}`);
+          } catch {
+            console.log(`Could not create branch: ${branch}`);
+          }
+        }
+      }
+      // Return to original branch
+      await run(`git checkout ${currentBranch}`);
+    }
+    
+    // Restore preserved files
+    await restorePreservedFiles(preserveDir);
+    
+    // Cleanup
+    await fsPromises.rm(tempDir, { recursive: true, force: true });
+    
+    // Optional: Remove old git backup after some time
+    setTimeout(async () => {
+      try {
+        if (fs.existsSync(gitBackup)) {
+          await fsPromises.rm(gitBackup, { recursive: true, force: true });
+        }
+      } catch {}
+    }, 60000); // Delete backup after 1 minute
+    
+    const newSize = await checkRepoSize();
+    console.log(`✅ Git history deep cleaned! New size: ${newSize.sizeMB} MB`);
     
     return {
       success: true,
-      sizeBefore: sizeBefore.sizeMB,
-      sizeAfter: sizeAfter.sizeMB,
-      sizeDiff: sizeDiff,
-      hasNodeModules: hasNodeModules
+      originalCommit: currentCommit.slice(0, 7),
+      originalBranch: currentBranch,
+      newSize: newSize.sizeMB,
+      branchesPreserved: preserveBranches ? branches.length : 1,
+      filesRestored: copyResult.filesCount
     };
     
   } catch (error) {
-    console.error('Fresh update failed:', error);
+    console.error('Deep Git cleanup failed:', error);
     
-    // Try to restore from git if something went wrong
+    // Try to restore from backup
     try {
-      await run('git reset --hard HEAD');
-      await run('git clean -fd');
-    } catch (recoverError) {
-      console.error('Could not recover:', recoverError);
-    }
+      if (fs.existsSync(path.join(process.cwd(), '.git_backup'))) {
+        await fsPromises.rm(path.join(process.cwd(), '.git'), { recursive: true, force: true });
+        await fsPromises.rename(path.join(process.cwd(), '.git_backup'), path.join(process.cwd(), '.git'));
+        console.log('Restored from backup');
+      }
+    } catch {}
     
     throw error;
   }
 }
 
-/* -------------------- Legacy Git Update (Optional) -------------------- */
-async function updateViaGit() {
-  try {
-    console.log('Starting Git update (legacy mode)...');
+/* -------------------- Get Essential Files List -------------------- */
+async function getEssentialFiles() {
+  const ignorePatterns = [
+    /^\.git($|\/)/,
+    /^node_modules($|\/)/,
+    /^tmp($|\/)/,
+    /^temp($|\/)/,
+    /^logs($|\/)/,
+    /^\.env$/,
+    /^\.env\..*$/,
+    /^\.backup/,
+    /^backup-/,
+    /\.log$/,
+    /\.cache$/,
+    /^session($|\/)/,
+    /^baileys_store\.json$/,
+    /^settings\.js$/,
+    /^config\.json$/,
+    /^package-lock\.json$/,
+    /^yarn\.lock$/,
+    /^pnpm-lock\.yaml$/,
+    /\.DS_Store$/,
+    /Thumbs\.db$/,
+    /desktop\.ini$/,
+    /^dist($|\/)/,
+    /^build($|\/)/,
+    /^coverage($|\/)/,
+    /\.tmp($|\/)/,
+    /\.temp($|\/)/,
+    /\.history($|\/)/,
+    /\.vscode($|\/)/,
+    /\.idea($|\/)/
+  ];
+  
+  const essentialExtensions = [
+    '.js', '.ts', '.jsx', '.tsx', '.json', '.md', '.txt',
+    '.yml', '.yaml', '.xml', '.html', '.css', '.scss',
+    '.py', '.php', '.java', '.cpp', '.c', '.go', '.rs',
+    '.sql', '.sh', '.bat', '.ps1', '.env.example'
+  ];
+  
+  async function scanDir(dir, relative = '') {
+    const files = [];
+    try {
+      const entries = await fsPromises.readdir(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        const relPath = relative ? path.join(relative, entry.name) : entry.name;
+        
+        // Skip ignored patterns
+        if (ignorePatterns.some(pattern => pattern.test(entry.name) || pattern.test(relPath))) {
+          continue;
+        }
+        
+        if (entry.isDirectory()) {
+          const subFiles = await scanDir(fullPath, relPath);
+          files.push(...subFiles);
+        } else {
+          // Check if file has essential extension
+          const ext = path.extname(entry.name).toLowerCase();
+          if (essentialExtensions.includes(ext) || entry.name.startsWith('.')) {
+            files.push(relPath);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`Could not scan directory ${dir}:`, error.message);
+    }
     
-    // Check if we can use git
+    return files;
+  }
+  
+  return await scanDir(process.cwd());
+}
+
+/* -------------------- Copy Directory Contents -------------------- */
+async function copyDirectoryContents(src, dest) {
+  let filesCount = 0;
+  
+  async function copyRecursive(srcPath, destPath) {
+    await fsPromises.mkdir(destPath, { recursive: true });
+    
+    const entries = await fsPromises.readdir(srcPath, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const srcEntry = path.join(srcPath, entry.name);
+      const destEntry = path.join(destPath, entry.name);
+      
+      if (entry.isDirectory()) {
+        await copyRecursive(srcEntry, destEntry);
+      } else {
+        await fsPromises.copyFile(srcEntry, destEntry);
+        filesCount++;
+        
+        if (filesCount % 50 === 0) {
+          console.log(`Copied ${filesCount} files...`);
+        }
+      }
+    }
+  }
+  
+  await copyRecursive(src, dest);
+  return { filesCount };
+}
+
+/* -------------------- Smart Git Update with Auto-Clean -------------------- */
+async function smartGitUpdate(options = {}) {
+  const {
+    autoCleanHistory = true,
+    cleanThresholdMB = 100,
+    maxHistoryDepth = 20,
+    preserveEssential = true
+  } = options;
+  
+  console.log('Starting smart Git update...');
+  
+  try {
+    // Check repo size before update
+    const sizeBefore = await checkRepoSize();
+    console.log(`Current repository size: ${sizeBefore.sizeMB} MB`);
+    
+    // Check if we need to clean based on threshold
+    const shouldClean = autoCleanHistory && parseFloat(sizeBefore.sizeMB) > cleanThresholdMB;
+    
+    if (shouldClean) {
+      console.log(`Repository size (${sizeBefore.sizeMB} MB) exceeds threshold (${cleanThresholdMB} MB), performing cleanup...`);
+      await deepCleanGitHistory({
+        preserveBranches: true,
+        maxHistoryDepth: maxHistoryDepth
+      });
+    }
+    
+    // Perform the update
+    const updateResult = await updateViaGit();
+    
+    // Check size after update
+    const sizeAfter = await checkRepoSize();
+    
+    // If still too large or grew significantly, do another cleanup
+    if (autoCleanHistory && (parseFloat(sizeAfter.sizeMB) > cleanThresholdMB || 
+        (parseFloat(sizeAfter.sizeMB) - parseFloat(sizeBefore.sizeMB) > 50))) {
+      console.log('Post-update cleanup triggered...');
+      await deepCleanGitHistory({
+        preserveBranches: true,
+        maxHistoryDepth: 10
+      });
+      
+      const finalSize = await checkRepoSize();
+      console.log(`Final repository size: ${finalSize.sizeMB} MB`);
+      
+      return {
+        ...updateResult,
+        historyCleaned: true,
+        initialSize: sizeBefore.sizeMB,
+        finalSize: finalSize.sizeMB,
+        reduction: (parseFloat(sizeBefore.sizeMB) - parseFloat(finalSize.sizeMB)).toFixed(2)
+      };
+    }
+    
+    return {
+      ...updateResult,
+      historyCleaned: shouldClean,
+      sizeBefore: sizeBefore.sizeMB,
+      sizeAfter: sizeAfter.sizeMB
+    };
+    
+  } catch (error) {
+    console.error('Smart Git update failed:', error);
+    throw error;
+  }
+}
+
+/* -------------------- Git Update (Modified with Clean Option) -------------------- */
+async function updateViaGit(cleanAfter = false) {
+  try {
+    console.log('Starting Git update...');
+    
     try {
       await run('git --version');
     } catch {
       throw new Error('Git is not installed or not in PATH');
     }
     
-    // Get size before update
     const sizeBefore = await checkRepoSize();
     console.log(`Current size: ${sizeBefore.sizeMB} MB`);
     
     const oldRev = await run('git rev-parse HEAD').catch(() => 'unknown');
     console.log(`Current revision: ${oldRev.slice(0, 7)}`);
     
-    // Clean BEFORE fetching
     console.log('Pre-fetch cleanup...');
     await run('git prune --expire=now').catch(() => {});
     await run('git gc --auto').catch(() => {});
     
-    // Check if we have n7-upstream remote
     try {
       await run('git remote get-url n7-upstream');
       console.log('Using existing n7-upstream remote');
@@ -1147,14 +1294,11 @@ async function updateViaGit() {
       await run(`git remote add n7-upstream ${GIT_REPO_URL}`);
     }
     
-    // Fetch with depth=1 to limit history
-    console.log('Fetching updates (depth=1)...');
-    await run('git fetch n7-upstream --depth=1 --prune');
+    console.log('Fetching updates (limited history: depth=20)...');
+    await run('git fetch n7-upstream --depth=20 --prune');
     
-    // Check current branch
     const currentBranch = await run('git rev-parse --abbrev-ref HEAD').catch(() => 'main');
     
-    // Get latest from upstream
     let newRev;
     try {
       newRev = await run(`git rev-parse n7-upstream/${currentBranch}`);
@@ -1165,6 +1309,13 @@ async function updateViaGit() {
     if (oldRev === newRev) {
       console.log('Already up to date');
       await run('git gc --auto').catch(() => {});
+      
+      // Optionally clean even if up to date
+      if (cleanAfter) {
+        console.log('Performing cleanup as requested...');
+        await deepCleanGitHistory();
+      }
+      
       return {
         oldRev,
         newRev,
@@ -1176,26 +1327,30 @@ async function updateViaGit() {
     
     console.log(`Updating to: ${newRev.slice(0, 7)}`);
     
-    // Create backup
     const timestamp = Date.now();
     const backupBranch = `backup-${timestamp}`;
     await run(`git branch ${backupBranch}`).catch(() => {
       console.log('Could not create backup branch');
     });
     
-    // Fast-forward merge
     await run(`git merge --ff-only ${newRev}`);
     
-    // Clean AFTER merging
     console.log('Post-merge cleanup...');
     await run('git prune --expire=now').catch(() => {});
     await run('git gc --aggressive --prune=now').catch(() => {});
     
-    // Get size after update
     const sizeAfter = await checkRepoSize();
     const sizeDiff = (parseFloat(sizeAfter.sizeMB) - parseFloat(sizeBefore.sizeMB)).toFixed(2);
     
     console.log(`Size after update: ${sizeAfter.sizeMB} MB (${sizeDiff >= 0 ? '+' : ''}${sizeDiff} MB)`);
+    
+    // Perform deep clean if requested
+    if (cleanAfter) {
+      console.log('Performing deep history cleanup...');
+      await deepCleanGitHistory();
+      const finalSize = await checkRepoSize();
+      console.log(`Final size after cleanup: ${finalSize.sizeMB} MB`);
+    }
     
     return {
       oldRev,
@@ -1206,13 +1361,13 @@ async function updateViaGit() {
       files: [],
       sizeBefore: sizeBefore.sizeMB,
       sizeAfter: sizeAfter.sizeMB,
-      sizeDiff: sizeDiff
+      sizeDiff: sizeDiff,
+      cleaned: cleanAfter
     };
     
   } catch (error) {
     console.error('Git update failed:', error);
     
-    // Try to revert if something went wrong
     try {
       const branches = await run('git branch --list backup-*');
       if (branches) {
@@ -1238,7 +1393,7 @@ async function downloadWithProgress(url, dest, onProgress) {
     
     const req = client.get(url, {
       headers: {
-        'User-Agent': 'WolfBot-Updater/2.0',
+        'User-Agent': 'WolfBot-Updater/3.0',
         'Accept': '*/*'
       },
       timeout: DOWNLOAD_TIMEOUT
@@ -1377,6 +1532,71 @@ async function hotReloadCommands(commandDir = 'commands') {
   }
 }
 
+/* -------------------- Fast Preserve Files -------------------- */
+async function preserveEssentialFiles() {
+  console.log('Preserving essential files...');
+  
+  const essentialFiles = [
+    'settings.js',
+    'config.json',
+    '.env',
+    'baileys_store.json',
+    '.env.example',
+    'package.json'
+  ];
+  
+  const essentialDirs = [
+    'session',
+    'data',
+    'logs',
+    'assets',
+    'lib'
+  ];
+  
+  const preserveDir = path.join(process.cwd(), 'tmp_preserve_fast_' + Date.now());
+  if (fs.existsSync(preserveDir)) {
+    await fsPromises.rm(preserveDir, { recursive: true, force: true });
+  }
+  await fsPromises.mkdir(preserveDir, { recursive: true });
+  
+  const preserved = [];
+  
+  for (const file of essentialFiles) {
+    const filePath = path.join(process.cwd(), file);
+    try {
+      if (fs.existsSync(filePath)) {
+        const preservePath = path.join(preserveDir, file);
+        const preserveDirPath = path.dirname(preservePath);
+        await fsPromises.mkdir(preserveDirPath, { recursive: true });
+        await fsPromises.copyFile(filePath, preservePath);
+        preserved.push(file);
+        console.log(`Preserved file: ${file}`);
+      }
+    } catch (error) {
+      console.warn(`Could not preserve ${file}:`, error.message);
+    }
+  }
+  
+  for (const dir of essentialDirs) {
+    const dirPath = path.join(process.cwd(), dir);
+    try {
+      if (fs.existsSync(dirPath)) {
+        const stat = await fsPromises.stat(dirPath);
+        if (stat.isDirectory()) {
+          const preservePath = path.join(preserveDir, dir);
+          await copyDirectoryFast(dirPath, preservePath);
+          preserved.push(dir);
+          console.log(`Preserved directory: ${dir}`);
+        }
+      }
+    } catch (error) {
+      console.warn(`Could not preserve ${dir}:`, error.message);
+    }
+  }
+  
+  return { preserveDir, preserved };
+}
+
 /* -------------------- Fast Directory Copy -------------------- */
 async function copyDirectoryFast(src, dest, timeout = PRESERVE_TIMEOUT) {
   await fsPromises.mkdir(dest, { recursive: true });
@@ -1414,11 +1634,11 @@ async function copyDirectoryFast(src, dest, timeout = PRESERVE_TIMEOUT) {
   }
 }
 
-/* -------------------- ZIP Update (Fallback) -------------------- */
+/* -------------------- ZIP Update -------------------- */
 async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
-  console.log(`Starting ZIP update from: ${zipUrl}`);
+  console.log(`Starting fast ZIP update from: ${zipUrl}`);
   
-  const tmpDir = path.join(process.cwd(), 'tmp_update_fast');
+  const tmpDir = path.join(process.cwd(), 'tmp_update_fast_' + Date.now());
   const zipPath = path.join(tmpDir, 'update.zip');
   const extractTo = path.join(tmpDir, 'extracted');
   
@@ -1429,7 +1649,9 @@ async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
     await fsPromises.mkdir(tmpDir, { recursive: true });
     await fsPromises.mkdir(extractTo, { recursive: true });
     
-    // Download with progress
+    const { preserveDir, preserved } = await preserveEssentialFiles();
+    console.log(`Preserved ${preserved.length} items: ${preserved.join(', ')}`);
+    
     console.log('Downloading update...');
     let lastProgress = 0;
     
@@ -1440,18 +1662,20 @@ async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
       }
     });
     
-    // Verify download
     const stat = await fsPromises.stat(zipPath);
     if (stat.size === 0) {
       throw new Error('Downloaded file is empty');
     }
     console.log(`Downloaded ${stat.size} bytes`);
     
-    // Extract ZIP
     console.log('Extracting ZIP...');
-    await extractZip(zipPath, extractTo);
+    await Promise.race([
+      extractZip(zipPath, extractTo),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Extraction timeout')), EXTRACTION_TIMEOUT)
+      )
+    ]);
     
-    // Find extracted root
     const entries = await fsPromises.readdir(extractTo);
     let root = extractTo;
     
@@ -1464,11 +1688,13 @@ async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
       }
     }
     
-    // Copy files
     console.log('Copying files...');
     const copied = await copyEssentialFiles(root, process.cwd());
     
-    // Cleanup
+    console.log('Restoring preserved files...');
+    await restorePreservedFiles(preserveDir);
+    
+    console.log('Cleaning up...');
     await fsPromises.rm(tmpDir, { recursive: true, force: true });
     
     return {
@@ -1560,210 +1786,33 @@ async function copyEssentialFiles(src, dest) {
   return copied;
 }
 
-/* -------------------- Main Command -------------------- */
-export default {
-  name: "update",
-  description: "Update bot from n7 repository (NO HISTORY)",
-  category: "owner",
-  ownerOnly: true,
-
-  async execute(sock, m, args) {
-    const jid = m.key.remoteJid;
-    const sender = m.key.participant || m.key.remoteJid;
+/* -------------------- Restore Preserved Files -------------------- */
+async function restorePreservedFiles(preserveDir) {
+  if (!fs.existsSync(preserveDir)) return;
+  
+  try {
+    const entries = await fsPromises.readdir(preserveDir, { withFileTypes: true });
     
-    // Check if owner
-    const isOwner = m.key.fromMe || sender.includes("947") || sender.includes("owner-number");
-    if (!isOwner) {
-      return sock.sendMessage(jid, {
-        text: '❌ Only bot owner can use .update command'
-      }, { quoted: m });
-    }
-    
-    let statusMessage;
-    try {
-      // Send initial message
-      statusMessage = await sock.sendMessage(jid, {
-        text: '🚀 **WolfBot Fresh Update (NO HISTORY)**\nStarting fresh update process...'
-      }, { quoted: m });
+    for (const entry of entries) {
+      const srcPath = path.join(preserveDir, entry.name);
+      const destPath = path.join(process.cwd(), entry.name);
+      const destDir = path.dirname(destPath);
       
-      const editStatus = async (text) => {
-        try {
-          await sock.sendMessage(jid, {
-            text,
-            edit: statusMessage.key
-          });
-        } catch {
-          const newMsg = await sock.sendMessage(jid, { text }, { quoted: m });
-          statusMessage = newMsg;
-        }
-      };
+      await fsPromises.mkdir(destDir, { recursive: true });
       
-      await editStatus('🔄 **Analyzing update method...**');
-      
-      // Parse arguments
-      const forceMethod = args[0]?.toLowerCase();
-      const useZip = forceMethod === 'zip';
-      const useGit = forceMethod === 'git';
-      const useLegacy = args.includes('legacy') || args.includes('old');
-      const softUpdate = args.includes('soft') || args.includes('no-restart');
-      const hotReload = args.includes('hot') || args.includes('reload');
-      const cleanOnly = args.includes('clean') || args.includes('trim');
-      
-      let result;
-      
-      // DEFAULT BEHAVIOR: FRESH UPDATE (NO HISTORY)
-      if (cleanOnly) {
-        await editStatus('🧹 **Cleaning repository only...**');
-        await run('git reflog expire --expire=now --all').catch(() => {});
-        await run('git gc --prune=now --aggressive').catch(() => {});
-        const newSize = await checkRepoSize();
-        await editStatus(`✅ **Repository cleaned!**\nSize: ${newSize.sizeMB} MB`);
-        return;
-      }
-      else if (useLegacy || useGit) {
-        await editStatus('🌐 **Using Legacy Git update**\n(May create some history)...');
-        result = await updateViaGit();
-        
-        if (result.alreadyUpToDate) {
-          await editStatus(`✅ **Already Up to Date**\nBranch: ${result.branch}\nSize: ${result.sizeAfter || 'unknown'} MB`);
-          
-          if (hotReload) {
-            await editStatus('🔄 **Hot reloading commands...**');
-            const reloadResult = await hotReloadCommands();
-            await editStatus(`✅ **Hot reload complete**\nReloaded: ${reloadResult.reloaded} commands`);
-          }
-          return;
-        }
-        
-        const sizeMsg = result.sizeDiff >= 0 ? `(+${result.sizeDiff} MB)` : `(${result.sizeDiff} MB)`;
-        await editStatus(`✅ **Legacy Update Complete**\nSize: ${result.sizeAfter} MB ${sizeMsg}\nInstalling dependencies...`);
-        
-      }
-      else if (useZip) {
-        await editStatus('📥 **Using ZIP update method**\nDownloading latest version...');
-        result = await updateViaZip();
-        await editStatus(`✅ **ZIP Update Complete**\nFiles updated: ${result.fileCount || 0}\nInstalling dependencies...`);
-      }
-      else {
-        // DEFAULT: FRESH UPDATE (NO HISTORY)
-        await editStatus('🚀 **Starting FRESH Update (NO HISTORY)**\n\n• Backing up configs & sessions\n• Cloning fresh code (depth=1)\n• Preserving all your data\n• Keeping repo at ~15KB');
-        
-        result = await updateFreshNoHistory();
-        
-        const sizeMsg = result.sizeDiff >= 0 ? `(+${result.sizeDiff} MB)` : `(${result.sizeDiff} MB)`;
-        await editStatus(`✅ **Fresh Update Complete!**\n\nRepository size: ${result.sizeAfter} MB ${sizeMsg}\n\nInstalling dependencies...`);
-      }
-      
-      // Install dependencies (skip if soft update)
-      if (!softUpdate) {
-        await editStatus('📦 **Installing/Updating dependencies...**');
-        
-        try {
-          if (fs.existsSync('package-lock.json')) {
-            await run('npm ci --no-audit --no-fund --silent', 180000);
-          } else {
-            await run('npm install --no-audit --no-fund --loglevel=error', 180000);
-          }
-          await editStatus('✅ **Dependencies installed**');
-        } catch (npmError) {
-          console.warn('npm install failed:', npmError.message);
-          try {
-            await run('npm install --no-audit --no-fund --loglevel=error', 240000);
-            await editStatus('⚠️ **Dependencies installed with warnings**');
-          } catch {
-            await editStatus('⚠️ **Could not install all dependencies**\nYou may need to run: npm install\nContinuing anyway...');
-          }
-        }
-      }
-      
-      // Try hot reload first if requested
-      if (hotReload || softUpdate) {
-        try {
-          await editStatus('🔄 **Attempting hot reload...**');
-          const reloadResult = await hotReloadCommands();
-          
-          if (reloadResult.reloaded > 0) {
-            await editStatus(`✅ **Hot reload successful!**\nReloaded: ${reloadResult.reloaded} commands\nErrors: ${reloadResult.errors}\n\nBot updated without restart! 🎉`);
-          } else if (reloadResult.errors > 0) {
-            await editStatus(`⚠️ **Hot reload had issues**\nReloaded: ${reloadResult.reloaded} commands\nErrors: ${reloadResult.errors}\n\nConsider restarting for full update.`);
-          } else {
-            await editStatus('✅ **Update Applied Successfully**\nRunning without restart.\nSome changes may need restart to take effect.');
-          }
-          
-        } catch (reloadError) {
-          console.error('Hot reload failed:', reloadError);
-          await editStatus('⚠️ **Hot reload failed**\nFalling back to normal update...');
-          
-          await editStatus('✅ **Update Complete!**\nRestarting bot in 3 seconds...');
-          
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          // Restart process
-          await sock.sendMessage(jid, {
-            text: '🔄 **Restarting Now...**\nBot will be back in a moment!'
-          }, { quoted: m });
-          
-          try {
-            await run('pm2 restart all', 10000);
-          } catch {
-            console.log('PM2 restart failed, exiting process...');
-            process.exit(0);
-          }
-        }
+      if (entry.isDirectory()) {
+        await copyDirectoryFast(srcPath, destPath);
       } else {
-        // Normal restart
-        await editStatus('✅ **Update Complete!**\nRestarting bot in 3 seconds...');
-        
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // Restart process
-        await sock.sendMessage(jid, {
-          text: '🔄 **Restarting Now...**\nBot will be back in a moment!'
-        }, { quoted: m });
-        
-        try {
-          await run('pm2 restart all', 10000);
-        } catch {
-          console.log('PM2 restart failed, exiting process...');
-          process.exit(0);
-        }
+        await fsPromises.copyFile(srcPath, destPath);
       }
-      
-    } catch (err) {
-      console.error('Update failed:', err);
-      
-      let errorText = `❌ **Update Failed**\nError: ${err.message || err}\n\n`;
-      
-      if (err.message.includes('timeout')) {
-        errorText += '**Reason:** Operation timed out\n';
-        errorText += '**Solution:** Try again with better internet\n';
-      } else if (err.message.includes('HTTP')) {
-        errorText += '**Reason:** Download failed\n';
-        errorText += '**Solution:** Check internet or try .update git\n';
-      } else if (err.message.includes('Git')) {
-        errorText += '**Reason:** Git operation failed\n';
-        errorText += '**Solution:** Try .update zip instead\n';
-      }
-      
-      errorText += '\n**Try these options:**\n';
-      errorText += '`.update` - Fresh update (NO HISTORY)\n';
-      errorText += '`.update legacy` - Old git update\n';
-      errorText += '`.update zip` - ZIP update\n';
-      errorText += '`.update clean` - Just clean repo\n';
-      errorText += '`.update hot` - Update with hot reload\n';
-      
-      try {
-        if (statusMessage?.key) {
-          await sock.sendMessage(jid, { text: errorText, edit: statusMessage.key });
-        } else {
-          await sock.sendMessage(jid, { text: errorText }, { quoted: m });
-        }
-      } catch {
-        // Ignore if can't send error
-      }
+      console.log(`Restored: ${entry.name}`);
     }
+    
+    await fsPromises.rm(preserveDir, { recursive: true, force: true });
+  } catch (error) {
+    console.warn('Failed to restore preserved files:', error.message);
   }
-};
+}
 
 /* -------------------- Extract Zip Utility -------------------- */
 async function extractZip(zipPath, outDir) {
@@ -1792,4 +1841,230 @@ async function extractZip(zipPath, outDir) {
   throw new Error('No extraction tool found');
 }
 
+/* -------------------- Main Command -------------------- */
+export default {
+  name: "update",
+  description: "Update bot from n7 repository with automatic history cleaning",
+  category: "owner",
+  ownerOnly: true,
 
+  async execute(sock, m, args) {
+    const jid = m.key.remoteJid;
+    const sender = m.key.participant || m.key.remoteJid;
+    
+    // Check if owner
+    const isOwner = m.key.fromMe || sender.includes("947") || sender.includes("owner-number");
+    if (!isOwner) {
+      return sock.sendMessage(jid, {
+        text: '❌ Only bot owner can use .update command'
+      }, { quoted: m });
+    }
+    
+    let statusMessage;
+    try {
+      statusMessage = await sock.sendMessage(jid, {
+        text: '🔄 **WolfBot Update v3.0**\nWith automatic history cleaning\nStarting update process...'
+      }, { quoted: m });
+      
+      const editStatus = async (text) => {
+        try {
+          await sock.sendMessage(jid, {
+            text,
+            edit: statusMessage.key
+          });
+        } catch {
+          const newMsg = await sock.sendMessage(jid, { text }, { quoted: m });
+          statusMessage = newMsg;
+        }
+      };
+      
+      await editStatus('🔄 **Analyzing update options...**');
+      
+      // Parse arguments
+      const forceMethod = args[0]?.toLowerCase();
+      const useZip = forceMethod === 'zip';
+      const useGit = forceMethod === 'git';
+      const softUpdate = args.includes('soft') || args.includes('no-restart');
+      const hotReload = args.includes('hot') || args.includes('reload');
+      const cleanHistory = args.includes('clean') || args.includes('fresh') || args.includes('reset');
+      const deepClean = args.includes('deep') || args.includes('nuke');
+      const sizeCheck = args.includes('size') || args.includes('check');
+      
+      // If just checking size
+      if (sizeCheck) {
+        try {
+          const sizeInfo = await checkRepoSize();
+          await editStatus(`📊 **Repository Size Report**\n\nSize: ${sizeInfo.sizeMB} MB\nObjects: ${sizeInfo.objects}\nPacks: ${sizeInfo.packs}\n\nUse \`.update clean\` to optimize size`);
+          return;
+        } catch (error) {
+          await editStatus(`❌ **Could not check size**\nError: ${error.message}`);
+          return;
+        }
+      }
+      
+      // If just cleaning history
+      if (cleanHistory && !useZip && !useGit) {
+        await editStatus('🧹 **Starting history cleanup...**\nThis will remove all Git history while keeping branches.');
+        
+        try {
+          const result = await deepCleanGitHistory({
+            preserveBranches: true,
+            maxHistoryDepth: deepClean ? 5 : 10
+          });
+          
+          await editStatus(`✅ **History Cleanup Complete!**\n\n• New size: ${result.newSize} MB\n• Branches preserved: ${result.branchesPreserved}\n• Original commit: ${result.originalCommit}\n\nRepository optimized! 🎉`);
+          return;
+        } catch (error) {
+          await editStatus(`❌ **Cleanup failed:** ${error.message}`);
+          return;
+        }
+      }
+      
+      let result;
+      
+      if (useGit || (!useZip && await hasGitRepo())) {
+        await editStatus('🌐 **Smart Git Update**\nWith automatic size optimization...');
+        result = await smartGitUpdate({
+          autoCleanHistory: cleanHistory || deepClean,
+          cleanThresholdMB: deepClean ? 50 : 100,
+          maxHistoryDepth: deepClean ? 5 : 20
+        });
+        
+        if (result.alreadyUpToDate) {
+          await editStatus(`✅ **Already Up to Date**\nBranch: ${result.branch}\nCommit: ${result.newRev?.slice(0, 7) || 'N/A'}\nSize: ${result.sizeAfter || 'unknown'} MB`);
+          
+          // Clean history even if up to date if requested
+          if (cleanHistory) {
+            await editStatus('🧹 **Cleaning history as requested...**');
+            const cleanResult = await deepCleanGitHistory();
+            await editStatus(`✅ **History cleaned!**\nNew size: ${cleanResult.newSize} MB\nReduction: ${cleanResult.reduction} MB`);
+          } else if (hotReload) {
+            await editStatus('🔄 **Hot reloading commands...**');
+            const reloadResult = await hotReloadCommands();
+            await editStatus(`✅ **Hot reload complete**\nReloaded: ${reloadResult.reloaded} commands\nErrors: ${reloadResult.errors}`);
+          }
+          return;
+        }
+        
+        const sizeMsg = result.historyCleaned ? 
+          `(Cleaned: ${result.reduction || '0'} MB saved)` : 
+          `(${result.sizeDiff >= 0 ? '+' : ''}${result.sizeDiff} MB)`;
+        
+        await editStatus(`✅ **Git Update Complete**\nUpdated to: ${result.newRev?.slice(0, 7) || 'N/A'}\nSize: ${result.sizeAfter} MB ${sizeMsg}\nInstalling dependencies...`);
+        
+      } else {
+        await editStatus('📥 **Using ZIP update method**\nDownloading latest version...');
+        result = await updateViaZip();
+        
+        await editStatus(`✅ **ZIP Update Complete**\nFiles updated: ${result.fileCount || 0}\nInstalling dependencies...`);
+      }
+      
+      // Install dependencies (skip if soft update)
+      if (!softUpdate) {
+        await editStatus('📦 **Installing dependencies...**');
+        
+        try {
+          await run('npm ci --no-audit --no-fund --silent', 180000);
+          await editStatus('✅ **Dependencies installed**');
+        } catch (npmError) {
+          console.warn('npm install failed, trying fallback:', npmError.message);
+          try {
+            await run('npm install --no-audit --no-fund --loglevel=error', 180000);
+            await editStatus('⚠️ **Dependencies installed with warnings**');
+          } catch {
+            await editStatus('⚠️ **Could not install all dependencies**\nContinuing anyway...');
+          }
+        }
+      }
+      
+      // Try hot reload first if requested
+      if (hotReload || softUpdate) {
+        try {
+          await editStatus('🔄 **Attempting hot reload...**');
+          const reloadResult = await hotReloadCommands();
+          
+          if (reloadResult.reloaded > 0) {
+            await editStatus(`✅ **Hot reload successful!**\nReloaded: ${reloadResult.reloaded} commands\nErrors: ${reloadResult.errors}\n\nBot updated without restart! 🎉`);
+          } else if (reloadResult.errors > 0) {
+            await editStatus(`⚠️ **Hot reload had issues**\nReloaded: ${reloadResult.reloaded} commands\nErrors: ${reloadResult.errors}\n\nConsider restarting for full update.`);
+          } else {
+            await editStatus('✅ **Update Applied Successfully**\nRunning without restart.\nSome changes may need restart to take effect.');
+          }
+          
+        } catch (reloadError) {
+          console.error('Hot reload failed:', reloadError);
+          await editStatus('⚠️ **Hot reload failed**\nFalling back to normal update...');
+          
+          await editStatus('✅ **Update Complete!**\nRestarting bot in 3 seconds...');
+          
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          await sock.sendMessage(jid, {
+            text: '🔄 **Restarting Now...**\nBot will be back in a moment!'
+          }, { quoted: m });
+          
+          try {
+            await run('pm2 restart all', 10000);
+          } catch {
+            console.log('PM2 restart failed, exiting process...');
+            process.exit(0);
+          }
+        }
+      } else {
+        // Normal restart
+        await editStatus('✅ **Update Complete!**\nRestarting bot in 3 seconds...');
+        
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        await sock.sendMessage(jid, {
+          text: '🔄 **Restarting Now...**\nBot will be back in a moment!'
+        }, { quoted: m });
+        
+        try {
+          await run('pm2 restart all', 10000);
+        } catch {
+          console.log('PM2 restart failed, exiting process...');
+          process.exit(0);
+        }
+      }
+      
+    } catch (err) {
+      console.error('Update failed:', err);
+      
+      let errorText = `❌ **Update Failed**\nError: ${err.message || err}\n\n`;
+      
+      if (err.message.includes('timeout')) {
+        errorText += '**Reason:** Operation timed out\n';
+        errorText += '**Solution:** Try again with better internet connection\n';
+      } else if (err.message.includes('HTTP')) {
+        errorText += '**Reason:** Download failed\n';
+        errorText += '**Solution:** Check internet or try .update git\n';
+      } else if (err.message.includes('Git')) {
+        errorText += '**Reason:** Git operation failed\n';
+        errorText += '**Solution:** Try .update zip instead\n';
+      } else if (err.message.includes('clean')) {
+        errorText += '**Reason:** History cleanup failed\n';
+        errorText += '**Solution:** Try without clean option first\n';
+      }
+      
+      errorText += '\n**Available Options:**\n';
+      errorText += '`.update` - Smart update with auto-clean\n';
+      errorText += '`.update clean` - Clean history only\n';
+      errorText += '`.update deep` - Deep clean + update\n';
+      errorText += '`.update git hot` - Git update + hot reload\n';
+      errorText += '`.update size` - Check repository size\n';
+      errorText += '`.update zip` - ZIP update (fallback)\n';
+      errorText += '`.update soft` - Update without restart\n';
+      
+      try {
+        if (statusMessage?.key) {
+          await sock.sendMessage(jid, { text: errorText, edit: statusMessage.key });
+        } else {
+          await sock.sendMessage(jid, { text: errorText }, { quoted: m });
+        }
+      } catch {
+        // Ignore if can't send error
+      }
+    }
+  }
+};
