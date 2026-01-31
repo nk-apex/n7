@@ -718,15 +718,79 @@ function updatePrefixImmediately(newPrefix) {
 // Platform detection
 // Update the platform detection function
 function detectPlatform() {
-    if (process.env.HEROKU) return 'Heroku';
-    if (process.env.KATABUMP) return 'Katabump';
-    if (process.env.AITIMY) return 'Aitimy';
-    if (process.env.RENDER) return 'Render';
-    if (process.env.REPLIT) return 'Replit';
-    if (process.env.VERCEL) return 'Vercel';
-    if (process.env.GLITCH) return 'Glitch';
-    if (process.env.PANEL) return 'Panel';
-    return 'Local/VPS';
+    // Check Heroku FIRST (most specific env variables)
+    if (process.env.HEROKU_APP_NAME || 
+        process.env.DYNO || 
+        process.env.HEROKU_API_KEY ||
+        (process.env.PORT && process.env.PORT !== '3000' && process.env.PORT !== '8080')) {
+        return 'Heroku';
+    }
+    // Check Render
+    else if (process.env.RENDER_SERVICE_ID || 
+             process.env.RENDER_SERVICE_NAME ||
+             process.env.RENDER) {
+        return 'Render';
+    }
+    // Check Railway
+    else if (process.env.RAILWAY_ENVIRONMENT ||
+             process.env.RAILWAY_PROJECT_NAME ||
+             process.env.RAILWAY_SERVICE_NAME) {
+        return 'Railway';
+    }
+    // Check Replit
+    else if (process.env.REPL_ID || 
+             process.env.REPLIT_DB_URL ||
+             process.env.REPLIT_USER ||
+             process.env.REPL_SLUG) {
+        return 'Replit';
+    }
+    // Check Vercel
+    else if (process.env.VERCEL || 
+             process.env.VERCEL_ENV ||
+             process.env.VERCEL_URL) {
+        return 'Vercel';
+    }
+    // Check Glitch
+    else if (process.env.GLITCH_PROJECT_REMIX ||
+             process.env.PROJECT_REMIX_CHAIN ||
+             process.env.GLITCH) {
+        return 'Glitch';
+    }
+    // Check Koyeb
+    else if (process.env.KOYEB_APP ||
+             process.env.KOYEB_REGION ||
+             process.env.KOYEB_SERVICE) {
+        return 'Koyeb';
+    }
+    // Check Cyclic
+    else if (process.env.CYCLIC_URL ||
+             process.env.CYCLIC_APP_ID ||
+             process.env.CYCLIC_DB) {
+        return 'Cyclic';
+    }
+    // Check Panel/Pterodactyl
+    else if (process.env.PANEL ||
+             process.env.PTERODACTYL ||
+             process.env.NODE_ENV === 'production' && 
+             (process.platform === 'linux' && !process.env.SSH_CONNECTION)) {
+        return 'Panel/VPS';
+    }
+    // Check SSH/VPS
+    else if (process.env.SSH_CONNECTION || 
+             process.env.SSH_CLIENT ||
+             (process.platform === 'linux' && process.env.USER === 'root')) {
+        return 'VPS/SSH';
+    }
+    // Check OS
+    else if (process.platform === 'win32') {
+        return 'Windows PC';
+    } else if (process.platform === 'darwin') {
+        return 'MacOS';
+    } else if (process.platform === 'linux') {
+        return 'Linux Local';
+    } else {
+        return 'Local Machine';
+    }
 }
 // ====== GLOBAL VARIABLES ======
 let OWNER_NUMBER = null;
@@ -4126,7 +4190,7 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
 ║  🔗 AUTO-CONNECT ON LINK: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}
 ║  🔄 AUTO-CONNECT ON START: ${AUTO_CONNECT_ON_START ? '✅' : '❌'}
 ║  🔐 AUTO-RECONNECT : ✅ ENABLED
-║  🏗️ Platform : ${platform}
+║  🏗️ Platform : ${detectPlatform()}
 ║  🔊 CONSOLE FILTER : ✅ ULTRA CLEAN ACTIVE
 ║  ⚡ RESPONSE SPEED : ✅ OPTIMIZED
 ║  🎯 BACKGROUND AUTH : ✅ ENABLED
@@ -5131,7 +5195,9 @@ async function main() {
         setupHerokuKeepAlive();
         
         // ====== HEROKU DETECTION & SETUP ======
-        const isHeroku = process.env.HEROKU || process.env.DYNO || false;
+        //const isHeroku = process.env.HEROKU || process.env.DYNO || false;
+        // ====== HEROKU DETECTION & SETUP ======
+const isHeroku = process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.HEROKU_API_KEY || false;
         const herokuSessionId = process.env.SESSION_ID;
         
         if (isHeroku) {
