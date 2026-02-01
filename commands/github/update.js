@@ -1863,7 +1863,7 @@ export default {
     let statusMessage;
     try {
       statusMessage = await sock.sendMessage(jid, {
-        text: '🔄 **WolfBot Update v3.0**\nWith automatic history cleaning\nStarting update process...'
+        text: '🔄 **WolfBot Update v1.1.5**\nWith automatic history cleaning\nStarting update process...'
       }, { quoted: m });
       
       const editStatus = async (text) => {
