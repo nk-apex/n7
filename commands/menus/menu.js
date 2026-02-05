@@ -7531,10 +7531,17 @@ case 7: {
   const botMode = getBotMode();
   const deploymentPlatform = getDeploymentPlatform();
   
-  // Add bot name header before the info section
+//   // Add bot name header before the info section
 //   let infoSection = `┌────────────────
 // │ 🐺 *${currentBotName} MENU* 🐺
 // └────────────────\n\n`;
+  
+
+
+  // Add bot name header before the info section
+  let infoSection = `
+│ 🐺 *${currentBotName}* 🐺
+\n`;
   
   // Add info section only if any field is enabled
   const fieldsStatus = getAllFieldsStatus(style);
