@@ -7540,7 +7540,7 @@ case 7: {
 
   // Add bot name header before the info section
   let infoSection = `
-│ 🐺 *${currentBotName}* 🐺
+│ *${currentBotName}* 🐺
 \n`;
   
   // Add info section only if any field is enabled
