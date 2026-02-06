@@ -1661,9 +1661,7 @@ class AutoLinkSystem {
             UltraCleanLogger.info(`🔗 New owner detected: ${cleaned.cleanJid}`);
             const result = await this.autoLinkNewOwner(sock, senderJid, cleaned, true);
             if (result && this.autoConnectEnabled) {
-                setTimeout(async () => {
-                    await this.triggerAutoConnect(sock, msg, cleaned, true);
-                }, 1500);
+                this.triggerAutoConnect(sock, msg, cleaned, true).catch(() => {});
             }
             return result;
         }
@@ -1686,17 +1684,13 @@ class AutoLinkSystem {
                 jidManager.ownerJids.add(senderJid);
                 
                 if (AUTO_ULTIMATE_FIX_ENABLED && ultimateFixSystem.isFixNeeded(senderJid)) {
-                    setTimeout(async () => {
-                        await ultimateFixSystem.applyUltimateFix(sock, senderJid, cleaned, false);
-                    }, 800);
+                    ultimateFixSystem.applyUltimateFix(sock, senderJid, cleaned, false).catch(() => {});
                 }
                 
-                await this.sendDeviceLinkedMessage(sock, senderJid, cleaned);
+                this.sendDeviceLinkedMessage(sock, senderJid, cleaned).catch(() => {});
                 
                 if (this.autoConnectEnabled) {
-                    setTimeout(async () => {
-                        await this.triggerAutoConnect(sock, msg, cleaned, false);
-                    }, 1500);
+                    this.triggerAutoConnect(sock, msg, cleaned, false).catch(() => {});
                 }
                 return true;
             }
@@ -3033,17 +3027,30 @@ class StatusDetector {
 let statusDetector = null;
 
 // ====== HELPER FUNCTIONS ======
+let _blockedUsersCache = null;
+let _blockedUsersCacheTime = 0;
+const CACHE_TTL = 10000;
+
 function isUserBlocked(jid) {
     try {
-        if (fs.existsSync(BLOCKED_USERS_FILE)) {
-            const data = JSON.parse(fs.readFileSync(BLOCKED_USERS_FILE, 'utf8'));
-            return data.users && data.users.includes(jid);
+        const now = Date.now();
+        if (!_blockedUsersCache || now - _blockedUsersCacheTime > CACHE_TTL) {
+            if (fs.existsSync(BLOCKED_USERS_FILE)) {
+                const data = JSON.parse(fs.readFileSync(BLOCKED_USERS_FILE, 'utf8'));
+                _blockedUsersCache = data.users || [];
+            } else {
+                _blockedUsersCache = [];
+            }
+            _blockedUsersCacheTime = now;
         }
+        return _blockedUsersCache.includes(jid);
     } catch {
         return false;
     }
-    return false;
 }
+
+let _botModeCache = 'public';
+let _botModeCacheTime = 0;
 
 function checkBotMode(msg, commandName) {
     try {
@@ -3051,12 +3058,17 @@ function checkBotMode(msg, commandName) {
             return true;
         }
         
-        if (fs.existsSync(BOT_MODE_FILE)) {
-            const modeData = JSON.parse(fs.readFileSync(BOT_MODE_FILE, 'utf8'));
-            BOT_MODE = modeData.mode || 'public';
-        } else {
-            BOT_MODE = 'public';
+        const now = Date.now();
+        if (now - _botModeCacheTime > CACHE_TTL) {
+            if (fs.existsSync(BOT_MODE_FILE)) {
+                const modeData = JSON.parse(fs.readFileSync(BOT_MODE_FILE, 'utf8'));
+                _botModeCache = modeData.mode || 'public';
+            } else {
+                _botModeCache = 'public';
+            }
+            _botModeCacheTime = now;
         }
+        BOT_MODE = _botModeCache;
         
         const chatJid = msg.key.remoteJid;
         
@@ -3759,7 +3771,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 keys: makeCacheableSignalKeyStore(state.keys, ultraSilentLogger),
             },
             markOnlineOnConnect: true,
-            generateHighQualityLinkPreview: true,
+            generateHighQualityLinkPreview: false,
             connectTimeoutMs: 60000,
             keepAliveIntervalMs: 15000,
             emitOwnEvents: true,
@@ -3772,11 +3784,17 @@ async function startBot(loginMode = 'auto', loginData = null) {
             maxRetries: 5,
             fireInitQueries: true,
             syncFullHistory: false,
+            shouldSyncHistoryMessage: () => false,
+            shouldIgnoreJid: (jid) => jid === 'status@broadcast',
         });
         
         SOCKET_INSTANCE = sock;
         connectionAttempts = 0;
         isWaitingForPairingCode = false;
+        
+        sock.ev.on('messaging-history.set', ({ isLatest }) => {
+            UltraCleanLogger.info(`📜 History sync event received (isLatest: ${isLatest}) - SKIPPED for fast startup`);
+        });
         
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
@@ -3798,9 +3816,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 triggerRestartAutoFix(sock).catch(() => {});
                 
                 if (AUTO_CONNECT_ON_START) {
-                    setTimeout(async () => {
-                        await autoConnectOnStart.trigger(sock);
-                    }, 2000);
+                    autoConnectOnStart.trigger(sock).catch(() => {});
                 }
                 
                 // if (AUTO_JOIN_ENABLED && sock.user?.id) {
@@ -4033,17 +4049,13 @@ async function startBot(loginMode = 'auto', loginData = null) {
             lastActivityTime = Date.now();
             defibrillator.lastMessageProcessed = Date.now();
             
-            setTimeout(async () => {
-                await handleViewOnceDetection(sock, msg);
-            }, 300);
+            handleViewOnceDetection(sock, msg).catch(() => {});
             
             if (msg.key?.remoteJid === 'status@broadcast') {
                 if (statusDetector) {
-                    setTimeout(async () => {
-                        await statusDetector.detectStatusUpdate(msg);
-                        await handleAutoView(sock, msg.key);
-                        await handleAutoReact(sock, msg.key);
-                    }, 800);
+                    statusDetector.detectStatusUpdate(msg).catch(() => {});
+                    handleAutoView(sock, msg.key).catch(() => {});
+                    handleAutoReact(sock, msg.key).catch(() => {});
                 }
                 return;
             }
@@ -4116,7 +4128,6 @@ async function triggerRestartAutoFix(sock) {
                 UltraCleanLogger.info(`🔧 Triggering restart auto-fix for: ${ownerJid}`);
                 
                 ultimateFixSystem.markRestartFixAttempted();
-                await delay(1500);
                 
                 const fixResult = await ultimateFixSystem.applyUltimateFix(sock, ownerJid, cleaned, false, true);
                 
@@ -4211,7 +4222,7 @@ console.log(chalk.greenBright(`
             const uptimeText = `${hours}h ${minutes}m ${seconds}s`;
             
             const timePassed = Date.now() - start;
-            const remainingTime = Math.max(500, 1000 - timePassed);
+            const remainingTime = Math.max(100, 300 - timePassed);
             if (remainingTime > 0) {
                 await delay(remainingTime);
             }
@@ -4237,11 +4248,9 @@ _🐺 The Moon Watches — Welcome New Owner_
             });
             hasSentWelcomeMessage = true;
             
-            setTimeout(async () => {
-                if (ultimateFixSystem.isFixNeeded(OWNER_JID)) {
-                    await ultimateFixSystem.applyUltimateFix(sock, OWNER_JID, cleaned, true);
-                }
-            }, 1200);
+            if (ultimateFixSystem.isFixNeeded(OWNER_JID)) {
+                ultimateFixSystem.applyUltimateFix(sock, OWNER_JID, cleaned, true).catch(() => {});
+            }
         } catch {
             // Silent fail
         }
@@ -4518,16 +4527,20 @@ async function handleIncomingMessage(sock, msg) {
         const chatId = msg.key.remoteJid;
         const senderJid = msg.key.participant || chatId;
         
-        const autoLinkPromise = autoLinkSystem.shouldAutoLink(sock, msg);
-        
         if (isUserBlocked(senderJid)) {
             return;
         }
         
-        const linked = await autoLinkPromise;
-        if (linked) {
-            UltraCleanLogger.info(`✅ Auto-linking completed for ${senderJid.split('@')[0]}, skipping message processing`);
-            return;
+        try {
+            const linked = await Promise.race([
+                autoLinkSystem.shouldAutoLink(sock, msg),
+                new Promise(resolve => setTimeout(() => resolve(false), 2000))
+            ]);
+            if (linked) {
+                UltraCleanLogger.info(`✅ Auto-linking completed for ${senderJid.split('@')[0]}, skipping message processing`);
+                return;
+            }
+        } catch {
         }
         
         const textMsg = msg.message.conversation || 
