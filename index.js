@@ -2868,7 +2868,167 @@ class RateLimitProtection {
 
 const rateLimiter = new RateLimitProtection();
 
-// ====== STATUS DETECTOR ======
+// // ====== STATUS DETECTOR ======
+// class StatusDetector {
+//     constructor() {
+//         this.detectionEnabled = true;
+//         this.statusLogs = [];
+//         this.lastDetection = null;
+//         this.setupDataDir();
+//         this.loadStatusLogs();
+        
+//         UltraCleanLogger.success('Status Detector initialized');
+//     }
+    
+//     setupDataDir() {
+//         try {
+//             if (!fs.existsSync('./data')) {
+//                 fs.mkdirSync('./data', { recursive: true });
+//             }
+//         } catch (error) {
+//             UltraCleanLogger.error(`Error setting up data directory: ${error.message}`);
+//         }
+//     }
+    
+//     loadStatusLogs() {
+//         try {
+//             if (fs.existsSync('./data/status_detection_logs.json')) {
+//                 const data = JSON.parse(fs.readFileSync('./data/status_detection_logs.json', 'utf8'));
+//                 if (Array.isArray(data.logs)) {
+//                     this.statusLogs = data.logs.slice(-100);
+//                 }
+//             }
+//         } catch (error) {
+//             // Silent fail
+//         }
+//     }
+    
+//     saveStatusLogs() {
+//         try {
+//             const data = {
+//                 logs: this.statusLogs.slice(-1000),
+//                 updatedAt: new Date().toISOString(),
+//                 count: this.statusLogs.length
+//             };
+//             fs.writeFileSync('./data/status_detection_logs.json', JSON.stringify(data, null, 2));
+//         } catch (error) {
+//             // Silent fail
+//         }
+//     }
+    
+//     async detectStatusUpdate(msg) {
+//         try {
+//             if (!this.detectionEnabled) return null;
+            
+//             const sender = msg.key.participant || 'unknown';
+//             const shortSender = sender.split('@')[0];
+//             const timestamp = msg.messageTimestamp || Date.now();
+//             const statusTime = new Date(timestamp * 1000).toLocaleTimeString();
+            
+//             const statusInfo = this.extractStatusInfo(msg);
+//             this.showDetectionMessage(shortSender, statusTime, statusInfo);
+            
+//             const logEntry = {
+//                 sender: shortSender,
+//                 fullSender: sender,
+//                 type: statusInfo.type,
+//                 caption: statusInfo.caption,
+//                 fileInfo: statusInfo.fileInfo,
+//                 postedAt: statusTime,
+//                 detectedAt: new Date().toLocaleTimeString(),
+//                 timestamp: Date.now()
+//             };
+            
+//             this.statusLogs.push(logEntry);
+//             this.lastDetection = logEntry;
+            
+//             if (this.statusLogs.length % 5 === 0) {
+//                 this.saveStatusLogs();
+//             }
+            
+//             return logEntry;
+            
+//         } catch (error) {
+//             return null;
+//         }
+//     }
+    
+//     extractStatusInfo(msg) {
+//         try {
+//             const message = msg.message;
+//             let type = 'unknown';
+//             let caption = '';
+//             let fileInfo = '';
+            
+//             if (message.imageMessage) {
+//                 type = 'image';
+//                 caption = message.imageMessage.caption || '';
+//                 const size = Math.round((message.imageMessage.fileLength || 0) / 1024);
+//                 fileInfo = `🖼️ ${message.imageMessage.width}x${message.imageMessage.height} | ${size}KB`;
+//             } else if (message.videoMessage) {
+//                 type = 'video';
+//                 caption = message.videoMessage.caption || '';
+//                 const size = Math.round((message.videoMessage.fileLength || 0) / 1024);
+//                 const duration = message.videoMessage.seconds || 0;
+//                 fileInfo = `🎬 ${duration}s | ${size}KB`;
+//             } else if (message.audioMessage) {
+//                 type = 'audio';
+//                 const size = Math.round((message.audioMessage.fileLength || 0) / 1024);
+//                 const duration = message.audioMessage.seconds || 0;
+//                 fileInfo = `🎵 ${duration}s | ${size}KB`;
+//             } else if (message.extendedTextMessage) {
+//                 type = 'text';
+//                 caption = message.extendedTextMessage.text || '';
+//             } else if (message.conversation) {
+//                 type = 'text';
+//                 caption = message.conversation;
+//             } else if (message.stickerMessage) {
+//                 type = 'sticker';
+//                 fileInfo = '🩹 Sticker';
+//             }
+            
+//             return {
+//                 type,
+//                 caption: caption.substring(0, 100),
+//                 fileInfo
+//             };
+            
+//         } catch (error) {
+//             return { type: 'unknown', caption: '', fileInfo: '' };
+//         }
+//     }
+    
+//     getStats() {
+//         return {
+//             totalDetected: this.statusLogs.length,
+//             lastDetection: this.lastDetection ? 
+//                 `${this.lastDetection.sender} - ${this.getTimeAgo(this.lastDetection.timestamp)}` : 
+//                 'None',
+//             detectionEnabled: this.detectionEnabled
+//         };
+//     }
+    
+//     getTimeAgo(timestamp) {
+//         const now = Date.now();
+//         const diff = now - timestamp;
+        
+//         const minutes = Math.floor(diff / 60000);
+//         if (minutes < 1) return 'Just now';
+//         if (minutes < 60) return `${minutes}m ago`;
+        
+//         const hours = Math.floor(minutes / 60);
+//         if (hours < 24) return `${hours}h ago`;
+        
+//         const days = Math.floor(hours / 24);
+//         return `${days}d ago`;
+//     }
+// }
+
+// let statusDetector = null;
+
+
+
+
 class StatusDetector {
     constructor() {
         this.detectionEnabled = true;
@@ -3025,6 +3185,7 @@ class StatusDetector {
 }
 
 let statusDetector = null;
+
 
 // ====== HELPER FUNCTIONS ======
 let _blockedUsersCache = null;
