@@ -725,6 +725,23 @@ class UltraCleanLogger {
     }
     
     static warning(...args) {
+        const message = args.join(' ').toLowerCase();
+        const warnSuppress = [
+            'decrypted message with closed session',
+            'failed to decrypt',
+            'bad mac',
+            'closing session',
+            'stream errored',
+            'signal',
+            'ratchet',
+            'session',
+            'buffer',
+            'encryption',
+            'decryption'
+        ];
+        for (const pattern of warnSuppress) {
+            if (message.includes(pattern)) return;
+        }
         const timestamp = chalk.yellow(`[${new Date().toLocaleTimeString()}]`);
         originalConsoleMethods.log(timestamp, chalk.yellow('⚠️'), ...args);
     }

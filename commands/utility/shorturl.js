@@ -24,12 +24,19 @@ export default {
     const longUrl = args[0];
 
     try {
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
+
       const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
       const shortUrl = await response.text();
 
+      if (!shortUrl || shortUrl.includes('Error')) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+        return sock.sendMessage(jid, { text: '❌ Failed to shorten URL. Please check the URL and try again.' }, { quoted: m });
+      }
+
       try {
         await sendInteractiveMessage(sock, jid, {
-          text: `┌─ 🔗 *URL Shortened* ─┐\n│\n│ ${shortUrl}\n│\n└─ _WOLF-BOT_ ─┘`,
+          text: `✅ *URL Shortened Successfully!*\n\n🔗 *Short URL:* ${shortUrl}\n\n🐺 _Silent Wolf Bot_`,
           footer: '🐺 Silent Wolf Bot',
           interactiveButtons: [
             {
@@ -53,8 +60,11 @@ export default {
         await sock.sendMessage(jid, { text: `🔗 *Shortened URL:*\n${shortUrl}` }, { quoted: m });
       }
 
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+
     } catch (err) {
       console.error('[ShortURL Error]', err);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       if (typeof jid === 'string') {
         sock.sendMessage(jid, { text: '❌ Failed to shorten URL. Please try again later.' }, { quoted: m });
       }
