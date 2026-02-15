@@ -36,8 +36,8 @@ export default {
 
       try {
         await sendInteractiveMessage(sock, jid, {
-          text: `✅ *URL Shortened Successfully!*\n\n🔗 *Short URL:* ${shortUrl}\n\n🐺 _Silent Wolf Bot_`,
-          footer: '🐺 Silent Wolf Bot',
+          text: `✅ *URL Shortened Successfully!*\n\n🔗 *Short URL:* ${shortUrl}\n\n🐺 _Silent Wolf_`,
+          footer: '🐺 Silent Wolf',
           interactiveButtons: [
             {
               name: 'cta_copy',

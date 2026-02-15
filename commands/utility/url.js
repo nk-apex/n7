@@ -510,10 +510,8 @@ export default {
     async execute(sock, m, args) {
         const jid = m.key.remoteJid;
         
-        // Clean old files
         cleanupOldFiles();
         
-        // Check if message is a reply
         const quoted = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         const hasUrl = args.length > 0 && args[0].startsWith('http');
         
@@ -529,11 +527,6 @@ export default {
                       `🎥 Videos: MP4, MOV, AVI, WebM\n` +
                       `📄 Documents: PDF, TXT, DOC, XLS\n` +
                       `🎵 Audio: MP3, WAV, OGG\n\n` +
-                      `⚡ *Features:*\n` +
-                      `• Permanent URLs (ImgBB)\n` +
-                      `• Fast upload\n` +
-                      `• Multiple services\n` +
-                      `• Auto-format detection\n\n` +
                       `📊 *Max Sizes:*\n` +
                       `• ImgBB: 32MB (images only)\n` +
                       `• Telegraph: 5MB (images)\n` +
@@ -543,31 +536,13 @@ export default {
             }, { quoted: m });
         }
         
-        // Show typing indicator
-        await sock.sendPresenceUpdate('composing', jid);
-        
-        let statusMsg;
         try {
-            // Initial message
-            statusMsg = await sock.sendMessage(jid, {
-                text: `📤 *Initializing URL Upload...*\n⏳ Please wait...`
-            }, { quoted: m });
-            
-            const updateStatus = async (text) => {
-                try {
-                    await sock.sendMessage(jid, { text, edit: statusMsg.key });
-                } catch {
-                    const newMsg = await sock.sendMessage(jid, { text }, { quoted: m });
-                    statusMsg = newMsg;
-                }
-            };
+            await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
             
             let buffer, filename;
             
-            // Case 1: URL provided
             if (hasUrl) {
                 const imageUrl = args[0];
-                await updateStatus(`🌐 *Downloading from URL...*\n${imageUrl}`);
                 
                 try {
                     const response = await fetch(imageUrl);
@@ -576,24 +551,16 @@ export default {
                     const arrayBuffer = await response.arrayBuffer();
                     buffer = Buffer.from(arrayBuffer);
                     filename = generateUniqueFilename(path.basename(imageUrl.split('?')[0]));
-                    
-                    console.log(`✅ Downloaded from URL: ${formatFileSize(buffer.length)}`);
-                    
                 } catch (error) {
-                    throw new Error(`URL download failed: ${error.message}`);
+                    await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+                    return sock.sendMessage(jid, { text: `❌ *URL download failed:* ${error.message}` }, { quoted: m });
                 }
                 
-            // Case 2: Quoted message
             } else {
-                await updateStatus(`📥 *Detecting media in message...*`);
-                
-                // Create message object
                 const messageObj = {
                     key: m.key,
                     message: quoted
                 };
-                
-                await updateStatus(`📥 *Downloading from WhatsApp...*`);
                 
                 try {
                     buffer = await downloadMediaMessage(
@@ -610,7 +577,6 @@ export default {
                         throw new Error("Empty buffer received");
                     }
                     
-                    // Get original filename if available
                     let originalName = 'file';
                     if (quoted.documentMessage?.fileName) {
                         originalName = quoted.documentMessage.fileName;
@@ -623,97 +589,35 @@ export default {
                     }
                     
                     filename = generateUniqueFilename(originalName);
-                    
-                    console.log(`✅ Downloaded from WhatsApp: ${formatFileSize(buffer.length)}`);
-                    
                 } catch (error) {
                     console.error('Download error:', error);
-                    throw new Error('Failed to download media. Please make sure you\'re replying to an image, video, or document.');
+                    await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+                    return sock.sendMessage(jid, { text: '❌ *Failed to download media*\n\nTry sending a fresh image.' }, { quoted: m });
                 }
             }
             
-            // Check if file is supported
             if (!isFileSupported(filename, buffer)) {
-                const detectedExt = getExtensionFromBuffer(buffer);
-                const ext = detectedExt || path.extname(filename).toLowerCase();
-                
-                throw new Error(
-                    `File type ${ext || 'unknown'} not supported.\n\n` +
-                    `✅ *Supported formats:*\n` +
-                    `• Images: JPG, PNG, GIF, WebP, BMP\n` +
-                    `• Videos: MP4, MOV, AVI, MKV, WebM\n` +
-                    `• Documents: PDF, TXT, DOC, XLS\n` +
-                    `• Audio: MP3, WAV, OGG, M4A`
-                );
+                await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+                return sock.sendMessage(jid, { text: `❌ *File type not supported*\n\nSupported: JPG, PNG, GIF, WebP, MP4, PDF, MP3` }, { quoted: m });
             }
             
-            // Update status
             const fileSizeMB = buffer.length / (1024 * 1024);
-            await updateStatus(`📊 *Processing file...*\n` +
-                               `Size: ${formatFileSize(buffer.length)}\n` +
-                               `Type: ${getContentType(filename).split('/')[0]}\n\n` +
-                               `📤 Uploading...`);
             
-            // Upload file
+            await sock.sendMessage(jid, { react: { text: '📤', key: m.key } });
+            
             const uploadResult = await uploadFile(buffer, filename);
             
             if (!uploadResult.success) {
-                throw new Error(uploadResult.error || 'Upload failed');
+                await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+                return sock.sendMessage(jid, { text: `❌ *Upload Failed:* ${uploadResult.error}` }, { quoted: m });
             }
             
-            const { url, service, permanent, thumb, deleteUrl, format, width, height } = uploadResult;
+            const { url, service, permanent, thumb, width, height } = uploadResult;
             
-            // // Prepare success message
-            // let message = `✅ *UPLOAD SUCCESSFUL!*\n\n`;
-            // message += `🔗 *Service:* ${service}\n`;
-            // message += `📁 *File:* ${getContentType(filename).split('/')[1]?.toUpperCase() || 'FILE'}\n`;
-            // message += `📏 *Size:* ${formatFileSize(buffer.length)}\n`;
-            // message += `⏳ *Storage:* ${permanent ? 'Permanent 🔒' : '14 Days ⏳'}\n\n`;
-            
-            // message += `🌐 *URLs:*\n`;
-            // message += `• Direct: ${url}\n`;
-            // if (thumb && thumb !== url) {
-            //     message += `• Thumbnail: ${thumb}\n`;
-            // }
-            // if (deleteUrl) {
-            //     message += `• Delete: ${deleteUrl}\n`;
-            // }
-            
-            // if (width && height) {
-            //     message += `\n📐 *Dimensions:* ${width} × ${height}\n`;
-            // }
-            
-            // message += `\n📱 *Quick Actions:*\n`;
-            // message += `• Tap URL to copy 📋\n`;
-            // message += `• Share anywhere 🌍\n`;
-            // message += `• Works in any browser\n`;
-            
-            // message += `\n💡 *Features:*\n`;
-            // if (service === 'ImgBB') {
-            //     message += `• Permanent storage ✅\n`;
-            //     message += `• High quality\n`;
-            //     message += `• No expiration\n`;
-            //     message += `• Fast CDN\n`;
-            // } else if (service === 'Telegra.ph') {
-            //     message += `• No account needed\n`;
-            //     message += `• Fast loading\n`;
-            //     message += `• Permanent\n`;
-            //     message += `• Images only\n`;
-            // } else {
-            //     message += `• Any file type\n`;
-            //     message += `• Large files supported\n`;
-            //     message += `• Simple sharing\n`;
-            //     message += `• 14 days retention\n`;
-            // }
-            
-            // // Send message
-            // await sock.sendMessage(jid, { text: message });
-            
-            const successCaption = `✅ *UPLOAD SUCCESSFUL!*\n\n` +
-                `🔗 ${url}\n\n` +
-                `Service: ${service} | ${permanent ? 'Permanent 🔒' : '14 Days ⏳'}\n` +
-                `Size: ${formatFileSize(buffer.length)}` +
-                (width && height ? ` | ${width} × ${height}` : '');
+            const successCaption = `✅ *Upload Successful!*\n\n` +
+                `📐 ${width && height ? `${width} × ${height} • ` : ''}${fileSizeMB.toFixed(2)} MB\n\n` +
+                `🔗 *URL:* ${url}\n\n` +
+                `🐺 _Silent Wolf_`;
 
             try {
                 const { createRequire } = await import('module');
@@ -721,7 +625,7 @@ export default {
                 const { sendInteractiveMessage } = require('gifted-btns');
                 await sendInteractiveMessage(sock, jid, {
                     text: successCaption,
-                    footer: '🐺 Silent Wolf Bot',
+                    footer: '🐺 Silent Wolf',
                     interactiveButtons: [
                         {
                             name: 'cta_copy',
@@ -743,85 +647,21 @@ export default {
                 console.log('[URL] Buttons failed:', btnErr.message);
                 if (getContentType(filename).startsWith('image/')) {
                     try {
-                        await sock.sendMessage(jid, {
-                            image: buffer,
-                            caption: successCaption
-                        });
+                        await sock.sendMessage(jid, { image: buffer, caption: successCaption });
                     } catch (sendError) {
-                        console.log('Image send failed:', sendError.message);
                         await sock.sendMessage(jid, { text: successCaption }, { quoted: m });
                     }
                 } else {
                     await sock.sendMessage(jid, { text: successCaption }, { quoted: m });
                 }
             }
-            
-            // Send additional info for ImgBB
-            // if (service === 'ImgBB') {
-            //     const apiInfo = `🔧 *ImgBB API Info*\n\n` +
-            //                    `• API Key: ✅ Embedded\n` +
-            //                    `• Status: Active\n` +
-            //                    `• Max Size: 32MB\n` +
-            //                    `• Formats: JPG, PNG, GIF, WebP, BMP\n` +
-            //                    `• Expiration: Never\n\n` +
-            //                    `💡 *Tips:*\n` +
-            //                    `• Use .qr on this URL for QR code\n` +
-            //                    `• Images are permanent\n` +
-            //                    `• Share anywhere`;
-                
-            //     await sock.sendMessage(jid, { text: apiInfo });
-            // }
+
+            await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
             
         } catch (error) {
             console.error('URL command error:', error);
-            
-            let errorMsg = `❌ *Upload Failed*\n\n`;
-            errorMsg += `*Error:* ${error.message}\n\n`;
-            
-            if (error.message.includes('not supported')) {
-                errorMsg += `*✅ Supported formats:*\n`;
-                errorMsg += `• Images: JPG, PNG, GIF, WebP, BMP\n`;
-                errorMsg += `• Videos: MP4, MOV, AVI, MKV, WebM\n`;
-                errorMsg += `• Documents: PDF, TXT, DOC, XLS\n`;
-                errorMsg += `• Audio: MP3, WAV, OGG, M4A\n\n`;
-                errorMsg += `💡 *Tip:* Convert your file to supported format`;
-            } else if (error.message.includes('download')) {
-                errorMsg += `*🔧 Solutions:*\n`;
-                errorMsg += `1. Make sure you're replying to:\n`;
-                errorMsg += `   • Image 📷\n`;
-                errorMsg += `   • Video 🎥\n`;
-                errorMsg += `   • Document 📄\n`;
-                errorMsg += `   • Audio 🎵\n`;
-                errorMsg += `2. Try sending media again\n`;
-                errorMsg += `3. Check file size (<2GB)\n`;
-                errorMsg += `4. Use fresh media (not too old)\n`;
-            } else if (error.message.includes('ImgBB') || error.message.includes('API')) {
-                errorMsg += `*🔧 API Status:*\n`;
-                const apiKey = getImgBBKey();
-                errorMsg += `• Key configured: ${apiKey && apiKey.length === 32 ? '✅' : '❌'}\n`;
-                errorMsg += `• Key length: ${apiKey?.length || 0}/32\n\n`;
-                errorMsg += `💡 *Try:* Use .telegraph for images or .transfer for other files`;
-            } else {
-                errorMsg += `*🔧 Try this:*\n`;
-                errorMsg += `1. Check internet connection\n`;
-                errorMsg += `2. Try smaller file\n`;
-                errorMsg += `3. Wait and retry\n`;
-                errorMsg += `4. Contact bot developer\n`;
-            }
-            
-            errorMsg += `\n💡 *Alternative commands:*\n`;
-            errorMsg += `• Images: \`.imgbb\` (permanent)\n`;
-            errorMsg += `• Videos: \`.transfer\` (large files)\n`;
-            errorMsg += `• Any file: \`.fileup\` (temporary)\n`;
-            
-            if (statusMsg?.key) {
-                await sock.sendMessage(jid, { text: errorMsg, edit: statusMsg.key });
-            } else {
-                await sock.sendMessage(jid, { text: errorMsg }, { quoted: m });
-            }
-            
-        } finally {
-            await sock.sendPresenceUpdate('paused', jid);
+            await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+            return sock.sendMessage(jid, { text: `❌ *Error:* ${error.message || 'Unknown error'}` }, { quoted: m });
         }
     }
 };

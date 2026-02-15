@@ -95,7 +95,7 @@ export default {
       const successText = `✅ *ImgBB Upload Successful!*\n\n` +
         `📐 ${result.width || '?'} × ${result.height || '?'} • ${fileSizeMB.toFixed(2)} MB\n\n` +
         `🔗 *URL:* ${result.url}\n\n` +
-        `🐺 _Silent Wolf Bot_`;
+        `🐺 _Silent Wolf_`;
 
       try {
         const { createRequire } = await import('module');
@@ -104,7 +104,7 @@ export default {
         await sendInteractiveMessage(sock, jid, {
           image: { url: result.thumb || result.url },
           text: successText,
-          footer: '🐺 Silent Wolf Bot',
+          footer: '🐺 Silent Wolf',
           interactiveButtons: [
             {
               name: 'cta_copy',
