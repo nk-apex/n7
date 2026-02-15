@@ -65,9 +65,7 @@ export default {
         }, { quoted: m });
       }
 
-      await sock.sendMessage(jid, {
-        react: { text: '⏳', key: m.key }
-      });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       let searchQuery = args.join(" ");
 
@@ -76,10 +74,6 @@ export default {
           text: `❌ Please provide video name or URL\nExample: ${prefix}video funny cats`
         }, { quoted: m });
       }
-
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Searching:* "${searchQuery}"` 
-      }, { quoted: m });
 
       let videoUrl = '';
       let videoTitle = '';
@@ -110,36 +104,33 @@ export default {
           } else {
             const { videos: ytResults } = await yts(searchQuery);
             if (!ytResults || ytResults.length === 0) {
+              await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
               return sock.sendMessage(jid, { 
-                text: `❌ No videos found for "${searchQuery}"\nTry different keywords or direct link`,
-                edit: statusMsg.key 
-              });
+                text: `❌ No videos found for "${searchQuery}"\nTry different keywords or direct link`
+              }, { quoted: m });
             }
             videoUrl = ytResults[0].url;
             videoTitle = ytResults[0].title;
             videoId = ytResults[0].videoId;
           }
           
-          await sock.sendMessage(jid, { 
-            text: `✅ *Found:* ${videoTitle}\n⬇️ *Downloading...*`,
-            edit: statusMsg.key 
-          });
-          
         } catch (error) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           return sock.sendMessage(jid, { 
-            text: `❌ Search failed\nUse direct YouTube link`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Search failed\nUse direct YouTube link`
+          }, { quoted: m });
         }
       }
+
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       let downloadUrl = await keithDownloadVideo(videoUrl);
       
       if (!downloadUrl) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         return sock.sendMessage(jid, { 
-          text: `❌ Failed to get video download link\nTry again later`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Failed to get video download link\nTry again later`
+        }, { quoted: m });
       }
 
       const tempDir = path.join(__dirname, "../temp");
@@ -174,10 +165,10 @@ export default {
         }
         
         if (parseFloat(fileSizeMB) > 99) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Video too large (${fileSizeMB}MB)\nMax size: 99MB`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Video too large (${fileSizeMB}MB)\nMax size: 99MB`
+          }, { quoted: m });
           fs.unlinkSync(tempFile);
           return;
         }
@@ -203,26 +194,20 @@ export default {
         }, { quoted: m });
 
         fs.unlinkSync(tempFile);
-        
-        await sock.sendMessage(jid, { 
-          text: `✅ *Video Sent!*\n\n🎬 ${videoTitle}\n📦 ${fileSizeMB}MB`,
-          edit: statusMsg.key 
-        });
 
-        await sock.sendMessage(jid, {
-          react: { text: '✅', key: m.key }
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
       } catch (error) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Download failed\nTry again later`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Download failed\nTry again later`
+        }, { quoted: m });
         if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
       }
 
     } catch (error) {
       console.error("Video error:", error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, { 
         text: `❌ Error downloading video\nTry again later`
       }, { quoted: m });

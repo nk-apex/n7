@@ -438,10 +438,7 @@ export default {
       }
     }
 
-    // Send processing message
-    await sock.sendMessage(jid, { 
-      text: `📥 *Downloading from Facebook...*` 
-    }, { quoted: m });
+    await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
     // Check if message has already been processed
     if (processedMessages.has(m.key.id)) {
@@ -476,6 +473,7 @@ export default {
         const tempFile = videoPath || `${tempDir}/fb_${Date.now()}.mp4`;
         
         console.log(`📘 [FACEBOOK] Downloading video to: ${tempFile}`);
+        await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
         await downloadToFile(videoUrl, tempFile);
         
         const fileSize = fs.statSync(tempFile).size;
@@ -510,20 +508,17 @@ export default {
         }, { quoted: m });
 
         console.log(`✅ [FACEBOOK] Video sent successfully`);
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
         
         // Clean up temp file
         if (existsSync(tempFile)) {
           fs.unlinkSync(tempFile);
           console.log(`🧹 [FACEBOOK] Cleaned up temp file: ${tempFile}`);
         }
-        
-        // Send success message
-        await sock.sendMessage(jid, { 
-          text: `✅ *Download complete!*\n• Size: ${sizeMB}MB\n• Quality: HD`
-        }, { quoted: m });
 
       } catch (sendError) {
         console.error('❌ [FACEBOOK] Error sending video:', sendError);
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         
         // Cleanup even if sending fails
         if (videoPath && existsSync(videoPath)) {
@@ -538,6 +533,7 @@ export default {
 
     } catch (error) {
       console.error('❌ [FACEBOOK] Command error:', error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       
       let errorMsg = `❌ *Download failed*\n\n⚠️ *Error:* ${error.message}`;
       

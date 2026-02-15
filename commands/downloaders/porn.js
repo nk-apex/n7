@@ -115,10 +115,8 @@ export default {
     console.log(`🐺 [WOLF] Searching for: "${searchQuery}"`);
     
     try {
-      // Send initial status
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Searching wolf content:* "${searchQuery}"` 
-      }, { quoted: m });
+      // Send initial status reaction
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
       
       let videoUrl = '';
       let videoTitle = '';
@@ -191,21 +189,18 @@ export default {
         }
         
         if (!videoUrl) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ No wolf content found for "${searchQuery}"\n\nTry:\n• Different search terms\n• More specific queries\n• Direct YouTube URL`,
-            edit: statusMsg.key 
-          });
+            text: `❌ No wolf content found for "${searchQuery}"\n\nTry:\n• Different search terms\n• More specific queries\n• Direct YouTube URL`
+          }, { quoted: m });
           return;
         }
       }
       
       console.log(`🐺 [WOLF] Found: "${videoTitle}" | URL: ${videoUrl}`);
       
-      // Update status
-      await sock.sendMessage(jid, { 
-        text: `✅ *Found:* "${videoTitle}"\n⏱️ *Duration:* ${duration || 'N/A'}\n⬇️ *Downloading...*`,
-        edit: statusMsg.key 
-      });
+      // Update status to downloading
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
       
       // Try multiple download sources
       let downloadUrl = null;
@@ -241,20 +236,14 @@ export default {
       
       if (!downloadUrl) {
         console.error("❌ All download methods failed");
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to get download link for "${videoTitle}"\n\nHere's the direct link:\n🔗 ${videoUrl}`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Failed to get download link for "${videoTitle}"\n\nHere's the direct link:\n🔗 ${videoUrl}`
+        }, { quoted: m });
         return;
       }
       
       console.log(`✅ [WOLF] Using ${apiUsed} for download`);
-      
-      // Update status
-      await sock.sendMessage(jid, { 
-        text: `✅ *Found:* "${videoTitle}" ✅\n⬇️ *Downloading...* ✅\n🎬 *Processing video...*`,
-        edit: statusMsg.key 
-      });
       
       // Create temp directory
       const tempDir = path.join(__dirname, "../temp");
@@ -299,10 +288,10 @@ export default {
         
         if (fileSizeMB > 100) {
           console.log(`⚠️ File too large: ${fileSizeMB}MB`);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Video too large (${fileSizeMB}MB). Maximum size is 100MB.\n\nHere's the direct link:\n🔗 ${videoUrl}`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Video too large (${fileSizeMB}MB). Maximum size is 100MB.\n\nHere's the direct link:\n🔗 ${videoUrl}`
+          }, { quoted: m });
           fs.unlinkSync(tempFile);
           return;
         }
@@ -364,20 +353,17 @@ export default {
           console.log(`🧹 Cleaned temp file: ${tempFile}`);
         }
         
-        // Send success message
-        await sock.sendMessage(jid, { 
-          text: `✅ *Wolf Video Downloaded!*\n\n🐺 *Title:* ${videoTitle}\n📦 *Size:* ${fileSizeMB}MB\n⏱️ *Duration:* ${duration || 'N/A'}\n🔧 *Source:* ${apiUsed}`,
-          edit: statusMsg.key 
-        });
+        // Send success reaction
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
         
         console.log(`✅ [WOLF] Success: "${videoTitle}" (${fileSizeMB}MB) via ${apiUsed}`);
         
       } catch (downloadError) {
         console.error("❌ [WOLF] Download error:", downloadError.message);
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to download video: ${downloadError.message}\n\nHere's the direct link:\n🔗 ${videoUrl}`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Failed to download video: ${downloadError.message}\n\nHere's the direct link:\n🔗 ${videoUrl}`
+        }, { quoted: m });
         if (fs.existsSync(tempFile)) {
           try { fs.unlinkSync(tempFile); } catch {}
         }

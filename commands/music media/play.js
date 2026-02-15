@@ -99,9 +99,7 @@ export default {
           return;
         }
 
-        const statusMsg = await sock.sendMessage(jid, { 
-          text: `🔍 *Searching:* "${listQuery}"` 
-        }, { quoted: m });
+        await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
         let videos = await keithSearch(listQuery);
         
@@ -115,10 +113,10 @@ export default {
         }
 
         if (videos.length === 0) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ No results found for "${listQuery}"`,
-            edit: statusMsg.key 
-          });
+            text: `❌ No results found for "${listQuery}"`
+          }, { quoted: m });
           return;
         }
 
@@ -138,15 +136,14 @@ export default {
         listText += `\n*Usage:* Reply with number (1-10) or use .play <URL>`;
         
         await sock.sendMessage(jid, { 
-          text: listText,
-          edit: statusMsg.key 
-        });
+          text: listText
+        }, { quoted: m });
+
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
         return;
       }
 
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Processing:* "${searchQuery}"` 
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       let videoUrl = '';
       let videoTitle = '';
@@ -159,10 +156,10 @@ export default {
         videoUrl = searchQuery;
         videoId = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i)?.[1];
         if (!videoId) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: "❌ Invalid YouTube URL format.",
-            edit: statusMsg.key 
-          });
+            text: "❌ Invalid YouTube URL format."
+          }, { quoted: m });
           return;
         }
         videoTitle = "YouTube Audio";
@@ -180,10 +177,10 @@ export default {
           } else {
             const { videos: ytResults } = await yts(searchQuery);
             if (!ytResults || ytResults.length === 0) {
+              await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
               await sock.sendMessage(jid, { 
-                text: `❌ No results found for "${searchQuery}"`,
-                edit: statusMsg.key 
-              });
+                text: `❌ No results found for "${searchQuery}"`
+              }, { quoted: m });
               return;
             }
             videoUrl = ytResults[0].url;
@@ -195,10 +192,10 @@ export default {
           }
         } catch (error) {
           console.error("Search error:", error);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Search failed: ${error.message}`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Search failed: ${error.message}`
+          }, { quoted: m });
           return;
         }
       }
@@ -209,26 +206,18 @@ export default {
 
       console.log(`🎵 [PLAY] Selected: "${videoTitle}" | URL: ${videoUrl}`);
 
-      await sock.sendMessage(jid, { 
-        text: `🔍 *Found:* "${videoTitle}" ✅\n⬇️ *Downloading...*`,
-        edit: statusMsg.key 
-      });
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       let downloadUrl = await keithDownloadAudio(videoUrl);
       
       if (!downloadUrl) {
         console.error("❌ All Keith API audio endpoints failed");
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Download failed. Please try:\n1. Another song/video\n2. Direct YouTube URL\n3. Try again later`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Download failed. Please try:\n1. Another song/video\n2. Direct YouTube URL\n3. Try again later`
+        }, { quoted: m });
         return;
       }
-      
-      await sock.sendMessage(jid, { 
-        text: `🔍 *Found:* "${videoTitle}" ✅\n⬇️ *Downloading...* ✅\n📤 *Processing file...*`,
-        edit: statusMsg.key 
-      });
 
       const tempDir = path.join(__dirname, "../temp");
       if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
@@ -267,10 +256,10 @@ export default {
         }
         
         if (fileSizeMB > 50) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ File too large (${fileSizeMB}MB). Maximum size is 50MB.`,
-            edit: statusMsg.key 
-          });
+            text: `❌ File too large (${fileSizeMB}MB). Maximum size is 50MB.`
+          }, { quoted: m });
           fs.unlinkSync(tempFile);
           return;
         }
@@ -337,19 +326,16 @@ export default {
           fs.unlinkSync(tempFile);
         }
 
-        await sock.sendMessage(jid, { 
-          text: `✅ *Download Complete!*\n\n🎵 "${videoTitle}"\n📦 Size: ${fileSizeMB}MB\n📤 Format: Audio & Document`,
-          edit: statusMsg.key 
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
         console.log(`✅ [PLAY] Success: "${videoTitle}" (${fileSizeMB}MB) via Keith API`);
 
       } catch (downloadError) {
         console.error("❌ [PLAY] Download error:", downloadError.message);
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to process file: ${downloadError.message}`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Failed to process file: ${downloadError.message}`
+        }, { quoted: m });
         if (fs.existsSync(tempFile)) {
           try { fs.unlinkSync(tempFile); } catch {}
         }
@@ -357,6 +343,7 @@ export default {
 
     } catch (error) {
       console.error("❌ [PLAY] ERROR:", error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, { 
         text: `❌ Error: ${error.message}` 
       }, { quoted: m });

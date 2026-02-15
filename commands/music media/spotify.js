@@ -445,11 +445,7 @@ export default {
     console.log(`🎵 [SPOTIFY] Query: "${query}"`);
 
     try {
-      // Send initial status
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Searching Spotify:* "${query}"\n` +
-              `⏳ *Please wait...*`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Check if it's a Spotify URL
       const isSpotifyUrl = query.match(/open\.spotify\.com\/(track|album|playlist|artist)/i);
@@ -498,21 +494,16 @@ export default {
 
       if (!track || !track.downloadLink) {
         console.error('❌ No track or download link found');
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Could not find or download track.\n\nTry:\n1. Different song name\n2. Add artist name\n3. Direct Spotify URL\n4. Check spelling`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Could not find or download track.\n\nTry:\n1. Different song name\n2. Add artist name\n3. Direct Spotify URL\n4. Check spelling`
+        }, { quoted: m });
         return;
       }
 
       console.log(`🎵 [SPOTIFY] Found: "${track.title}" by ${track.artist || 'Unknown'}`);
       
-      await sock.sendMessage(jid, { 
-        text: `🔍 *Found:* "${track.title}" ✅\n` +
-              `👤 *Artist:* ${track.artist || 'Unknown'}\n` +
-              `⬇️ *Downloading...*`,
-        edit: statusMsg.key 
-      });
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       // Try alternative APIs if Keith API fails
       let downloadUrl = track.downloadLink;
@@ -549,20 +540,12 @@ export default {
       }
 
       if (!downloadUrl || !downloadUrl.startsWith('http')) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ No valid download link available.\n\nTry:\n1. Another song\n2. YouTube download instead\n3. Check if song is available in your region`,
-          edit: statusMsg.key 
-        });
+          text: `❌ No valid download link available.\n\nTry:\n1. Another song\n2. YouTube download instead\n3. Check if song is available in your region`
+        }, { quoted: m });
         return;
       }
-
-      await sock.sendMessage(jid, { 
-        text: `🔍 *Found:* "${track.title}" ✅\n` +
-              `👤 *Artist:* ${track.artist || 'Unknown'} ✅\n` +
-              `⬇️ *Downloading...* ✅\n` +
-              `🎵 *Processing audio...*`,
-        edit: statusMsg.key 
-      });
 
       // Create temp directory
       const tempDir = path.join(__dirname, "../temp");
@@ -610,10 +593,10 @@ export default {
         
         // Check file size limits
         if (fileSizeMB > 50) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ File too large (${fileSizeMB}MB).\nMaximum size is 50MB.\n\nTry:\n1. Different song\n2. Shorter track`,
-            edit: statusMsg.key 
-          });
+            text: `❌ File too large (${fileSizeMB}MB).\nMaximum size is 50MB.\n\nTry:\n1. Different song\n2. Shorter track`
+          }, { quoted: m });
           fs.unlinkSync(tempFile);
           return;
         }
@@ -687,24 +670,16 @@ export default {
           console.log(`🧹 [SPOTIFY] Cleaned temp file: ${tempFile}`);
         }
 
-        await sock.sendMessage(jid, { 
-          text: `✅ *Spotify Track Downloaded!*\n\n` +
-                `🎵 *Title:* ${track.title}\n` +
-                `👤 *Artist:* ${track.artist || 'Unknown'}\n` +
-                `⏱️ *Duration:* ${durationFormatted}\n` +
-                `📦 *Size:* ${fileSizeMB}MB\n` +
-                `🔧 *Source:* ${apiUsed}`,
-          edit: statusMsg.key 
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
         console.log(`✅ [SPOTIFY] Success: "${track.title}" (${fileSizeMB}MB) via ${apiUsed}`);
 
       } catch (downloadError) {
         console.error("❌ [SPOTIFY] Download error:", downloadError.message);
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to download audio: ${downloadError.message}\n\nTry YouTube download instead: ${PREFIX}song ${query}`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Failed to download audio: ${downloadError.message}\n\nTry YouTube download instead: ${PREFIX}song ${query}`
+        }, { quoted: m });
         if (fs.existsSync(tempFile)) {
           try { fs.unlinkSync(tempFile); } catch {}
         }
@@ -734,6 +709,7 @@ export default {
       errorMessage += `• Try different track name\n`;
       errorMessage += `• Use direct Spotify URL\n`;
       
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, { 
         text: errorMessage
       }, { quoted: m });

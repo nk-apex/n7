@@ -30,8 +30,6 @@ export default {
   async execute(sock, m, args) {
     const jid = m.key.remoteJid;
     const userId = m.key.participant || m.key.remoteJid;
-    let statusMsg = null;
-
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, { 
@@ -50,42 +48,31 @@ export default {
         return;
       }
 
-      // Send initial status
-      statusMsg = await sock.sendMessage(jid, { 
-        text: `👻 *Processing Snapchat URL...*` 
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Extract video ID
       const videoId = extractVideoId(url);
       
       if (!videoId) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `👻 *Processing Snapchat URL...* ❌\n\n❌ Could not extract video ID from URL`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Could not extract video ID from URL`
+        }, { quoted: m });
         return;
       }
 
-      await sock.sendMessage(jid, { 
-        text: `👻 *Processing Snapchat URL...* ✅\n📥 *Downloading Spotlight video...*`,
-        edit: statusMsg.key 
-      });
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       // Try multiple download methods
       const result = await downloadSpotlightVideo(videoId);
       
       if (!result.success) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `👻 *Processing Snapchat URL...* ✅\n📥 *Downloading Spotlight video...* ❌\n\n❌ ${result.error || 'Failed to download video'}`,
-          edit: statusMsg.key 
-        });
+          text: `❌ ${result.error || 'Failed to download video'}`
+        }, { quoted: m });
         return;
       }
-
-      await sock.sendMessage(jid, { 
-        text: `👻 *Processing Snapchat URL...* ✅\n📥 *Downloading Spotlight video...* ✅\n📤 *Sending video...*`,
-        edit: statusMsg.key 
-      });
 
       // Send the video
       const userCaption = getCaption(userId);
@@ -116,23 +103,17 @@ export default {
         });
       }
 
-      await sock.sendMessage(jid, { 
-        text: `👻 *Processing Snapchat URL...* ✅\n📥 *Downloading Spotlight video...* ✅\n📤 *Sending video...* ✅\n\n✅ *Video sent successfully!*`,
-        edit: statusMsg.key 
-      });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
       // Cleanup
       cleanupFile(result.filePath);
 
     } catch (error) {
       console.error('Snapchat command error:', error);
-      
-      if (statusMsg) {
-        await sock.sendMessage(jid, { 
-          text: `👻 *Processing Snapchat URL...* ❌\n\n❌ Error: ${error.message.substring(0, 100)}`,
-          edit: statusMsg.key 
-        });
-      }
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+      await sock.sendMessage(jid, { 
+        text: `❌ Error: ${error.message.substring(0, 100)}`
+      }, { quoted: m });
     }
   },
 };

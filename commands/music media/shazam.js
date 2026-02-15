@@ -189,11 +189,7 @@ export default {
                 return;
             }
 
-            await sock.sendMessage(jid, { react: { text: '🎵', key: m.key } });
-
-            const statusMsg = await sock.sendMessage(jid, {
-                text: `🎵 *Listening...*\n\n🔍 Analyzing audio...\n⏳ Please wait`
-            }, { quoted: m });
+            await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
             let audioBuffer;
 
@@ -217,18 +213,14 @@ export default {
 
             const clip = await extractAudioClip(audioBuffer, 15);
 
-            await sock.sendMessage(jid, {
-                text: `🎵 *Listening...*\n\n🔍 Identifying song...\n⏳ Searching database...`,
-                edit: statusMsg.key
-            });
+            await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
             const songInfo = await identifySong(clip);
 
             if (!songInfo) {
                 await sock.sendMessage(jid, {
-                    text: `❌ *Song not identified*\n\nCould not recognize this audio.\n\n*Tips:*\n• Use clear audio (not distorted)\n• 10-15 seconds of the main melody\n• Avoid background noise`,
-                    edit: statusMsg.key
-                });
+                    text: `❌ *Song not identified*\n\nCould not recognize this audio.\n\n*Tips:*\n• Use clear audio (not distorted)\n• 10-15 seconds of the main melody\n• Avoid background noise`
+                }, { quoted: m });
                 await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
                 return;
             }
@@ -247,9 +239,8 @@ export default {
             if (songInfo.appleMusic) resultText += `🍎 *Apple Music:* ${songInfo.appleMusic}\n`;
 
             await sock.sendMessage(jid, {
-                text: resultText,
-                edit: statusMsg.key
-            });
+                text: resultText
+            }, { quoted: m });
 
             await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
             console.log(`[SHAZAM] Identified: ${songInfo.artist} - ${songInfo.title}`);

@@ -130,29 +130,28 @@ export default {
       const searchQuery = args.join(" ");
       console.log(`🎵 [LYRICS] Searching for: ${searchQuery}`);
 
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Searching lyrics*: "${searchQuery}"` 
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Try multiple methods to get lyrics
       const lyricsData = await getLyricsEnhanced(searchQuery);
       
       if (lyricsData && lyricsData.lyrics) {
         const formattedLyrics = formatLyrics(lyricsData);
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: formattedLyrics,
-          edit: statusMsg.key 
-        });
+          text: formattedLyrics
+        }, { quoted: m });
         console.log(`✅ [LYRICS] Successfully sent lyrics for: ${lyricsData.title}`);
       } else {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ *Lyrics Not Found*\n\n"${searchQuery}"\n\n🌐 *Search manually:*\n• https://genius.com/search?q=${encodeURIComponent(searchQuery)}\n• https://www.azlyrics.com/lyrics/${generateAZLyricsPath(searchQuery)}\n• https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' lyrics')}\n\n💡 *Tip:* Try the exact song title with artist name`,
-          edit: statusMsg.key 
-        });
+          text: `❌ *Lyrics Not Found*\n\n"${searchQuery}"\n\n🌐 *Search manually:*\n• https://genius.com/search?q=${encodeURIComponent(searchQuery)}\n• https://www.azlyrics.com/lyrics/${generateAZLyricsPath(searchQuery)}\n• https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' lyrics')}\n\n💡 *Tip:* Try the exact song title with artist name`
+        }, { quoted: m });
       }
 
     } catch (error) {
       console.error("❌ [LYRICS] ERROR:", error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, { 
         text: `❌ Error: ${error.message}` 
       }, { quoted: m });

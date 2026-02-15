@@ -535,10 +535,7 @@ export default {
       const searchQuery = args.join(" ");
       console.log(`🎬 [VIDEO] Request: "${searchQuery}"`);
 
-      // Send initial status
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Searching*: "${searchQuery}"\n⚡ Using Keith API...`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Determine if input is YouTube link or search query
       let videoUrl = '';
@@ -553,20 +550,15 @@ export default {
         const videoId = extractYouTubeId(videoUrl);
         
         if (!videoId) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Invalid YouTube URL\nPlease provide a valid YouTube link.`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Invalid YouTube URL\nPlease provide a valid YouTube link.`
+          }, { quoted: m });
           return;
         }
         
         // Fetch video info
         try {
-          await sock.sendMessage(jid, { 
-            text: `🔍 *Searching*: "${searchQuery}"\n📡 Fetching video info...`,
-            edit: statusMsg.key 
-          });
-          
           const { videos } = await yts({ videoId });
           if (videos && videos.length > 0) {
             videoTitle = videos[0].title;
@@ -582,17 +574,12 @@ export default {
       } else {
         // Search YouTube
         try {
-          await sock.sendMessage(jid, { 
-            text: `🔍 *Searching*: "${searchQuery}"\n📡 Looking for best match...`,
-            edit: statusMsg.key 
-          });
-          
           const { videos } = await yts(searchQuery);
           if (!videos || videos.length === 0) {
+            await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
             await sock.sendMessage(jid, { 
-              text: `❌ No videos found for "${searchQuery}"\nTry different keywords or use direct YouTube link.`,
-              edit: statusMsg.key 
-            });
+              text: `❌ No videos found for "${searchQuery}"\nTry different keywords or use direct YouTube link.`
+            }, { quoted: m });
             return;
           }
           
@@ -602,17 +589,12 @@ export default {
           
           console.log(`🎬 [VIDEO] Found: ${videoTitle} - ${videoUrl}`);
           
-          await sock.sendMessage(jid, { 
-            text: `✅ *Found:* ${videoTitle}\n⬇️ *Getting download link...*`,
-            edit: statusMsg.key 
-          });
-          
         } catch (searchError) {
           console.error("❌ [VIDEO] Search error:", searchError);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Search failed. Please use direct YouTube link.\nExample: video https://youtube.com/watch?v=...`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Search failed. Please use direct YouTube link.\nExample: video https://youtube.com/watch?v=...`
+          }, { quoted: m });
           return;
         }
       }
@@ -632,10 +614,7 @@ export default {
         try {
           console.log(`🎬 [VIDEO] Trying ${apiName} API...`);
           
-          await sock.sendMessage(jid, { 
-            text: `✅ *Found:* ${videoTitle}\n⬇️ *Getting download link...*\n⚡ Using ${apiName} API...`,
-            edit: statusMsg.key 
-          });
+          await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
           
           const result = await apiCall();
           
@@ -651,18 +630,12 @@ export default {
       }
 
       if (!videoResult) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ All download services failed\nPlease try again later.`,
-          edit: statusMsg.key 
-        });
+          text: `❌ All download services failed\nPlease try again later.`
+        }, { quoted: m });
         return;
       }
-
-      // Update status
-      await sock.sendMessage(jid, { 
-        text: `✅ *Found:* ${videoTitle}\n✅ *Download link ready*\n📥 *Downloading video...*`,
-        edit: statusMsg.key 
-      });
 
       // Download the video file
       const tempDir = path.join(__dirname, "../temp");
@@ -719,10 +692,10 @@ export default {
 
         // WhatsApp video limit is ~16MB
         if (parseFloat(fileSizeMB) > 16) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Video too large: ${fileSizeMB}MB\nMax size: 16MB\nTry shorter video or use .audio command for music only.`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Video too large: ${fileSizeMB}MB\nMax size: 16MB\nTry shorter video or use .audio command for music only.`
+          }, { quoted: m });
           
           if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
           return;
@@ -754,11 +727,7 @@ export default {
           console.log(`✅ [VIDEO] Cleaned up: ${tempFile}`);
         }
 
-        // Success message
-        await sock.sendMessage(jid, { 
-          text: `✅ *Video Sent!*\n\n🎬 ${videoTitle}\n📹 ${videoResult.quality} • ${fileSizeMB}MB\n⚡ Source: ${videoResult.source}`,
-          edit: statusMsg.key 
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
         console.log(`✅ [VIDEO] Success: ${videoTitle} (${fileSizeMB}MB)`);
 
@@ -779,10 +748,10 @@ export default {
         
         errorMsg += `\n\n*Tip:* Try shorter videos for better success rate.`;
         
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: errorMsg,
-          edit: statusMsg.key 
-        });
+          text: errorMsg
+        }, { quoted: m });
         
         // Clean up on error
         if (fs.existsSync(tempFile)) {

@@ -733,9 +733,7 @@ export default {
       const searchQuery = args.join(" ");
       console.log(`🎵 [YTPLAY] Request: "${searchQuery}"`);
 
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Searching*: "${searchQuery}"\n⚡ Trying multiple APIs...` 
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Determine if input is YouTube link or search query
       let videoUrl = '';
@@ -750,10 +748,10 @@ export default {
         videoId = extractYouTubeId(videoUrl);
         
         if (!videoId) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Invalid YouTube URL\nPlease provide a valid YouTube link.`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Invalid YouTube URL\nPlease provide a valid YouTube link.`
+          }, { quoted: m });
           return;
         }
         
@@ -777,18 +775,13 @@ export default {
         }
       } else {
         // Search YouTube for the video
-        await sock.sendMessage(jid, { 
-          text: `🔍 *Searching*: "${searchQuery}"\n📡 Looking for best match...`,
-          edit: statusMsg.key 
-        });
-        
         try {
           const { videos } = await yts(searchQuery);
           if (!videos || videos.length === 0) {
+            await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
             await sock.sendMessage(jid, { 
-              text: `❌ No songs found for "${searchQuery}"\nTry different keywords or use direct YouTube link.`,
-              edit: statusMsg.key 
-            });
+              text: `❌ No songs found for "${searchQuery}"\nTry different keywords or use direct YouTube link.`
+            }, { quoted: m });
             return;
           }
           
@@ -802,17 +795,12 @@ export default {
           
           console.log(`🎵 [YTPLAY] Found: ${videoTitle} - ${videoUrl}`);
           
-          await sock.sendMessage(jid, { 
-            text: `✅ *Found:* "${videoTitle}"\n🎤 Artist: ${videoAuthor}\n⬇️ *Getting download link...*`,
-            edit: statusMsg.key 
-          });
-          
         } catch (searchError) {
           console.error("❌ [YTPLAY] Search error:", searchError);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Search failed. Please use direct YouTube link.\nExample: ytplay https://youtube.com/watch?v=...`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Search failed. Please use direct YouTube link.\nExample: ytplay https://youtube.com/watch?v=...`
+          }, { quoted: m });
           return;
         }
       }
@@ -835,11 +823,6 @@ export default {
         try {
           console.log(`🎵 [YTPLAY] Trying ${apiName} API...`);
           
-          await sock.sendMessage(jid, { 
-            text: `✅ *Found:* "${videoTitle}"\n⬇️ *Getting download link...*\n⚡ Using ${apiName} API...`,
-            edit: statusMsg.key 
-          });
-          
           const result = await apiCall();
           
           if (result.success) {
@@ -855,11 +838,6 @@ export default {
 
       // If new APIs fail, try savetube as fallback
       if (!audioResult) {
-        await sock.sendMessage(jid, { 
-          text: `✅ *Found:* "${videoTitle}"\n⚠️ *New APIs failed, trying savetube...*`,
-          edit: statusMsg.key 
-        });
-        
         try {
           console.log(`🎵 [YTPLAY] Trying savetube as fallback...`);
           const savetubeResult = await savetube.download(videoUrl, 'mp3');
@@ -882,18 +860,14 @@ export default {
       }
 
       if (!audioResult) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ All download services failed!\nPlease try again later.`,
-          edit: statusMsg.key 
-        });
+          text: `❌ All download services failed!\nPlease try again later.`
+        }, { quoted: m });
         return;
       }
 
-      // Update status
-      await sock.sendMessage(jid, { 
-        text: `✅ *Found:* "${videoTitle}"\n✅ *Download link ready*\n⬇️ *Downloading MP3...*`,
-        edit: statusMsg.key 
-      });
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       // Download the MP3 file
       const tempDir = path.join(__dirname, "../temp");
@@ -968,12 +942,6 @@ export default {
 
         const finalFileName = `${cleanTitle}.mp3`;
 
-        // Update status
-        await sock.sendMessage(jid, { 
-          text: `✅ *Found:* "${videoTitle}"\n✅ *Download complete*\n🎵 *Sending audio...*`,
-          edit: statusMsg.key 
-        });
-
         // Send as audio message (not document)
         await sock.sendMessage(jid, {
           audio: audioBuffer,
@@ -999,11 +967,7 @@ export default {
           console.log(`✅ [YTPLAY] Cleaned up: ${tempFile}`);
         }
 
-        // Success message
-        await sock.sendMessage(jid, { 
-          text: `✅ *Audio Sent!*\n\n🎵 ${videoTitle}\n🎤 ${videoAuthor}\n📊 ${fileSizeMB}MB • ⏱ ${videoDuration}\n⚡ Source: ${audioResult.source}`,
-          edit: statusMsg.key 
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
         console.log(`✅ [YTPLAY] Success: ${videoTitle} (${fileSizeMB}MB, ${audioResult.source})`);
 
@@ -1024,10 +988,10 @@ export default {
         
         errorMsg += `\n\n💡 Try:\n• Different song\n• Direct YouTube link\n• Shorter audio`;
         
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: errorMsg,
-          edit: statusMsg.key 
-        });
+          text: errorMsg
+        }, { quoted: m });
         
         // Clean up on error
         if (fs.existsSync(tempFile)) {
@@ -1038,6 +1002,7 @@ export default {
 
     } catch (error) {
       console.error("❌ [YTPLAY] Fatal error:", error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       
       await sock.sendMessage(jid, { 
         text: `❌ An error occurred\n💡 Try:\n1. Direct YouTube link\n2. Different song\n3. Try again later\n\nError: ${error.message.substring(0, 100)}`

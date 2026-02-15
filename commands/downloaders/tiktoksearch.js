@@ -54,21 +54,16 @@ export default {
         }
       }
       
-      // Send processing message
-      const processingMsg = await sock.sendMessage(jid, {
-        text: `🔍 *Searching TikTok...*\n\n` +
-              `📝 *Query:* "${query}"\n` +
-              `📊 *Results:* ${limit} videos`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Search TikTok videos
       const searchResults = await searchTikTok(query, limit);
       
       if (!searchResults || searchResults.length === 0) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
-          text: `❌ *No Results Found!*\n\nCould not find any TikTok videos for "${query}".\n\n💡 *Try:*\n• Different keywords\n• Trending topics\n• Popular hashtags`,
-          edit: processingMsg.key
-        });
+          text: `❌ *No Results Found!*\n\nCould not find any TikTok videos for "${query}".\n\n💡 *Try:*\n• Different keywords\n• Trending topics\n• Popular hashtags`
+        }, { quoted: m });
         return;
       }
 
@@ -130,15 +125,11 @@ export default {
         text: resultText
       }, { quoted: m });
 
-      // Update processing message
-      await sock.sendMessage(jid, {
-        text: `✅ *Search Complete!*\n\nFound ${searchResults.length} TikTok videos for "${query}".\n\nUse \`${PREFIX}tiktok <url>\` to download any video.`,
-        edit: processingMsg.key
-      });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('❌ [TIKSEARCH] ERROR:', error);
-      
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
         text: `❌ *Search Failed!*\n\nError: ${error.message}\n\n💡 *Try again with:*\n• Different keywords\n• Check your connection\n• Wait a few moments`
       }, { quoted: m });

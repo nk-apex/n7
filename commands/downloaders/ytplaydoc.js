@@ -711,10 +711,7 @@ export default {
       
       console.log(`🎬 [VIDEO2] Request: "${searchQuery}" (Quality: ${qualityFlag})`);
 
-      // Send initial status
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Searching*: "${searchQuery}"\n⚡ Looking for video...`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       let videoUrl = '';
       let videoTitle = '';
@@ -728,10 +725,10 @@ export default {
         videoId = extractYouTubeId(videoUrl);
         
         if (!videoId) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Invalid YouTube URL!\nPlease provide a valid YouTube link.`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Invalid YouTube URL!\nPlease provide a valid YouTube link.`
+          }, { quoted: m });
           return;
         }
         
@@ -752,17 +749,12 @@ export default {
       } else {
         // Search for video
         try {
-          await sock.sendMessage(jid, { 
-            text: `🔍 *Searching*: "${searchQuery}"\n📡 Looking for best match...`,
-            edit: statusMsg.key 
-          });
-          
           const { videos } = await yts(searchQuery);
           if (!videos || videos.length === 0) {
+            await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
             await sock.sendMessage(jid, { 
-              text: `😕 Couldn't find that video. Try another one!`,
-              edit: statusMsg.key 
-            });
+              text: `😕 Couldn't find that video. Try another one!`
+            }, { quoted: m });
             return;
           }
           
@@ -774,17 +766,12 @@ export default {
           
           console.log(`🎬 [VIDEO2] Found: ${videoTitle} (${videoDuration}s) - ${videoUrl}`);
           
-          await sock.sendMessage(jid, { 
-            text: `✅ *Found:* ${videoTitle}\n⬇️ *Getting download link...*`,
-            edit: statusMsg.key 
-          });
-          
         } catch (searchError) {
           console.error("❌ [VIDEO2] Search error:", searchError);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Search failed. Please use direct YouTube link.\nExample: video2 https://youtube.com/watch?v=...`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Search failed. Please use direct YouTube link.\nExample: video2 https://youtube.com/watch?v=...`
+          }, { quoted: m });
           return;
         }
       }
@@ -794,9 +781,8 @@ export default {
       
       if (estimatedSize > 16 && qualityFlag !== 'low') {
         await sock.sendMessage(jid, { 
-          text: `⚠️ *Warning:* Estimated size: ${estimatedSize}MB\nThis might exceed WhatsApp limit.\nTry with \`-low\` flag for smaller size.`,
-          edit: statusMsg.key 
-        });
+          text: `⚠️ *Warning:* Estimated size: ${estimatedSize}MB\nThis might exceed WhatsApp limit.\nTry with \`-low\` flag for smaller size.`
+        }, { quoted: m });
       }
 
       // Try multiple APIs sequentially with quality preference
@@ -830,11 +816,6 @@ export default {
         try {
           console.log(`🎬 [VIDEO2] Trying ${apiName} API...`);
           
-          await sock.sendMessage(jid, { 
-            text: `✅ *Found:* ${videoTitle}\n⬇️ *Getting download link...*\n⚡ Using ${apiName} API...`,
-            edit: statusMsg.key 
-          });
-          
           const result = await apiCall();
           
           if (result.success) {
@@ -849,18 +830,14 @@ export default {
       }
 
       if (!videoResult) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ All download services failed!\nPlease try again later.`,
-          edit: statusMsg.key 
-        });
+          text: `❌ All download services failed!\nPlease try again later.`
+        }, { quoted: m });
         return;
       }
 
-      // Update status
-      await sock.sendMessage(jid, { 
-        text: `✅ *Found:* ${videoTitle}\n✅ *Download link ready* (${videoResult.quality})\n📥 *Downloading video...*`,
-        edit: statusMsg.key 
-      });
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       // Download the video file
       const tempDir = path.join(__dirname, "../temp");
@@ -917,20 +894,14 @@ export default {
 
         // WhatsApp video limit is ~16MB
         if (parseFloat(fileSizeMB) > 16) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Video too large: ${fileSizeMB}MB\nMax size: 16MB\nTry with \`-low\` flag: \`video2 ${searchQuery} -low\``,
-            edit: statusMsg.key 
-          });
+            text: `❌ Video too large: ${fileSizeMB}MB\nMax size: 16MB\nTry with \`-low\` flag: \`video2 ${searchQuery} -low\``
+          }, { quoted: m });
           
           if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
           return;
         }
-
-        // Send video preview message
-        await sock.sendMessage(jid, { 
-          text: `_🎥 Playing:_\n _${videoTitle}_`,
-          edit: statusMsg.key 
-        });
 
         // Send the video as VIDEO (not document)
         await sock.sendMessage(jid, {
@@ -958,7 +929,7 @@ export default {
           console.log(`✅ [VIDEO2] Cleaned up: ${tempFile}`);
         }
 
-        // Success message
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
         console.log(`✅ [VIDEO2] Success: ${videoTitle} (${fileSizeMB}MB, ${videoResult.quality})`);
 
       } catch (downloadError) {
@@ -974,10 +945,10 @@ export default {
           errorMsg = `📦 Download failed. Try again.`;
         }
         
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: errorMsg,
-          edit: statusMsg.key 
-        });
+          text: errorMsg
+        }, { quoted: m });
         
         // Clean up on error
         if (fs.existsSync(tempFile)) {
@@ -988,11 +959,11 @@ export default {
 
     } catch (error) {
       console.error("❌ [VIDEO2] Fatal error:", error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       
       await sock.sendMessage(jid, { 
-        text: `🚫 Error: ${error.message}`,
-        quoted: m 
-      });
+        text: `🚫 Error: ${error.message}`
+      }, { quoted: m });
     }
   }
 };

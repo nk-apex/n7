@@ -8,7 +8,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Reuse your exact savetube code
 const savetube = {
    api: {
       base: "https://media.savetube.me/api",
@@ -147,7 +146,6 @@ const savetube = {
    }
 };
 
-// Okatsu API for video download
 const okatsuAPI = {
   getVideo: async (youtubeUrl) => {
     try {
@@ -191,11 +189,9 @@ export default {
         return;
       }
 
-      // Parse arguments for quality specification
-      let quality = '360'; // Default quality
+      let quality = '360';
       let searchQuery = args.join(" ");
       
-      // Check if first argument is a quality specification
       const qualityPattern = /^(144|240|360|480|720|1080)$/;
       if (qualityPattern.test(args[0])) {
         quality = args[0];
@@ -211,22 +207,16 @@ export default {
 
       console.log(`📁 [YTV-DOC] Request: ${searchQuery} (Quality: ${quality}p)`);
 
-      // Send status message
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `📁 *Document Mode*\n🔍 *Searching:* "${searchQuery}"\n📊 *Quality:* ${quality}p` 
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      // Determine if input is YouTube link or search query
       let videoUrl = '';
       let videoTitle = '';
       
-      // Check if it's a URL
       const isUrl = searchQuery.startsWith('http://') || searchQuery.startsWith('https://');
       
       if (isUrl) {
         videoUrl = searchQuery;
         
-        // Try to extract title from URL
         const videoId = savetube.youtube(videoUrl);
         if (videoId) {
           try {
@@ -239,19 +229,13 @@ export default {
           }
         }
       } else {
-        // Search YouTube for the video
         try {
-          await sock.sendMessage(jid, { 
-            text: `📁 *Document Mode*\n🔍 *Searching:* "${searchQuery}"\n📊 *Quality:* ${quality}p\n📡 Looking for best match...`,
-            edit: statusMsg.key 
-          });
-          
           const { videos } = await yts(searchQuery);
           if (!videos || videos.length === 0) {
+            await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
             await sock.sendMessage(jid, { 
-              text: `❌ No videos found for "${searchQuery}"\nTry different keywords or use direct YouTube link.`,
-              edit: statusMsg.key 
-            });
+              text: `❌ No videos found for "${searchQuery}"\nTry different keywords or use direct YouTube link.`
+            }, { quoted: m });
             return;
           }
           
@@ -260,22 +244,18 @@ export default {
           
           console.log(`📁 [YTV-DOC] Found: ${videoTitle} - ${videoUrl}`);
           
-          await sock.sendMessage(jid, { 
-            text: `📁 *Document Mode*\n🔍 *Searching:* "${searchQuery}" ✅\n🎬 *Found:* ${videoTitle}\n📊 *Quality:* ${quality}p\n⬇️ *Downloading video...*`,
-            edit: statusMsg.key 
-          });
-          
         } catch (searchError) {
           console.error("❌ [YTV-DOC] Search error:", searchError);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Search failed. Please use direct YouTube link.\nExample: ytvdoc https://youtube.com/watch?v=...`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Search failed. Please use direct YouTube link.\nExample: ytvdoc https://youtube.com/watch?v=...`
+          }, { quoted: m });
           return;
         }
       }
 
-      // Download using savetube first, then fallback to Okatsu
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
+
       let result = null;
       let downloadSource = "savetube";
       let actualQuality = quality;
@@ -291,7 +271,6 @@ export default {
       } catch (err) {
         console.log(`⚠️ [YTV-DOC] Savetube failed: ${err.message}`);
         
-        // Try lower qualities first
         const qualities = ['360', '240', '144'];
         let foundAlternative = false;
         
@@ -311,13 +290,7 @@ export default {
           }
         }
         
-        // If savetube completely fails, try Okatsu API
         if (!foundAlternative) {
-          await sock.sendMessage(jid, { 
-            text: `📁 *Document Mode*\n🔍 *Searching:* "${searchQuery}" ✅\n🎬 *Found:* ${videoTitle}\n📊 *Quality:* ${quality}p\n⚠️ *Primary service failed, trying backup...*`,
-            edit: statusMsg.key 
-          });
-          
           console.log(`📁 [YTV-DOC] Trying Okatsu API as backup`);
           const okatsuResult = await okatsuAPI.getVideo(videoUrl);
           
@@ -336,10 +309,10 @@ export default {
             console.log(`✅ [YTV-DOC] Got video from Okatsu API`);
           } else {
             console.error("❌ [YTV-DOC] All services failed");
+            await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
             await sock.sendMessage(jid, { 
-              text: `❌ All download services failed\nPlease try again in a few minutes.`,
-              edit: statusMsg.key 
-            });
+              text: `❌ All download services failed\nPlease try again in a few minutes.`
+            }, { quoted: m });
             return;
           }
         }
@@ -347,20 +320,13 @@ export default {
 
       if (!result || !result.status || !result.result || !result.result.download) {
         console.error("❌ [YTV-DOC] Invalid result:", result);
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to get download link\nService might be temporarily unavailable.`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Failed to get download link\nService might be temporarily unavailable.`
+        }, { quoted: m });
         return;
       }
 
-      // Update status
-      await sock.sendMessage(jid, { 
-        text: `📁 *Document Mode*\n🔍 *Searching:* "${searchQuery}" ✅\n⬇️ *Downloading video...* ✅\n📦 *Preparing document...* (${actualQuality}p)`,
-        edit: statusMsg.key 
-      });
-
-      // Download the video file
       const tempDir = path.join(__dirname, "../temp");
       if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
       
@@ -369,12 +335,11 @@ export default {
       const tempFile = path.join(tempDir, `${Date.now()}_${fileName}`);
       
       try {
-        // Download the video
         const response = await axios({
           url: result.result.download,
           method: 'GET',
           responseType: 'stream',
-          timeout: 180000, // 3 minute timeout for larger videos
+          timeout: 180000,
           headers: {
             'User-Agent': 'Mozilla/5.0',
             'Referer': 'https://yt.savetube.me/'
@@ -385,7 +350,6 @@ export default {
           throw new Error(`Download failed with status: ${response.status}`);
         }
 
-        // Stream to file
         const writer = fs.createWriteStream(tempFile);
         response.data.pipe(writer);
         
@@ -394,23 +358,19 @@ export default {
           writer.on('error', reject);
         });
 
-        // Read file into buffer
         const videoBuffer = fs.readFileSync(tempFile);
         const fileSizeMB = (videoBuffer.length / (1024 * 1024)).toFixed(1);
 
-        // Check file size (Document limit is higher, but still reasonable)
         if (parseFloat(fileSizeMB) > 100) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Video too large: ${fileSizeMB}MB\nMax recommended size: 100MB\nTry lower quality (144p, 240p) or shorter video.`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Video too large: ${fileSizeMB}MB\nMax recommended size: 100MB\nTry lower quality (144p, 240p) or shorter video.`
+          }, { quoted: m });
           
-          // Clean up
           if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
           return;
         }
 
-        // Send as document
         await sock.sendMessage(jid, {
           document: videoBuffer,
           mimetype: 'video/mp4',
@@ -418,17 +378,12 @@ export default {
           caption: `📁 *${videoTitle}*\n📊 Quality: ${actualQuality}p\n📦 Size: ${fileSizeMB}MB\n⚡ Source: ${downloadSource}\n🔗 ${videoUrl}`
         }, { quoted: m });
 
-        // Clean up temp file
         if (fs.existsSync(tempFile)) {
           fs.unlinkSync(tempFile);
           console.log(`✅ [YTV-DOC] Cleaned up: ${tempFile}`);
         }
 
-        // Success message
-        await sock.sendMessage(jid, { 
-          text: `✅ *Video Sent as Document!*\n\n📁 ${videoTitle}\n📊 ${actualQuality}p • ${fileSizeMB}MB\n⚡ Source: ${downloadSource}\n⏱ ${result.result.duration || 'N/A'}\n\n*Note:* Open the document to play the video.`,
-          edit: statusMsg.key 
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
         console.log(`✅ [YTV-DOC] Success: ${videoTitle} (${actualQuality}p, ${fileSizeMB}MB, ${downloadSource})`);
 
@@ -447,12 +402,11 @@ export default {
         
         errorMsg += `\n\n💡 Try:\n• Lower quality (144p, 240p)\n• Shorter video`;
         
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: errorMsg,
-          edit: statusMsg.key 
-        });
+          text: errorMsg
+        }, { quoted: m });
         
-        // Clean up on error
         if (fs.existsSync(tempFile)) {
           fs.unlinkSync(tempFile);
           console.log(`🧹 [YTV-DOC] Cleaned up failed: ${tempFile}`);
@@ -470,6 +424,7 @@ export default {
         errorText += `\n${error.message.substring(0, 100)}`;
       }
       
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, { 
         text: errorText
       }, { quoted: m });

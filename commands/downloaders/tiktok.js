@@ -58,12 +58,7 @@ export default {
         }, { quoted: m });
       }
 
-      // Send processing message
-      const processingMsg = await sock.sendMessage(jid, {
-        text: `🔍 *Fetching TikTok Account...*\n\n` +
-              `👤 *Username:* @${username}\n` +
-              `⏳ *Please wait...*`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       console.log(`[TIKTOK INFO] Fetching account: @${username}`);
       
@@ -73,10 +68,10 @@ export default {
         const data = res.data;
 
         if (!data.status || !data.result?.profile) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, {
-            text: `❌ *Account Not Found!*\n\nCould not fetch data for @${username}.\n\n💡 *Possible reasons:*\n• Account doesn't exist\n• Account is private\n• API is temporarily unavailable\n\n✅ *Try:*\n• Check username spelling\n• Use exact username (case-sensitive)\n• Try again in a few minutes`,
-            edit: processingMsg.key
-          });
+            text: `❌ *Account Not Found!*\n\nCould not fetch data for @${username}.\n\n💡 *Possible reasons:*\n• Account doesn't exist\n• Account is private\n• API is temporarily unavailable\n\n✅ *Try:*\n• Check username spelling\n• Use exact username (case-sensitive)\n• Try again in a few minutes`
+          }, { quoted: m });
           return;
         }
 
@@ -114,12 +109,7 @@ export default {
         }, { quoted: m });
 
         console.log(`✅ [TIKTOK INFO] Successfully sent profile for @${username}`);
-
-        // Update processing message
-        await sock.sendMessage(jid, {
-          text: `✅ *Profile Retrieved Successfully!*\n\nDetailed information for @${profile.username} has been sent.`,
-          edit: processingMsg.key
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
       } catch (apiError) {
         console.error('❌ [TIKTOK INFO] API Error:', apiError);
@@ -156,16 +146,13 @@ export default {
             text: fallbackCaption
           }, { quoted: m });
           
-          await sock.sendMessage(jid, {
-            text: `⚠️ *Partial Data Retrieved*\n\nUsing alternative source for @${username}. Some features may be limited.`,
-            edit: processingMsg.key
-          });
+          await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
           
         } catch (fallbackError) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, {
-            text: `❌ *Failed to Fetch Account!*\n\nError: ${apiError.message || 'API unavailable'}\n\n💡 *Try:*\n• Check if username is correct\n• Make sure account is public\n• Try again later`,
-            edit: processingMsg.key
-          });
+            text: `❌ *Failed to Fetch Account!*\n\nError: ${apiError.message || 'API unavailable'}\n\n💡 *Try:*\n• Check if username is correct\n• Make sure account is public\n• Try again later`
+          }, { quoted: m });
         }
       }
 

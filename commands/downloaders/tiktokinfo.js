@@ -54,23 +54,17 @@ export default {
         }, { quoted: m });
       }
 
-      // Send processing message
-      const processingMsg = await sock.sendMessage(jid, {
-        text: `🔍 *Fetching TikTok Account...*\n\n` +
-              `👤 *Username:* @${username}\n` +
-              `⏳ *Getting real-time data...*`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       console.log(`[TIKTOK INFO] Fetching account: @${username}`);
       
-      // Get account information using reliable methods
       const accountInfo = await getTikTokAccountInfo(username);
       
       if (!accountInfo || accountInfo.error) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
-          text: `❌ *Account Data Unavailable!*\n\nCould not fetch data for @${username}.\n\n💡 *Possible reasons:*\n• Account is private\n• Account doesn't exist\n• TikTok API is temporarily unavailable\n\n✅ *Try:*\n• Check username spelling\n• Make sure account is public\n• Try again in a few minutes`,
-          edit: processingMsg.key
-        });
+          text: `❌ *Account Data Unavailable!*\n\nCould not fetch data for @${username}.\n\n💡 *Possible reasons:*\n• Account is private\n• Account doesn't exist\n• TikTok API is temporarily unavailable\n\n✅ *Try:*\n• Check username spelling\n• Make sure account is public\n• Try again in a few minutes`
+        }, { quoted: m });
         return;
       }
 
@@ -127,15 +121,11 @@ export default {
 
       console.log(`✅ Sent account info for @${username}`);
 
-      // Final update
-      await sock.sendMessage(jid, {
-        text: `✅ *Account Info Retrieved!*\n\nReal-time data for @${username} has been sent.`,
-        edit: processingMsg.key
-      });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('❌ [TIKTOK INFO] ERROR:', error);
-      
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
         text: `❌ *Failed to Fetch Account!*\n\nError: ${error.message}\n\n💡 *Try:*\n\`${PREFIX}tiktokinfo khaby.lame\`\n\`${PREFIX}ttinfo zachking\``
       }, { quoted: m });

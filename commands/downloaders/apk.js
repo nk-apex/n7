@@ -359,9 +359,7 @@ export default {
     }
 
     const appName = args[0].toLowerCase();
-    await sock.sendMessage(jid, { 
-      text: `🔍 *Searching for ${appName} APK...*` 
-    }, { quoted: m });
+    await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
     try {
       // Get download link from a simpler source
@@ -384,10 +382,7 @@ export default {
 
       const { downloadUrl, appTitle } = result;
       
-      // Send file info
-      await sock.sendMessage(jid, { 
-        text: `✅ *Found: ${appTitle}*\n\n📥 *Downloading APK...*` 
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       // Download APK to temp file
       const tempDir = './temp/apk';
@@ -424,6 +419,7 @@ export default {
         caption: `📱 *${appTitle} APK*\n\n📦 *Size:* ${fileSizeMB}MB\n⚠️ *Install at your own risk!*`
       }, { quoted: m });
       
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       console.log(`✅ [APK] APK sent successfully: ${appTitle}`);
       
       // Cleanup
@@ -440,6 +436,7 @@ export default {
 
     } catch (error) {
       console.error('❌ [APK] Command error:', error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       
       let errorMsg = `❌ *Download failed*\n\n⚠️ *Error:* ${error.message}`;
       

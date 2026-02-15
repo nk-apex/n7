@@ -82,9 +82,7 @@ export default {
     console.log(`🎵 [SONG] Query: "${searchQuery}"`);
 
     try {
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Searching:* "${searchQuery}"` 
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       let videoUrl = '';
       let videoTitle = '';
@@ -97,10 +95,10 @@ export default {
         videoId = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i)?.[1];
         
         if (!videoId) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: "❌ Invalid YouTube URL format.",
-            edit: statusMsg.key 
-          });
+            text: "❌ Invalid YouTube URL format."
+          }, { quoted: m });
           return;
         }
         
@@ -130,10 +128,10 @@ export default {
           } else {
             const { videos: ytResults } = await yts(searchQuery);
             if (!ytResults || ytResults.length === 0) {
+              await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
               await sock.sendMessage(jid, { 
-                text: `❌ No songs found for "${searchQuery}"`,
-                edit: statusMsg.key 
-              });
+                text: `❌ No songs found for "${searchQuery}"`
+              }, { quoted: m });
               return;
             }
             
@@ -147,10 +145,10 @@ export default {
           
         } catch (error) {
           console.error("Search error:", error);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Search failed: ${error.message}`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Search failed: ${error.message}`
+          }, { quoted: m });
           return;
         }
       }
@@ -161,26 +159,18 @@ export default {
 
       console.log(`🎵 [SONG] Selected: "${videoTitle}" | URL: ${videoUrl}`);
 
-      await sock.sendMessage(jid, { 
-        text: `✅ *Found:* "${videoTitle}"\n⬇️ *Downloading audio...*`,
-        edit: statusMsg.key 
-      });
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       let downloadUrl = await keithDownloadAudio(videoUrl);
 
       if (!downloadUrl) {
         console.error("❌ All Keith API audio endpoints failed");
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to get audio download link. Please try another song or URL.`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Failed to get audio download link. Please try another song or URL.`
+        }, { quoted: m });
         return;
       }
-
-      await sock.sendMessage(jid, { 
-        text: `✅ *Found:* "${videoTitle}"\n⬇️ *Downloading...* ✅\n📤 *Processing audio...*`,
-        edit: statusMsg.key 
-      });
 
       const tempDir = path.join(__dirname, "../temp");
       if (!fs.existsSync(tempDir)) {
@@ -224,10 +214,10 @@ export default {
         
         if (fileSizeMB > 50) {
           console.log(`⚠️ File too large: ${fileSizeMB}MB`);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ File too large (${fileSizeMB}MB). Maximum size is 50MB.`,
-            edit: statusMsg.key 
-          });
+            text: `❌ File too large (${fileSizeMB}MB). Maximum size is 50MB.`
+          }, { quoted: m });
           fs.unlinkSync(tempFile);
           return;
         }
@@ -282,19 +272,16 @@ export default {
           fs.unlinkSync(tempFile);
         }
 
-        await sock.sendMessage(jid, { 
-          text: `✅ *Download Complete!*\n\n🎵 "${videoTitle}"\n📦 Size: ${fileSizeMB}MB`,
-          edit: statusMsg.key 
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
         console.log(`✅ [SONG] Success: "${videoTitle}" (${fileSizeMB}MB) via Keith API`);
 
       } catch (downloadError) {
         console.error("❌ [SONG] Download error:", downloadError.message);
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to download audio: ${downloadError.message}`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Failed to download audio: ${downloadError.message}`
+        }, { quoted: m });
         if (fs.existsSync(tempFile)) {
           try { fs.unlinkSync(tempFile); } catch {}
         }
@@ -302,6 +289,7 @@ export default {
 
     } catch (error) {
       console.error("❌ [SONG] ERROR:", error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, { 
         text: `❌ Error: ${error.message}` 
       }, { quoted: m });

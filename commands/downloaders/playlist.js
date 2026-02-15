@@ -182,12 +182,7 @@ export default {
       const searchQuery = args.join(" ");
       console.log(`🎵 [PLAYLIST] Search: "${searchQuery}"`);
 
-      // Send status message
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `📋 *PLAYLIST SEARCH*\n\n` +
-              `🔍 *Query:* "${searchQuery}"\n` +
-              `⏳ *Searching for playlists...*`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Check if it's a direct playlist URL
       let isPlaylistUrl = searchQuery.includes('playlist?list=');
@@ -197,13 +192,6 @@ export default {
       if (isPlaylistUrl) {
         // Direct playlist URL
         try {
-          await sock.sendMessage(jid, { 
-            text: `📋 *PLAYLIST SEARCH*\n\n` +
-                  `🔍 *Query:* "${searchQuery}"\n` +
-                  `⏳ *Fetching playlist...*`,
-            edit: statusMsg.key 
-          });
-          
           // Extract playlist ID
           const playlistIdMatch = searchQuery.match(/list=([a-zA-Z0-9_-]+)/);
           if (!playlistIdMatch) {
@@ -224,32 +212,24 @@ export default {
           
         } catch (error) {
           console.error("❌ [PLAYLIST] URL error:", error);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Invalid playlist URL\nUse: ${PREFIX}playlist <artist/song name>`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Invalid playlist URL\nUse: ${PREFIX}playlist <artist/song name>`
+          }, { quoted: m });
           return;
         }
       } else {
         // Search for playlists
         try {
-          await sock.sendMessage(jid, { 
-            text: `📋 *PLAYLIST SEARCH*\n\n` +
-                  `🔍 *Query:* "${searchQuery}"\n` +
-                  `⏳ *Searching for playlists...* 🔄\n` +
-                  `📡 Looking for "${searchQuery} playlist"...`,
-            edit: statusMsg.key 
-          });
-          
           // Search YouTube for playlist
           const searchResult = await yts(`${searchQuery} playlist`);
           
           if (!searchResult.videos || searchResult.videos.length === 0) {
+            await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
             await sock.sendMessage(jid, { 
               text: `❌ No playlists found for "${searchQuery}"\nTry different keywords.\n\n` +
-                    `💡 *Example:* ${PREFIX}playlist NF\n${PREFIX}playlist pop music`,
-              edit: statusMsg.key 
-            });
+                    `💡 *Example:* ${PREFIX}playlist NF\n${PREFIX}playlist pop music`
+            }, { quoted: m });
             return;
           }
           
@@ -259,30 +239,21 @@ export default {
           
           console.log(`🎵 [PLAYLIST] Found ${playlistVideos.length} videos`);
           
-          await sock.sendMessage(jid, { 
-            text: `📋 *PLAYLIST SEARCH*\n\n` +
-                  `🔍 *Query:* "${searchQuery}" ✅\n` +
-                  `📊 *Found:* ${playlistVideos.length} songs\n` +
-                  `🎵 *Playlist:* ${playlistTitle}\n` +
-                  `⬇️ *Preparing downloads...*`,
-            edit: statusMsg.key 
-          });
-          
         } catch (searchError) {
           console.error("❌ [PLAYLIST] Search error:", searchError);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Search failed\nTry: ${PREFIX}playlist <artist name>\nExample: ${PREFIX}playlist NF`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Search failed\nTry: ${PREFIX}playlist <artist name>\nExample: ${PREFIX}playlist NF`
+          }, { quoted: m });
           return;
         }
       }
 
       if (playlistVideos.length === 0) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ No songs found in playlist\nTry a different search.`,
-          edit: statusMsg.key 
-        });
+          text: `❌ No songs found in playlist\nTry a different search.`
+        }, { quoted: m });
         return;
       }
 
@@ -294,15 +265,7 @@ export default {
       let failedCount = 0;
       const maxSongs = Math.min(playlistVideos.length, 3); // Limit to 3 songs per request
       
-      // Send playlist info
-      await sock.sendMessage(jid, { 
-        text: `🎵 *PLAYLIST STARTED*\n\n` +
-              `📋 *Title:* ${playlistTitle}\n` +
-              `📊 *Songs:* ${maxSongs} of ${playlistVideos.length}\n` +
-              `⬇️ *Downloading songs...*\n\n` +
-              `⏳ This may take a few minutes...`,
-        edit: statusMsg.key 
-      });
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
       
       for (let i = 0; i < maxSongs; i++) {
         const video = playlistVideos[i];
@@ -313,16 +276,6 @@ export default {
         console.log(`🎵 [PLAYLIST] Downloading ${songNumber}/${maxSongs}: ${videoTitle}`);
         
         try {
-          // Update progress
-          await sock.sendMessage(jid, { 
-            text: `🎵 *PLAYLIST PROGRESS*\n\n` +
-                  `📋 *Title:* ${playlistTitle}\n` +
-                  `📊 *Progress:* ${songNumber}/${maxSongs}\n` +
-                  `🎵 *Now:* ${videoTitle}\n` +
-                  `⬇️ *Downloading...*`,
-            edit: statusMsg.key 
-          });
-          
           // Download using savetube
           let result;
           try {
@@ -418,16 +371,6 @@ export default {
 
             successCount++;
             
-            // Progress update
-            await sock.sendMessage(jid, { 
-              text: `✅ *SONG ${songNumber} SENT!*\n\n` +
-                    `🎵 *Title:* ${videoTitle}\n` +
-                    `📦 *Size:* ${fileSizeMB}MB\n` +
-                    `📊 *Progress:* ${songNumber}/${maxSongs}\n` +
-                    `🎯 *Success:* ${successCount} • ❌ *Failed:* ${failedCount}`,
-              edit: statusMsg.key 
-            });
-            
             // Small delay between songs
             if (i < maxSongs - 1) {
               await new Promise(resolve => setTimeout(resolve, 2000));
@@ -478,15 +421,17 @@ export default {
                      `🎯 *Try:* ${PREFIX}playlist <artist name>`;
       }
       
-      await sock.sendMessage(jid, { 
-        text: summaryText,
-        edit: statusMsg.key 
-      });
+      if (successCount > 0) {
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+      } else {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+      }
       
       console.log(`✅ [PLAYLIST] Completed: ${successCount} success, ${failedCount} failed`);
 
     } catch (error) {
       console.error("❌ [PLAYLIST] Fatal error:", error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       
       let errorText = `❌ *PLAYLIST ERROR*\n\n` +
                      `Error: ${error.message.substring(0, 100)}\n\n` +

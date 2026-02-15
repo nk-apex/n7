@@ -61,9 +61,7 @@ export default {
       const searchQuery = args.join(" ");
       console.log(`🎵 [YTMP3] Request: ${searchQuery}`);
 
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🔍 *Searching for MP3:* "${searchQuery}"` 
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       let videoUrl = '';
       let videoTitle = '';
@@ -97,10 +95,10 @@ export default {
           } else {
             const { videos: ytResults } = await yts(searchQuery);
             if (!ytResults || ytResults.length === 0) {
+              await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
               await sock.sendMessage(jid, { 
-                text: `❌ No songs found for "${searchQuery}"`,
-                edit: statusMsg.key 
-              });
+                text: `❌ No songs found for "${searchQuery}"`
+              }, { quoted: m });
               return;
             }
             videoUrl = ytResults[0].url;
@@ -109,28 +107,25 @@ export default {
           }
         } catch (searchError) {
           console.error("❌ [YTMP3] Search error:", searchError);
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ Search failed. Try direct YouTube link.`,
-            edit: statusMsg.key 
-          });
+            text: `❌ Search failed. Try direct YouTube link.`
+          }, { quoted: m });
           return;
         }
       }
 
       console.log(`🎵 [YTMP3] Found: ${videoTitle} - ${videoUrl}`);
 
-      await sock.sendMessage(jid, { 
-        text: `✅ *Found:* "${videoTitle}"\n⬇️ *Downloading MP3...*`,
-        edit: statusMsg.key 
-      });
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       let downloadUrl = await keithDownloadAudio(videoUrl);
 
       if (!downloadUrl) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ MP3 download failed. Try again later or use .song command.`,
-          edit: statusMsg.key 
-        });
+          text: `❌ MP3 download failed. Try again later or use .song command.`
+        }, { quoted: m });
         return;
       }
 
@@ -168,10 +163,10 @@ export default {
         if (stats.size === 0) throw new Error("Downloaded file is empty");
 
         if (parseFloat(fileSizeMB) > 50) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, { 
-            text: `❌ MP3 too large: ${fileSizeMB}MB\nMax size: 50MB`,
-            edit: statusMsg.key 
-          });
+            text: `❌ MP3 too large: ${fileSizeMB}MB\nMax size: 50MB`
+          }, { quoted: m });
           fs.unlinkSync(tempFile);
           return;
         }
@@ -213,19 +208,16 @@ export default {
 
         if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
 
-        await sock.sendMessage(jid, { 
-          text: `✅ *MP3 Sent!*\n\n🎵 ${videoTitle}\n📦 ${fileSizeMB}MB`,
-          edit: statusMsg.key 
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
         console.log(`✅ [YTMP3] Success: ${videoTitle} (${fileSizeMB}MB)`);
 
       } catch (downloadError) {
         console.error("❌ [YTMP3] Download error:", downloadError);
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to download MP3: ${downloadError.message}`,
-          edit: statusMsg.key 
-        });
+          text: `❌ Failed to download MP3: ${downloadError.message}`
+        }, { quoted: m });
         if (fs.existsSync(tempFile)) {
           try { fs.unlinkSync(tempFile); } catch {}
         }
@@ -233,6 +225,7 @@ export default {
 
     } catch (error) {
       console.error("❌ [YTMP3] Fatal error:", error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, { 
         text: `❌ Error: ${error.message}`
       }, { quoted: m });

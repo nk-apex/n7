@@ -54,10 +54,7 @@ export default {
         return;
       }
 
-      // Send processing message
-      await sock.sendMessage(jid, { 
-        text: `📥 *Downloading from Instagram...*` 
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Check if message has already been processed
       if (processedMessages.has(m.key.id)) {
@@ -153,15 +150,16 @@ export default {
       }
 
       if (successCount > 0) {
-        await sock.sendMessage(jid, { 
-          //text: `✅ Downloaded ${successCount} item${successCount > 1 ? 's' : ''} successfully!` 
-        });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       } else {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
           text: `❌ Could not download any media\n\n💡 Try manually: https://snapinsta.app` 
-        });
+        }, { quoted: m });
       }
+    } catch (error) {
       console.error('📷 [INSTAGRAM] Command error:', error);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       
       let errorMsg = "❌ An error occurred while processing the request";
       
@@ -179,7 +177,8 @@ export default {
         text: errorMsg
       }, { quoted: m });
     }
-  };
+  }
+};
                    
 
 async function downloadToFile(url, filePath) {

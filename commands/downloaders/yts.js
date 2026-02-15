@@ -204,15 +204,12 @@ export default {
 
       const query = args.join(' ');
       
-      // Send processing message
-      await sock.sendMessage(msg.key.remoteJid, {
-        text: `🔍 *Searching YouTube for:* "${query}"`
-      }, { quoted: msg });
+      await sock.sendMessage(msg.key.remoteJid, { react: { text: '⏳', key: msg.key } });
 
-      // Search using yt-search
       const searchResults = await searchYouTube(query);
       
       if (!searchResults || searchResults.length === 0) {
+        await sock.sendMessage(msg.key.remoteJid, { react: { text: '❌', key: msg.key } });
         return sock.sendMessage(msg.key.remoteJid, {
           text: '❌ No results found. Try different keywords.'
         }, { quoted: msg });
@@ -260,8 +257,11 @@ export default {
         text: resultText
       }, { quoted: msg });
 
+      await sock.sendMessage(msg.key.remoteJid, { react: { text: '✅', key: msg.key } });
+
     } catch (error) {
       console.error('YouTube search error:', error);
+      await sock.sendMessage(msg.key.remoteJid, { react: { text: '❌', key: msg.key } });
       await sock.sendMessage(msg.key.remoteJid, {
         text: '❌ Search failed. Please try again later.'
       }, { quoted: msg });
