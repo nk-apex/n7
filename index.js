@@ -5379,16 +5379,16 @@ async function resolveRealNumberForDisplay(senderJid, chatId, sock) {
 async function displayIncomingMessage(msg, sock) {
     try {
         if (!msg || !msg.key) return;
-        if (msg.key.fromMe) return;
         
         const chatId = msg.key.remoteJid;
         if (!chatId || chatId === 'status@broadcast') return;
         
-        const senderJid = msg.key.participant || chatId;
+        const isFromMe = msg.key.fromMe;
+        const senderJid = isFromMe ? (sock.user?.id || chatId) : (msg.key.participant || chatId);
         const isGroup = chatId.endsWith('@g.us');
         
-        const senderNum = await resolveRealNumberForDisplay(senderJid, chatId, sock);
-        const pushName = msg.pushName || 'Unknown';
+        const senderNum = isFromMe ? getDisplayNumber(sock.user?.id || '') : await resolveRealNumberForDisplay(senderJid, chatId, sock);
+        const pushName = isFromMe ? '👑 Owner' : (msg.pushName || 'Unknown');
         
         const msgType = getMessageTypeLabel(msg.message);
         const content = normalizeMessageContent(msg.message);
@@ -5413,10 +5413,10 @@ async function displayIncomingMessage(msg, sock) {
         const typeIcon = typeIcons[msgType] || '📦';
         
         const time = new Date().toLocaleTimeString();
-        const g = chalk.green;
-        const gb = chalk.greenBright;
-        const gBold = chalk.green.bold;
-        const originTag = isGroup ? gb('GROUP') : gb('DM');
+        const c = isFromMe ? chalk.yellow : chalk.green;
+        const cb = isFromMe ? chalk.yellowBright : chalk.greenBright;
+        const cBold = isFromMe ? chalk.yellow.bold : chalk.green.bold;
+        const originTag = isGroup ? cb('GROUP') : cb('DM');
         
         let groupName = '';
         if (isGroup) {
@@ -5429,21 +5429,21 @@ async function displayIncomingMessage(msg, sock) {
             }
         }
         
-        const line1 = `${typeIcon} ${gBold(pushName)} (${gb(senderNum)})`;
+        const line1 = `${typeIcon} ${cBold(pushName)} (${cb(senderNum)})`;
         const line2 = isGroup 
-            ? `   ${originTag} ${g('in')} ${gb(groupName)}`
+            ? `   ${originTag} ${c('in')} ${cb(groupName)}`
             : `   ${originTag}`;
         const line3 = preview 
-            ? `   ${g(msgType.toUpperCase())}: ${gb(preview)}`
-            : `   ${g(msgType.toUpperCase())}`;
+            ? `   ${c(msgType.toUpperCase())}: ${cb(preview)}`
+            : `   ${c(msgType.toUpperCase())}`;
         
-        const border = g('┌──────────────────────────────────────────────');
-        const borderMid = g('│');
-        const borderEnd = g('└──────────────────────────────────────────────');
+        const border = c('┌──────────────────────────────────────────────');
+        const borderMid = c('│');
+        const borderEnd = c('└──────────────────────────────────────────────');
         
         originalConsoleMethods.log(
             `\n${border}\n` +
-            `${borderMid} ${g(time)} ${line1}\n` +
+            `${borderMid} ${c(time)} ${line1}\n` +
             `${borderMid} ${line2}\n` +
             `${borderMid} ${line3}\n` +
             `${borderEnd}`
