@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { fileURLToPath } from 'url';
 
 const WOLF_API = 'https://apis.xwolf.space/download/yta3';
+const WOLF_STREAM = 'https://apis.xwolf.space/download/stream/mp3';
 const KEITH_API = 'https://apiskeith.top';
 
 const keithFallbackEndpoints = [
@@ -49,7 +49,7 @@ async function downloadAndValidate(downloadUrl) {
   }
 
   const headerStr = buffer.slice(0, 50).toString('utf8').toLowerCase();
-  if (headerStr.includes('<!doctype') || headerStr.includes('<html') || headerStr.includes('error')) {
+  if (headerStr.includes('<!doctype') || headerStr.includes('<html') || headerStr.includes('bad gateway')) {
     throw new Error('Received HTML instead of audio');
   }
 
@@ -96,43 +96,53 @@ export default {
       const videoId = data.videoId || '';
       const youtubeUrl = data.youtubeUrl || searchQuery;
       const fileSize = data.fileSize || '';
+      const streamUrl = data.streamUrl ? data.streamUrl.replace('http://', 'https://') : null;
+      const downloadUrl = data.downloadUrl;
 
       console.log(`🎵 [YTA3] Found: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      let downloadUrl = data.downloadUrl;
-      let usedWolfDirect = false;
+      const downloadSources = [];
+
+      if (streamUrl) {
+        downloadSources.push({ url: streamUrl, label: 'WOLF Stream' });
+      }
 
       if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
-        usedWolfDirect = true;
-        console.log(`🎵 [YTA3] Using WOLF API direct download`);
-      } else {
-        console.log(`🎵 [YTA3] WOLF downloadUrl unavailable, using Keith fallback`);
-        downloadUrl = await getKeithDownloadUrl(youtubeUrl);
+        downloadSources.push({ url: downloadUrl, label: 'WOLF Direct' });
       }
 
-      if (!downloadUrl) {
+      downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(youtubeUrl)}`, label: 'WOLF Stream URL' });
+
+      let audioBuffer = null;
+      let sourceUsed = '';
+
+      for (const source of downloadSources) {
+        try {
+          console.log(`🎵 [YTA3] Trying: ${source.label}`);
+          audioBuffer = await downloadAndValidate(source.url);
+          sourceUsed = source.label;
+          break;
+        } catch (err) {
+          console.log(`🎵 [YTA3] ${source.label} failed: ${err.message}`);
+          continue;
+        }
+      }
+
+      if (!audioBuffer) {
+        console.log(`🎵 [YTA3] All WOLF sources failed, trying Keith fallback`);
+        const keithUrl = await getKeithDownloadUrl(youtubeUrl);
+        if (keithUrl) {
+          audioBuffer = await downloadAndValidate(keithUrl);
+          sourceUsed = 'Keith Fallback';
+        }
+      }
+
+      if (!audioBuffer) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         return sock.sendMessage(jid, {
-          text: `❌ *Download failed*\n\n🎵 ${title}\n\nCouldn't get download link. Try \`${prefix}ytmp3 ${searchQuery}\``
+          text: `❌ *Download failed*\n\n🎵 ${title}\n\nAll download sources failed. Try \`${prefix}ytmp3 ${searchQuery}\``
         }, { quoted: m });
-      }
-
-      let audioBuffer;
-      try {
-        audioBuffer = await downloadAndValidate(downloadUrl);
-      } catch (dlErr) {
-        console.log(`🎵 [YTA3] First download failed (${dlErr.message}), trying Keith fallback`);
-        if (usedWolfDirect) {
-          const fallbackUrl = await getKeithDownloadUrl(youtubeUrl);
-          if (fallbackUrl) {
-            audioBuffer = await downloadAndValidate(fallbackUrl);
-          } else {
-            throw new Error('All download sources failed');
-          }
-        } else {
-          throw dlErr;
-        }
       }
 
       const fileSizeMB = (audioBuffer.length / (1024 * 1024)).toFixed(1);
@@ -178,7 +188,7 @@ export default {
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      console.log(`✅ [YTA3] Success: ${title} (${fileSizeMB}MB)${usedWolfDirect ? ' [WOLF Direct]' : ' [Keith Fallback]'}`);
+      console.log(`✅ [YTA3] Success: ${title} (${fileSizeMB}MB) [${sourceUsed}]`);
 
     } catch (error) {
       console.error('❌ [YTA3] Error:', error.message);

@@ -1,12 +1,7 @@
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const WOLF_API = 'https://apis.xwolf.space/download/mp4';
+const WOLF_STREAM = 'https://apis.xwolf.space/download/stream/mp4';
 const KEITH_API = 'https://apiskeith.top';
 
 const keithFallbackEndpoints = [
@@ -32,12 +27,12 @@ async function getKeithDownloadUrl(videoUrl) {
   return null;
 }
 
-async function downloadAndValidate(downloadUrl) {
+async function downloadAndValidate(downloadUrl, timeout = 120000) {
   const response = await axios({
     url: downloadUrl,
     method: 'GET',
     responseType: 'arraybuffer',
-    timeout: 120000,
+    timeout: timeout,
     maxRedirects: 5,
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -52,7 +47,7 @@ async function downloadAndValidate(downloadUrl) {
   }
 
   const headerStr = buffer.slice(0, 50).toString('utf8').toLowerCase();
-  if (headerStr.includes('<!doctype') || headerStr.includes('<html') || headerStr.includes('error')) {
+  if (headerStr.includes('<!doctype') || headerStr.includes('<html') || headerStr.includes('bad gateway')) {
     throw new Error('Received HTML instead of video');
   }
 
@@ -99,43 +94,54 @@ export default {
       const videoId = data.videoId || '';
       const youtubeUrl = data.youtubeUrl || searchQuery;
       const fileSize = data.fileSize || '';
+      const streamUrl = data.streamUrl ? data.streamUrl.replace('http://', 'https://') : null;
+      const downloadUrl = data.downloadUrl;
 
       console.log(`🎬 [MP4] Found: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      let downloadUrl = data.downloadUrl;
-      let usedWolfDirect = false;
+      const downloadSources = [];
+
+      if (streamUrl) {
+        downloadSources.push({ url: streamUrl, label: 'WOLF Stream' });
+      }
+
+      downloadSources.push({ url: `${WOLF_STREAM}?q=${encodeURIComponent(searchQuery)}`, label: 'WOLF Stream Q' });
+      downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(youtubeUrl)}`, label: 'WOLF Stream URL' });
 
       if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
-        usedWolfDirect = true;
-        console.log(`🎬 [MP4] Using WOLF API direct download`);
-      } else {
-        console.log(`🎬 [MP4] WOLF downloadUrl unavailable ("${downloadUrl}"), using Keith fallback`);
-        downloadUrl = await getKeithDownloadUrl(youtubeUrl);
+        downloadSources.push({ url: downloadUrl, label: 'WOLF Direct' });
       }
 
-      if (!downloadUrl) {
+      let videoBuffer = null;
+      let sourceUsed = '';
+
+      for (const source of downloadSources) {
+        try {
+          console.log(`🎬 [MP4] Trying: ${source.label}`);
+          videoBuffer = await downloadAndValidate(source.url);
+          sourceUsed = source.label;
+          break;
+        } catch (err) {
+          console.log(`🎬 [MP4] ${source.label} failed: ${err.message}`);
+          continue;
+        }
+      }
+
+      if (!videoBuffer) {
+        console.log(`🎬 [MP4] All WOLF sources failed, trying Keith fallback`);
+        const keithUrl = await getKeithDownloadUrl(youtubeUrl);
+        if (keithUrl) {
+          videoBuffer = await downloadAndValidate(keithUrl);
+          sourceUsed = 'Keith Fallback';
+        }
+      }
+
+      if (!videoBuffer) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         return sock.sendMessage(jid, {
-          text: `❌ *Download failed*\n\n🎬 ${title}\n\nCouldn't get download link. Try \`${prefix}ytmp4 ${searchQuery}\``
+          text: `❌ *Download failed*\n\n🎬 ${title}\n\nAll download sources failed. Try \`${prefix}ytmp4 ${searchQuery}\``
         }, { quoted: m });
-      }
-
-      let videoBuffer;
-      try {
-        videoBuffer = await downloadAndValidate(downloadUrl);
-      } catch (dlErr) {
-        console.log(`🎬 [MP4] First download failed (${dlErr.message}), trying Keith fallback`);
-        if (usedWolfDirect) {
-          const fallbackUrl = await getKeithDownloadUrl(youtubeUrl);
-          if (fallbackUrl) {
-            videoBuffer = await downloadAndValidate(fallbackUrl);
-          } else {
-            throw new Error('All download sources failed');
-          }
-        } else {
-          throw dlErr;
-        }
       }
 
       const fileSizeMB = (videoBuffer.length / (1024 * 1024)).toFixed(1);
@@ -172,7 +178,7 @@ export default {
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      console.log(`✅ [MP4] Success: ${title} (${fileSizeMB}MB)${usedWolfDirect ? ' [WOLF Direct]' : ' [Keith Fallback]'}`);
+      console.log(`✅ [MP4] Success: ${title} (${fileSizeMB}MB) [${sourceUsed}]`);
 
     } catch (error) {
       console.error('❌ [MP4] Error:', error.message);
