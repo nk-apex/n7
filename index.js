@@ -2285,9 +2285,9 @@ class ProfessionalDefibrillator {
             
             const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
             
-            console.log(chalk.greenBright(`
+            console.log(chalk.redBright(`
 ╔═══════════════════════════════════════════╗
-║                    🩺 DEFIBRILLATOR HEARTBEAT   ║
+║          🩺 DEFIBRILLATOR HEARTBEAT       ║
 ╠═══════════════════════════════════════════╣
 ║  ${heartbeatDisplay}                                                
 ║  ⏰ Uptime: ${hours}h ${minutes}m ${seconds}s                        
