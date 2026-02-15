@@ -617,7 +617,7 @@ export default {
             const successCaption = `✅ *Upload Successful!*\n\n` +
                 `📐 ${width && height ? `${width} × ${height} • ` : ''}${fileSizeMB.toFixed(2)} MB\n\n` +
                 `🔗 *URL:* ${url}\n\n` +
-                `🐺 _Silent Wolf_`;
+                ``;
 
             try {
                 const { createRequire } = await import('module');

@@ -28,7 +28,7 @@ export default {
 
       await sendInteractiveMessage(sock, jid, {
         text: `👑 *WOLFBOT OWNER*\n\n📱 *+${ownerNumber}*`,
-        footer: '🐺 Silent Wolf Bot',
+        footer: '🐺WolfBot',
         interactiveButtons: [
           {
             name: 'cta_copy',
