@@ -2189,16 +2189,16 @@ class ProfessionalDefibrillator {
         
         this.heartbeatCount = 0;
         this.restartCount = 0;
-        this.maxRestartsPerHour = 3;
+        this.maxRestartsPerHour = 2;
         this.restartHistory = [];
         
         this.isMonitoring = false;
         this.ownerJid = null;
         
-        this.responseTimeout = 30000;
-        this.terminalHeartbeatInterval = 60000;
-        this.ownerReportIntervalMs = 300000;
-        this.healthCheckIntervalMs = 60000;
+        this.responseTimeout = 120000;
+        this.terminalHeartbeatInterval = 300000;
+        this.ownerReportIntervalMs = 600000;
+        this.healthCheckIntervalMs = 300000;
         
         this.commandStats = {
             total: 0,
@@ -2340,12 +2340,12 @@ class ProfessionalDefibrillator {
             let statusEmoji = "🟢";
             let statusText = "Excellent";
             
-            if (memoryMB > 300) {
+            if (memoryMB > 600) {
                 statusEmoji = "🟡";
                 statusText = "Good";
             }
             
-            if (memoryMB > 500) {
+            if (memoryMB > 900) {
                 statusEmoji = "🔴";
                 statusText = "Warning";
             }
@@ -2434,10 +2434,10 @@ class ProfessionalDefibrillator {
             const memoryUsage = process.memoryUsage();
             const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
             
-            if (memoryMB > 500) {
+            if (memoryMB > 900) {
                 UltraCleanLogger.critical(`High memory usage: ${memoryMB}MB`);
                 await this.handleHighMemory(sock, memoryMB);
-            } else if (memoryMB > 300) {
+            } else if (memoryMB > 600) {
                 UltraCleanLogger.warning(`Moderate memory usage: ${memoryMB}MB`);
             }
             
@@ -2483,27 +2483,54 @@ class ProfessionalDefibrillator {
     async handleHighMemory(sock, memoryMB) {
         UltraCleanLogger.warning(`Handling high memory (${memoryMB}MB)...`);
         
-        await this.sendMemoryWarning(sock, memoryMB);
-        
         this.freeMemory();
         
-        if (memoryMB > 700 && this.canRestart()) {
-            UltraCleanLogger.critical('Critical memory usage, restarting...');
+        const afterFree = Math.round(process.memoryUsage().rss / 1024 / 1024);
+        UltraCleanLogger.info(`Memory after cleanup: ${afterFree}MB (freed ${memoryMB - afterFree}MB)`);
+        
+        if (afterFree > 1200 && this.canRestart()) {
+            await this.sendMemoryWarning(sock, afterFree);
+            UltraCleanLogger.critical('Critical memory usage after cleanup, restarting...');
             await this.restartBot(sock, 'High memory usage');
+        } else if (afterFree > 900) {
+            await this.sendMemoryWarning(sock, afterFree);
         }
     }
     
     freeMemory() {
         try {
+            if (lidPhoneCache && lidPhoneCache.size > 5000) {
+                const entries = [...lidPhoneCache.entries()];
+                lidPhoneCache.clear();
+                entries.slice(-2000).forEach(([k, v]) => lidPhoneCache.set(k, v));
+                UltraCleanLogger.info(`LID cache trimmed to 2000 entries`);
+            }
+            if (phoneLidCache && phoneLidCache.size > 5000) {
+                const entries = [...phoneLidCache.entries()];
+                phoneLidCache.clear();
+                entries.slice(-2000).forEach(([k, v]) => phoneLidCache.set(k, v));
+            }
+            if (groupMetadataCache && groupMetadataCache.size > 100) {
+                const entries = [...groupMetadataCache.entries()];
+                groupMetadataCache.clear();
+                entries.slice(-30).forEach(([k, v]) => groupMetadataCache.set(k, v));
+                UltraCleanLogger.info(`Group metadata cache trimmed`);
+            }
+            if (global.contactNames && global.contactNames.size > 5000) {
+                const entries = [...global.contactNames.entries()];
+                global.contactNames.clear();
+                entries.slice(-2000).forEach(([k, v]) => global.contactNames.set(k, v));
+            }
+            if (store && store.messages && store.messages.size > 80) {
+                const entries = [...store.messages.entries()];
+                store.messages.clear();
+                entries.slice(-50).forEach(([k, v]) => store.messages.set(k, v));
+                UltraCleanLogger.info(`Message store trimmed`);
+            }
             if (global.gc) {
                 global.gc();
                 UltraCleanLogger.info('Garbage collection forced');
             }
-            
-            if (commands && commands.size > 50) {
-                UltraCleanLogger.info('Commands cache cleared');
-            }
-            
         } catch (error) {
             UltraCleanLogger.error(`Memory free error: ${error.message}`);
         }
@@ -2579,9 +2606,9 @@ class ProfessionalDefibrillator {
             const warningMessage = `⚠️ *MEMORY WARNING - ${BOT_NAME}*\n\n` +
                                  `📊 *Current Usage:* ${memoryMB}MB\n\n` +
                                  `🎯 *Thresholds:*\n` +
-                                 `├─ Normal: < 300MB\n` +
-                                 `├─ Warning: 300-500MB\n` +
-                                 `└─ Critical: > 500MB\n\n` +
+                                 `├─ Normal: < 600MB\n` +
+                                 `├─ Warning: 600-900MB\n` +
+                                 `└─ Critical: > 900MB\n\n` +
                                  `🛠️ *Actions Taken:*\n` +
                                  `• Garbage collection forced\n` +
                                  `• Cache cleared\n` +
@@ -3828,7 +3855,7 @@ function setupHerokuKeepAlive() {
             const memoryUsage = process.memoryUsage();
             const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
             
-            if (memoryMB > 450) {
+            if (memoryMB > 900) {
                 UltraCleanLogger.warning(`⚠️ High memory usage on Heroku: ${memoryMB}MB`);
                 
                 // Force garbage collection if available
@@ -4518,6 +4545,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
             
             const msg = messages[0];
 
+            displayIncomingMessage(msg, sock);
+
             if (!msg.message) {
                 if (store && msg.key?.remoteJid && msg.key?.id) {
                     store.addMessage(msg.key.remoteJid, msg.key.id, msg);
@@ -4917,6 +4946,31 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
         return;
     }
     
+    const errorMsg = lastDisconnect?.error?.message || '';
+    const errorOutput = lastDisconnect?.error?.output?.payload?.message || '';
+    const combinedError = `${errorMsg} ${errorOutput}`.toLowerCase();
+    
+    if (combinedError.includes('decrypt') || combinedError.includes('bad mac') || 
+        combinedError.includes('hmac') || statusCode === 515) {
+        UltraCleanLogger.warning(`Session decryption error detected (${statusCode}). Clearing signal keys and reconnecting...`);
+        try {
+            const sessionFiles = fs.readdirSync(SESSION_DIR);
+            for (const file of sessionFiles) {
+                if (file.startsWith('sender-key-') || file.startsWith('session-') || 
+                    file.startsWith('pre-key-') || file.startsWith('app-state-sync')) {
+                    fs.unlinkSync(path.join(SESSION_DIR, file));
+                }
+            }
+            UltraCleanLogger.info('Signal keys cleared, keeping creds.json intact');
+        } catch (cleanErr) {
+            UltraCleanLogger.warning(`Signal key cleanup error: ${cleanErr.message}`);
+        }
+        setTimeout(async () => {
+            await startBot(loginMode, phoneNumber);
+        }, 3000);
+        return;
+    }
+    
     const baseDelay = 1500;
     const maxDelay = 15000;
     const delayTime = Math.min(baseDelay * Math.pow(1.3, connectionAttempts - 1), maxDelay);
@@ -5221,6 +5275,97 @@ _🐺 The Moon Watches — ..._
 }
 
 // ====== MESSAGE HANDLER ======
+function getMessageTypeLabel(messageObj) {
+    const content = normalizeMessageContent(messageObj);
+    if (!content) return 'empty';
+    if (content.conversation || content.extendedTextMessage) return 'text';
+    if (content.imageMessage) return 'image';
+    if (content.videoMessage) return 'video';
+    if (content.audioMessage) return content.audioMessage.ptt ? 'voice' : 'audio';
+    if (content.stickerMessage) return 'sticker';
+    if (content.documentMessage) return 'document';
+    if (content.contactMessage || content.contactsArrayMessage) return 'contact';
+    if (content.locationMessage || content.liveLocationMessage) return 'location';
+    if (content.reactionMessage) return 'reaction';
+    if (content.pollCreationMessage || content.pollCreationMessageV3) return 'poll';
+    if (content.viewOnceMessage || content.viewOnceMessageV2) return 'view-once';
+    if (content.protocolMessage) return 'protocol';
+    return 'other';
+}
+
+function displayIncomingMessage(msg, sock) {
+    try {
+        if (!msg || !msg.key) return;
+        if (msg.key.fromMe) return;
+        
+        const chatId = msg.key.remoteJid;
+        if (!chatId || chatId === 'status@broadcast') return;
+        
+        const senderJid = msg.key.participant || chatId;
+        const isGroup = chatId.endsWith('@g.us');
+        
+        const senderNum = getDisplayNumber(senderJid);
+        const pushName = msg.pushName || 'Unknown';
+        
+        const msgType = getMessageTypeLabel(msg.message);
+        const content = normalizeMessageContent(msg.message);
+        let preview = '';
+        if (content) {
+            const rawText = content.conversation ||
+                           content.extendedTextMessage?.text ||
+                           content.imageMessage?.caption ||
+                           content.videoMessage?.caption || '';
+            if (rawText) {
+                preview = rawText.length > 60 ? rawText.substring(0, 57) + '...' : rawText;
+                preview = preview.replace(/\n/g, ' ');
+            }
+        }
+        
+        const typeIcons = {
+            'text': '💬', 'image': '🖼️', 'video': '🎥', 'voice': '🎤',
+            'audio': '🎵', 'sticker': '🏷️', 'document': '📄', 'contact': '👤',
+            'location': '📍', 'reaction': '😀', 'poll': '📊', 'view-once': '👁️',
+            'protocol': '⚙️', 'other': '📦', 'empty': '📭'
+        };
+        const typeIcon = typeIcons[msgType] || '📦';
+        
+        const time = new Date().toLocaleTimeString();
+        const originTag = isGroup ? chalk.yellow('GROUP') : chalk.green('DM');
+        
+        let groupName = '';
+        if (isGroup) {
+            const cached = groupMetadataCache.get(chatId);
+            if (cached && cached.data && cached.data.subject) {
+                groupName = cached.data.subject;
+                if (groupName.length > 20) groupName = groupName.substring(0, 17) + '...';
+            } else {
+                groupName = chatId.split('@')[0].substring(0, 15);
+            }
+        }
+        
+        const line1 = `${typeIcon} ${chalk.bold(pushName)} (${chalk.cyan(senderNum)})`;
+        const line2 = isGroup 
+            ? `   ${originTag} ${chalk.gray('in')} ${chalk.white(groupName)}`
+            : `   ${originTag}`;
+        const line3 = preview 
+            ? `   ${chalk.gray(msgType.toUpperCase())}: ${chalk.white(preview)}`
+            : `   ${chalk.gray(msgType.toUpperCase())}`;
+        
+        const border = chalk.gray('┌──────────────────────────────────────────────');
+        const borderMid = chalk.gray('│');
+        const borderEnd = chalk.gray('└──────────────────────────────────────────────');
+        
+        originalConsoleMethods.log(
+            `\n${border}\n` +
+            `${borderMid} ${chalk.gray(time)} ${line1}\n` +
+            `${borderMid} ${line2}\n` +
+            `${borderMid} ${line3}\n` +
+            `${borderEnd}`
+        );
+    } catch {
+    }
+}
+
 function extractTextFromMessage(messageObj) {
     const content = normalizeMessageContent(messageObj);
     if (!content) return '';
