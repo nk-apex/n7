@@ -5293,7 +5293,73 @@ function getMessageTypeLabel(messageObj) {
     return 'other';
 }
 
-function displayIncomingMessage(msg, sock) {
+async function resolveRealNumberForDisplay(senderJid, chatId, sock) {
+    if (!senderJid) return 'unknown';
+    const raw = senderJid.split('@')[0].split(':')[0];
+    const full = senderJid.split('@')[0];
+
+    if (!senderJid.includes('@lid')) {
+        const num = raw.replace(/[^0-9]/g, '');
+        if (num.length >= 7 && num.length <= 15) return `+${num}`;
+        return `+${raw}`;
+    }
+
+    const cached = lidPhoneCache.get(raw) || lidPhoneCache.get(full) || getPhoneFromLid(raw) || getPhoneFromLid(full);
+    if (cached) return `+${cached}`;
+
+    if (sock?.signalRepository?.lidMapping?.getPNForLID) {
+        try {
+            const formats = [senderJid, `${raw}:0@lid`, `${raw}@lid`];
+            for (const fmt of formats) {
+                try {
+                    const pn = sock.signalRepository.lidMapping.getPNForLID(fmt);
+                    if (pn) {
+                        const num = String(pn).split('@')[0].replace(/[^0-9]/g, '');
+                        if (num.length >= 7 && num.length <= 15 && num !== raw) {
+                            cacheLidPhone(raw, num);
+                            return `+${num}`;
+                        }
+                    }
+                } catch {}
+            }
+        } catch {}
+    }
+
+    if (chatId && chatId.endsWith('@g.us')) {
+        const groupCached = groupMetadataCache.get(chatId);
+        if (groupCached && groupCached.data && groupCached.data.participants) {
+            for (const p of groupCached.data.participants) {
+                const info = extractParticipantInfo(p, sock);
+                if (info.lidNum === raw && info.phoneNum) {
+                    cacheLidPhone(raw, info.phoneNum);
+                    return `+${info.phoneNum}`;
+                }
+            }
+        }
+
+        try {
+            const resolved = await resolveSenderFromGroup(senderJid, chatId, sock);
+            if (resolved) return `+${resolved}`;
+        } catch {}
+    }
+
+    if (sock?.store?.contacts) {
+        try {
+            const contact = sock.store.contacts[senderJid] || sock.store.contacts[`${raw}@lid`];
+            if (contact?.notify || contact?.name) {
+                const phoneFromContact = contact.id?.split('@')[0]?.replace(/[^0-9]/g, '');
+                if (phoneFromContact && phoneFromContact.length >= 7 && phoneFromContact !== raw) {
+                    cacheLidPhone(raw, phoneFromContact);
+                    return `+${phoneFromContact}`;
+                }
+            }
+        } catch {}
+    }
+
+    return `LID:${raw.substring(0, 8)}...`;
+}
+
+async function displayIncomingMessage(msg, sock) {
     try {
         if (!msg || !msg.key) return;
         if (msg.key.fromMe) return;
@@ -5304,7 +5370,7 @@ function displayIncomingMessage(msg, sock) {
         const senderJid = msg.key.participant || chatId;
         const isGroup = chatId.endsWith('@g.us');
         
-        const senderNum = getDisplayNumber(senderJid);
+        const senderNum = await resolveRealNumberForDisplay(senderJid, chatId, sock);
         const pushName = msg.pushName || 'Unknown';
         
         const msgType = getMessageTypeLabel(msg.message);
@@ -5330,7 +5396,10 @@ function displayIncomingMessage(msg, sock) {
         const typeIcon = typeIcons[msgType] || '📦';
         
         const time = new Date().toLocaleTimeString();
-        const originTag = isGroup ? chalk.yellow('GROUP') : chalk.green('DM');
+        const g = chalk.green;
+        const gb = chalk.greenBright;
+        const gBold = chalk.green.bold;
+        const originTag = isGroup ? gb('GROUP') : gb('DM');
         
         let groupName = '';
         if (isGroup) {
@@ -5343,21 +5412,21 @@ function displayIncomingMessage(msg, sock) {
             }
         }
         
-        const line1 = `${typeIcon} ${chalk.bold(pushName)} (${chalk.cyan(senderNum)})`;
+        const line1 = `${typeIcon} ${gBold(pushName)} (${gb(senderNum)})`;
         const line2 = isGroup 
-            ? `   ${originTag} ${chalk.gray('in')} ${chalk.white(groupName)}`
+            ? `   ${originTag} ${g('in')} ${gb(groupName)}`
             : `   ${originTag}`;
         const line3 = preview 
-            ? `   ${chalk.gray(msgType.toUpperCase())}: ${chalk.white(preview)}`
-            : `   ${chalk.gray(msgType.toUpperCase())}`;
+            ? `   ${g(msgType.toUpperCase())}: ${gb(preview)}`
+            : `   ${g(msgType.toUpperCase())}`;
         
-        const border = chalk.gray('┌──────────────────────────────────────────────');
-        const borderMid = chalk.gray('│');
-        const borderEnd = chalk.gray('└──────────────────────────────────────────────');
+        const border = g('┌──────────────────────────────────────────────');
+        const borderMid = g('│');
+        const borderEnd = g('└──────────────────────────────────────────────');
         
         originalConsoleMethods.log(
             `\n${border}\n` +
-            `${borderMid} ${chalk.gray(time)} ${line1}\n` +
+            `${borderMid} ${g(time)} ${line1}\n` +
             `${borderMid} ${line2}\n` +
             `${borderMid} ${line3}\n` +
             `${borderEnd}`
