@@ -1,22 +1,15 @@
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const WOLF_API = 'https://apis.xwolf.space/download/dlmp3';
+const WOLF_API = 'https://apis.xwolf.space/download/yta3';
 const KEITH_API = 'https://apiskeith.top';
 
 const keithFallbackEndpoints = [
+  `${KEITH_API}/download/yta3`,
   `${KEITH_API}/download/ytmp3`,
   `${KEITH_API}/download/audio`,
   `${KEITH_API}/download/dlmp3`,
-  `${KEITH_API}/download/mp3`,
-  `${KEITH_API}/download/yta`,
-  `${KEITH_API}/download/yta2`,
-  `${KEITH_API}/download/yta3`
+  `${KEITH_API}/download/mp3`
 ];
 
 async function getKeithDownloadUrl(videoUrl) {
@@ -64,11 +57,11 @@ async function downloadAndValidate(downloadUrl) {
 }
 
 export default {
-  name: 'dlmp3',
-  description: 'Download MP3 audio via WOLF API',
+  name: 'yta3',
+  description: 'Download audio via WOLF YTA3 API',
   category: 'Downloader',
-  aliases: ['wolfmp3', 'wdl'],
-  usage: 'dlmp3 <url or song name>',
+  aliases: ['wolfyta3'],
+  usage: 'yta3 <url or song name>',
 
   async execute(sock, m, args, prefix) {
     const jid = m.key.remoteJid;
@@ -76,17 +69,17 @@ export default {
     try {
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `🎵 *DLMP3 - WOLF API Downloader*\n\n` +
-                `📌 *Usage:* \`${prefix}dlmp3 song name or url\`\n` +
+          text: `🎵 *YTA3 - WOLF API Audio Downloader*\n\n` +
+                `📌 *Usage:* \`${prefix}yta3 song name or url\`\n` +
                 `📝 *Examples:*\n` +
-                `• \`${prefix}dlmp3 Alan Walker Faded\`\n` +
-                `• \`${prefix}dlmp3 https://youtube.com/...\`\n\n` +
-                `✨ Downloads audio via WOLF API`
+                `• \`${prefix}yta3 Alan Walker Faded\`\n` +
+                `• \`${prefix}yta3 https://youtube.com/...\`\n\n` +
+                `✨ Downloads audio via WOLF YTA3 API`
         }, { quoted: m });
       }
 
       const searchQuery = args.join(' ');
-      console.log(`🎵 [DLMP3] Request: ${searchQuery}`);
+      console.log(`🎵 [YTA3] Request: ${searchQuery}`);
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
@@ -104,7 +97,7 @@ export default {
       const youtubeUrl = data.youtubeUrl || searchQuery;
       const fileSize = data.fileSize || '';
 
-      console.log(`🎵 [DLMP3] Found: ${title}`);
+      console.log(`🎵 [YTA3] Found: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       let downloadUrl = data.downloadUrl;
@@ -112,9 +105,9 @@ export default {
 
       if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
         usedWolfDirect = true;
-        console.log(`🎵 [DLMP3] Using WOLF API direct download`);
+        console.log(`🎵 [YTA3] Using WOLF API direct download`);
       } else {
-        console.log(`🎵 [DLMP3] WOLF downloadUrl unavailable, using Keith fallback`);
+        console.log(`🎵 [YTA3] WOLF downloadUrl unavailable, using Keith fallback`);
         downloadUrl = await getKeithDownloadUrl(youtubeUrl);
       }
 
@@ -129,7 +122,7 @@ export default {
       try {
         audioBuffer = await downloadAndValidate(downloadUrl);
       } catch (dlErr) {
-        console.log(`🎵 [DLMP3] First download failed (${dlErr.message}), trying Keith fallback`);
+        console.log(`🎵 [YTA3] First download failed (${dlErr.message}), trying Keith fallback`);
         if (usedWolfDirect) {
           const fallbackUrl = await getKeithDownloadUrl(youtubeUrl);
           if (fallbackUrl) {
@@ -185,13 +178,13 @@ export default {
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      console.log(`✅ [DLMP3] Success: ${title} (${fileSizeMB}MB)${usedWolfDirect ? ' [WOLF Direct]' : ' [Keith Fallback]'}`);
+      console.log(`✅ [YTA3] Success: ${title} (${fileSizeMB}MB)${usedWolfDirect ? ' [WOLF Direct]' : ' [Keith Fallback]'}`);
 
     } catch (error) {
-      console.error('❌ [DLMP3] Error:', error.message);
+      console.error('❌ [YTA3] Error:', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `❌ *DLMP3 Error:* ${error.message}\n\nTry: \`${prefix}ytmp3 ${args.join(' ')}\``
+        text: `❌ *YTA3 Error:* ${error.message}\n\nTry: \`${prefix}ytmp3 ${args.join(' ')}\``
       }, { quoted: m });
     }
   }

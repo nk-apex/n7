@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const WOLF_API = 'https://apis.xwolf.space/download/mp3';
 const KEITH_API = 'https://apiskeith.top';
 
-const audioEndpoints = [
+const keithFallbackEndpoints = [
   `${KEITH_API}/download/ytmp3`,
   `${KEITH_API}/download/audio`,
   `${KEITH_API}/download/dlmp3`,
@@ -19,15 +19,14 @@ const audioEndpoints = [
   `${KEITH_API}/download/yta3`
 ];
 
-async function getDownloadUrl(videoUrl) {
-  for (const endpoint of audioEndpoints) {
+async function getKeithDownloadUrl(videoUrl) {
+  for (const endpoint of keithFallbackEndpoints) {
     try {
       const response = await axios.get(
         `${endpoint}?url=${encodeURIComponent(videoUrl)}`,
         { timeout: 15000 }
       );
       if (response.data?.status && response.data?.result) {
-        console.log(`[MP3] Got download URL from: ${endpoint}`);
         return response.data.result;
       }
     } catch {
@@ -37,7 +36,7 @@ async function getDownloadUrl(videoUrl) {
   return null;
 }
 
-async function downloadAndValidate(downloadUrl, tempFile) {
+async function downloadAndValidate(downloadUrl) {
   const response = await axios({
     url: downloadUrl,
     method: 'GET',
@@ -56,14 +55,11 @@ async function downloadAndValidate(downloadUrl, tempFile) {
     throw new Error('File too small, likely not audio');
   }
 
-  const header = buffer.slice(0, 4).toString('hex').toUpperCase();
   const headerStr = buffer.slice(0, 50).toString('utf8').toLowerCase();
-
   if (headerStr.includes('<!doctype') || headerStr.includes('<html') || headerStr.includes('error')) {
     throw new Error('Received HTML instead of audio');
   }
 
-  fs.writeFileSync(tempFile, buffer);
   return buffer;
 }
 
@@ -95,28 +91,32 @@ export default {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       const apiUrl = `${WOLF_API}?url=${encodeURIComponent(searchQuery)}`;
-      let title = 'Unknown Track';
-      let videoId = '';
-      let youtubeUrl = searchQuery;
-      let duration = '';
+      const response = await axios.get(apiUrl, { timeout: 20000 });
 
-      try {
-        const response = await axios.get(apiUrl, { timeout: 20000 });
-        if (response.data?.success) {
-          const data = response.data;
-          title = data.title || data.searchResult?.title || title;
-          duration = data.searchResult?.duration || '';
-          videoId = data.videoId || '';
-          youtubeUrl = data.youtubeUrl || searchQuery;
-        }
-      } catch (wolfErr) {
-        console.log(`[MP3] WOLF API failed: ${wolfErr.message}, using search query directly`);
+      if (!response.data?.success) {
+        throw new Error('WOLF API returned no results');
       }
+
+      const data = response.data;
+      const title = data.title || data.searchResult?.title || 'Unknown Track';
+      const duration = data.searchResult?.duration || '';
+      const videoId = data.videoId || '';
+      const youtubeUrl = data.youtubeUrl || searchQuery;
+      const fileSize = data.fileSize || '';
 
       console.log(`🎵 [MP3] Found: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      const downloadUrl = await getDownloadUrl(youtubeUrl);
+      let downloadUrl = data.downloadUrl;
+      let usedWolfDirect = false;
+
+      if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
+        usedWolfDirect = true;
+        console.log(`🎵 [MP3] Using WOLF API direct download`);
+      } else {
+        console.log(`🎵 [MP3] WOLF downloadUrl unavailable, using Keith fallback`);
+        downloadUrl = await getKeithDownloadUrl(youtubeUrl);
+      }
 
       if (!downloadUrl) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
@@ -125,27 +125,26 @@ export default {
         }, { quoted: m });
       }
 
-      const tempDir = path.join(__dirname, '../temp');
-      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-      const tempFile = path.join(tempDir, `mp3_${Date.now()}.mp3`);
-
       let audioBuffer;
       try {
-        audioBuffer = await downloadAndValidate(downloadUrl, tempFile);
+        audioBuffer = await downloadAndValidate(downloadUrl);
       } catch (dlErr) {
-        console.log(`[MP3] First download failed: ${dlErr.message}, trying next endpoint`);
-        const altUrl = await getDownloadUrl(youtubeUrl);
-        if (altUrl && altUrl !== downloadUrl) {
-          audioBuffer = await downloadAndValidate(altUrl, tempFile);
+        console.log(`🎵 [MP3] First download failed (${dlErr.message}), trying Keith fallback`);
+        if (usedWolfDirect) {
+          const fallbackUrl = await getKeithDownloadUrl(youtubeUrl);
+          if (fallbackUrl) {
+            audioBuffer = await downloadAndValidate(fallbackUrl);
+          } else {
+            throw new Error('All download sources failed');
+          }
         } else {
-          throw new Error('All download sources failed');
+          throw dlErr;
         }
       }
 
       const fileSizeMB = (audioBuffer.length / (1024 * 1024)).toFixed(1);
 
       if (parseFloat(fileSizeMB) > 50) {
-        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         return sock.sendMessage(jid, {
           text: `❌ File too large: ${fileSizeMB}MB (max 50MB)`
@@ -175,7 +174,7 @@ export default {
         contextInfo: {
           externalAdReply: {
             title: title.substring(0, 60),
-            body: `🎵 ${duration ? duration + ' • ' : ''}${fileSizeMB}MB | Downloaded using WOLF API`,
+            body: `🎵 ${duration ? duration + ' • ' : ''}${fileSize || fileSizeMB + 'MB'} | Downloaded using WOLF API`,
             mediaType: 2,
             thumbnail: thumbnailBuffer,
             sourceUrl: youtubeUrl,
@@ -185,10 +184,8 @@ export default {
         }
       }, { quoted: m });
 
-      if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
-
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      console.log(`✅ [MP3] Success: ${title} (${fileSizeMB}MB)`);
+      console.log(`✅ [MP3] Success: ${title} (${fileSizeMB}MB)${usedWolfDirect ? ' [WOLF Direct]' : ' [Keith Fallback]'}`);
 
     } catch (error) {
       console.error('❌ [MP3] Error:', error.message);
