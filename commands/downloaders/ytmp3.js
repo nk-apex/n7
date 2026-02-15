@@ -1,0 +1,241 @@
+import axios from "axios";
+import yts from "yt-search";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const KEITH_API = "https://apiskeith.top";
+
+const audioEndpoints = [
+  `${KEITH_API}/download/ytmp3`,
+  `${KEITH_API}/download/audio`,
+  `${KEITH_API}/download/dlmp3`,
+  `${KEITH_API}/download/mp3`,
+  `${KEITH_API}/download/yta`,
+  `${KEITH_API}/download/yta2`,
+  `${KEITH_API}/download/yta3`
+];
+
+const keithDownloadAudio = async (url) => {
+  for (const endpoint of audioEndpoints) {
+    try {
+      const response = await axios.get(
+        `${endpoint}?url=${encodeURIComponent(url)}`,
+        { timeout: 15000 }
+      );
+      if (response.data?.status && response.data?.result) {
+        console.log(`[YTMP3] Download success via: ${endpoint}`);
+        return response.data.result;
+      }
+    } catch (error) {
+      console.log(`[YTMP3] Endpoint failed: ${endpoint} - ${error.message}`);
+      continue;
+    }
+  }
+  return null;
+};
+
+export default {
+  name: "ytmp3",
+  description: "Download YouTube audio as MP3",
+  category: "Downloader",
+  async execute(sock, m, args, prefix) {
+    const jid = m.key.remoteJid;
+
+    try {
+      if (args.length === 0) {
+        await sock.sendMessage(jid, { 
+          text: `🎵 *YouTube MP3 Downloader*\n\n` +
+                `📌 *Usage:* \`${prefix}ytmp3 song name\`\n` +
+                `📝 *Examples:*\n` +
+                `• \`${prefix}ytmp3 Alan Walker Faded\`\n` +
+                `• \`${prefix}ytmp3 https://youtube.com/...\`\n\n` +
+                `✨ Downloads audio from YouTube`
+        }, { quoted: m });
+        return;
+      }
+
+      const searchQuery = args.join(" ");
+      console.log(`🎵 [YTMP3] Request: ${searchQuery}`);
+
+      const statusMsg = await sock.sendMessage(jid, { 
+        text: `🔍 *Searching for MP3:* "${searchQuery}"` 
+      }, { quoted: m });
+
+      let videoUrl = '';
+      let videoTitle = '';
+      let videoId = '';
+      
+      if (searchQuery.match(/(youtube\.com|youtu\.be)/i)) {
+        videoUrl = searchQuery;
+        videoId = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i)?.[1] || '';
+        
+        if (videoId) {
+          try {
+            const { videos } = await yts({ videoId });
+            if (videos && videos.length > 0) {
+              videoTitle = videos[0].title;
+            }
+          } catch (e) {}
+        }
+        if (!videoTitle) videoTitle = "YouTube Audio";
+      } else {
+        try {
+          const searchRes = await axios.get(
+            `${KEITH_API}/search/yts?query=${encodeURIComponent(searchQuery)}`,
+            { timeout: 10000 }
+          );
+          const videos = searchRes.data?.result || [];
+          
+          if (videos.length > 0) {
+            videoUrl = videos[0].url;
+            videoTitle = videos[0].title;
+            videoId = videos[0].id || videos[0].videoId;
+          } else {
+            const { videos: ytResults } = await yts(searchQuery);
+            if (!ytResults || ytResults.length === 0) {
+              await sock.sendMessage(jid, { 
+                text: `❌ No songs found for "${searchQuery}"`,
+                edit: statusMsg.key 
+              });
+              return;
+            }
+            videoUrl = ytResults[0].url;
+            videoTitle = ytResults[0].title;
+            videoId = ytResults[0].videoId;
+          }
+        } catch (searchError) {
+          console.error("❌ [YTMP3] Search error:", searchError);
+          await sock.sendMessage(jid, { 
+            text: `❌ Search failed. Try direct YouTube link.`,
+            edit: statusMsg.key 
+          });
+          return;
+        }
+      }
+
+      console.log(`🎵 [YTMP3] Found: ${videoTitle} - ${videoUrl}`);
+
+      await sock.sendMessage(jid, { 
+        text: `✅ *Found:* "${videoTitle}"\n⬇️ *Downloading MP3...*`,
+        edit: statusMsg.key 
+      });
+
+      let downloadUrl = await keithDownloadAudio(videoUrl);
+
+      if (!downloadUrl) {
+        await sock.sendMessage(jid, { 
+          text: `❌ MP3 download failed. Try again later or use .song command.`,
+          edit: statusMsg.key 
+        });
+        return;
+      }
+
+      const tempDir = path.join(__dirname, "../temp");
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+      
+      const tempFile = path.join(tempDir, `ytmp3_${Date.now()}.mp3`);
+      
+      try {
+        const response = await axios({
+          url: downloadUrl,
+          method: 'GET',
+          responseType: 'stream',
+          timeout: 60000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        if (response.status !== 200) {
+          throw new Error(`Download failed with status: ${response.status}`);
+        }
+
+        const writer = fs.createWriteStream(tempFile);
+        response.data.pipe(writer);
+        
+        await new Promise((resolve, reject) => {
+          writer.on('finish', resolve);
+          writer.on('error', reject);
+        });
+
+        const stats = fs.statSync(tempFile);
+        const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(1);
+
+        if (stats.size === 0) throw new Error("Downloaded file is empty");
+
+        if (parseFloat(fileSizeMB) > 50) {
+          await sock.sendMessage(jid, { 
+            text: `❌ MP3 too large: ${fileSizeMB}MB\nMax size: 50MB`,
+            edit: statusMsg.key 
+          });
+          fs.unlinkSync(tempFile);
+          return;
+        }
+
+        const audioBuffer = fs.readFileSync(tempFile);
+
+        let thumbnailBuffer = null;
+        if (videoId) {
+          try {
+            const thumbResponse = await axios.get(
+              `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+              { responseType: 'arraybuffer', timeout: 10000 }
+            );
+            if (thumbResponse.status === 200 && thumbResponse.data.length > 1000) {
+              thumbnailBuffer = Buffer.from(thumbResponse.data);
+            }
+          } catch (e) {}
+        }
+
+        const cleanTitle = videoTitle.replace(/[^\w\s.-]/gi, '').substring(0, 50);
+
+        await sock.sendMessage(jid, {
+          audio: audioBuffer,
+          mimetype: 'audio/mpeg',
+          ptt: false,
+          fileName: `${cleanTitle}.mp3`,
+          contextInfo: {
+            externalAdReply: {
+              title: videoTitle.substring(0, 60),
+              body: `🎵 YouTube MP3 • ${fileSizeMB}MB | Powered by Keith API`,
+              mediaType: 2,
+              thumbnail: thumbnailBuffer,
+              sourceUrl: videoUrl,
+              mediaUrl: videoUrl,
+              renderLargerThumbnail: true
+            }
+          }
+        }, { quoted: m });
+
+        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+
+        await sock.sendMessage(jid, { 
+          text: `✅ *MP3 Sent!*\n\n🎵 ${videoTitle}\n📦 ${fileSizeMB}MB`,
+          edit: statusMsg.key 
+        });
+
+        console.log(`✅ [YTMP3] Success: ${videoTitle} (${fileSizeMB}MB)`);
+
+      } catch (downloadError) {
+        console.error("❌ [YTMP3] Download error:", downloadError);
+        await sock.sendMessage(jid, { 
+          text: `❌ Failed to download MP3: ${downloadError.message}`,
+          edit: statusMsg.key 
+        });
+        if (fs.existsSync(tempFile)) {
+          try { fs.unlinkSync(tempFile); } catch {}
+        }
+      }
+
+    } catch (error) {
+      console.error("❌ [YTMP3] Fatal error:", error);
+      await sock.sendMessage(jid, { 
+        text: `❌ Error: ${error.message}`
+      }, { quoted: m });
+    }
+  },
+};
