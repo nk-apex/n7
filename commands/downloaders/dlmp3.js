@@ -71,7 +71,7 @@ export default {
     try {
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `╭─⌈ 🎵 *DLMP3 - WOLF API Downloader* ⌋\n│\n├─⊷ *${prefix}dlmp3 <song name or url>*\n│  └⊷ Downloads audio via WOLF API\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}dlmp3 Alan Walker Faded\n│  └⊷ ${prefix}dlmp3 https://youtube.com/...\n│\n╰───`
+          text: `╭─⌈ 🎵 *DLMP3 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}dlmp3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}dlmp3 <YouTube URL>*\n│  └⊷ Download from link\n╰───`
         }, { quoted: m });
       }
 

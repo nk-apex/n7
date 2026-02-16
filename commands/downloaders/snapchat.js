@@ -33,7 +33,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 👻 *Snapchat Downloader* ⌋\n│\n├─⊷ *snapchat <url>*\n│  └⊷ Download Spotlight videos\n│\n├─⊷ *Example:*\n│  └⊷ snapchat https://www.snapchat.com/spotlight/abc123xyz\n│\n⚠️ Story downloading may not work due to Snapchat restrictions\n╰───` 
+          text: `╭─⌈ 👻 *SNAPCHAT DOWNLOADER* ⌋\n│\n├─⊷ *snapchat <url>*\n│  └⊷ Download Spotlight videos\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -43,7 +43,7 @@ export default {
       // Validate URL
       if (!isValidSnapchatUrl(url)) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ ❌ *Invalid Snapchat URL* ⌋\n│\n├─⊷ *snapchat <url>*\n│  └⊷ Provide a valid Spotlight URL\n│\n├─⊷ *Example:*\n│  └⊷ snapchat https://www.snapchat.com/spotlight/videoId\n│\n╰───` 
+          text: `╭─⌈ ❌ *INVALID URL* ⌋\n│\n├─⊷ *snapchat <url>*\n│  └⊷ Provide a valid Spotlight URL\n╰───` 
         }, { quoted: m });
         return;
       }

@@ -69,7 +69,7 @@ export default {
     try {
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `╭─⌈ 🎵 *YTA3 - WOLF API Audio Downloader* ⌋\n│\n├─⊷ *${prefix}yta3 <song name or url>*\n│  └⊷ Downloads audio via WOLF YTA3 API\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}yta3 Alan Walker Faded\n│  └⊷ ${prefix}yta3 https://youtube.com/...\n│\n╰───`
+          text: `╭─⌈ 🎵 *YTA3 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}yta3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}yta3 <YouTube URL>*\n│  └⊷ Download from link\n╰───`
         }, { quoted: m });
       }
 

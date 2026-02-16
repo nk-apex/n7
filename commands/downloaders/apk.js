@@ -353,7 +353,7 @@ export default {
     
     if (!args || !args[0]) {
       await sock.sendMessage(jid, { 
-        text: `╭─⌈ 📱 *APK Downloader* ⌋\n│\n├─⊷ *${prefix}apk <app-name>*\n│  └⊷ Download APK from trusted sources\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}apk termux\n│  └⊷ ${prefix}apk facebook\n│  └⊷ ${prefix}apk whatsapp\n│  └⊷ ${prefix}apk instagram\n│  └⊷ ${prefix}apk tiktok\n│\n╰───` 
+        text: `╭─⌈ 📱 *APK DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}apk <app name>*\n│  └⊷ Download APK file\n╰───` 
       }, { quoted: m });
       return;
     }

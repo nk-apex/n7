@@ -91,7 +91,7 @@ export default {
       searchQuery = quoted.text;
     } else if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎵 *PLAY COMMAND* ⌋\n│\n├─⊷ *${prefix}play <song name>*\n│  └⊷ Download audio from YouTube\n│\n├─⊷ *${prefix}play <YouTube URL>*\n│  └⊷ Download from direct link\n│\n├─⊷ *${prefix}play list <query>*\n│  └⊷ Search and list results\n│\n╰───`
+        text: `╭─⌈ 🎵 *PLAY COMMAND* ⌋\n│\n├─⊷ *${prefix}play <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}play <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *${prefix}play list <query>*\n│  └⊷ Search and list results\n╰───`
       }, { quoted: m });
     }
 

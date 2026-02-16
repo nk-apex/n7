@@ -29,7 +29,7 @@ export default {
     if (!args || !args[0]) {
   const prefix = ','; // Your bot's prefix
   await sock.sendMessage(jid, { 
-    text: `╭─⌈ 📷 *Instagram Downloader* ⌋\n│\n├─⊷ *${prefix}instagram <url>*\n│  └⊷ Download reels/posts from Instagram\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}instagram https://instagram.com/reel/xyz\n│\n╰───` 
+    text: `╭─⌈ 📷 *INSTAGRAM DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}instagram <url>*\n│  └⊷ Download reels/posts\n╰───` 
   }, { quoted: m });
   return;
 }

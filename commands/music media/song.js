@@ -71,7 +71,7 @@ export default {
     
     if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎵 *SONG DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}song <song name>*\n│  └⊷ Download audio with thumbnail\n│\n├─⊷ *${prefix}song <YouTube URL>*\n│  └⊷ Download from direct link\n│\n╰───`
+        text: `╭─⌈ 🎵 *SONG DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}song <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}song <YouTube URL>*\n│  └⊷ Download from link\n╰───`
       }, { quoted: m });
     }
     
