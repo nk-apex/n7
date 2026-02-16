@@ -4579,6 +4579,17 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     store.addMessage(msg.key.remoteJid, msg.key.id, msg);
                 }
 
+                if (msg.key?.remoteJid === 'status@broadcast' && msg.messageStubType) {
+                    console.log(`[STATUS-AD] Status stub event type=${msg.messageStubType} from ${msg.key?.participant?.split('@')[0] || 'unknown'}`);
+                    statusAntideleteHandleUpdate({
+                        key: msg.key,
+                        update: { message: null, messageStubType: msg.messageStubType }
+                    }).catch(err => {
+                        originalConsoleMethods.log(`❌ [STATUS-AD] Stub handle error: ${err.message}`);
+                    });
+                    return;
+                }
+
                 if (msg.messageStubType === 29 || msg.messageStubType === 30) {
                     const stubAction = msg.messageStubType === 29 ? 'promote' : 'demote';
                     const groupId = msg.key.remoteJid;
@@ -4625,7 +4636,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }
             }
 
-            if (msg.messageStubType || msg.labels?.length > 0) return;
+            if (msg.key?.remoteJid !== 'status@broadcast' && (msg.messageStubType || msg.labels?.length > 0)) return;
 
             const normalizedUpsertContent = normalizeMessageContent(msg.message) || msg.message;
             const upsertProtoMsg = normalizedUpsertContent?.protocolMessage;
@@ -4633,13 +4644,23 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 const revokedMsgId = upsertProtoMsg.key?.id;
                 if (revokedMsgId) {
                     const revokedChatJid = upsertProtoMsg.key?.remoteJid || msg.key?.remoteJid;
-                    console.log(`[ANTIDELETE] Protocol revoke detected via upsert for ${revokedMsgId} in ${revokedChatJid}`);
-                    antideleteHandleUpdate({
-                        key: { ...msg.key, id: revokedMsgId, remoteJid: revokedChatJid },
-                        update: { message: null, messageStubType: 1 }
-                    }).catch(err => {
-                        console.log(`❌ [ANTIDELETE] Revoke handle error: ${err.message}`);
-                    });
+                    if (msg.key?.remoteJid === 'status@broadcast' || revokedChatJid === 'status@broadcast') {
+                        console.log(`[STATUS-AD] Protocol revoke detected via upsert for ${revokedMsgId}`);
+                        statusAntideleteHandleUpdate({
+                            key: { ...msg.key, id: revokedMsgId },
+                            update: { message: null, messageStubType: 1 }
+                        }).catch(err => {
+                            originalConsoleMethods.log(`❌ [STATUS-AD] Revoke handle error: ${err.message}`);
+                        });
+                    } else {
+                        console.log(`[ANTIDELETE] Protocol revoke detected via upsert for ${revokedMsgId} in ${revokedChatJid}`);
+                        antideleteHandleUpdate({
+                            key: { ...msg.key, id: revokedMsgId, remoteJid: revokedChatJid },
+                            update: { message: null, messageStubType: 1 }
+                        }).catch(err => {
+                            console.log(`❌ [ANTIDELETE] Revoke handle error: ${err.message}`);
+                        });
+                    }
                 }
                 return;
             }
@@ -4738,8 +4759,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
         sock.ev.on('messages.update', async (updates) => {
             try {
                 for (const update of updates) {
-                    const updateChatJid = update.key?.remoteJidAlt || update.key?.remoteJid;
+                    const updateChatJid = update.key?.remoteJid;
                     if (updateChatJid === 'status@broadcast') {
+                        const updateKeys = update.update ? Object.keys(update.update) : [];
+                        console.log(`[STATUS-AD] messages.update for status ${update.key?.id?.substring(0,8)} | update keys: ${updateKeys.join(',')} | participant: ${update.key?.participant?.split('@')[0] || 'none'}`);
                         await statusAntideleteHandleUpdate(update);
                     } else {
                         await antideleteHandleUpdate(update);

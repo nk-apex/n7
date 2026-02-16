@@ -555,17 +555,23 @@ export async function statusAntideleteHandleUpdate(update) {
         const protocolMsg = inner.message?.protocolMessage || inner.protocolMessage;
         const isProtocolRevoke = protocolMsg?.type === 0 || protocolMsg?.type === 4;
 
-        const isDeleted =
-            inner.message === null ||
-            inner.message === undefined && inner.messageStubType !== undefined ||
-            inner.status === 5 ||
-            inner.status === 6 ||
-            (stubType !== undefined && STATUS_PATTERNS.DELETE_STUB_TYPES.includes(stubType)) ||
-            isProtocolRevoke ||
-            update.message === null ||
-            update.messageStubType !== undefined && STATUS_PATTERNS.DELETE_STUB_TYPES.includes(update.messageStubType);
+        const checks = {
+            innerMsgNull: inner.message === null,
+            innerMsgUndefinedWithStub: (inner.message === undefined && inner.messageStubType !== undefined),
+            status5: inner.status === 5,
+            status6: inner.status === 6,
+            stubMatch: (stubType !== undefined && STATUS_PATTERNS.DELETE_STUB_TYPES.includes(stubType)),
+            protoRevoke: isProtocolRevoke,
+            updateMsgNull: update.message === null,
+            updateStubMatch: (update.messageStubType !== undefined && STATUS_PATTERNS.DELETE_STUB_TYPES.includes(update.messageStubType))
+        };
 
-        if (!isDeleted) return;
+        const isDeleted = Object.values(checks).some(v => v);
+
+        if (!isDeleted) {
+            console.log(`[STATUS-AD] Update for ${msgId.substring(0,8)} NOT detected as deletion | inner keys: ${Object.keys(inner).join(',')} | checks: ${JSON.stringify(checks)}`);
+            return;
+        }
 
         console.log(`🔍 Status Antidelete: Deletion detected for status ${msgId}`);
 
