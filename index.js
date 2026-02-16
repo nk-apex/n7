@@ -3565,7 +3565,7 @@ function cleanSession(preserveExisting = false) {
 class MessageStore {
     constructor() {
         this.messages = new Map();
-        this.maxMessages = 100;
+        this.maxMessages = 500;
     }
     
     addMessage(jid, messageId, message) {
@@ -4174,6 +4174,35 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     return storeMsg.message;
                 }
                 return { conversation: '' };
+            },
+            patchMessageBeforeSending: (message) => {
+                const requiresPatch = !!(
+                    message.buttonsMessage ||
+                    message.templateMessage ||
+                    message.listMessage ||
+                    message.interactiveMessage
+                );
+                if (requiresPatch) {
+                    message = {
+                        viewOnceMessage: {
+                            message: {
+                                messageContextInfo: {
+                                    deviceListMetadataVersion: 2,
+                                    deviceListMetadata: {},
+                                },
+                                ...message,
+                            },
+                        },
+                    };
+                }
+                return message;
+            },
+            cachedGroupMetadata: async (jid) => {
+                const cached = groupMetadataCache.get(jid);
+                if (cached && Date.now() - cached.ts < GROUP_CACHE_TTL) {
+                    return cached.data;
+                }
+                return undefined;
             },
             defaultQueryTimeoutMs: 30000,
             retryRequestDelayMs: 250,
