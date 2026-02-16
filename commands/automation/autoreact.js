@@ -1315,26 +1315,23 @@ export default {
         const cmdStatus = status.reactToCommands ? "✅ Commands" : "❌ Commands";
         
         await sock.sendMessage(targetJid, {
-          text: `😂 *Auto-React Manager*
-
-${statusText} | ${emojiText}
-
-📊 *Current Settings:*
-• Status: ${status.enabled ? '🟢 ON' : '🔴 OFF'}
-• Mode: ${status.useRandomEmoji ? '🎲 Random' : '🎯 Fixed'}
-• DMs: ${dmStatus}
-• Groups: ${groupStatus}
-• Commands: ${cmdStatus}
-• Access: ${modeText}
-
-🔧 *Quick Commands:*
-• \`${PREFIX}autoreact on/off\` - Toggle
-• \`${PREFIX}autoreact set 😍\` - Set emoji
-• \`${PREFIX}autoreact random\` - Toggle random
-• \`${PREFIX}autoreact dms/groups\` - Toggle targets
-• \`${PREFIX}autoreact status\` - Detailed view
-
-💡 *Tip:* System remembers settings while bot is online!`
+          text: `╭─⌈ 😂 *AUTO-REACT* ⌋
+│
+│ ${statusText} | ${emojiText}
+│ ${dmStatus} | ${groupStatus} | ${cmdStatus}
+│ Access: ${modeText}
+│
+├─⊷ *${PREFIX}autoreact on/off*
+│  └⊷ Toggle auto-react
+├─⊷ *${PREFIX}autoreact set <emoji>*
+│  └⊷ Set fixed emoji
+├─⊷ *${PREFIX}autoreact random toggle*
+│  └⊷ Toggle random emoji mode
+├─⊷ *${PREFIX}autoreact dms/groups/both*
+│  └⊷ Toggle reaction targets
+├─⊷ *${PREFIX}autoreact status*
+│  └⊷ Detailed status view
+╰───`
         }, { quoted: m });
         return;
       }
@@ -1346,46 +1343,31 @@ ${statusText} | ${emojiText}
         const status = AutoReactManager.status();
         const allowedUsers = AutoReactManager.getAllowedUsers();
         
-        let statusMsg = `😂 *Auto-React Status* (Owner View)\n\n`;
-        statusMsg += `📊 *System Status:*\n`;
-        statusMsg += `├─ Enabled: ${status.enabled ? '✅ YES' : '❌ NO (Default OFF)'}\n`;
-        statusMsg += `├─ Emoji Mode: ${status.useRandomEmoji ? '🎲 Random' : '🎯 Fixed'}\n`;
-        statusMsg += `├─ Current Emoji: ${status.emoji}\n`;
-        statusMsg += `├─ Random Emojis: ${status.randomEmojiCount} available\n`;
-        statusMsg += `├─ React to DMs: ${status.reactToDMs ? '✅ YES' : '❌ NO'}\n`;
-        statusMsg += `├─ React to Groups: ${status.reactToGroups ? '✅ YES' : '❌ NO'}\n`;
-        statusMsg += `├─ React to Commands: ${status.reactToCommands ? '✅ YES' : '❌ NO'}\n`;
-        statusMsg += `├─ Mode: ${status.ownerOnly ? '🔒 Owner Only' : '🌍 Public'}\n`;
-        statusMsg += `├─ Active Reactions: ${status.activeReactions}\n`;
-        statusMsg += `├─ Rate Limit: ${status.rateLimit}\n`;
-        statusMsg += `├─ User Cooldowns: ${status.userCooldowns}\n`;
-        statusMsg += `└─ Hooked: ${status.isHooked ? '✅' : '❌'}\n\n`;
-        
-        statusMsg += `⚙️ *Default Settings:*\n`;
-        statusMsg += `├─ Enabled: ❌ OFF (by default)\n`;
-        statusMsg += `├─ DMs: ✅ ON (when enabled)\n`;
-        statusMsg += `├─ Groups: ✅ ON (when enabled)\n`;
-        statusMsg += `├─ Commands: ❌ OFF\n`;
-        statusMsg += `└─ Emoji: Fixed (😂)\n\n`;
+        let statusMsg = `╭─⌈ 😂 *AUTO-REACT STATUS* ⌋\n│\n`;
+        statusMsg += `│ ${status.enabled ? '🟢 ON' : '🔴 OFF'} | ${status.useRandomEmoji ? '🎲 Random' : '🎯 Fixed'} | ${status.emoji}\n`;
+        statusMsg += `│ DMs: ${status.reactToDMs ? '✅' : '❌'} | Groups: ${status.reactToGroups ? '✅' : '❌'} | Cmds: ${status.reactToCommands ? '✅' : '❌'}\n`;
+        statusMsg += `│ Access: ${status.ownerOnly ? '🔒 Owner' : '🌍 Public'} | Hooked: ${status.isHooked ? '✅' : '❌'}\n`;
+        statusMsg += `│ Active: ${status.activeReactions} | Rate: ${status.rateLimit}\n`;
         
         if (status.useRandomEmoji) {
           const emojiPreview = autoReactConfig.randomEmojiList.slice(0, 10).join(' ');
-          statusMsg += `🎲 *Random Emojis (Preview):*\n${emojiPreview}`;
+          statusMsg += `│ Random: ${emojiPreview}`;
           if (autoReactConfig.randomEmojiList.length > 10) {
-            statusMsg += ` ... +${autoReactConfig.randomEmojiList.length - 10} more`;
+            statusMsg += ` +${autoReactConfig.randomEmojiList.length - 10} more`;
           }
-          statusMsg += `\n\n`;
+          statusMsg += `\n`;
         }
         
         if (allowedUsers.length > 0 && !status.ownerOnly) {
-          statusMsg += `👥 *Allowed Users:* ${allowedUsers.length}\n`;
+          statusMsg += `│ Allowed Users: ${allowedUsers.length}\n`;
         }
         
-        statusMsg += `💡 *Commands:*\n`;
-        statusMsg += `• \`${PREFIX}autoreact random add 😘\` - Add emoji to random list\n`;
-        statusMsg += `• \`${PREFIX}autoreact random list\` - Show all random emojis\n`;
-        statusMsg += `• \`${PREFIX}autoreact random clear\` - Reset to default list\n`;
-        statusMsg += `• \`${PREFIX}autoreact test\` - Test reaction\n`;
+        statusMsg += `│\n`;
+        statusMsg += `├─⊷ *${PREFIX}autoreact random add <emoji>*\n│  └⊷ Add to random list\n`;
+        statusMsg += `├─⊷ *${PREFIX}autoreact random list*\n│  └⊷ Show all random emojis\n`;
+        statusMsg += `├─⊷ *${PREFIX}autoreact random clear*\n│  └⊷ Reset to default list\n`;
+        statusMsg += `├─⊷ *${PREFIX}autoreact test*\n│  └⊷ Test reaction\n`;
+        statusMsg += `╰───`;
         
         return sock.sendMessage(targetJid, {
           text: statusMsg
@@ -1546,7 +1528,7 @@ Use \`${PREFIX}autoreact on\` to enable again.`
         
         // Invalid random command
         await sock.sendMessage(targetJid, {
-          text: `❓ *Random Emoji Commands*\n\nUsage:\n• \`${PREFIX}autoreact random toggle\` - Toggle random mode\n• \`${PREFIX}autoreact random list\` - Show all emojis\n• \`${PREFIX}autoreact random add 😘\` - Add emoji\n• \`${PREFIX}autoreact random remove 😘\` - Remove emoji\n• \`${PREFIX}autoreact random clear\` - Reset to default`
+          text: `╭─⌈ 🎲 *RANDOM EMOJI* ⌋\n│\n├─⊷ *${PREFIX}autoreact random toggle*\n│  └⊷ Toggle random mode\n├─⊷ *${PREFIX}autoreact random list*\n│  └⊷ Show all emojis\n├─⊷ *${PREFIX}autoreact random add <emoji>*\n│  └⊷ Add emoji to list\n├─⊷ *${PREFIX}autoreact random remove <emoji>*\n│  └⊷ Remove emoji from list\n├─⊷ *${PREFIX}autoreact random clear*\n│  └⊷ Reset to default\n╰───`
         }, { quoted: m });
         return;
       }
@@ -1739,7 +1721,7 @@ ${ownerOnly ?
         
         // Invalid user command
         await sock.sendMessage(targetJid, {
-          text: `❓ *Invalid User Command*\n\nUsage:\n• \`${PREFIX}autoreact users list\`\n• \`${PREFIX}autoreact users add @user\`\n• \`${PREFIX}autoreact users remove @user\`\n• \`${PREFIX}autoreact users clear\``
+          text: `╭─⌈ 👥 *USER MANAGEMENT* ⌋\n│\n├─⊷ *${PREFIX}autoreact users list*\n│  └⊷ Show allowed users\n├─⊷ *${PREFIX}autoreact users add @user*\n│  └⊷ Add allowed user\n├─⊷ *${PREFIX}autoreact users remove @user*\n│  └⊷ Remove allowed user\n├─⊷ *${PREFIX}autoreact users clear*\n│  └⊷ Remove all users\n╰───`
         }, { quoted: m });
         return;
       }
@@ -1791,40 +1773,39 @@ Reacted with ${emoji} to this command!
       
       // If no valid command, show help
       await sock.sendMessage(targetJid, {
-        text: `😂 *Auto-React Owner Commands:*
-
-⚠️ *NOTE:* Auto-react is OFF by default. Enable with \`${PREFIX}autoreact on\`
-
-🔧 *Basic Control:*
-• \`${PREFIX}autoreact on\` - Enable auto-react
-• \`${PREFIX}autoreact off\` - Disable auto-react
-• \`${PREFIX}autoreact set 😍\` - Set fixed emoji
-
-🎲 *Random Emoji Mode:*
-• \`${PREFIX}autoreact random toggle\` - Toggle random mode
-• \`${PREFIX}autoreact random list\` - Show random emojis
-• \`${PREFIX}autoreact random add 😘\` - Add to random list
-• \`${PREFIX}autoreact random remove 😘\` - Remove from list
-
-🎯 *Target Control:*
-• \`${PREFIX}autoreact dms\` - Toggle DM reactions
-• \`${PREFIX}autoreact groups\` - Toggle group reactions  
-• \`${PREFIX}autoreact both\` - React to both DMs & groups
-• \`${PREFIX}autoreact commands\` - Toggle command reactions
-
-🔒 *Access Control:*
-• \`${PREFIX}autoreact mode\` - Toggle owner-only/public mode
-• \`${PREFIX}autoreact users\` - Manage allowed users
-
-📊 *Info & Tools:*
-• \`${PREFIX}autoreact\` - Show status
-• \`${PREFIX}autoreact status\` - Detailed status
-• \`${PREFIX}autoreact test\` - Test reaction
-• \`${PREFIX}autoreact clear\` - Clear reaction tracking
-
-⚠️ *Rate Limit:* ${autoReactConfig.maxReactionsPerMinute} reactions per minute
-⚙️ *Defaults:* OFF | DMs ✅ | Groups ✅ | Commands ❌ | Random ❌
-💡 *Persistence:* Settings stay active while bot is online!`
+        text: `╭─⌈ 😂 *AUTO-REACT* ⌋
+│
+├─⊷ *${PREFIX}autoreact on*
+│  └⊷ Enable auto-react
+├─⊷ *${PREFIX}autoreact off*
+│  └⊷ Disable auto-react
+├─⊷ *${PREFIX}autoreact set <emoji>*
+│  └⊷ Set fixed emoji
+├─⊷ *${PREFIX}autoreact random toggle*
+│  └⊷ Toggle random emoji mode
+├─⊷ *${PREFIX}autoreact random list*
+│  └⊷ Show random emojis
+├─⊷ *${PREFIX}autoreact random add <emoji>*
+│  └⊷ Add to random list
+├─⊷ *${PREFIX}autoreact dms*
+│  └⊷ Toggle DM reactions
+├─⊷ *${PREFIX}autoreact groups*
+│  └⊷ Toggle group reactions
+├─⊷ *${PREFIX}autoreact both*
+│  └⊷ React to DMs & groups
+├─⊷ *${PREFIX}autoreact commands*
+│  └⊷ Toggle command reactions
+├─⊷ *${PREFIX}autoreact mode*
+│  └⊷ Toggle owner-only/public
+├─⊷ *${PREFIX}autoreact users*
+│  └⊷ Manage allowed users
+├─⊷ *${PREFIX}autoreact status*
+│  └⊷ Detailed status
+├─⊷ *${PREFIX}autoreact test*
+│  └⊷ Test reaction
+├─⊷ *${PREFIX}autoreact clear*
+│  └⊷ Clear reaction tracking
+╰───`
       }, { quoted: m });
       
     } catch (err) {
