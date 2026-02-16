@@ -63,6 +63,9 @@ The bot operates on Node.js 20, utilizing ESM modules. Its core logic resides in
 
 ## Recent Changes (Feb 2026)
 
+### Environment Migration
+*   **Node.js Upgrade**: Upgraded from Node.js 18 to Node.js 20 to satisfy `@whiskeysockets/baileys` v7 engine requirement (Node.js 20+).
+
 ### Performance & Stability Improvements
 *   **Memory Management**: Raised memory thresholds (warning: 900MB, critical: 1200MB) to prevent unnecessary restarts on Replit. Added proper cache cleanup with size limits for LID cache, group metadata cache, contact names, and message store.
 *   **Defibrillator Optimization**: Reduced monitoring overhead - heartbeat every 5min (was 1min), health checks every 5min (was 1min), owner reports every 10min (was 5min), response timeout 2min (was 30s). Max restarts per hour reduced from 3 to 2.
