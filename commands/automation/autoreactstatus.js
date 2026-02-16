@@ -494,10 +494,10 @@ export default {
                 let statusText = `╭─⌈ 🐺 *AUTOREACTSTATUS* ⌋\n│\n`;
                 statusText += `│ Status: ${stats.enabled ? '✅ **ACTIVE**' : '❌ **INACTIVE**'}\n`;
                 statusText += `│ Mode: ${stats.mode === 'fixed' ? `Fixed (${stats.fixedEmoji})` : 'Random (1 emoji per status)'}\n│\n`;
-                statusText += `├─⊷ *${prefix}autoreactstatus on*\n│  └⊷ Enable auto reactions\n│\n`;
-                statusText += `├─⊷ *${prefix}autoreactstatus off*\n│  └⊷ Disable auto reactions\n│\n`;
-                statusText += `├─⊷ *${prefix}autoreactstatus random*\n│  └⊷ Set random emoji mode\n│\n`;
-                statusText += `├─⊷ *${prefix}autoreactstatus emoji <emoji>*\n│  └⊷ Set a fixed emoji for reactions\n│\n`;
+                statusText += `├─⊷ *${prefix}autoreactstatus on*\n│  └⊷ Enable reactions\n`;
+                statusText += `├─⊷ *${prefix}autoreactstatus off*\n│  └⊷ Disable reactions\n`;
+                statusText += `├─⊷ *${prefix}autoreactstatus random*\n│  └⊷ Random emoji mode\n`;
+                statusText += `├─⊷ *${prefix}autoreactstatus emoji <emoji>*\n│  └⊷ Set fixed emoji\n`;
                 statusText += `╰───`;
                 
                 await sock.sendMessage(m.key.remoteJid, { text: statusText }, { quoted: m });
@@ -569,7 +569,7 @@ export default {
                 case 'emoji':
                     if (args.length < 2) {
                         await sock.sendMessage(m.key.remoteJid, {
-                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS EMOJI* ⌋\n│\n│ Current: ${autoReactManager.fixedEmoji}\n│\n├─⊷ *${prefix}autoreactstatus emoji 🐺*\n│  └⊷ Sets a fixed emoji for reactions\n│\n╰───`
+                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS EMOJI* ⌋\n│\n│ Current: ${autoReactManager.fixedEmoji}\n│\n├─⊷ *${prefix}autoreactstatus emoji 🐺*\n│  └⊷ Set fixed emoji\n╰───`
                         }, { quoted: m });
                         return;
                     }
@@ -640,7 +640,7 @@ export default {
                     
                     if (args.length < 2) {
                         await sock.sendMessage(m.key.remoteJid, {
-                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS ADD* ⌋\n│\n├─⊷ *${prefix}autoreactstatus add ❤️*\n│  └⊷ Adds an emoji to the random list\n│\n╰───`
+                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS ADD* ⌋\n│\n├─⊷ *${prefix}autoreactstatus add ❤️*\n│  └⊷ Add to random list\n╰───`
                         }, { quoted: m });
                         return;
                     }
@@ -674,7 +674,7 @@ export default {
                     
                     if (args.length < 2) {
                         await sock.sendMessage(m.key.remoteJid, {
-                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS REMOVE* ⌋\n│\n├─⊷ *${prefix}autoreactstatus remove 🔥*\n│  └⊷ Removes an emoji from the random list\n│\n╰───`
+                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS REMOVE* ⌋\n│\n├─⊷ *${prefix}autoreactstatus remove 🔥*\n│  └⊷ Remove from list\n╰───`
                         }, { quoted: m });
                         return;
                     }
@@ -724,7 +724,7 @@ export default {
                     
                 default:
                     await sock.sendMessage(m.key.remoteJid, {
-                        text: `╭─⌈ ❓ *AUTOREACTSTATUS* ⌋\n│\n├─⊷ *${prefix}autoreactstatus on/off*\n│  └⊷ Enable or disable\n│\n├─⊷ *${prefix}autoreactstatus random*\n│  └⊷ Set random emoji mode\n│\n├─⊷ *${prefix}autoreactstatus emoji 🐺*\n│  └⊷ Set a fixed emoji\n│\n├─⊷ *${prefix}autoreactstatus stats*\n│  └⊷ View detailed statistics\n│\n├─⊷ *${prefix}autoreactstatus list*\n│  └⊷ View emoji list\n│\n╰───`
+                        text: `╭─⌈ ❓ *AUTOREACTSTATUS* ⌋\n│\n├─⊷ *${prefix}autoreactstatus on/off*\n│  └⊷ Enable or disable\n├─⊷ *${prefix}autoreactstatus random*\n│  └⊷ Random emoji mode\n├─⊷ *${prefix}autoreactstatus emoji 🐺*\n│  └⊷ Set fixed emoji\n├─⊷ *${prefix}autoreactstatus stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}autoreactstatus list*\n│  └⊷ View emoji list\n╰───`
                     }, { quoted: m });
             }
             

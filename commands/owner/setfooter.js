@@ -44,7 +44,7 @@ export default {
         if (args.length === 0 || args[0]?.toLowerCase() === 'help') {
             const current = getFooter();
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📝 *SET FOOTER* ⌋\n│\n│ 📌 Current: ${current}\n│\n├─⊷ *${PREFIX}setfooter <text>*\n│  └⊷ Set default caption for downloads\n├─⊷ *${PREFIX}setfooter reset*\n│  └⊷ Reset to default\n│\n│ 💡 Example: ${PREFIX}setfooter WOLFBOT is the ALPHA\n│\n╰───────────────`
+                text: `╭─⌈ 📝 *SET FOOTER* ⌋\n│\n│ 📌 Current: ${current}\n├─⊷ *${PREFIX}setfooter <text>*\n│  └⊷ Set footer text\n├─⊷ *${PREFIX}setfooter reset*\n│  └⊷ Reset to default\n╰───`
             }, { quoted: msg });
         }
 

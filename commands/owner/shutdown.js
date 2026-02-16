@@ -1065,7 +1065,7 @@ async function handleStats(sock, m, args, editMessage) {
 async function handleHelp(sock, m, args, editMessage) {
   const helpText = 
     `╭─⌈ 🔒 *SHUTDOWN HELP* ⌋\n│\n` +
-    `├─⊷ *!shutdown [time]*\n│  └⊷ Shutdown bot (e.g. 30s, 5m, 2h, 1d)\n` +
+    `├─⊷ *!shutdown [time]*\n│  └⊷ Scheduled shutdown\n` +
     `├─⊷ *!shutdown [time] reason=...*\n│  └⊷ Shutdown with reason\n` +
     `├─⊷ *!shutdown status*\n│  └⊷ Show active shutdowns\n` +
     `├─⊷ *!shutdown cancel <id|all>*\n│  └⊷ Cancel shutdown(s)\n` +
@@ -1074,7 +1074,7 @@ async function handleHelp(sock, m, args, editMessage) {
     `├─⊷ *!shutdown resume <id>*\n│  └⊷ Resume paused shutdown\n` +
     `├─⊷ *!shutdown stats*\n│  └⊷ Show shutdown statistics\n` +
     `├─⊷ *!shutdown help*\n│  └⊷ This help menu\n` +
-    `│\n│ ⏱️ Time: s/m/h/d | Aliases: !sleep, !pause, !offline\n│\n╰───────────────`;
+    `╰───`;
   
   await editMessage(helpText);
 }

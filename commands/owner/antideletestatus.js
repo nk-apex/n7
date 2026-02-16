@@ -739,7 +739,7 @@ export default {
         switch (command) {
             case 'status':
             case 'stats': {
-                const statsText = `╭─⌈ 📊 *STATUS ANTIDELETE STATS* ⌋\n│\n│ ✅ ALWAYS ON (Private Mode)\n│ 📦 Cached: ${statusAntideleteState.statusCache.size} | 🔍 Deleted: ${statusAntideleteState.stats.deletedDetected}\n│ ✅ Retrieved: ${statusAntideleteState.stats.retrieved} | 📸 Media: ${statusAntideleteState.stats.mediaCaptured}\n│ 📩 Sent to DM: ${statusAntideleteState.stats.sentToDm} | 💾 ${statusAntideleteState.stats.totalStorageMB}MB\n│\n├─⊷ *${prefix}antideletestatus stats*\n│  └⊷ View stats\n├─⊷ *${prefix}antideletestatus list*\n│  └⊷ Recent deleted statuses\n├─⊷ *${prefix}antideletestatus clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antideletestatus settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antideletestatus help*\n│  └⊷ Full help\n│\n╰───────────────`;
+                const statsText = `╭─⌈ 📊 *STATUS ANTIDELETE STATS* ⌋\n│\n├─⊷ *${prefix}antideletestatus stats*\n│  └⊷ View stats\n├─⊷ *${prefix}antideletestatus list*\n│  └⊷ Recent statuses\n├─⊷ *${prefix}antideletestatus clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antideletestatus settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antideletestatus help*\n│  └⊷ Full help\n╰───`;
 
                 await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
                 break;
@@ -821,7 +821,7 @@ export default {
                 const subCommand = args[1]?.toLowerCase();
 
                 if (!subCommand) {
-                    const settingsText = `╭─⌈ ⚙️ *STATUS ANTIDELETE SETTINGS* ⌋\n│\n│ ✅ ALWAYS ON (Private Mode)\n│\n│ 🔧 Auto-clean: ${statusAntideleteState.settings.autoCleanEnabled ? '✅' : '❌'}\n│ 🔧 Clean Retrieved: ${statusAntideleteState.settings.autoCleanRetrieved ? '✅' : '❌'}\n│ 🔧 Max Age: ${statusAntideleteState.settings.maxAgeHours}h | Max Storage: ${statusAntideleteState.settings.maxStorageMB}MB\n│\n├─⊷ *${prefix}ads settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}ads settings cleanretrieved on/off*\n│  └⊷ Toggle clean retrieved\n├─⊷ *${prefix}ads settings maxage <hours>*\n│  └⊷ Set max cache age\n├─⊷ *${prefix}ads settings maxstorage <MB>*\n│  └⊷ Set max storage\n│\n╰───────────────`;
+                    const settingsText = `╭─⌈ ⚙️ *STATUS ANTIDELETE SETTINGS* ⌋\n│\n├─⊷ *${prefix}ads settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}ads settings cleanretrieved on/off*\n│  └⊷ Toggle clean mode\n├─⊷ *${prefix}ads settings maxage <hours>*\n│  └⊷ Set max age\n├─⊷ *${prefix}ads settings maxstorage <MB>*\n│  └⊷ Set max storage\n╰───`;
                     await sock.sendMessage(chatId, { text: settingsText }, { quoted: msg });
                     return;
                 }
@@ -895,7 +895,7 @@ export default {
             }
 
             case 'help': {
-                const helpText = `╭─⌈ 🔍 *STATUS ANTIDELETE SYSTEM* ⌋\n│\n│ ✅ ALWAYS ON - Deleted statuses sent to your DM\n│\n├─⊷ *${prefix}ads stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}ads list*\n│  └⊷ Recent deleted statuses\n├─⊷ *${prefix}ads clear*\n│  └⊷ Clear all cached data\n├─⊷ *${prefix}ads settings*\n│  └⊷ Configure settings\n├─⊷ *${prefix}ads help*\n│  └⊷ This menu\n│\n│ 📝 Cached: ${statusAntideleteState.statusCache.size} | Storage: ${statusAntideleteState.stats.totalStorageMB}MB\n│\n╰───────────────`;
+                const helpText = `╭─⌈ 🔍 *STATUS ANTIDELETE SYSTEM* ⌋\n│\n├─⊷ *${prefix}ads stats*\n│  └⊷ View stats\n├─⊷ *${prefix}ads list*\n│  └⊷ Recent statuses\n├─⊷ *${prefix}ads clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}ads settings*\n│  └⊷ Configure\n├─⊷ *${prefix}ads help*\n│  └⊷ This menu\n╰───`;
 
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;

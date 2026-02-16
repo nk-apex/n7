@@ -254,7 +254,7 @@ export default {
             const action = (args[1] || 'warn').toLowerCase();
             if (!['warn', 'kick', 'revert'].includes(action)) {
                 return sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🛡️ *ANTI-DEMOTE SETUP* ⌋\n│\n├─⊷ *${PREFIX}antidemote on warn*\n│  └⊷ Send warning when someone demotes an admin\n│\n├─⊷ *${PREFIX}antidemote on kick*\n│  └⊷ Remove offender + restore admin\n│\n├─⊷ *${PREFIX}antidemote on revert*\n│  └⊷ Restore demoted admin's role\n│\n╰───`
+                    text: `╭─⌈ 🛡️ *ANTI-DEMOTE SETUP* ⌋\n│\n├─⊷ *${PREFIX}antidemote on warn*\n│  └⊷ Warn on demotion\n├─⊷ *${PREFIX}antidemote on kick*\n│  └⊷ Kick offender + restore\n├─⊷ *${PREFIX}antidemote on revert*\n│  └⊷ Restore admin role\n╰───`
                 }, { quoted: msg });
             }
 
@@ -294,7 +294,7 @@ export default {
             if (!['warn', 'kick', 'revert'].includes(action)) {
                 const current = config[chatId]?.action || 'warn';
                 return sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🛡️ *ANTI-DEMOTE MODE* ⌋\n│\n│ Current: *${current.toUpperCase()}*\n│\n├─⊷ *${PREFIX}antidemote mode warn*\n│  └⊷ Warning only\n│\n├─⊷ *${PREFIX}antidemote mode kick*\n│  └⊷ Kick offender + restore\n│\n├─⊷ *${PREFIX}antidemote mode revert*\n│  └⊷ Restore admin role\n│\n╰───`
+                    text: `╭─⌈ 🛡️ *ANTI-DEMOTE MODE* ⌋\n│\n├─⊷ *${PREFIX}antidemote mode warn*\n│  └⊷ Warning only\n├─⊷ *${PREFIX}antidemote mode kick*\n│  └⊷ Kick offender + restore\n├─⊷ *${PREFIX}antidemote mode revert*\n│  └⊷ Restore admin role\n╰───`
                 }, { quoted: msg });
             }
 
@@ -342,7 +342,7 @@ export default {
             const action = gc?.action || 'warn';
 
             await sock.sendMessage(chatId, {
-                text: `╭─⌈ 🛡️ *ANTI-DEMOTE* ⌋\n│\n│ Status: ${isOn ? '✅ ON' : '❌ OFF'} • Mode: ${action.toUpperCase()}\n│\n├─⊷ *${PREFIX}antidemote on [warn|kick|revert]*\n│  └⊷ Enable with mode\n│\n├─⊷ *${PREFIX}antidemote off*\n│  └⊷ Disable for this group\n│\n├─⊷ *${PREFIX}antidemote mode <warn|kick|revert>*\n│  └⊷ Change mode\n│\n├─⊷ *${PREFIX}antidemote status*\n│  └⊷ View full status\n│\n├─⊷ *${PREFIX}antidemote resetwarns*\n│  └⊷ Clear warnings\n│\n│ 💡 _Active by default in all groups_\n│ 📢 _For promotion control, use_ \`${PREFIX}antipromote\`\n╰───`
+                text: `╭─⌈ 🛡️ *ANTI-DEMOTE* ⌋\n│\n├─⊷ *${PREFIX}antidemote on [warn|kick|revert]*\n│  └⊷ Enable with mode\n├─⊷ *${PREFIX}antidemote off*\n│  └⊷ Disable protection\n├─⊷ *${PREFIX}antidemote mode <warn|kick|revert>*\n│  └⊷ Change mode\n├─⊷ *${PREFIX}antidemote status*\n│  └⊷ View full status\n├─⊷ *${PREFIX}antidemote resetwarns*\n│  └⊷ Clear warnings\n╰───`
             }, { quoted: msg });
         }
     }

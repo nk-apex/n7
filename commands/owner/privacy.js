@@ -87,7 +87,7 @@ export default {
             text += `│ • \`${PREFIX}profilepic\` - Profile pic privacy\n`;
             text += `│ • \`${PREFIX}viewer\` - Status viewer privacy\n`;
             text += `│\n`;
-            text += `╰───────────────`;
+            text += `╰───`;
 
             await sock.sendMessage(chatId, { text }, { quoted: msg });
 

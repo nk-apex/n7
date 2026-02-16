@@ -60,7 +60,7 @@ export default {
         `│ • \`${PREFIX}revoke\` - Reset link\n` +
         `│ • \`${PREFIX}groupinfo\` - Group details\n` +
         `│\n` +
-        `╰───────────────`;
+        `╰───`;
 
       try {
         const { createRequire } = await import('module');

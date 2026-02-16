@@ -996,7 +996,7 @@ export default {
                 
             case 'status':
             case 'stats':
-                const statsText = `╭─⌈ 📊 *ANTIDELETE STATUS* ⌋\n│\n│ ✅ *System:* ALWAYS ACTIVE\n│ 🔒 *Mode:* ${antideleteState.mode.toUpperCase()}\n│ 💾 *Storage:* ${antideleteState.stats.totalStorageMB}MB\n│ 📦 *Cached:* ${antideleteState.messageCache.size} msgs | 📸 ${antideleteState.mediaCache.size} media\n│ 🔍 *Detected:* ${antideleteState.stats.deletedDetected} | ✅ *Retrieved:* ${antideleteState.stats.retrieved}\n│\n├─⊷ *${prefix}antidelete private*\n│  └⊷ Send to DM only\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antidelete help*\n│  └⊷ Full help\n│\n╰───────────────`;
+                const statsText = `╭─⌈ 📊 *ANTIDELETE STATUS* ⌋\n│\n│ ✅ *System:* ALWAYS ACTIVE\n│ 🔒 *Mode:* ${antideleteState.mode.toUpperCase()}\n│ 💾 *Storage:* ${antideleteState.stats.totalStorageMB}MB\n│ 📦 *Cached:* ${antideleteState.messageCache.size} msgs | 📸 ${antideleteState.mediaCache.size} media\n│ 🔍 *Detected:* ${antideleteState.stats.deletedDetected} | ✅ *Retrieved:* ${antideleteState.stats.retrieved}\n│\n├─⊷ *${prefix}antidelete private*\n│  └⊷ Send to DM only\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antidelete help*\n│  └⊷ Full help\n│\n╰───`;
                 
                 await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
                 break;
@@ -1050,7 +1050,7 @@ export default {
                 const subCommand = args[1]?.toLowerCase();
                 
                 if (!subCommand) {
-                    const settingsText = `╭─⌈ ⚙️ *ANTIDELETE SETTINGS* ⌋\n│\n│ ✅ System: ALWAYS ACTIVE\n│ Mode: ${antideleteState.mode.toUpperCase()} | Storage: JSON\n│\n│ 🔧 Auto-clean: ${antideleteState.settings.autoCleanEnabled ? '✅' : '❌'}\n│ 🔧 Clean Retrieved: ${antideleteState.settings.autoCleanRetrieved ? '✅' : '❌'}\n│ 🔧 Max Age: ${antideleteState.settings.maxAgeHours}h | Max Storage: ${antideleteState.settings.maxStorageMB}MB\n│ 🔧 Group Names: ${antideleteState.settings.showGroupNames ? '✅' : '❌'}\n│\n├─⊷ *${prefix}antidelete settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}antidelete settings cleanretrieved on/off*\n│  └⊷ Toggle clean retrieved\n├─⊷ *${prefix}antidelete settings maxage <hours>*\n│  └⊷ Set max cache age\n├─⊷ *${prefix}antidelete settings maxstorage <MB>*\n│  └⊷ Set max storage\n├─⊷ *${prefix}antidelete settings groupnames on/off*\n│  └⊷ Toggle group names\n├─⊷ *${prefix}antidelete settings save*\n│  └⊷ Save settings\n│\n╰───────────────`;
+                    const settingsText = `╭─⌈ ⚙️ *ANTIDELETE SETTINGS* ⌋\n│\n│ ✅ System: ALWAYS ACTIVE\n│ Mode: ${antideleteState.mode.toUpperCase()} | Storage: JSON\n│\n│ 🔧 Auto-clean: ${antideleteState.settings.autoCleanEnabled ? '✅' : '❌'}\n│ 🔧 Clean Retrieved: ${antideleteState.settings.autoCleanRetrieved ? '✅' : '❌'}\n│ 🔧 Max Age: ${antideleteState.settings.maxAgeHours}h | Max Storage: ${antideleteState.settings.maxStorageMB}MB\n│ 🔧 Group Names: ${antideleteState.settings.showGroupNames ? '✅' : '❌'}\n│\n├─⊷ *${prefix}antidelete settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}antidelete settings cleanretrieved on/off*\n│  └⊷ Toggle clean retrieved\n├─⊷ *${prefix}antidelete settings maxage <hours>*\n│  └⊷ Set max cache age\n├─⊷ *${prefix}antidelete settings maxstorage <MB>*\n│  └⊷ Set max storage\n├─⊷ *${prefix}antidelete settings groupnames on/off*\n│  └⊷ Toggle group names\n├─⊷ *${prefix}antidelete settings save*\n│  └⊷ Save settings\n│\n╰───`;
                     await sock.sendMessage(chatId, { text: settingsText }, { quoted: msg });
                     return;
                 }
@@ -1166,14 +1166,14 @@ export default {
                 break;
                 
             case 'help':
-                const helpText = `╭─⌈ 🔍 *ANTIDELETE SYSTEM* ⌋\n│\n│ ✅ ALWAYS ACTIVE - Cannot be turned off\n│\n├─⊷ *${prefix}antidelete private*\n│  └⊷ Deleted messages go to your DM only\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show deleted messages in original chat\n├─⊷ *${prefix}antidelete stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear all data\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure settings\n├─⊷ *${prefix}antidelete help*\n│  └⊷ This menu\n│\n│ 📝 Mode: ${antideleteState.mode.toUpperCase()} | Storage: ${antideleteState.stats.totalStorageMB}MB\n│ Group Names: ${antideleteState.settings.showGroupNames ? '✅' : '❌'}\n│\n╰───────────────`;
+                const helpText = `╭─⌈ 🔍 *ANTIDELETE SYSTEM* ⌋\n│\n├─⊷ *${prefix}antidelete private*\n│  └⊷ Send to DM only\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}antidelete stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear all data\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antidelete help*\n│  └⊷ This menu\n╰───`;
                 
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
                 
             default:
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🔧 *ANTIDELETE* ⌋\n│\n│ ✅ Status: ALWAYS ACTIVE\n│ 🔒 Mode: ${antideleteState.mode.toUpperCase()}\n│ 💾 Storage: ${antideleteState.stats.totalStorageMB}MB\n│\n├─⊷ *${prefix}antidelete help*\n│  └⊷ View all commands\n│\n╰───────────────`
+                    text: `╭─⌈ 🔧 *ANTIDELETE* ⌋\n│\n├─⊷ *${prefix}antidelete help*\n│  └⊷ View all commands\n╰───`
                 }, { quoted: msg });
         }
     }

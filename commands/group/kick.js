@@ -74,7 +74,7 @@ export default {
 
     if (!participants.length) {
       return sock.sendMessage(msg.key.remoteJid, { 
-        text: '╭─⌈ ❗ *KICK* ⌋\n│\n├─⊷ *@kick @user*\n│  └⊷ Mention user(s) to kick\n│\n├─⊷ *@kick* (in reply)\n│  └⊷ Reply to user to kick\n│\n├─⊷ *@kick 1234567890*\n│  └⊷ Use number to kick\n│\n╰───' 
+        text: '╭─⌈ ❗ *KICK* ⌋\n│\n├─⊷ *@kick @user*\n│  └⊷ Kick via mention\n├─⊷ *@kick* (in reply)\n│  └⊷ Kick via reply\n├─⊷ *@kick 1234567890*\n│  └⊷ Kick by number\n╰───' 
       }, { quoted: msg });
     }
 

@@ -83,14 +83,14 @@ export default {
                     }
                 }
                 return sock.sendMessage(chatId, {
-                    text: `╭─⌈ ⚠️ *LINK SUDO* ⌋\n│\n├─⊷ *Reply + ${PREFIX}linksudo <number>*\n│  └⊷ Manually link sudo user's number\n│\n╰───────────────`
+                    text: `╭─⌈ ⚠️ *LINK SUDO* ⌋\n│\n├─⊷ *Reply + ${PREFIX}linksudo <number>*\n│  └⊷ Link sudo number\n╰───`
                 }, { quoted: msg });
             }
         }
 
         if (!isGroup) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📋 *LINK SUDO* ⌋\n│\n├─⊷ *${PREFIX}linksudo*\n│  └⊷ Auto-scan group members for sudos\n├─⊷ *Reply + ${PREFIX}linksudo*\n│  └⊷ Link specific sudo user\n│\n│ 📊 Current Sudos: ${sudoers.map(s => '+' + s).join(', ')}\n│\n╰───────────────`
+                text: `╭─⌈ 📋 *LINK SUDO* ⌋\n│\n├─⊷ *${PREFIX}linksudo*\n│  └⊷ Auto-scan members\n├─⊷ *Reply + ${PREFIX}linksudo*\n│  └⊷ Link specific sudo user\n╰───`
             }, { quoted: msg });
         }
 

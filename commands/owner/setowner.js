@@ -30,7 +30,7 @@
 //             const originalOwner = this.getOriginalOwner();
             
 //             return sock.sendMessage(chatId, {
-//                 text: `╭─⌈ 👑 *SET OWNER* ⌋\n│\n│ 📝 Current: *${currentOwner}*\n│ 🔗 Original: ${originalOwner}\n│\n├─⊷ *${PREFIX}setowner <name>*\n│  └⊷ Change display name in menu\n├─⊷ *${PREFIX}resetowner*\n│  └⊷ Reset to original owner\n│\n╰───────────────`
+//                 text: `╭─⌈ 👑 *SET OWNER* ⌋\n╰───`
 //             }, { quoted: msg });
 //         }
         
@@ -226,7 +226,7 @@ export default {
             const originalOwner = this.getOriginalOwner();
             
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 👑 *SET OWNER* ⌋\n│\n│ 📝 Current: *${currentOwner}*\n│ 🔗 Original: ${originalOwner}\n│\n├─⊷ *${PREFIX}setowner <name>*\n│  └⊷ Change display name in menu\n├─⊷ *${PREFIX}resetowner*\n│  └⊷ Reset to original owner\n│\n╰───────────────`
+                text: `╭─⌈ 👑 *SET OWNER* ⌋\n│\n├─⊷ *${PREFIX}setowner <name>*\n│  └⊷ Set owner name\n╰───`
             }, { quoted: msg });
         }
         

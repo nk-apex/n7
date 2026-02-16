@@ -225,7 +225,7 @@ export default {
             
             if (!mode || !['warn', 'delete', 'kick'].includes(mode)) {
                 return sock.sendMessage(chatId, { 
-                    text: '╭─⌈ ⚙️ *ANTI-MENTION SETUP* ⌋\n│\n├─⊷ *.antimention on warn*\n│  └⊷ Warn users who mention others\n│\n├─⊷ *.antimention on delete*\n│  └⊷ Delete messages with mentions\n│\n├─⊷ *.antimention on kick*\n│  └⊷ Kick users who mention others\n│\n╰───' 
+                    text: '╭─⌈ ⚙️ *ANTI-MENTION SETUP* ⌋\n│\n├─⊷ *.antimention on warn*\n│  └⊷ Warn senders\n├─⊷ *.antimention on delete*\n│  └⊷ Auto-delete mentions\n├─⊷ *.antimention on kick*\n│  └⊷ Kick senders\n╰───' 
                 }, { quoted: msg });
             }
 
@@ -355,7 +355,7 @@ export default {
                 
                 if (typesToAdd.length === 0) {
                     return sock.sendMessage(chatId, { 
-                        text: '╭─⌈ 👥 *ANTI-MENTION TYPES* ⌋\n│\n├─⊷ *.antimention types add all*\n│  └⊷ All mentions\n│\n├─⊷ *.antimention types add admin*\n│  └⊷ Admin mentions only\n│\n├─⊷ *.antimention types add member*\n│  └⊷ Member mentions only\n│\n├─⊷ *.antimention types add everyone*\n│  └⊷ @everyone mentions\n│\n╰───' 
+                        text: '╭─⌈ 👥 *ANTI-MENTION TYPES* ⌋\n│\n├─⊷ *.antimention types add all*\n│  └⊷ All mentions\n├─⊷ *.antimention types add admin*\n│  └⊷ Admin mentions only\n├─⊷ *.antimention types add member*\n│  └⊷ Member mentions only\n├─⊷ *.antimention types add everyone*\n│  └⊷ @everyone mentions\n╰───' 
                     }, { quoted: msg });
                 }
                 
@@ -391,7 +391,7 @@ export default {
                 
                 if (typesToRemove.length === 0) {
                     return sock.sendMessage(chatId, { 
-                        text: '╭─⌈ 👥 *ANTI-MENTION TYPES REMOVE* ⌋\n│\n├─⊷ *.antimention types remove [type]*\n│  └⊷ Valid types: all, admin, member, everyone\n│\n╰───' 
+                        text: '╭─⌈ 👥 *ANTI-MENTION TYPES REMOVE* ⌋\n│\n├─⊷ *.antimention types remove [type]*\n│  └⊷ Remove mention type\n╰───' 
                     }, { quoted: msg });
                 }
                 
@@ -444,7 +444,7 @@ export default {
             }
             else {
                 await sock.sendMessage(chatId, { 
-                    text: '╭─⌈ 📋 *ANTI-MENTION TYPES* ⌋\n│\n├─⊷ *.antimention types add [type]*\n│  └⊷ Add mention type to block\n│\n├─⊷ *.antimention types remove [type]*\n│  └⊷ Remove mention type from block\n│\n├─⊷ *.antimention types list*\n│  └⊷ View blocked types\n│\n│ Valid types: all, admin, member, everyone\n╰───' 
+                    text: '╭─⌈ 📋 *ANTI-MENTION TYPES* ⌋\n│\n├─⊷ *.antimention types add [type]*\n│  └⊷ Add mention type\n├─⊷ *.antimention types remove [type]*\n│  └⊷ Remove mention type\n├─⊷ *.antimention types list*\n│  └⊷ View blocked types\n╰───' 
                 }, { quoted: msg });
             }
         }
@@ -530,7 +530,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `╭─⌈ 👥 *ANTI-MENTION* ⌋\n│\n├─⊷ *.antimention on <warn|delete|kick>*\n│  └⊷ Enable with mode\n│\n├─⊷ *.antimention off*\n│  └⊷ Disable anti-mention\n│\n├─⊷ *.antimention types [add/remove/list]*\n│  └⊷ Manage blocked mention types\n│\n├─⊷ *.antimention exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n│\n├─⊷ *.antimention status*\n│  └⊷ View current status\n│\n╰───`;
+            const helpText = `╭─⌈ 👥 *ANTI-MENTION* ⌋\n│\n├─⊷ *.antimention on <warn|delete|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antimention off*\n│  └⊷ Disable protection\n├─⊷ *.antimention types [add/remove/list]*\n│  └⊷ Manage mention types\n├─⊷ *.antimention exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *.antimention status*\n│  └⊷ View current status\n╰───`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

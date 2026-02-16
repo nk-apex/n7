@@ -172,7 +172,7 @@ export default {
         const enabled = config[chatId]?.enabled || false;
         const action = config[chatId]?.action || 'block';
         return sock.sendMessage(chatId, {
-            text: `╭─⌈ 🛡️ *ANTI-BUG* ⌋\n│\n│ Status: ${enabled ? '✅ ENABLED' : '❌ DISABLED'} • Action: ${action.toUpperCase()}\n│\n├─⊷ *${PREFIX}antibug on*\n│  └⊷ Enable protection\n│\n├─⊷ *${PREFIX}antibug off*\n│  └⊷ Disable protection\n│\n├─⊷ *${PREFIX}antibug action <block|kick|delete>*\n│  └⊷ Set action on detection\n│\n├─⊷ *${PREFIX}antibug status*\n│  └⊷ Check current status\n│\n│ 🔍 Detects: text crash, VCF bomb, unicode overflow, protocol crash, button/list overflow\n╰───`
+            text: `╭─⌈ 🛡️ *ANTI-BUG* ⌋\n│\n├─⊷ *${PREFIX}antibug on*\n│  └⊷ Enable protection\n├─⊷ *${PREFIX}antibug off*\n│  └⊷ Disable protection\n├─⊷ *${PREFIX}antibug action <block|kick|delete>*\n│  └⊷ Set action mode\n├─⊷ *${PREFIX}antibug status*\n│  └⊷ Check current status\n╰───`
         }, { quoted: msg });
     }
 };

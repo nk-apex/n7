@@ -14,7 +14,7 @@ export default {
 
         if (!number || number.length < 6 || number.length > 20) {
             await sock.sendMessage(chatId, {
-                text: `╭─⌈ ⚠️ *PAIR DEVICE* ⌋\n│\n├─⊷ *${PREFIX}pair <number>*\n│  └⊷ Full number with country code, no + or spaces\n│\n│ 💡 Example: ${PREFIX}pair 254703XXXXXX\n│\n╰───────────────`
+                text: `╭─⌈ ⚠️ *PAIR DEVICE* ⌋\n│\n├─⊷ *${PREFIX}pair <number>*\n│  └⊷ Full number, no +\n╰───`
             }, { quoted: m });
             await sock.sendMessage(chatId, { react: { text: '⚠️', key: m.key } });
             return;

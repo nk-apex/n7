@@ -144,7 +144,7 @@ export default {
         `│ • \`${PREFIX}kick @user\` - Remove member\n` +
         `│ • \`${PREFIX}kickall\` - Remove all non-admins\n` +
         `│\n` +
-        `╰───────────────\n` +
+        `╰───\n` +
         `\n🔒 _Results depend on user privacy settings_`;
 
       const allMentionIds = [...inactiveMembers, ...activeMembers].map(m => m.id);

@@ -59,7 +59,7 @@ export default {
 
         if (!targetNumber || targetNumber.length < 7) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📋 *REMOVE SUDO* ⌋\n│\n├─⊷ *${PREFIX}delsudo <number>*\n│  └⊷ Remove user by phone number\n├─⊷ *Reply + ${PREFIX}delsudo*\n│  └⊷ Remove user by replying to their message\n│\n╰───────────────`
+                text: `╭─⌈ 📋 *REMOVE SUDO* ⌋\n│\n├─⊷ *${PREFIX}delsudo <number>*\n│  └⊷ Remove by number\n├─⊷ *Reply + ${PREFIX}delsudo*\n│  └⊷ Remove via reply\n╰───`
             }, { quoted: msg });
         }
 

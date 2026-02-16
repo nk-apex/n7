@@ -171,7 +171,7 @@ export default {
                 };
 
                 return sock.sendMessage(targetJid, {
-                    text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n│ Mode: ${modeLabels[mode] || mode}\n│ Duration: ${autoTypingConfig.duration}s\n│ Active: ${autoTypingConfig.activeTypers.size}\n│\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ DMs only\n│\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ Groups only\n│\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ Both DMs & groups\n│\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n│\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n│\n╰───`
+                    text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n│ Mode: ${modeLabels[mode] || mode}\n│ Duration: ${autoTypingConfig.duration}s\n│ Active: ${autoTypingConfig.activeTypers.size}\n│\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ DMs only\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ Groups only\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ Both DMs & groups\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n╰───`
                 }, { quoted: m });
             }
 
@@ -220,7 +220,7 @@ export default {
             }
 
             return sock.sendMessage(targetJid, {
-                text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ DMs only\n│\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ Groups only\n│\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ Both DMs & groups\n│\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n│\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n│\n╰───`
+                text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ DMs only\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ Groups only\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ Both DMs & groups\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n╰───`
             }, { quoted: m });
 
         } catch (err) {

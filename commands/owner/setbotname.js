@@ -30,7 +30,7 @@ export default {
             const currentName = this.getCurrentBotName();
             
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 🤖 *SET BOT NAME* ⌋\n│\n│ 📝 Current: *${currentName}*\n│\n├─⊷ *${PREFIX}setbotname <new_name>*\n│  └⊷ Change the bot display name\n│\n│ 💡 Example: ${PREFIX}setbotname WolfBot Pro\n│\n╰───────────────`
+                text: `╭─⌈ 🤖 *SET BOT NAME* ⌋\n│\n│ 📝 Current: *${currentName}*\n├─⊷ *${PREFIX}setbotname <new_name>*\n│  └⊷ Change bot name\n╰───`
             }, { quoted: msg });
         }
         

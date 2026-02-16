@@ -233,7 +233,7 @@ export default {
         txt += `│ Hey ${mentionTag}! 👋\n`;
         txt += `│ _*Don't forget*_ 🎉`;
         txt += `│ *to fork and star the repo!* ⭐\n`;
-        txt += `╰───────────────`;
+        txt += `╰───`;
 
         // Send message with image
         await sock.sendMessage(jid, {
@@ -269,7 +269,7 @@ export default {
           `│ Hey ${mentionTag}! 👋\n` +
           `│ _This repository is clean and optimized!_\n` +
           `│ *Be the first to star it!* ⭐\n` +
-          `╰───────────────`;
+          `╰───`;
 
         // Send fallback message with image
         await sock.sendMessage(jid, {

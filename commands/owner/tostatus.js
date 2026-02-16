@@ -25,7 +25,7 @@ export default {
 
         if (!quoted && !textAfterCmd && !msg.message?.imageMessage && !msg.message?.videoMessage) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📱 *POST TO STATUS* ⌋\n│\n├─⊷ *${PREFIX}tostatus <text>*\n│  └⊷ Post text status\n├─⊷ *Reply to image + ${PREFIX}tostatus*\n│  └⊷ Post image to status\n├─⊷ *Reply to video + ${PREFIX}tostatus*\n│  └⊷ Post video to status\n├─⊷ *Reply to text + ${PREFIX}tostatus*\n│  └⊷ Repost text to status\n├─⊷ *Send image + ${PREFIX}tostatus <caption>*\n│  └⊷ Post image with caption\n│\n│ 📝 Status visible to contacts for 24h\n│\n╰───────────────`
+                text: `╭─⌈ 📱 *POST TO STATUS* ⌋\n│\n├─⊷ *${PREFIX}tostatus <text>*\n│  └⊷ Post text status\n├─⊷ *Reply to image + ${PREFIX}tostatus*\n│  └⊷ Post image\n├─⊷ *Reply to video + ${PREFIX}tostatus*\n│  └⊷ Post video\n├─⊷ *Reply to text + ${PREFIX}tostatus*\n│  └⊷ Repost text\n├─⊷ *Send image + ${PREFIX}tostatus <caption>*\n│  └⊷ Image with caption\n╰───`
             }, { quoted: msg });
         }
 

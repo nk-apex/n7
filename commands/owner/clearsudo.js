@@ -20,7 +20,7 @@ export default {
 
         if (args[0] !== 'confirm') {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ ⚠️ *CLEAR SUDO* ⌋\n│\n├─⊷ *${PREFIX}clearsudo confirm*\n│  └⊷ Remove ALL sudo users\n│\n│ ⚠️ This action cannot be undone.\n│\n╰───────────────`
+                text: `╭─⌈ ⚠️ *CLEAR SUDO* ⌋\n│\n├─⊷ *${PREFIX}clearsudo confirm*\n│  └⊷ Remove ALL sudo users\n╰───`
             }, { quoted: msg });
         }
 

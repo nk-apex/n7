@@ -51,7 +51,7 @@ export default {
 
         if (!targetNumber || targetNumber.length < 7) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📋 *CHECK SUDO* ⌋\n│\n├─⊷ *${PREFIX}checksudo <number>*\n│  └⊷ Check user by phone number\n├─⊷ *Reply + ${PREFIX}checksudo*\n│  └⊷ Check user by replying to their message\n│\n╰───────────────`
+                text: `╭─⌈ 📋 *CHECK SUDO* ⌋\n│\n├─⊷ *${PREFIX}checksudo <number>*\n│  └⊷ Check by number\n├─⊷ *Reply + ${PREFIX}checksudo*\n│  └⊷ Check via reply\n╰───`
             }, { quoted: msg });
         }
 

@@ -31,7 +31,7 @@ export default {
 
         if (!action || action === 'help') {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 👋 *GOODBYE SYSTEM* ⌋\n│\n├─⊷ *${PREFIX}goodbye on*\n│  └⊷ Enable goodbye messages\n│\n├─⊷ *${PREFIX}goodbye off*\n│  └⊷ Disable goodbye messages\n│\n├─⊷ *${PREFIX}goodbye set <message>*\n│  └⊷ Set custom goodbye message\n│\n├─⊷ *${PREFIX}goodbye reset*\n│  └⊷ Reset to default message\n│\n├─⊷ *${PREFIX}goodbye preview*\n│  └⊷ Preview goodbye message\n│\n├─⊷ *${PREFIX}goodbye status*\n│  └⊷ Check system status\n│\n│ Variables: {name}, {group}, {members}, {mention}\n╰───`
+                text: `╭─⌈ 👋 *GOODBYE SYSTEM* ⌋\n│\n├─⊷ *${PREFIX}goodbye on*\n│  └⊷ Enable goodbye\n├─⊷ *${PREFIX}goodbye off*\n│  └⊷ Disable goodbye\n├─⊷ *${PREFIX}goodbye set <message>*\n│  └⊷ Set custom message\n├─⊷ *${PREFIX}goodbye reset*\n│  └⊷ Reset to default\n├─⊷ *${PREFIX}goodbye preview*\n│  └⊷ Preview message\n├─⊷ *${PREFIX}goodbye status*\n│  └⊷ Check status\n╰───`
             }, { quoted: msg });
         }
         
@@ -113,7 +113,7 @@ export default {
                     
                 default:
                     await sock.sendMessage(chatId, {
-                        text: `╭─⌈ ❌ *GOODBYE* ⌋\n│\n├─⊷ *${PREFIX}goodbye help*\n│  └⊷ View usage instructions\n│\n╰───`
+                        text: `╭─⌈ ❌ *GOODBYE* ⌋\n│\n├─⊷ *${PREFIX}goodbye help*\n│  └⊷ View help\n╰───`
                     }, { quoted: msg });
             }
         } catch (error) {

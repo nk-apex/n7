@@ -101,13 +101,13 @@ export default {
                     }
                 } catch {}
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🔐 *ANTI-VIEWONCE SETTINGS* ⌋\n│\n│ *Mode:* ${modeDisplay}\n│ *Owner:* ${config.ownerJid ? '✅ Set' : '❌ Not set'}\n│ *Captured:* ${capturedCount} media files\n│\n├─⊷ *${prefix}av private*\n│  └⊷ Send to owner DM\n├─⊷ *${prefix}av public*\n│  └⊷ Reveal in chat\n├─⊷ *${prefix}av off*\n│  └⊷ Disable\n├─⊷ *${prefix}av settings*\n│  └⊷ This menu\n│\n╰───────────────`
+                    text: `╭─⌈ 🔐 *ANTI-VIEWONCE SETTINGS* ⌋\n│\n├─⊷ *${prefix}av private*\n│  └⊷ Send to DM\n├─⊷ *${prefix}av public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}av off*\n│  └⊷ Disable\n├─⊷ *${prefix}av settings*\n│  └⊷ This menu\n╰───`
                 }, { quoted: msg });
                 break;
             }
             default:
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🔐 *ANTI-VIEWONCE* ⌋\n│\n├─⊷ *${prefix}av private*\n│  └⊷ Send to owner DM\n├─⊷ *${prefix}av public*\n│  └⊷ Reveal in chat\n├─⊷ *${prefix}av off*\n│  └⊷ Disable\n├─⊷ *${prefix}av settings*\n│  └⊷ Check status\n│\n╰───────────────`
+                    text: `╭─⌈ 🔐 *ANTI-VIEWONCE* ⌋\n│\n├─⊷ *${prefix}av private*\n│  └⊷ Send to DM\n├─⊷ *${prefix}av public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}av off*\n│  └⊷ Disable\n├─⊷ *${prefix}av settings*\n│  └⊷ Check status\n╰───`
                 }, { quoted: msg });
         }
     }

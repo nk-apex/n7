@@ -39,7 +39,7 @@ export default {
             info += `│\n`;
         }
 
-        info += `╰───────────────`;
+        info += `╰───`;
 
         await sock.sendMessage(chatId, { text: info }, { quoted: msg });
     }

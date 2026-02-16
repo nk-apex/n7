@@ -24,28 +24,28 @@ export default {
             if (action === 'everyone' || action === 'all') {
                 await sock.updateStatusPrivacy('all');
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n│ ✧ *Visibility:* 🌍 Everyone\n│\n│ Anyone can view your\n│ WhatsApp status updates\n│\n╰───────────────`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 🌍 Everyone\n╰───`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '🌍', key: msg.key } }); } catch {}
 
             } else if (action === 'contacts') {
                 await sock.updateStatusPrivacy('contacts');
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n│ ✧ *Visibility:* 👥 Contacts Only\n│\n│ Only your contacts can\n│ view your status updates\n│\n╰───────────────`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 👥 Contacts Only\n╰───`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '👥', key: msg.key } }); } catch {}
 
             } else if (action === 'except') {
                 await sock.updateStatusPrivacy('contact_blacklist');
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n│ ✧ *Visibility:* 🚫 Contacts Except...\n│\n│ Your contacts can view status\n│ except those you've excluded\n│\n│ ⚠️ Manage exclusion list\n│ through WhatsApp app settings\n│\n╰───────────────`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 🚫 Contacts Except\n╰───`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '🚫', key: msg.key } }); } catch {}
 
             } else if (action === 'none' || action === 'nobody') {
                 await sock.updateStatusPrivacy('none');
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n│ ✧ *Visibility:* 🔒 Nobody\n│\n│ No one can view your\n│ WhatsApp status updates\n│\n╰───────────────`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 🔒 Nobody\n╰───`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '🔒', key: msg.key } }); } catch {}
 
@@ -62,7 +62,7 @@ export default {
                 } catch {}
 
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n│ ✧ *Current:* ${currentStatus}\n│\n│ 💡 *Usage:*\n│ • \`${PREFIX}viewer everyone\`\n│ • \`${PREFIX}viewer contacts\`\n│ • \`${PREFIX}viewer except\`\n│ • \`${PREFIX}viewer nobody\`\n│\n╰───────────────`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *${PREFIX}viewer everyone*\n│  └⊷ Everyone sees\n├─⊷ *${PREFIX}viewer contacts*\n│  └⊷ Contacts only\n├─⊷ *${PREFIX}viewer except*\n│  └⊷ Contacts except\n├─⊷ *${PREFIX}viewer nobody*\n│  └⊷ No one sees\n╰───`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '📋', key: msg.key } }); } catch {}
             }

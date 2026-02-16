@@ -261,8 +261,8 @@ export default {
                 
                 let statusText = `╭─⌈ 👁️ *AUTOVIEWSTATUS* ⌋\n│\n`;
                 statusText += `│ Status: ${stats.enabled ? '✅ **ACTIVE**' : '❌ **INACTIVE**'}\n│\n`;
-                statusText += `├─⊷ *${prefix}autoviewstatus on*\n│  └⊷ Enable auto viewing\n│\n`;
-                statusText += `├─⊷ *${prefix}autoviewstatus off*\n│  └⊷ Disable auto viewing\n│\n`;
+                statusText += `├─⊷ *${prefix}autoviewstatus on*\n│  └⊷ Enable viewing\n`;
+                statusText += `├─⊷ *${prefix}autoviewstatus off*\n│  └⊷ Disable viewing\n`;
                 statusText += `╰───`;
              
                 
@@ -383,10 +383,10 @@ export default {
                         settingsText += `│ Delay: ${settings.rateLimitDelay}ms\n`;
                         settingsText += `│ View All: ${settings.viewToAll ? '✅' : '❌'}\n`;
                         settingsText += `│ Ignore Consecutive: ${settings.ignoreConsecutiveLimit ? '✅' : '❌'}\n│\n`;
-                        settingsText += `├─⊷ *${prefix}autoviewstatus settings seen on/off*\n│  └⊷ Toggle mark as seen\n│\n`;
-                        settingsText += `├─⊷ *${prefix}autoviewstatus settings delay <ms>*\n│  └⊷ Set viewing delay\n│\n`;
-                        settingsText += `├─⊷ *${prefix}autoviewstatus settings all on/off*\n│  └⊷ Toggle view all\n│\n`;
-                        settingsText += `├─⊷ *${prefix}autoviewstatus settings consecutive on/off*\n│  └⊷ Toggle consecutive viewing\n│\n`;
+                        settingsText += `├─⊷ *${prefix}autoviewstatus settings seen on/off*\n│  └⊷ Toggle mark as seen\n`;
+                        settingsText += `├─⊷ *${prefix}autoviewstatus settings delay <ms>*\n│  └⊷ Set viewing delay\n`;
+                        settingsText += `├─⊷ *${prefix}autoviewstatus settings all on/off*\n│  └⊷ Toggle view all\n`;
+                        settingsText += `├─⊷ *${prefix}autoviewstatus settings consecutive on/off*\n│  └⊷ Toggle consecutive\n`;
                         settingsText += `╰───`;
                         
                         await sock.sendMessage(m.key.remoteJid, { text: settingsText }, { quoted: m });
@@ -398,7 +398,7 @@ export default {
                     if (settingName === 'seen') {
                         if (args.length < 3) {
                             await sock.sendMessage(m.key.remoteJid, {
-                                text: `╭─⌈ ⚙️ *SETTINGS: SEEN* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings seen on/off*\n│  └⊷ Controls whether statuses are marked as "seen"\n│\n╰───`
+                                text: `╭─⌈ ⚙️ *SETTINGS: SEEN* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings seen on/off*\n│  └⊷ Toggle mark as seen\n╰───`
                             }, { quoted: m });
                             return;
                         }
@@ -424,7 +424,7 @@ export default {
                     } else if (settingName === 'delay') {
                         if (args.length < 3) {
                             await sock.sendMessage(m.key.remoteJid, {
-                                text: `╭─⌈ ⚙️ *SETTINGS: DELAY* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings delay <ms>*\n│  └⊷ Set delay (minimum 500ms)\n│\n╰───`
+                                text: `╭─⌈ ⚙️ *SETTINGS: DELAY* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings delay <ms>*\n│  └⊷ Set viewing delay\n╰───`
                             }, { quoted: m });
                             return;
                         }
@@ -446,7 +446,7 @@ export default {
                     } else if (settingName === 'all') {
                         if (args.length < 3) {
                             await sock.sendMessage(m.key.remoteJid, {
-                                text: `╭─⌈ ⚙️ *SETTINGS: VIEW ALL* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings all on/off*\n│  └⊷ Toggle viewing all statuses or selective\n│\n╰───`
+                                text: `╭─⌈ ⚙️ *SETTINGS: VIEW ALL* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings all on/off*\n│  └⊷ Toggle view all\n╰───`
                             }, { quoted: m });
                             return;
                         }
@@ -472,7 +472,7 @@ export default {
                     } else if (settingName === 'consecutive') {
                         if (args.length < 3) {
                             await sock.sendMessage(m.key.remoteJid, {
-                                text: `╭─⌈ ⚙️ *SETTINGS: CONSECUTIVE* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings consecutive on/off*\n│  └⊷ Toggle viewing consecutive statuses from same user\n│\n╰───`
+                                text: `╭─⌈ ⚙️ *SETTINGS: CONSECUTIVE* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings consecutive on/off*\n│  └⊷ Toggle consecutive\n╰───`
                             }, { quoted: m });
                             return;
                         }
@@ -515,13 +515,13 @@ export default {
                 case 'help':
                 case 'cmd':
                     await sock.sendMessage(m.key.remoteJid, {
-                        text: `╭─⌈ 📖 *AUTOVIEWSTATUS HELP* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on*\n│  └⊷ Enable auto viewing\n│\n├─⊷ *${prefix}autoviewstatus off*\n│  └⊷ Disable auto viewing\n│\n├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ Detailed statistics\n│\n├─⊷ *${prefix}autoviewstatus logs*\n│  └⊷ View recent logs\n│\n├─⊷ *${prefix}autoviewstatus settings*\n│  └⊷ Configure options\n│\n├─⊷ *${prefix}autoviewstatus reset*\n│  └⊷ Clear stats\n│\n╰───`
+                        text: `╭─⌈ 📖 *AUTOVIEWSTATUS HELP* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on*\n│  └⊷ Enable viewing\n├─⊷ *${prefix}autoviewstatus off*\n│  └⊷ Disable viewing\n├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}autoviewstatus logs*\n│  └⊷ View recent logs\n├─⊷ *${prefix}autoviewstatus settings*\n│  └⊷ Configure options\n├─⊷ *${prefix}autoviewstatus reset*\n│  └⊷ Clear stats\n╰───`
                     }, { quoted: m });
                     break;
                     
                 default:
                     await sock.sendMessage(m.key.remoteJid, {
-                        text: `╭─⌈ ❓ *AUTOVIEWSTATUS* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on/off*\n│  └⊷ Enable or disable\n│\n├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ View statistics\n│\n├─⊷ *${prefix}autoviewstatus settings*\n│  └⊷ Configure options\n│\n├─⊷ *${prefix}autoviewstatus help*\n│  └⊷ Show all commands\n│\n╰───`
+                        text: `╭─⌈ ❓ *AUTOVIEWSTATUS* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on/off*\n│  └⊷ Enable or disable\n├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}autoviewstatus settings*\n│  └⊷ Configure options\n├─⊷ *${prefix}autoviewstatus help*\n│  └⊷ Show all commands\n╰───`
                     }, { quoted: m });
             }
             

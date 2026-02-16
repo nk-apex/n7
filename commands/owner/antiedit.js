@@ -864,14 +864,14 @@ Auto-save: ✅
                 
             case 'help':
             case 'menu':
-                const helpText = `╭─⌈ 🔍 *ANTIEDIT SYSTEM* ⌋\n│\n├─⊷ *${prefix}antiedit public*\n│  └⊷ Enable PUBLIC mode\n├─⊷ *${prefix}antiedit private*\n│  └⊷ Enable PRIVATE mode\n├─⊷ *${prefix}antiedit on*\n│  └⊷ Enable system (private mode)\n├─⊷ *${prefix}antiedit off*\n│  └⊷ Disable system\n├─⊷ *${prefix}antiedit status*\n│  └⊷ View statistics\n├─⊷ *${prefix}antiedit history <reply>*\n│  └⊷ Show edit history of a message\n├─⊷ *${prefix}antiedit test*\n│  └⊷ Send test message\n├─⊷ *${prefix}antiedit clear*\n│  └⊷ Clear all cache\n├─⊷ *${prefix}antiedit debug*\n│  └⊷ Debug information\n├─⊷ *${prefix}antiedit help*\n│  └⊷ This menu\n│\n│ 📝 Mode: ${antieditState.mode.toUpperCase()} | Active: ${antieditState.mode === 'off' ? '❌' : '✅'}\n│ Tracking: ${antieditState.currentMessages.size} messages\n│\n╰───────────────`;
+                const helpText = `╭─⌈ 🔍 *ANTIEDIT SYSTEM* ⌋\n│\n├─⊷ *${prefix}antiedit public*\n│  └⊷ Public mode\n├─⊷ *${prefix}antiedit private*\n│  └⊷ Private mode\n├─⊷ *${prefix}antiedit on*\n│  └⊷ Enable (private)\n├─⊷ *${prefix}antiedit off*\n│  └⊷ Disable system\n├─⊷ *${prefix}antiedit status*\n│  └⊷ View stats\n├─⊷ *${prefix}antiedit history <reply>*\n│  └⊷ Show edit history\n├─⊷ *${prefix}antiedit test*\n│  └⊷ Test message\n├─⊷ *${prefix}antiedit clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antiedit debug*\n│  └⊷ Debug info\n├─⊷ *${prefix}antiedit help*\n│  └⊷ This menu\n╰───`;
                 
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
                 
             default:
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🔧 *ANTIEDIT* ⌋\n│\n│ Mode: ${antieditState.mode.toUpperCase()}\n│ Status: ${antieditState.mode === 'off' ? '❌ INACTIVE' : '✅ ACTIVE'}\n│ Tracking: ${antieditState.currentMessages.size} messages\n│\n├─⊷ *${prefix}antiedit help*\n│  └⊷ View all commands\n│\n╰───────────────`
+                    text: `╭─⌈ 🔧 *ANTIEDIT* ⌋\n│\n├─⊷ *${prefix}antiedit help*\n│  └⊷ View commands\n╰───`
                 }, { quoted: msg });
         }
         

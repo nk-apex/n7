@@ -832,7 +832,7 @@ export default {
         if (subCommand === 'on') {
             if (!mode || !['warn', 'delete', 'kick'].includes(mode)) {
                 return sock.sendMessage(chatId, { 
-                    text: '╭─⌈ ⚙️ *ANTI-LINK SETUP* ⌋\n│\n├─⊷ *.antilink on warn*\n│  └⊷ Warn users who share links\n│\n├─⊷ *.antilink on delete*\n│  └⊷ Delete links automatically\n│\n├─⊷ *.antilink on kick*\n│  └⊷ Kick users who share links\n│\n╰───' 
+                    text: '╭─⌈ ⚙️ *ANTI-LINK SETUP* ⌋\n│\n├─⊷ *.antilink on warn*\n│  └⊷ Warn senders\n├─⊷ *.antilink on delete*\n│  └⊷ Auto-delete links\n├─⊷ *.antilink on kick*\n│  └⊷ Kick senders\n╰───' 
                 }, { quoted: msg });
             }
 
@@ -922,7 +922,7 @@ export default {
             const linkToAllow = args.slice(1).join(' ').trim();
             if (!linkToAllow) {
                 return sock.sendMessage(chatId, { 
-                    text: '╭─⌈ 🔗 *ANTI-LINK ALLOW* ⌋\n│\n├─⊷ *.antilink allow [link]*\n│  └⊷ Add link to whitelist\n│\n╰───' 
+                    text: '╭─⌈ 🔗 *ANTI-LINK ALLOW* ⌋\n│\n├─⊷ *.antilink allow [link]*\n│  └⊷ Whitelist a link\n╰───' 
                 }, { quoted: msg });
             }
 
@@ -956,7 +956,7 @@ export default {
             const linkToRemove = args.slice(1).join(' ').trim();
             if (!linkToRemove) {
                 return sock.sendMessage(chatId, { 
-                    text: '╭─⌈ 🔗 *ANTI-LINK DISALLOW* ⌋\n│\n├─⊷ *.antilink disallow [link]*\n│  └⊷ Remove link from whitelist\n│\n╰───' 
+                    text: '╭─⌈ 🔗 *ANTI-LINK DISALLOW* ⌋\n│\n├─⊷ *.antilink disallow [link]*\n│  └⊷ Remove from whitelist\n╰───' 
                 }, { quoted: msg });
             }
 
@@ -1052,7 +1052,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `╭─⌈ 🔗 *ANTI-LINK* ⌋\n│\n├─⊷ *.antilink on [mode]*\n│  └⊷ Enable with warn/delete/kick\n│\n├─⊷ *.antilink off*\n│  └⊷ Disable protection\n│\n├─⊷ *.antilink allow [link]*\n│  └⊷ Whitelist a link\n│\n├─⊷ *.antilink disallow [link]*\n│  └⊷ Remove from whitelist\n│\n├─⊷ *.antilink listallowed*\n│  └⊷ View allowed links\n│\n├─⊷ *.antilink exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n│\n╰───`;
+            const helpText = `╭─⌈ 🔗 *ANTI-LINK* ⌋\n│\n├─⊷ *.antilink on [mode]*\n│  └⊷ Enable with mode\n├─⊷ *.antilink off*\n│  └⊷ Disable protection\n├─⊷ *.antilink allow [link]*\n│  └⊷ Whitelist a link\n├─⊷ *.antilink disallow [link]*\n│  └⊷ Remove from whitelist\n├─⊷ *.antilink listallowed*\n│  └⊷ View allowed links\n├─⊷ *.antilink exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n╰───`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }
