@@ -12,11 +12,7 @@ export default {
     
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
       return sock.sendMessage(jid, {
-        text: `📸 *WEBSITE SCREENSHOT*\n\n` +
-          `💡 *Usage:*\n` +
-          `• \`${PREFIX}screenshot https://website.com\`\n` +
-          `• \`${PREFIX}screenshot google.com\`\n\n` +
-          `📝 *Aliases:* ss, webshot, capture`
+        text: `╭─⌈ 📸 *WEBSITE SCREENSHOT* ⌋\n│\n├─⊷ *${PREFIX}screenshot <URL>*\n│  └⊷ Take a screenshot of any website\n│\n├─⊷ *${PREFIX}screenshot google.com*\n│  └⊷ Also works without https://\n│\n├─⊷ *Aliases:* ss, webshot, capture\n│\n╰───`
       }, { quoted: m });
     }
 

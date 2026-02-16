@@ -67,12 +67,7 @@ export default {
     try {
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `🎬 *MP4 - WOLF API Video Downloader*\n\n` +
-                `📌 *Usage:* \`${prefix}mp4 video name or url\`\n` +
-                `📝 *Examples:*\n` +
-                `• \`${prefix}mp4 funny cats compilation\`\n` +
-                `• \`${prefix}mp4 https://youtube.com/...\`\n\n` +
-                `✨ Downloads video via WOLF API`
+          text: `╭─⌈ 🎬 *MP4 - WOLF API Video Downloader* ⌋\n│\n├─⊷ *${prefix}mp4 <video name or url>*\n│  └⊷ Downloads video via WOLF API\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}mp4 funny cats compilation\n│  └⊷ ${prefix}mp4 https://youtube.com/...\n│\n╰───`
         }, { quoted: m });
       }
 

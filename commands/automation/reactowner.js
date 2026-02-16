@@ -67,14 +67,7 @@ export default {
             const status = config.enabled ? '✅ ON' : '❌ OFF';
             const emoji = config.emoji || '🐺';
             return await sock.sendMessage(chatId, {
-                text: `🐺 *REACT OWNER*\n\n` +
-                      `Status: ${status}\n` +
-                      `Emoji: ${emoji}\n\n` +
-                      `Usage:\n` +
-                      `• reactowner on - Enable\n` +
-                      `• reactowner off - Disable\n` +
-                      `• reactowner emoji <emoji> - Change emoji\n\n` +
-                      `_Auto-reacts to your messages in groups_`
+                text: `╭─⌈ 🐺 *REACT OWNER* ⌋\n│\n│ Status: ${status}\n│ Emoji: ${emoji}\n│\n├─⊷ *reactowner on*\n│  └⊷ Enable auto-react\n│\n├─⊷ *reactowner off*\n│  └⊷ Disable auto-react\n│\n├─⊷ *reactowner emoji <emoji>*\n│  └⊷ Change reaction emoji\n│\n╰───\n_Auto-reacts to your messages in groups_`
             });
         }
 
@@ -100,7 +93,7 @@ export default {
             const newEmoji = args.slice(1).join(' ').trim();
             if (!newEmoji) {
                 return await sock.sendMessage(chatId, {
-                    text: `⚠️ Please provide an emoji.\n\nExample: reactowner emoji 🐺`
+                    text: `╭─⌈ ⚠️ *REACT OWNER* ⌋\n│\n├─⊷ *reactowner emoji 🐺*\n│  └⊷ Provide an emoji to set\n│\n╰───`
                 });
             }
             config.emoji = newEmoji;
@@ -111,7 +104,7 @@ export default {
         }
 
         return await sock.sendMessage(chatId, {
-            text: `⚠️ Unknown option. Use: on, off, or emoji <emoji>`
+            text: `╭─⌈ ⚠️ *REACT OWNER* ⌋\n│\n├─⊷ *reactowner on*\n│  └⊷ Enable\n│\n├─⊷ *reactowner off*\n│  └⊷ Disable\n│\n├─⊷ *reactowner emoji <emoji>*\n│  └⊷ Change emoji\n│\n╰───`
         });
     }
 };

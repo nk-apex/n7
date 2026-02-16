@@ -978,61 +978,41 @@ function updateLeaderboard(userId, userName, score) {
 // ============= INFO COMMANDS =============
 
 async function showHelp(sock, m, chatId) {
-    const helpText = `
-🎮 *TETRIS - EASY TO PLAY!* 🎮
-
-*🚀 SUPER SIMPLE COMMANDS:*
-• \`.t\` - Start/continue game
-• \`.t [action]\` - Do action (see below)
-
-*🎮 GAME ACTIONS:*
-*Movement:*
-• \`.t a\` / \`.t d\` - Move left/right
-• \`.t s\` - Move down
-• \`.t w\` - Rotate piece
-• \`.t space\` - Hard drop
-
-*Piece Selection:*
-• \`.t 1\` / \`.t 2\` / \`.t 3\` - Choose piece
-
-*Game Control:*
-• \`.t pause\` - Pause game
-• \`.t resume\` - Resume game
-• \`.t stop\` - End game
-
-*Info:*
-• \`.t stats\` - Your statistics
-• \`.t leaderboard\` - High scores
-
-*🎯 HOW TO PLAY:*
-1. Type \`.t\` to start
-2. Choose piece with \`.t 1/2/3\`
-3. Move piece with \`.t a/d/s/w/space\`
-4. When piece lands, choose next piece
-5. Complete lines to score points!
-
-*💡 TIPS:*
-• Game auto-starts when you use controls
-• Just keep typing \`.t [action]\` to play
-• Use \`.t space\` for quick drops
-• Plan ahead when choosing pieces
-
-*Example game session:*
-.t          # Start game
-.t 2        # Choose piece 2
-.t d        # Move right
-.t w        # Rotate
-.t space    # Hard drop
-.t 1        # Choose next piece
-.t s        # Move down
-...and so on!
-
-*🎮 Piece colors:*
-🟦 I-Piece  🟨 O-Piece  🟪 T-Piece
-🟩 S-Piece  🟥 Z-Piece  🟫 J-Piece  🟧 L-Piece
-
-*Ready to play? Just type:* .t
-    `.trim();
+    const helpText = `╭─⌈ 🎮 *TETRIS* ⌋
+│
+├─⊷ *.t*
+│  └⊷ Start/continue game
+│
+├─⊷ *.t a / d*
+│  └⊷ Move left / right
+│
+├─⊷ *.t s*
+│  └⊷ Move down
+│
+├─⊷ *.t w*
+│  └⊷ Rotate piece
+│
+├─⊷ *.t space*
+│  └⊷ Hard drop
+│
+├─⊷ *.t 1 / 2 / 3*
+│  └⊷ Choose piece
+│
+├─⊷ *.t pause / resume*
+│  └⊷ Pause or resume game
+│
+├─⊷ *.t stop*
+│  └⊷ End game
+│
+├─⊷ *.t stats*
+│  └⊷ Your statistics
+│
+├─⊷ *.t leaderboard*
+│  └⊷ High scores
+│
+├─⊷ 🎮 🟦I 🟨O 🟪T 🟩S 🟥Z 🟫J 🟧L
+│
+╰───`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }

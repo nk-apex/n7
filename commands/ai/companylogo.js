@@ -12,7 +12,7 @@ export default {
       const query = args.join(" ");
       if (!query) {
         return sock.sendMessage(m.key.remoteJid, {
-          text: "📊 *Company Information*\n━━━━━━━━━━━━━━━━━\nGet company logos with business details\n\n*Usage:* .companylogo microsoft.com\n.companylogo Tesla\n.companylogo amazon\n\n*Data includes:*\n• Official logo\n• Company size\n• Industry\n• Location"
+          text: `╭─⌈ 📊 *COMPANY LOGO* ⌋\n│\n├─⊷ *.companylogo <domain>*\n│  └⊷ Get company logo & info\n│\n├─⊷ *.companylogo <company name>*\n│  └⊷ Search by company name\n│\n╰───`
         }, { quoted: m });
       }
 
@@ -47,7 +47,7 @@ export default {
         
         if (response.status === 422) {
           return sock.sendMessage(m.key.remoteJid, {
-            text: "❌ *Invalid Domain Format*\nUse: company.com format\nExample: .companylogo google.com"
+            text: `╭─⌈ ❌ *INVALID DOMAIN* ⌋\n│\n├─⊷ *.companylogo <domain>*\n│  └⊷ Use company.com format\n│\n╰───`
           }, { quoted: m });
         }
         

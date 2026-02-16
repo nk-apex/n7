@@ -31,25 +31,7 @@ export default {
 
         if (!action || action === 'help') {
             return sock.sendMessage(chatId, {
-                text: `🎉 *WELCOME SYSTEM*
-
-Welcome new members with their profile picture!
-
-• \`${PREFIX}welcome on\` - Enable welcome messages
-• \`${PREFIX}welcome off\` - Disable welcome messages
-• \`${PREFIX}welcome set <message>\` - Set custom welcome message
-• \`${PREFIX}welcome reset\` - Reset to default welcome message
-• \`${PREFIX}welcome preview\` - Preview welcome message
-• \`${PREFIX}welcome status\` - Check welcome system status
-
-Custom Message Variables:
-{name} - Member's name
-{group} - Group name
-{members} - Total group members
-{mention} - Mention the member
-
-Example:
-• \`${PREFIX}welcome set Welcome {name} to {group}! 🎉\``
+                text: `╭─⌈ 🎉 *WELCOME SYSTEM* ⌋\n│\n├─⊷ *${PREFIX}welcome on*\n│  └⊷ Enable welcome messages\n│\n├─⊷ *${PREFIX}welcome off*\n│  └⊷ Disable welcome messages\n│\n├─⊷ *${PREFIX}welcome set <message>*\n│  └⊷ Set custom welcome message\n│\n├─⊷ *${PREFIX}welcome reset*\n│  └⊷ Reset to default message\n│\n├─⊷ *${PREFIX}welcome preview*\n│  └⊷ Preview welcome message\n│\n├─⊷ *${PREFIX}welcome status*\n│  └⊷ Check system status\n│\n│ Variables: {name}, {group}, {members}, {mention}\n╰───`
             }, { quoted: msg });
         }
         
@@ -131,7 +113,7 @@ Example:
                     
                 default:
                     await sock.sendMessage(chatId, {
-                        text: `❌ Invalid command. Use \`${PREFIX}welcome help\` for usage instructions.`
+                        text: `╭─⌈ ❌ *WELCOME* ⌋\n│\n├─⊷ *${PREFIX}welcome help*\n│  └⊷ View usage instructions\n│\n╰───`
                     }, { quoted: msg });
             }
         } catch (error) {

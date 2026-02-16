@@ -25,15 +25,7 @@ export default {
 
         if (!quoted && !textAfterCmd && !msg.message?.imageMessage && !msg.message?.videoMessage) {
             return sock.sendMessage(chatId, {
-                text: `📱 *POST TO STATUS*\n\n` +
-                    `Post text, images, or videos to your WhatsApp Status.\n\n` +
-                    `💡 *Usage:*\n` +
-                    `• \`${PREFIX}tostatus Hello World!\` - Text status\n` +
-                    `• Reply to image: \`${PREFIX}tostatus\`\n` +
-                    `• Reply to video: \`${PREFIX}tostatus\`\n` +
-                    `• Reply to text: \`${PREFIX}tostatus\`\n` +
-                    `• Send image with caption: \`${PREFIX}tostatus My pic!\`\n\n` +
-                    `📝 *Note:* Status visible to contacts for 24h`
+                text: `╭─⌈ 📱 *POST TO STATUS* ⌋\n│\n├─⊷ *${PREFIX}tostatus <text>*\n│  └⊷ Post text status\n├─⊷ *Reply to image + ${PREFIX}tostatus*\n│  └⊷ Post image to status\n├─⊷ *Reply to video + ${PREFIX}tostatus*\n│  └⊷ Post video to status\n├─⊷ *Reply to text + ${PREFIX}tostatus*\n│  └⊷ Repost text to status\n├─⊷ *Send image + ${PREFIX}tostatus <caption>*\n│  └⊷ Post image with caption\n│\n│ 📝 Status visible to contacts for 24h\n│\n╰───────────────`
             }, { quoted: msg });
         }
 

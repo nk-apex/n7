@@ -71,12 +71,7 @@ export default {
     try {
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `🎵 *MP3 - WOLF API Audio Downloader*\n\n` +
-                `📌 *Usage:* \`${prefix}mp3 song name or url\`\n` +
-                `📝 *Examples:*\n` +
-                `• \`${prefix}mp3 Ed Sheeran Shape of You\`\n` +
-                `• \`${prefix}mp3 https://youtube.com/...\`\n\n` +
-                `✨ Downloads audio via WOLF API`
+          text: `╭─⌈ 🎵 *MP3 - WOLF API Audio Downloader* ⌋\n│\n├─⊷ *${prefix}mp3 <song name or url>*\n│  └⊷ Downloads audio via WOLF API\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}mp3 Ed Sheeran Shape of You\n│  └⊷ ${prefix}mp3 https://youtube.com/...\n│\n╰───`
         }, { quoted: m });
       }
 

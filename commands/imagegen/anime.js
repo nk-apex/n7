@@ -35,7 +35,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, { 
-          text: `🎨 *Anime Image Generator*\n\nUsage: anime <prompt>\n\nExamples:\nanime cute cat girl with blue hair\nanime cyberpunk samurai in tokyo\nanime fantasy elf warrior, detailed\n\n🎭 *Styles Available:*\n• Anything V5 (best for anime)\n• AOM3 (anime mix)\n• Counterfeit V3\n• MeinaMix\n• Pastel Anime\n\n💡 *Tips:*\n• Be descriptive\n• Include style keywords\n• Specify character details` 
+          text: `╭─⌈ 🎨 *ANIME IMAGE GEN* ⌋\n│\n├─⊷ *anime <prompt>*\n│  └⊷ Generate anime-style AI images\n│\n├─⊷ *Examples:*\n│  └⊷ anime cute cat girl with blue hair\n│  └⊷ anime cyberpunk samurai in tokyo\n│\n├─⊷ 🎭 *Styles:* Anything V5, AOM3, Counterfeit V3, MeinaMix\n│\n╰───` 
         }, { quoted: m });
         return;
       }

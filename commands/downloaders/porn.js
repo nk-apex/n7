@@ -99,14 +99,13 @@ export default {
       searchQuery = quoted.text.trim();
     } else {
       const helpText = 
-        `🐺 *WOLF VIDEO DOWNLOADER*\n\n` +
-        `📌 *Usage:* \`.wolf search query\`\n` +
-        `📝 *Examples:*\n` +
-        `• \`porn documentary\`\n` +
-        `• \`.wolf hunting\`\n` +
-        `• \`.wolf pack behavior\`\n` +
-        `• \`.wolf https://youtube.com/...\`\n\n` +
-        `✨ Downloads educational wolf content from YouTube`;
+        `╭─⌈ 🐺 *WOLF VIDEO DOWNLOADER* ⌋\n│\n` +
+        `├─⊷ *.wolf <search query>*\n│  └⊷ Downloads educational wolf content from YouTube\n│\n` +
+        `├─⊷ *Examples:*\n` +
+        `│  └⊷ .wolf hunting\n` +
+        `│  └⊷ .wolf pack behavior\n` +
+        `│  └⊷ .wolf https://youtube.com/...\n│\n` +
+        `╰───`;
       
       await sock.sendMessage(jid, { text: helpText }, { quoted: m });
       return;

@@ -491,15 +491,14 @@ export default {
                 // Show current status
                 const stats = autoReactManager.getStats();
                 
-                let statusText = `🐺 *AUTOREACTSTATUS*\n\n`;
-                statusText += `Status: ${stats.enabled ? '✅ **ACTIVE**' : '❌ **INACTIVE**'}\n`;
-                statusText += `Mode: ${stats.mode === 'fixed' ? `Fixed (${stats.fixedEmoji})` : 'Random (1 emoji per status)'}\n`;
-                
-                statusText += `\n📋 *Commands:*\n`;
-                statusText += `• \`${prefix}autoreactstatus on\`\n`;
-                statusText += `• \`${prefix}autoreactstatus off\`\n`;
-                statusText += `• \`${prefix}autoreactstatus random\`\n`;
-                statusText += `• \`${prefix}autoreactstatus emoji <choose emoji>\``;
+                let statusText = `╭─⌈ 🐺 *AUTOREACTSTATUS* ⌋\n│\n`;
+                statusText += `│ Status: ${stats.enabled ? '✅ **ACTIVE**' : '❌ **INACTIVE**'}\n`;
+                statusText += `│ Mode: ${stats.mode === 'fixed' ? `Fixed (${stats.fixedEmoji})` : 'Random (1 emoji per status)'}\n│\n`;
+                statusText += `├─⊷ *${prefix}autoreactstatus on*\n│  └⊷ Enable auto reactions\n│\n`;
+                statusText += `├─⊷ *${prefix}autoreactstatus off*\n│  └⊷ Disable auto reactions\n│\n`;
+                statusText += `├─⊷ *${prefix}autoreactstatus random*\n│  └⊷ Set random emoji mode\n│\n`;
+                statusText += `├─⊷ *${prefix}autoreactstatus emoji <emoji>*\n│  └⊷ Set a fixed emoji for reactions\n│\n`;
+                statusText += `╰───`;
                 
                 await sock.sendMessage(m.key.remoteJid, { text: statusText }, { quoted: m });
                 return;
@@ -570,7 +569,7 @@ export default {
                 case 'emoji':
                     if (args.length < 2) {
                         await sock.sendMessage(m.key.remoteJid, {
-                            text: `🐺 *Current Fixed Emoji:* ${autoReactManager.fixedEmoji}\n\nUsage: ${prefix}autoreactstatus emoji 🐺\n\nSets a fixed emoji for reactions.`
+                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS EMOJI* ⌋\n│\n│ Current: ${autoReactManager.fixedEmoji}\n│\n├─⊷ *${prefix}autoreactstatus emoji 🐺*\n│  └⊷ Sets a fixed emoji for reactions\n│\n╰───`
                         }, { quoted: m });
                         return;
                     }
@@ -641,7 +640,7 @@ export default {
                     
                     if (args.length < 2) {
                         await sock.sendMessage(m.key.remoteJid, {
-                            text: `Usage: ${prefix}autoreactstatus add ❤️\n\nAdds an emoji to the random emoji list.`
+                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS ADD* ⌋\n│\n├─⊷ *${prefix}autoreactstatus add ❤️*\n│  └⊷ Adds an emoji to the random list\n│\n╰───`
                         }, { quoted: m });
                         return;
                     }
@@ -675,7 +674,7 @@ export default {
                     
                     if (args.length < 2) {
                         await sock.sendMessage(m.key.remoteJid, {
-                            text: `Usage: ${prefix}autoreactstatus remove 🔥\n\nRemoves an emoji from the random emoji list.`
+                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS REMOVE* ⌋\n│\n├─⊷ *${prefix}autoreactstatus remove 🔥*\n│  └⊷ Removes an emoji from the random list\n│\n╰───`
                         }, { quoted: m });
                         return;
                     }
@@ -725,7 +724,7 @@ export default {
                     
                 default:
                     await sock.sendMessage(m.key.remoteJid, {
-                        text: `❓ *Invalid Command*\n\nUse:\n• ${prefix}autoreactstatus on/off\n• ${prefix}autoreactstatus random\n• ${prefix}autoreactstatus emoji 🐺\n• ${prefix}autoreactstatus stats\n• ${prefix}autoreactstatus list`
+                        text: `╭─⌈ ❓ *AUTOREACTSTATUS* ⌋\n│\n├─⊷ *${prefix}autoreactstatus on/off*\n│  └⊷ Enable or disable\n│\n├─⊷ *${prefix}autoreactstatus random*\n│  └⊷ Set random emoji mode\n│\n├─⊷ *${prefix}autoreactstatus emoji 🐺*\n│  └⊷ Set a fixed emoji\n│\n├─⊷ *${prefix}autoreactstatus stats*\n│  └⊷ View detailed statistics\n│\n├─⊷ *${prefix}autoreactstatus list*\n│  └⊷ View emoji list\n│\n╰───`
                     }, { quoted: m });
             }
             

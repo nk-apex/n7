@@ -56,7 +56,7 @@ export default {
             }
             
             return sock.sendMessage(chatId, {
-                text: `🤖 *BOT MODE MANAGEMENT*\n\n📊 Current Mode: ${modes[currentMode]?.name || currentMode}\n\n📋 Available modes:\n${modeList}\nUsage: \`${PREFIX}mode <mode_name>\`\nExample: \`${PREFIX}mode groups\``
+                text: `╭─⌈ 🤖 *BOT MODE* ⌋\n│\n│ 📊 Current: ${modes[currentMode]?.name || currentMode}\n│\n${modeList}\n├─⊷ *${PREFIX}mode <mode_name>*\n│  └⊷ Change bot mode\n│\n╰───────────────`
             }, { quoted: msg });
         }
         
@@ -65,7 +65,7 @@ export default {
         if (!modes[requestedMode]) {
             const validModes = Object.keys(modes).join(', ');
             return sock.sendMessage(chatId, {
-                text: `❌ Invalid mode!\n\nValid modes: ${validModes}\n\nExample: \`${PREFIX}mode groups\``
+                text: `╭─⌈ ❌ *INVALID MODE* ⌋\n│\n│ Valid modes: ${validModes}\n│\n├─⊷ *${PREFIX}mode <mode_name>*\n│  └⊷ Example: ${PREFIX}mode groups\n│\n╰───────────────`
             }, { quoted: msg });
         }
         

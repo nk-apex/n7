@@ -159,22 +159,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `🎵 *YOUTUBE PLAYLIST DOWNLOADER*\n\n` +
-                `💡 *Usage:*\n` +
-                `• \`${PREFIX}playlist <search>\` - Search for playlists\n` +
-                `• \`${PREFIX}playlist NF\` - NF playlist songs\n` +
-                `• \`${PREFIX}playlist https://youtube.com/playlist?list=...\` - Direct playlist link\n\n` +
-                
-                `✨ *Examples:*\n` +
-                `• \`${PREFIX}playlist NF songs\`\n` +
-                `• \`${PREFIX}pl hip hop mix\`\n` +
-                `• \`${PREFIX}playlist workout music\`\n` +
-                
-                `📌 *Features:*\n` +
-                `• Search any artist's playlist\n` +
-                `• Download multiple songs\n` +
-                `• High quality audio\n` +
-                `• Same API as song command`
+          text: `╭─⌈ 🎵 *YOUTUBE PLAYLIST DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}playlist <search>*\n│  └⊷ Search for playlists\n│\n├─⊷ *${PREFIX}playlist <url>*\n│  └⊷ Direct playlist link\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}playlist NF songs\n│  └⊷ ${PREFIX}pl hip hop mix\n│  └⊷ ${PREFIX}playlist workout music\n│\n╰───`
         }, { quoted: m });
         return;
       }

@@ -15,27 +15,14 @@ export default {
     try {
       // Show help if no arguments
       if (args.length === 0 || args[0]?.toLowerCase() === 'help') {
-        const helpText = `🔍 *WOLFBOT TIKTOK SEARCH*\n\n` +
-          `📌 *Usage:*\n` +
-          `• \`${PREFIX}tiksearch <search query>\`\n` +
-          `• \`${PREFIX}tiksearch trending\`\n` +
-          `• \`${PREFIX}ttsearch funny videos\`\n\n` +
-          
-          `✨ *Features:*\n` +
-          `• Search TikTok videos by keywords\n` +
-          `• Get direct TikTok video links\n` +
-          `• Shows video details (likes, comments, shares)\n` +
-          `• Multiple search sources\n\n` +
-          
-          `📥 *Download:*\n` +
-          `• Use \`${PREFIX}tiktok <url>\` to download\n` +
-          `• Videos download without watermark\n` +
-          `• High quality MP4 format\n\n` +
-          
-          `🎬 *Examples:*\n` +
-          `\`${PREFIX}tiksearch funny cats\`\n` +
-          `\`${PREFIX}ttsearch music trends\`\n` +
-          `\`${PREFIX}tiksearch trending now\``;
+        const helpText = `╭─⌈ 🔍 *WOLFBOT TIKTOK SEARCH* ⌋\n│\n` +
+          `├─⊷ *${PREFIX}tiksearch <search query>*\n│  └⊷ Search TikTok videos by keywords\n│\n` +
+          `├─⊷ *${PREFIX}ttsearch <query>*\n│  └⊷ Alias for tiksearch\n│\n` +
+          `├─⊷ *Examples:*\n` +
+          `│  └⊷ ${PREFIX}tiksearch funny cats\n` +
+          `│  └⊷ ${PREFIX}ttsearch music trends\n` +
+          `│  └⊷ ${PREFIX}tiksearch trending now\n│\n` +
+          `╰───`;
         
         return sock.sendMessage(jid, { text: helpText }, { quoted: m });
       }

@@ -35,7 +35,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, { 
-          text: `🎨 *Artistic Image Generator*\n\nUsage: art <prompt>\n\nExamples:\nart impressionist painting of a garden\nart surreal fantasy landscape, digital art\nart watercolor portrait of a wizard\n\n🎭 *Art Styles Available:*\n• Impressionism • Surrealism • Abstract\n• Renaissance • Cyberpunk • Fantasy\n• Watercolor • Oil Painting • Digital Art\n• Concept Art • Character Design • Illustration\n\n🎨 *Famous Artist Styles:*\n• Van Gogh • Picasso • Monet • Dali\n• Hokusai • Mucha • Klimt • Hopper\n\n💡 *Tips:*\n• Specify art style: "in the style of..."\n• Mention medium: "watercolor", "oil painting"\n• Add mood: "dreamy", "epic", "mystical"\n• Use artistic terms: "brush strokes", "texture"` 
+          text: `╭─⌈ 🎨 *ART IMAGE GEN* ⌋\n│\n├─⊷ *art <prompt>*\n│  └⊷ Generate artistic AI images\n│\n├─⊷ *Examples:*\n│  └⊷ art impressionist painting of a garden\n│  └⊷ art watercolor portrait of a wizard\n│\n├─⊷ 🎭 *Styles:* Impressionism, Surrealism, Watercolor, Digital Art\n├─⊷ 🎨 *Artists:* Van Gogh, Picasso, Monet, Dali\n│\n╰───` 
         }, { quoted: m });
         return;
       }

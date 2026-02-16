@@ -668,49 +668,33 @@ function updateLeaderboard(userId, userName, score) {
 // ============= INFO COMMANDS =============
 
 async function showHelp(sock, m, chatId) {
-    const helpText = `
-🐍 *SNAKE GAME COMMANDS* 🐍
-
-*Start Game:*
-• \`.snake start\` - Start new game
-• \`.snake play\` - Start new game
-
-*Controls:*
-• \`.snake up\` / \`.snake u\` - Move up
-• \`.snake down\` / \`.snake d\` - Move down
-• \`.snake left\` / \`.snake l\` - Move left
-• \`.snake right\` / \`.snake r\` - Move right
-
-*Game Management:*
-• \`.snake pause\` - Pause game
-• \`.snake resume\` - Resume game
-• \`.snake stop\` - End game
-• \`.snake status\` - Show game info
-
-*Info Commands:*
-• \`.snake stats\` - Your statistics
-• \`.snake leaderboard\` - High scores
-• \`.snake help\` - This menu
-
-*🎮 GAME RULES:*
-1. Eat apples (🍎) to grow
-2. Avoid walls and yourself
-3. Speed increases every 5 apples
-4. Each apple = 10 points
-5. Game ends on collision
-
-*📌 IMPORTANT:*
-• Snake moves automatically every 1.5 seconds
-• Use commands to change direction
-• You can't turn 180° immediately
-• Game auto-pauses if you don't respond
-
-*Example gameplay:*
-.snake start
-.snake right
-.snake down
-.snake right
-    `.trim();
+    const helpText = `╭─⌈ 🐍 *SNAKE GAME* ⌋
+│
+├─⊷ *.snake start / play*
+│  └⊷ Start new game
+│
+├─⊷ *.snake up / down / left / right*
+│  └⊷ Move direction (or u/d/l/r)
+│
+├─⊷ *.snake pause / resume*
+│  └⊷ Pause or resume game
+│
+├─⊷ *.snake stop*
+│  └⊷ End game
+│
+├─⊷ *.snake status*
+│  └⊷ Show game info
+│
+├─⊷ *.snake stats*
+│  └⊷ Your statistics
+│
+├─⊷ *.snake leaderboard*
+│  └⊷ High scores
+│
+├─⊷ 🎮 Eat 🍎 to grow, avoid walls & yourself
+├─⊷ 📌 Snake moves every 1.5s, can't turn 180°
+│
+╰───`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }

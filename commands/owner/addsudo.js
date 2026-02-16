@@ -52,7 +52,7 @@ export default {
                 targetNumber = args[0].replace(/[^0-9]/g, '');
             } else {
                 return sock.sendMessage(chatId, {
-                    text: `⚠️ *Could not resolve phone number*\n\nPlease include the phone number:\n• \`${PREFIX}addsudo <phone number>\`\n_(while replying to their message)_\n\nExample: Reply → \`${PREFIX}addsudo 254703397679\``
+                    text: `╭─⌈ ⚠️ *ADD SUDO* ⌋\n│\n├─⊷ *${PREFIX}addsudo <phone number>*\n│  └⊷ Include number while replying to their message\n│\n│ 💡 Example: Reply → ${PREFIX}addsudo 254703397679\n│\n╰───────────────`
                 }, { quoted: msg });
             }
         } else if (mentioned) {
@@ -68,7 +68,7 @@ export default {
 
         if (!targetNumber || targetNumber.length < 7) {
             return sock.sendMessage(chatId, {
-                text: `📋 *Add Sudo User*\n\nUsage:\n• \`${PREFIX}addsudo 2547xxxxxxxx\`\n• Reply to user's message → \`${PREFIX}addsudo\`\n\n_Sudo users can use owner commands_`
+                text: `╭─⌈ 📋 *ADD SUDO* ⌋\n│\n├─⊷ *${PREFIX}addsudo <number>*\n│  └⊷ Add user by phone number\n├─⊷ *Reply + ${PREFIX}addsudo*\n│  └⊷ Add user by replying to their message\n│\n╰───────────────`
             }, { quoted: msg });
         }
 

@@ -13,13 +13,7 @@ export default {
     
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `🤖 *GOOGLE BARD AI*\n` +
-        `⚡ *Google\'s Conversational AI Assistant*\n` +
-        `💡 *Usage:*\n` +
-        `• \`${PREFIX}bard your question\`\n` +
-        `• \`${PREFIX}bard hello\`\n` +
-        `• \`${PREFIX}bard explain something\`\n` +
-       ``;
+      const helpText = `╭─⌈ 🤖 *GOOGLE BARD AI* ⌋\n│\n├─⊷ *${PREFIX}bard <question>*\n│  └⊷ Ask Bard anything\n│\n├─⊷ *${PREFIX}bardai <question>*\n│  └⊷ Alias for bard\n│\n├─⊷ *${PREFIX}googlebard <question>*\n│  └⊷ Alias for bard\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }

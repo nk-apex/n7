@@ -12,7 +12,7 @@ export default {
     if (!args.length) {
       return sock.sendMessage(
         typeof from === 'string' ? from : m.key.remoteJid,
-        { text: '❌ Please provide a country name.\nExample: `.covid Kenya`' },
+        { text: `╭─⌈ 🦠 *COVID-19 STATS* ⌋\n│\n├─⊷ *covid <country>*\n│  └⊷ Get COVID-19 stats for a country\n│\n├─⊷ *Example:*\n│  └⊷ \`.covid Kenya\`\n│\n╰───` },
         { quoted: m }
       );
     }

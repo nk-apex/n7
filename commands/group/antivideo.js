@@ -109,7 +109,7 @@ export default {
             
             if (!mode || !['warn', 'delete', 'kick'].includes(mode)) {
                 return sock.sendMessage(chatId, { 
-                    text: '⚙️ *Anti-Video Setup*\n\nUsage: `.antivideo on [mode]`\n\nAvailable modes:\n• `warn` - Warn users who share videos\n• `delete` - Delete videos automatically\n• `kick` - Kick users who share videos\n\nExample: `.antivideo on delete`' 
+                    text: '╭─⌈ ⚙️ *ANTI-VIDEO SETUP* ⌋\n│\n├─⊷ *.antivideo on warn*\n│  └⊷ Warn users who share videos\n│\n├─⊷ *.antivideo on delete*\n│  └⊷ Delete videos automatically\n│\n├─⊷ *.antivideo on kick*\n│  └⊷ Kick users who share videos\n│\n╰───' 
                 }, { quoted: msg });
             }
 
@@ -237,7 +237,7 @@ export default {
                 
                 if (typesToAdd.length === 0) {
                     return sock.sendMessage(chatId, { 
-                        text: 'Usage: `.antivideo types add [type1] [type2]`\n\nValid types: video, gif\n\nExample: `.antivideo types add gif`' 
+                        text: '╭─⌈ 🎬 *ANTI-VIDEO TYPES* ⌋\n│\n├─⊷ *.antivideo types add video*\n│  └⊷ Regular videos\n│\n├─⊷ *.antivideo types add gif*\n│  └⊷ GIFs/Animated images\n│\n╰───' 
                     }, { quoted: msg });
                 }
                 
@@ -269,7 +269,7 @@ export default {
                 
                 if (typesToRemove.length === 0) {
                     return sock.sendMessage(chatId, { 
-                        text: 'Usage: `.antivideo types remove [type1] [type2]`\n\nValid types: video, gif\n\nExample: `.antivideo types remove gif`' 
+                        text: '╭─⌈ 🎬 *ANTI-VIDEO TYPES REMOVE* ⌋\n│\n├─⊷ *.antivideo types remove [type]*\n│  └⊷ Valid types: video, gif\n│\n╰───' 
                     }, { quoted: msg });
                 }
                 
@@ -315,7 +315,7 @@ export default {
             }
             else {
                 await sock.sendMessage(chatId, { 
-                    text: '📋 *Video Types Management*\n\nUsage:\n• `.antivideo types add [type]`\n• `.antivideo types remove [type]`\n• `.antivideo types list`\n\nValid types:\n• video - Regular videos\n• gif - GIFs/Animated images' 
+                    text: '╭─⌈ 📋 *ANTI-VIDEO TYPES* ⌋\n│\n├─⊷ *.antivideo types add [type]*\n│  └⊷ Add video type to block\n│\n├─⊷ *.antivideo types remove [type]*\n│  └⊷ Remove video type from block\n│\n├─⊷ *.antivideo types list*\n│  └⊷ View blocked types\n│\n│ Valid types: video, gif\n╰───' 
                 }, { quoted: msg });
             }
         }
@@ -359,14 +359,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `
-🎬 *Anti-Video Commands*
-
- • \`.antivideo on <warn|delete|kick> [types]\`
- • \`.antivideo off\`
- • \`.antivideo types [add/remove/list] [types]\`
- • \`.antivideo exemptadmins [on/off]\`
-`.trim();
+            const helpText = `╭─⌈ 🎬 *ANTI-VIDEO* ⌋\n│\n├─⊷ *.antivideo on <warn|delete|kick>*\n│  └⊷ Enable with mode\n│\n├─⊷ *.antivideo off*\n│  └⊷ Disable anti-video\n│\n├─⊷ *.antivideo types [add/remove/list]*\n│  └⊷ Manage blocked video types\n│\n├─⊷ *.antivideo exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n│\n├─⊷ *.antivideo status*\n│  └⊷ View current status\n│\n╰───`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

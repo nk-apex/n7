@@ -352,7 +352,7 @@ export default {
             
             if (!mode || !['warn', 'delete', 'kick'].includes(mode)) {
                 return sock.sendMessage(chatId, { 
-                    text: '⚙️ *Anti-Sticker Setup*\n\nUsage: `.antisticker on [mode]`\n\nAvailable modes:\n• `warn` - Warn users who send stickers\n• `delete` - Delete stickers automatically\n• `kick` - Kick users who send stickers\n\nExample: `.antisticker on delete`' 
+                    text: '╭─⌈ ⚙️ *ANTI-STICKER SETUP* ⌋\n│\n├─⊷ *.antisticker on warn*\n│  └⊷ Warn users who send stickers\n│\n├─⊷ *.antisticker on delete*\n│  └⊷ Delete stickers automatically\n│\n├─⊷ *.antisticker on kick*\n│  └⊷ Kick users who send stickers\n│\n╰───' 
                 }, { quoted: msg });
             }
 
@@ -479,21 +479,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `
-🎭 *Anti-Sticker Commands*
-
-• \`.antisticker on <delete|warn|kick>\`
-• \`.antisticker off\`
-• \`.antisticker exemptadmins [on/off]\`
-• \`.antisticker status\`
-
-*Modes:*
-• \`warn\` - Warn users who send stickers
-• \`delete\` - Delete stickers automatically
-• \`kick\` - Kick users who send stickers
-
-*Note:* Admins are exempt by default. Use \`.antisticker exemptadmins off\` to include admins.
-`.trim();
+            const helpText = `╭─⌈ 🎭 *ANTI-STICKER* ⌋\n│\n├─⊷ *.antisticker on <warn|delete|kick>*\n│  └⊷ Enable with mode\n│\n├─⊷ *.antisticker off*\n│  └⊷ Disable anti-sticker\n│\n├─⊷ *.antisticker exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n│\n├─⊷ *.antisticker status*\n│  └⊷ View current status\n│\n╰───`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

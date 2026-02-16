@@ -121,7 +121,7 @@ export default {
 
             if (!target) {
                 return sock.sendMessage(chatId, {
-                    text: `❌ *Reply to a user or mention them!*\n\nUsage: Reply to user with \`${PREFIX}antichart restrict\`\nOr: \`${PREFIX}antichart restrict @user\``
+                    text: `╭─⌈ ❌ *ANTI-CHART* ⌋\n│\n├─⊷ *${PREFIX}antichart restrict* (reply)\n│  └⊷ Reply to user to restrict\n│\n├─⊷ *${PREFIX}antichart restrict @user*\n│  └⊷ Mention user to restrict\n│\n╰───`
                 }, { quoted: msg });
             }
 
@@ -194,20 +194,7 @@ export default {
         const restricted = config[chatId]?.restricted || [];
 
         return sock.sendMessage(chatId, {
-            text: `📊 *ANTI-CHART SYSTEM*\n\n` +
-                `Prevents chart/poll spam and restricts specific users.\n\n` +
-                `📊 *Status:* ${enabled ? '✅ ENABLED' : '❌ DISABLED'}\n` +
-                `⚡ *Action:* ${action.toUpperCase()}\n` +
-                `🚫 *Restricted:* ${restricted.length} user(s)\n\n` +
-                `💡 *Usage:*\n` +
-                `• \`${PREFIX}antichart on\` - Enable\n` +
-                `• \`${PREFIX}antichart off\` - Disable\n` +
-                `• \`${PREFIX}antichart action warn\` - Warn mode\n` +
-                `• \`${PREFIX}antichart action delete\` - Delete mode\n` +
-                `• \`${PREFIX}antichart action kick\` - Kick mode\n` +
-                `• \`${PREFIX}antichart restrict\` (reply) - Restrict user\n` +
-                `• \`${PREFIX}antichart unrestrict\` (reply) - Unrestrict\n` +
-                `• \`${PREFIX}antichart list\` - List restricted users`
+            text: `╭─⌈ 📊 *ANTI-CHART* ⌋\n│\n│ Status: ${enabled ? '✅ ENABLED' : '❌ DISABLED'} • Action: ${action.toUpperCase()} • Restricted: ${restricted.length}\n│\n├─⊷ *${PREFIX}antichart on*\n│  └⊷ Enable protection\n│\n├─⊷ *${PREFIX}antichart off*\n│  └⊷ Disable protection\n│\n├─⊷ *${PREFIX}antichart action <warn|delete|kick>*\n│  └⊷ Set action mode\n│\n├─⊷ *${PREFIX}antichart restrict* (reply)\n│  └⊷ Restrict a user\n│\n├─⊷ *${PREFIX}antichart unrestrict* (reply)\n│  └⊷ Unrestrict a user\n│\n├─⊷ *${PREFIX}antichart list*\n│  └⊷ List restricted users\n│\n╰───`
         }, { quoted: msg });
     }
 };

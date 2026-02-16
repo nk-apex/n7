@@ -62,7 +62,7 @@ export default {
       
       if (!imageMessage) {
         await sock.sendMessage(jid, { 
-          text: `🎨 *Image to Sticker*\n💡 *Usage:*\n• Reply to an image with \`${prefix}tosticker\`\n• Or send image with caption \`${prefix}tosticker\`\n\n📌 *Supported:*\n• JPG, PNG, GIF, WebP\n• Max size: 3MB`
+          text: `╭─⌈ 🎨 *IMAGE TO STICKER* ⌋\n│\n├─⊷ *${prefix}tosticker*\n│  └⊷ Reply to an image to convert to sticker\n│\n├─⊷ *Send image with caption ${prefix}tosticker*\n│  └⊷ Supported: JPG, PNG, GIF, WebP (max 3MB)\n│\n╰───`
         }, { quoted: m });
         return;
       }

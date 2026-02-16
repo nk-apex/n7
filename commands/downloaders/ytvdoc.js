@@ -184,7 +184,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `📁 *YouTube Video as Document*\n\nUsage:\n• \`ytvdoc song name\`\n• \`ytvdoc https://youtube.com/...\`\n• \`ytvdoc 720 song name\` (specify quality)\n`
+          text: `╭─⌈ 📁 *YouTube Video as Document* ⌋\n│\n├─⊷ *ytvdoc <video name>*\n│  └⊷ Download video as document file\n│\n├─⊷ *ytvdoc <quality> <name>*\n│  └⊷ Specify quality (144/240/360/480/720/1080)\n│\n├─⊷ *Examples:*\n│  └⊷ ytvdoc song name\n│  └⊷ ytvdoc https://youtube.com/...\n│  └⊷ ytvdoc 720 song name\n│\n╰───`
         }, { quoted: m });
         return;
       }
@@ -199,7 +199,7 @@ export default {
         
         if (!searchQuery) {
           await sock.sendMessage(jid, { 
-            text: `❌ Please provide video name or URL after quality\nExample: ytvdoc 720 funny cats`
+            text: `╭─⌈ ❌ *Missing Input* ⌋\n│\n├─⊷ *ytvdoc <quality> <name>*\n│  └⊷ Provide video name or URL after quality\n│\n├─⊷ *Example:*\n│  └⊷ ytvdoc 720 funny cats\n│\n╰───`
           }, { quoted: m });
           return;
         }

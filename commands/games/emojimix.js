@@ -210,13 +210,7 @@ export default {
     
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `🎭 *WOLFBOT EMOJI MIX*\n\n` +
-        `💡 *Usage:*\n` +
-        `• \`${PREFIX}emojimix 😂 😭\` - Get mixed emoji image\n` +
-        `• \`${PREFIX}emojimix sticker ❤️ ⭐\` - Get as WolfBot sticker\n` +
-        `• \`${PREFIX}emojimix 🐱 🐶\` - Get image\n` +
-        `• \`${PREFIX}emix -s 🍕 🍔\` - Sticker with flag\n` +
-      ``;
+      const helpText = `╭─⌈ 🎭 *WOLFBOT EMOJI MIX* ⌋\n│\n├─⊷ *${PREFIX}emojimix 😂 😭*\n│  └⊷ Get mixed emoji image\n│\n├─⊷ *${PREFIX}emojimix sticker ❤️ ⭐*\n│  └⊷ Get as WolfBot sticker\n│\n├─⊷ *${PREFIX}emojimix 🐱 🐶*\n│  └⊷ Get image\n│\n├─⊷ *${PREFIX}emix -s 🍕 🍔*\n│  └⊷ Sticker with flag\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
@@ -236,7 +230,7 @@ export default {
       emoji2 = args[1];
     } else {
       return sock.sendMessage(jid, {
-        text: `❌ *Need two emojis!*\n\nUsage: ${PREFIX}emojimix 😂 😭\nFor sticker: ${PREFIX}emojimix sticker 😂 😭`
+        text: `╭─⌈ ❌ *NEED TWO EMOJIS* ⌋\n│\n├─⊷ *${PREFIX}emojimix 😂 😭*\n│  └⊷ Get mixed emoji image\n│\n├─⊷ *${PREFIX}emojimix sticker 😂 😭*\n│  └⊷ Get as sticker\n│\n╰───`
       }, { quoted: m });
     }
 

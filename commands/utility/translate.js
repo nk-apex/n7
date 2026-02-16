@@ -24,7 +24,7 @@ export default {
 
       if (!targetLang || !text) {
         await sock.sendMessage(m.key.remoteJid, {
-          text: "Usage: .translate <lang> <text> or reply to a message",
+          text: `╭─⌈ 🌍 *TRANSLATE* ⌋\n│\n├─⊷ *translate <lang> <text>*\n│  └⊷ Translate text to target language\n│\n├─⊷ *Reply*\n│  └⊷ Reply to a message with .translate <lang>\n│\n╰───`,
         });
         return;
       }

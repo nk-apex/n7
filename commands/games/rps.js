@@ -1191,97 +1191,72 @@ function calculatePrizes(playerCount, entryFee) {
 // ============= INFO COMMANDS =============
 
 async function showRPSHelp(sock, m, chatId) {
-    const helpText = `
-🎮 *ROCK PAPER SCISSORS COMMANDS* 🎮
-
-*Quick Play (vs AI):*
-• \`.rps rock\` / \`.rps r\` - Play Rock vs AI
-• \`.rps paper\` / \`.rps p\` - Play Paper vs AI
-• \`.rps scissors\` / \`.rps s\` - Play Scissors vs AI
-• \`.rps play rock\` - Play vs AI (full command)
-
-*Multiplayer:*
-• \`.rps challenge @user\` - Challenge another player
-• \`.rps challenge @user 100\` - Challenge with bet (points)
-• \`.rps accept\` - Accept pending challenge
-• \`.rps decline\` - Decline challenge
-• \`.rps cancel\` - Cancel your challenge
-
-*Tournaments:*
-• \`.rps tournament create 8 10\` - Create 8-player tournament with 10 point entry
-• \`.rps tournament join\` - Join active tournament
-• \`.rps tournament start\` - Start tournament (creator only)
-• \`.rps tournament status\` - Check tournament status
-• \`.rps tournament leave\` - Leave tournament
-
-*Info & Stats:*
-• \`.rps stats\` - Your personal statistics
-• \`.rps leaderboard\` - Global rankings
-• \`.rps history\` - Your match history
-• \`.rps rules\` - Game rules
-• \`.rps help\` - This menu
-
-*Example Gameplay:*
-1. \`.rps rock\` (play vs AI)
-2. \`.rps challenge @friend\` (challenge friend)
-3. Wait for friend to accept
-4. Both players DM me with \`rock\`, \`paper\`, or \`scissors\`
-5. Result announced in group!
-
-*🎯 Tournament Sizes:* 4, 8, 16, or 32 players
-*⏱️ Time Limits:* 60 seconds per move, 2 minutes for tournament matches
-    `.trim();
+    const helpText = `╭─⌈ 🎮 *ROCK PAPER SCISSORS* ⌋
+│
+├─⊷ *.rps rock / r*
+│  └⊷ Play Rock vs AI
+│
+├─⊷ *.rps paper / p*
+│  └⊷ Play Paper vs AI
+│
+├─⊷ *.rps scissors / s*
+│  └⊷ Play Scissors vs AI
+│
+├─⊷ *.rps challenge @user [bet]*
+│  └⊷ Challenge another player
+│
+├─⊷ *.rps accept / decline / cancel*
+│  └⊷ Manage challenges
+│
+├─⊷ *.rps tournament create 8 10*
+│  └⊷ Create 8-player tournament (10pt entry)
+│
+├─⊷ *.rps tournament join / start / status / leave*
+│  └⊷ Tournament management
+│
+├─⊷ *.rps stats*
+│  └⊷ Your personal statistics
+│
+├─⊷ *.rps leaderboard*
+│  └⊷ Global rankings
+│
+├─⊷ *.rps history*
+│  └⊷ Your match history
+│
+├─⊷ *.rps rules*
+│  └⊷ Game rules
+│
+├─⊷ 🎯 Tournament sizes: 4, 8, 16, or 32 players
+├─⊷ ⏱️ Time: 60s per move, 2min for tournaments
+│
+╰───`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }
 
 async function showRPSRules(sock, m, chatId) {
-    const rulesText = `
-📜 *ROCK PAPER SCISSORS RULES* 📜
-
-*Basic Rules:*
-• 🪨 Rock crushes ✂️ Scissors
-• 📄 Paper covers 🪨 Rock  
-• ✂️ Scissors cuts 📄 Paper
-• Same choice = Draw
-
-*How to Play:*
-1. Challenge a friend: \`.rps challenge @username\`
-2. Friend accepts: \`.rps accept\`
-3. Both players send me their choice in *PRIVATE CHAT*
-4. I announce the winner in the group
-
-*Multiplayer Rules:*
-• You have 60 seconds to make your choice
-• If you don't choose in time, you forfeit
-• Bets are optional (points system)
-• Tournament matches have 2-minute time limit
-
-*Tournament Rules:*
-• Single elimination bracket
-• Winner advances to next round
-• Prizes distributed to top 3
-• Entry fee is optional
-• Tournament creator can start when ready
-
-*Points System:*
-• Win vs AI: +10 points
-• Win vs Human: +25 rating points
-• Loss vs Human: -15 rating points
-• Draw: No points change
-
-*Achievements:*
-Unlock achievements by playing:
-• First Game 🎮
-• 10 Wins 🏆  
-• 5 Win Streak 🔥
-• 100 Games 🎯
-• Rock King 🪨
-• Paper Master 📄
-• Scissors Expert ✂️
-
-*Good luck and have fun!* 🎉
-    `.trim();
+    const rulesText = `╭─⌈ 📜 *RPS RULES* ⌋
+│
+├─⊷ 🪨 Rock crushes ✂️ Scissors
+├─⊷ 📄 Paper covers 🪨 Rock
+├─⊷ ✂️ Scissors cuts 📄 Paper
+├─⊷ Same choice = Draw
+│
+├─⊷ *How to Play:*
+│  └⊷ .rps challenge @user → accept → choose in DM → result in group
+│
+├─⊷ *Multiplayer:*
+│  └⊷ 60s per choice, bets optional, forfeit on timeout
+│
+├─⊷ *Tournaments:*
+│  └⊷ Single elimination, top 3 prizes, 2min per match
+│
+├─⊷ *Points:*
+│  └⊷ AI win +10 │ Human win +25 │ Loss -15 │ Draw ±0
+│
+├─⊷ *Achievements:* 🎮 First Game │ 🏆 10 Wins │ 🔥 5 Streak │ 🎯 100 Games
+│
+╰───`;
     
     await sock.sendMessage(chatId, { text: rulesText }, { quoted: m });
 }
@@ -1397,40 +1372,33 @@ async function showRPSHistory(sock, m, chatId, userId, userName) {
 }
 
 async function showTournamentHelp(sock, m, chatId) {
-    const helpText = `
-🏆 *RPS TOURNAMENT COMMANDS* 🏆
-
-*Create Tournament:*
-• \`.rps tournament create 8\` - Create 8-player free tournament
-• \`.rps tournament create 16 10\` - 16 players, 10 point entry fee
-
-*Join & Manage:*
-• \`.rps tournament join\` - Join active tournament
-• \`.rps tournament leave\` - Leave tournament
-• \`.rps tournament start\` - Start tournament (creator only)
-• \`.rps tournament cancel\` - Cancel tournament (creator only)
-
-*Info:*
-• \`.rps tournament status\` - Check tournament status
-• \`.rps tournament list\` - List active tournaments
-
-*Tournament Rules:*
-• Single elimination bracket
-• Minimum 2 players to start
-• Maximum 32 players
-• Entry fee optional
-• Prizes: 1st: 50%, 2nd: 30%, 3rd-4th: 10% each
-• 2-minute time limit per match
-
-*Example Tournament:*
-1. \`.rps tournament create 8 20\`
-2. 7 others join with \`.rps tournament join\`
-3. Creator starts with \`.rps tournament start\`
-4. Players get DMs for each match
-5. Winner gets 80 points (50% of 160 total)
-
-*Have fun and may the best player win!* 🏆
-    `.trim();
+    const helpText = `╭─⌈ 🏆 *RPS TOURNAMENT* ⌋
+│
+├─⊷ *.rps tournament create 8*
+│  └⊷ Create 8-player free tournament
+│
+├─⊷ *.rps tournament create 16 10*
+│  └⊷ 16 players, 10 point entry fee
+│
+├─⊷ *.rps tournament join*
+│  └⊷ Join active tournament
+│
+├─⊷ *.rps tournament leave*
+│  └⊷ Leave tournament
+│
+├─⊷ *.rps tournament start*
+│  └⊷ Start tournament (creator only)
+│
+├─⊷ *.rps tournament cancel*
+│  └⊷ Cancel tournament (creator only)
+│
+├─⊷ *.rps tournament status / list*
+│  └⊷ Check status or list tournaments
+│
+├─⊷ *Rules:* Single elimination, 2-32 players, 2min per match
+├─⊷ *Prizes:* 1st 50% │ 2nd 30% │ 3rd-4th 10% each
+│
+╰───`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }

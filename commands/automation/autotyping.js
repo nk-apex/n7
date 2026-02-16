@@ -171,16 +171,7 @@ export default {
                 };
 
                 return sock.sendMessage(targetJid, {
-                    text: `🤖 *Auto-Typing Status*\n\n` +
-                        `• Mode: ${modeLabels[mode] || mode}\n` +
-                        `• Duration: ${autoTypingConfig.duration}s\n` +
-                        `• Active sessions: ${autoTypingConfig.activeTypers.size}\n\n` +
-                        `*Commands:*\n` +
-                        `• \`${PREFIX}autotyping dm\` — DMs only\n` +
-                        `• \`${PREFIX}autotyping groups\` — Groups only\n` +
-                        `• \`${PREFIX}autotyping both\` — Both DMs & groups\n` +
-                        `• \`${PREFIX}autotyping off\` — Disable\n` +
-                        `• \`${PREFIX}autotyping <1-60>\` — Set duration`
+                    text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n│ Mode: ${modeLabels[mode] || mode}\n│ Duration: ${autoTypingConfig.duration}s\n│ Active: ${autoTypingConfig.activeTypers.size}\n│\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ DMs only\n│\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ Groups only\n│\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ Both DMs & groups\n│\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n│\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n│\n╰───`
                 }, { quoted: m });
             }
 
@@ -229,13 +220,7 @@ export default {
             }
 
             return sock.sendMessage(targetJid, {
-                text: `🤖 *Auto-Typing*\n\n` +
-                    `*Modes:*\n` +
-                    `• \`${PREFIX}autotyping dm\` — DMs only\n` +
-                    `• \`${PREFIX}autotyping groups\` — Groups only\n` +
-                    `• \`${PREFIX}autotyping both\` — Both\n` +
-                    `• \`${PREFIX}autotyping off\` — Disable\n` +
-                    `• \`${PREFIX}autotyping <1-60>\` — Set duration`
+                text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ DMs only\n│\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ Groups only\n│\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ Both DMs & groups\n│\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n│\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n│\n╰───`
             }, { quoted: m });
 
         } catch (err) {

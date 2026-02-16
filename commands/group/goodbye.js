@@ -31,25 +31,7 @@ export default {
 
         if (!action || action === 'help') {
             return sock.sendMessage(chatId, {
-                text: `👋 *GOODBYE SYSTEM*
-
-Send farewell messages when members leave!
-
-• \`${PREFIX}goodbye on\` - Enable goodbye messages
-• \`${PREFIX}goodbye off\` - Disable goodbye messages
-• \`${PREFIX}goodbye set <message>\` - Set custom goodbye message
-• \`${PREFIX}goodbye reset\` - Reset to default goodbye message
-• \`${PREFIX}goodbye preview\` - Preview goodbye message
-• \`${PREFIX}goodbye status\` - Check goodbye system status
-
-Custom Message Variables:
-{name} - Member's name
-{group} - Group name
-{members} - Remaining group members
-{mention} - Mention the member
-
-Example:
-• \`${PREFIX}goodbye set Goodbye {name}! We'll miss you 😢\``
+                text: `╭─⌈ 👋 *GOODBYE SYSTEM* ⌋\n│\n├─⊷ *${PREFIX}goodbye on*\n│  └⊷ Enable goodbye messages\n│\n├─⊷ *${PREFIX}goodbye off*\n│  └⊷ Disable goodbye messages\n│\n├─⊷ *${PREFIX}goodbye set <message>*\n│  └⊷ Set custom goodbye message\n│\n├─⊷ *${PREFIX}goodbye reset*\n│  └⊷ Reset to default message\n│\n├─⊷ *${PREFIX}goodbye preview*\n│  └⊷ Preview goodbye message\n│\n├─⊷ *${PREFIX}goodbye status*\n│  └⊷ Check system status\n│\n│ Variables: {name}, {group}, {members}, {mention}\n╰───`
             }, { quoted: msg });
         }
         
@@ -131,7 +113,7 @@ Example:
                     
                 default:
                     await sock.sendMessage(chatId, {
-                        text: `❌ Invalid command. Use \`${PREFIX}goodbye help\` for usage instructions.`
+                        text: `╭─⌈ ❌ *GOODBYE* ⌋\n│\n├─⊷ *${PREFIX}goodbye help*\n│  └⊷ View usage instructions\n│\n╰───`
                     }, { quoted: msg });
             }
         } catch (error) {

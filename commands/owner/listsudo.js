@@ -15,7 +15,7 @@ export default {
 
         if (sudoers.length === 0) {
             return sock.sendMessage(chatId, {
-                text: `📋 *Sudo Users List*\n\n_No sudo users added yet._\n\nUse \`${PREFIX}addsudo <number>\` to add one.\n\n🔧 Sudo Mode: ${sudomode ? '✅ ON' : '❌ OFF'}`
+                text: `╭─⌈ 📋 *SUDO LIST* ⌋\n│\n│ _No sudo users added yet._\n│\n├─⊷ *${PREFIX}addsudo <number>*\n│  └⊷ Add a sudo user\n│\n│ 🔧 Sudo Mode: ${sudomode ? '✅ ON' : '❌ OFF'}\n│\n╰───────────────`
             }, { quoted: msg });
         }
 

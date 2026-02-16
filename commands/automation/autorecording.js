@@ -366,22 +366,26 @@ export default {
         const modeText = status.ownerOnly ? "🔒 *Owner Only*" : "🌍 *Public*";
         
         await sock.sendMessage(targetJid, {
-          text: `🎤 *Auto-Recording Manager* (Owner Command)
-
-${statusText}
-${modeText}
-
-📊 *Status:*
-• Auto-Recording: ${status.enabled ? 'ON 🟢' : 'OFF 🔴'}
-• Duration: ${status.duration} seconds
-• Active Chats: ${status.activeSessions}
-
-🔧 *Owner Commands:*
-• \`${PREFIX}autorecording on\`
-• \`${PREFIX}autorecording off\` 
-• \`${PREFIX}autorecording <duration>\` 
-• \`${PREFIX}autorecording status\` - Detailed info
-`
+          text: `╭─⌈ 🎤 *AUTO-RECORDING* ⌋
+│
+│ ${statusText}
+│ ${modeText}
+│ Auto-Recording: ${status.enabled ? 'ON 🟢' : 'OFF 🔴'}
+│ Duration: ${status.duration}s | Active: ${status.activeSessions}
+│
+├─⊷ *${PREFIX}autorecording on*
+│  └⊷ Enable auto-recording
+│
+├─⊷ *${PREFIX}autorecording off*
+│  └⊷ Disable auto-recording
+│
+├─⊷ *${PREFIX}autorecording <duration>*
+│  └⊷ Set duration (1-120s)
+│
+├─⊷ *${PREFIX}autorecording status*
+│  └⊷ Detailed info
+│
+╰───`
         }, { quoted: m });
         return;
       }
@@ -469,9 +473,13 @@ ${ownerOnly ?
   'Anyone can use auto-recording commands now.\n\n⚠️ *Warning:* Public mode may allow others to spam recording.'
 }
 
-⚙️ To add specific allowed users:
-• \`${PREFIX}autorecording users add @user\`
-• \`${PREFIX}autorecording users list\``
+├─⊷ *${PREFIX}autorecording users add @user*
+│  └⊷ Add allowed user
+│
+├─⊷ *${PREFIX}autorecording users list*
+│  └⊷ View allowed users
+│
+╰───`
         }, { quoted: m });
         return;
       }
@@ -492,10 +500,10 @@ ${ownerOnly ?
             });
           }
           
-          userList += `\n🔧 *Commands:*\n`;
-          userList += `• \`${PREFIX}autorecording users add @user\`\n`;
-          userList += `• \`${PREFIX}autorecording users remove @user\`\n`;
-          userList += `• \`${PREFIX}autorecording users clear\`\n`;
+          userList += `\n├─⊷ *${PREFIX}autorecording users add @user*\n│  └⊷ Add a user\n│\n`;
+          userList += `├─⊷ *${PREFIX}autorecording users remove @user*\n│  └⊷ Remove a user\n│\n`;
+          userList += `├─⊷ *${PREFIX}autorecording users clear*\n│  └⊷ Clear all users\n│\n`;
+          userList += `╰───`;
           
           return sock.sendMessage(targetJid, {
             text: userList
@@ -533,7 +541,7 @@ ${ownerOnly ?
         
         // Invalid user command
         await sock.sendMessage(targetJid, {
-          text: `❓ *Invalid User Command*\n\nUsage:\n• \`${PREFIX}autorecording users list\`\n• \`${PREFIX}autorecording users add @user\`\n• \`${PREFIX}autorecording users remove @user\`\n• \`${PREFIX}autorecording users clear\``
+          text: `╭─⌈ ❓ *RECORDING USERS* ⌋\n│\n├─⊷ *${PREFIX}autorecording users list*\n│  └⊷ View allowed users\n│\n├─⊷ *${PREFIX}autorecording users add @user*\n│  └⊷ Add a user\n│\n├─⊷ *${PREFIX}autorecording users remove @user*\n│  └⊷ Remove a user\n│\n├─⊷ *${PREFIX}autorecording users clear*\n│  └⊷ Clear all users\n│\n╰───`
         }, { quoted: m });
         return;
       }
@@ -570,11 +578,7 @@ Maximum recording time is 2 minutes (120 seconds).`
         
         if (isNaN(manualDuration) || manualDuration < 1 || manualDuration > 300) {
           await sock.sendMessage(targetJid, {
-            text: `❌ *Invalid Duration*
-
-Please use a number between 1 and 300 seconds for manual recording.
-
-Usage: \`${PREFIX}autorecording manual 15\``
+            text: `╭─⌈ ❌ *INVALID DURATION* ⌋\n│\n├─⊷ *${PREFIX}autorecording manual 15*\n│  └⊷ Use 1-300 seconds\n│\n╰───`
           }, { quoted: m });
           return;
         }
@@ -593,25 +597,30 @@ I'll show 'recording...' for ${manualDuration} seconds!`
       
       // If no valid command, show help
       await sock.sendMessage(targetJid, {
-        text: `🎤 *Auto-Recording Owner Commands:*
-
-🔧 *Control:*
-• \`${PREFIX}autorecording on\` - Enable auto-recording
-• \`${PREFIX}autorecording off\` - Disable auto-recording
-• \`${PREFIX}autorecording 15\` - Set duration to 15s
-
-🔒 *Access Control:*
-• \`${PREFIX}autorecording mode\` - Toggle owner-only/public mode
-• \`${PREFIX}autorecording users\` - Manage allowed users list
-
-📊 *Info:*
-• \`${PREFIX}autorecording\` - Show status
-• \`${PREFIX}autorecording status\` - Detailed status
-
-🎙️ *Manual Recording:*
-• \`${PREFIX}autorecording manual 10\` - Manual recording for 10s
-
-⚠️ *Note:* Recording can show in multiple chats simultaneously!`
+        text: `╭─⌈ 🎤 *AUTO-RECORDING* ⌋
+│
+├─⊷ *${PREFIX}autorecording on*
+│  └⊷ Enable auto-recording
+│
+├─⊷ *${PREFIX}autorecording off*
+│  └⊷ Disable auto-recording
+│
+├─⊷ *${PREFIX}autorecording <1-120>*
+│  └⊷ Set duration in seconds
+│
+├─⊷ *${PREFIX}autorecording mode*
+│  └⊷ Toggle owner-only/public mode
+│
+├─⊷ *${PREFIX}autorecording users*
+│  └⊷ Manage allowed users list
+│
+├─⊷ *${PREFIX}autorecording status*
+│  └⊷ Detailed status info
+│
+├─⊷ *${PREFIX}autorecording manual 10*
+│  └⊷ Manual recording for 10s
+│
+╰───`
       }, { quoted: m });
       
     } catch (err) {

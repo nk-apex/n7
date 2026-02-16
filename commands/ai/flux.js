@@ -18,12 +18,7 @@ export default {
     // Check if query is provided
     if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `🎨 *FLUX AI IMAGE GENERATOR*\n\n` +
-              `❌ Provide a prompt to generate an image\n\n` +
-              `📌 *Usage:* \`${PREFIX}flux your prompt here\`\n` +
-              `📝 *Examples:*\n` +
-              `• \`${PREFIX}flux a cute cat wearing sunglasses\`\n` +
-              `✨ Powered by Flux AI`
+        text: `╭─⌈ 🎨 *FLUX AI* ⌋\n│\n├─⊷ *${PREFIX}flux <prompt>*\n│  └⊷ Generate AI image from text\n│\n├─⊷ *${PREFIX}fluxai <prompt>*\n│  └⊷ Alias for flux\n│\n╰───`
       }, { quoted: m });
     }
 

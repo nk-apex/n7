@@ -77,13 +77,7 @@ export default {
       searchQuery = quoted.text;
     } else if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `🎵 *PLAY COMMAND*\n\n` +
-              `📌 *Usage:* \`${prefix}play song name\`\n` +
-              `📝 *Examples:*\n` +
-              `• \`${prefix}play Home by NF\`\n` +
-              `• \`${prefix}play https://youtube.com/...\`\n` +
-              `• \`${prefix}play Ed Sheeran Shape of You\`\n\n` +
-              `✨ Downloads audio from YouTube using Keith API`
+        text: `╭─⌈ 🎵 *PLAY COMMAND* ⌋\n│\n├─⊷ *${prefix}play <song name>*\n│  └⊷ Download audio from YouTube\n│\n├─⊷ *${prefix}play <YouTube URL>*\n│  └⊷ Download from direct link\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}play Home by NF\n│  └⊷ ${prefix}play Ed Sheeran Shape of You\n│\n╰───`
       }, { quoted: m });
     }
 

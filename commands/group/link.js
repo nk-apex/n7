@@ -78,7 +78,7 @@ export default {
       
       // Show usage if no action specified
       if (!action) {
-        const usageText = `📋 *Group Link Commands*\n\n• *link* - Get current invite link\n• *link reset* - Generate new link\n• *link revoke* - Revoke current link\n• *link info* - Show link info`;
+        const usageText = `╭─⌈ 📋 *GROUP LINK* ⌋\n│\n├─⊷ *link*\n│  └⊷ Get current invite link\n│\n├─⊷ *link reset*\n│  └⊷ Generate new link\n│\n├─⊷ *link revoke*\n│  └⊷ Revoke current link\n│\n├─⊷ *link info*\n│  └⊷ Show link info\n│\n╰───`;
         
         await sock.sendMessage(sender, { 
           text: usageText
@@ -128,7 +128,7 @@ export default {
             message += `📅 *Created:* ${creationDate}\n`;
             message += `👑 *Admins:* ${adminsCount}\n`;
             message += `🆔 *Group ID:* ${sender.split('@')[0]}\n\n`;
-            message += `💡 *Commands:*\n• *link reset* - Generate new link\n• *link revoke* - Delete current link`;
+            message += `\n╭─⌈ 💡 *COMMANDS* ⌋\n│\n├─⊷ *link reset*\n│  └⊷ Generate new link\n│\n├─⊷ *link revoke*\n│  └⊷ Delete current link\n│\n╰───`;
           } catch (error) {
             if (error.message?.includes('not authorized') || error.message?.includes('401')) {
               message = '🔗 *No Active Link*\n\nThere is no active invite link for this group or the bot lacks permissions.\n\nGenerate one with: *link reset*';
@@ -146,11 +146,7 @@ export default {
             
             message = `🐺 *Group Invite Link*\n\n`;
             message += `🔗 *Link:* ${link}\n\n`;
-            message += `📋 *Usage:*\n`;
-            message += `• Share this link to invite people\n`;
-            message += `• Use *link reset* for new link\n`;
-            message += `• Use *link revoke* to delete link\n\n`;
-            message += `⚠️ *Warning:* Anyone with this link can join the group.`;
+            message += `\n╭─⌈ 📋 *USAGE* ⌋\n│\n├─⊷ *link reset*\n│  └⊷ Generate new link\n│\n├─⊷ *link revoke*\n│  └⊷ Delete current link\n│\n│ ⚠️ Anyone with this link can join\n╰───`;
           } catch (error) {
             // No active link, generate one
             try {

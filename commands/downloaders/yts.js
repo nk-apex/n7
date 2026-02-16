@@ -198,7 +198,7 @@ export default {
     try {
       if (args.length === 0) {
         return sock.sendMessage(msg.key.remoteJid, {
-          text: '❌ *Please provide a search query*\n\n📌 *Usage:*\n• `.yts song name`\n• `.yts funny videos`\n• `.yts tutorial`'
+          text: '╭─⌈ 🔍 *YouTube Search* ⌋\n│\n├─⊷ *.yts <search query>*\n│  └⊷ Search YouTube videos\n│\n├─⊷ *Examples:*\n│  └⊷ .yts song name\n│  └⊷ .yts funny videos\n│  └⊷ .yts tutorial\n│\n╰───'
         }, { quoted: msg });
       }
 

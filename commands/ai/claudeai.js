@@ -18,15 +18,7 @@ export default {
       query = quoted.text;
     } else {
       await sock.sendMessage(jid, { 
-        text: `🧠 *Claude AI*\n\n` +
-              `💡 *Usage:*\n` +
-              `• \`${PREFIX}claudeai your question\`\n` +
-              `• \`${PREFIX}claudeai explain something\`\n` +
-              `📌 *Examples:*\n` +
-              `• \`${PREFIX}claudeai What is machine learning?\`\n` +
-              `• \`${PREFIX}claudeai How to write better code?\`\n` +
-              //`🔤 *Aliases:* ${PREFIX}claude, ${PREFIX}anthropic, ${PREFIX}claude2, ${PREFIX}claude3`
-      ``}, { quoted: m });
+        text: `╭─⌈ 🧠 *CLAUDE AI* ⌋\n│\n├─⊷ *${PREFIX}claudeai <question>*\n│  └⊷ Ask Claude anything\n│\n├─⊷ *${PREFIX}claude <question>*\n│  └⊷ Alias for claudeai\n│\n├─⊷ *${PREFIX}anthropic <question>*\n│  └⊷ Alias for claudeai\n│\n╰───`}, { quoted: m });
       return;
     }
 

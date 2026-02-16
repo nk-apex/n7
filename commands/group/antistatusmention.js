@@ -247,19 +247,7 @@ export default {
 
         if (!action || action === 'help') {
             return sock.sendMessage(chatId, {
-                text: `🚫 *ANTI-STATUS MENTION*
-
-Detects when someone mentions this group in their WhatsApp status and takes automatic action.
-
-• \`${PREFIX}antistatusmention warn\` - Warn the person
-• \`${PREFIX}antistatusmention delete\` - Notify & warn (delete mode)
-• \`${PREFIX}antistatusmention kick\` - Auto-kick after warnings
-• \`${PREFIX}antistatusmention off\` - Disable protection
-• \`${PREFIX}antistatusmention maxwarn <number>\` - Set max warnings before kick
-• \`${PREFIX}antistatusmention reset <@user>\` - Reset a user's warnings
-• \`${PREFIX}antistatusmention status\` - View current settings
-
-_Short command:_ \`${PREFIX}asm\``
+                text: `╭─⌈ 🚫 *ANTI-STATUS MENTION* ⌋\n│\n├─⊷ *${PREFIX}antistatusmention warn*\n│  └⊷ Warn the person\n│\n├─⊷ *${PREFIX}antistatusmention delete*\n│  └⊷ Notify & warn (delete mode)\n│\n├─⊷ *${PREFIX}antistatusmention kick*\n│  └⊷ Auto-kick after warnings\n│\n├─⊷ *${PREFIX}antistatusmention off*\n│  └⊷ Disable protection\n│\n├─⊷ *${PREFIX}antistatusmention maxwarn <number>*\n│  └⊷ Set max warnings before kick\n│\n├─⊷ *${PREFIX}antistatusmention reset <@user>*\n│  └⊷ Reset a user's warnings\n│\n├─⊷ *${PREFIX}antistatusmention status*\n│  └⊷ View current settings\n│\n│ _Short command:_ \`${PREFIX}asm\`\n╰───`
             }, { quoted: msg });
         }
 

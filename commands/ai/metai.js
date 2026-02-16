@@ -13,13 +13,7 @@ export default {
     
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `🤖 *META AI ASSISTANT*\n` +
-        `⚡ *Powered by Meta AI Technology*\n\n` +
-        `💡 *Usage:*\n` +
-        `• \`${PREFIX}metai your question\`\n` +
-        `• \`${PREFIX}meta hello\`\n` +
-        `• \`${PREFIX}metaai how are you?\`\n` +
-       ``;
+      const helpText = `╭─⌈ 🤖 *META AI* ⌋\n│\n├─⊷ *${PREFIX}metai <question>*\n│  └⊷ Ask Meta AI anything\n│\n├─⊷ *${PREFIX}meta <question>*\n│  └⊷ Alias for metai\n│\n├─⊷ *${PREFIX}metaai <question>*\n│  └⊷ Alias for metai\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }

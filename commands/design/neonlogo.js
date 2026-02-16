@@ -10,7 +10,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `💡 *Neon Logo*\n\nUsage: neonlogo <text>\n\n*Example:*\nneonlogo WOLF\nneonlogo NEON\nneonlogo GLOW` 
+          text: `╭─⌈ 💡 *NEON LOGO* ⌋\n│\n├─⊷ *neonlogo*\n│  └⊷ neonlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ neonlogo WOLF\n│  └⊷ neonlogo NEON\n│  └⊷ neonlogo GLOW\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -19,7 +19,7 @@ export default {
       
       if (text.length > 15) {
         await sock.sendMessage(jid, { 
-          text: `❌ Text too long! Please use maximum 15 characters.\n\nYour text: "${text}" (${text.length} characters)` 
+          text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ Text too long!\n│  └⊷ Maximum 15 characters\n│  └⊷ Your text: "${text}" (${text.length} chars)\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -40,7 +40,7 @@ export default {
     } catch (error) {
       console.error("❌ [NEONLOGO] ERROR:", error);
       await sock.sendMessage(jid, { 
-        text: `❌ Error creating neon logo: ${error.message}\n\nPlease try again with shorter text.` 
+        text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ ${error.message}\n│  └⊷ Please try again with shorter text\n│\n╰───` 
       }, { quoted: m });
     }
   },

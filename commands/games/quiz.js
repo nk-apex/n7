@@ -1056,19 +1056,19 @@ async function showStats(sock, m, chatId, userId) {
 }
 
 async function showCategories(sock, m, chatId) {
-    let categoriesText = `📚 *QUIZ CATEGORIES*\n\n`;
+    let categoriesText = `╭─⌈ 📚 *QUIZ CATEGORIES* ⌋\n│\n`;
     
     Object.entries(QUIZ_CATEGORIES).forEach(([key, cat]) => {
-        categoriesText += `${cat.emoji} *${cat.name}:* .quiz ${key}\n`;
+        categoriesText += `├─⊷ *${cat.emoji} ${cat.name}*\n│  └⊷ .quiz ${key}\n│\n`;
     });
     
-    categoriesText += `\n*Random question:* .quiz\n*Your stats:* .quiz stats`;
+    categoriesText += `├─⊷ *.quiz*\n│  └⊷ Random question\n│\n├─⊷ *.quiz stats*\n│  └⊷ Your stats\n│\n╰───`;
     
     await sock.sendMessage(chatId, { text: categoriesText }, { quoted: m });
 }
 
 async function showHelp(sock, m, chatId) {
-    const helpText = `🎮 *INSTANT QUIZ GAME*\n\n*Start:* .quiz\n*Categories:* .quiz science/geography/etc\n*Stats:* .quiz stats\n*Categories:* .quiz categories\n*Answer:* Reply to any question with A-D\n\n*Features:*\n• New questions anytime\n• Answer anytime within 5 minutes\n• Live results updating\n• Multiple users can answer\n• No waiting for others\n\n*Just type .quiz to start!*`;
+    const helpText = `╭─⌈ 🎮 *INSTANT QUIZ GAME* ⌋\n│\n├─⊷ *.quiz*\n│  └⊷ Start a random quiz\n│\n├─⊷ *.quiz science/geography/etc*\n│  └⊷ Quiz by category\n│\n├─⊷ *.quiz stats*\n│  └⊷ Your statistics\n│\n├─⊷ *.quiz categories*\n│  └⊷ List all categories\n│\n├─⊷ *Answer:* Reply to any question with A-D\n├─⊷ ⏱️ 5 minutes to answer, multiple users can play\n│\n╰───`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }

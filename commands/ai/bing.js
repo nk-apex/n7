@@ -27,15 +27,7 @@ export default {
     // Check if prompt is provided
     if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `🎨 *AI IMAGE GENERATOR*\n\n` +
-              `❌ Please provide a text prompt\n` +
-              `📌 *Usage:* \`${PREFIX}bing your prompt | resolution\`\n` +
-              `📝 *Examples:*\n` +
-              `• \`${PREFIX}bing cute cat\`\n` +
-              `• \`${PREFIX}bing beautiful sunset | landscape\`\n` +
-              `• \`${PREFIX}bing anime girl | portrait\`\n` +
-              `• \`${PREFIX}bing futuristic city | ultra\`\n\n` +
-         ``
+        text: `╭─⌈ 🎨 *AI IMAGE GENERATOR* ⌋\n│\n├─⊷ *${PREFIX}bing <prompt>*\n│  └⊷ Generate AI image\n│\n├─⊷ *${PREFIX}bing <prompt> | <resolution>*\n│  └⊷ Generate with resolution (landscape/portrait/ultra/hd)\n│\n╰───`
       }, { quoted: m });
     }
 
@@ -50,10 +42,7 @@ export default {
     if (!reso[resolution]) {
       const validResolutions = Object.keys(reso).join(', ');
       return sock.sendMessage(jid, {
-        text: `❌ *Invalid Resolution*\n\n` +
-              `Resolution "${resolution}" is not valid.\n\n` +
-              `✅ *Available options:*\n${validResolutions}\n\n` +
-              `📝 *Example:* \`${PREFIX}bing cute cat | portrait\``
+        text: `╭─⌈ ❌ *INVALID RESOLUTION* ⌋\n│\n│ "${resolution}" is not valid.\n│\n│ ✅ Available: ${validResolutions}\n│\n├─⊷ *${PREFIX}bing <prompt> | <resolution>*\n│  └⊷ Use a valid resolution\n│\n╰───`
       }, { quoted: m });
     }
 
@@ -166,8 +155,7 @@ export default {
       errorMessage += `• Specify colors, lighting, mood\n`;
       errorMessage += `• Keep prompts under 200 characters\n\n`;
       
-      errorMessage += `📌 *Usage:* \`${PREFIX}bing prompt | resolution\`\n`;
-      errorMessage += `📝 *Example:* \`${PREFIX}bing beautiful sunset over mountains | landscape\``;
+      errorMessage += `╭─⌈ 📌 *USAGE* ⌋\n│\n├─⊷ *${PREFIX}bing <prompt> | <resolution>*\n│  └⊷ Generate AI image\n│\n╰───`;
       
       await sock.sendMessage(jid, {
         text: errorMessage

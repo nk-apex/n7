@@ -687,7 +687,7 @@ export default {
 
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `🎬 *YouTube Video Downloader*\n\nUsage:\n• \`video2 song name\`\n• \`video2 https://youtube.com/...\`\n\nAdd \`-low\` for smaller file size\nExample: video2 Not Like Us -low`
+          text: `╭─⌈ 🎬 *YouTube Video Downloader* ⌋\n│\n├─⊷ *video2 <song name>*\n│  └⊷ Download video from YouTube\n│\n├─⊷ *video2 <url>*\n│  └⊷ Download video from YouTube link\n│\n├─⊷ *-low*\n│  └⊷ Add flag for smaller file size\n│\n├─⊷ *Examples:*\n│  └⊷ video2 Not Like Us\n│  └⊷ video2 Not Like Us -low\n│\n╰───`
         }, { quoted: m });
         return;
       }

@@ -43,12 +43,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `🎬 *YouTube Video Downloader*\n\n` +
-                `📌 *Usage:* \`${prefix}ytv video name\`\n` +
-                `📝 *Examples:*\n` +
-                `• \`${prefix}ytv funny cats\`\n` +
-                `• \`${prefix}ytv https://youtube.com/...\`\n\n` +
-                `✨ Downloads video from YouTube`
+          text: `╭─⌈ 🎬 *YouTube Video Downloader* ⌋\n│\n├─⊷ *${prefix}ytv <video name>*\n│  └⊷ Downloads video from YouTube\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}ytv funny cats\n│  └⊷ ${prefix}ytv https://youtube.com/...\n│\n╰───`
         }, { quoted: m });
         return;
       }

@@ -22,7 +22,7 @@ export default {
 
         if (!args[0]) {
             return sock.sendMessage(chatId, {
-                text: `🔧 *Sudo Mode*\n\n📊 Current: ${currentMode ? '✅ ON' : '❌ OFF'}\n👥 Sudo Users: ${getSudoCount()}\n\nUsage:\n• \`${PREFIX}sudomode on\` - Only owner & sudo can use bot\n• \`${PREFIX}sudomode off\` - Normal mode\n\n_When enabled, only the owner and sudo users can use the bot regardless of other mode settings._`
+                text: `╭─⌈ 🔧 *SUDO MODE* ⌋\n│\n│ 📊 Current: ${currentMode ? '✅ ON' : '❌ OFF'}\n│ 👥 Sudo Users: ${getSudoCount()}\n│\n├─⊷ *${PREFIX}sudomode on*\n│  └⊷ Only owner & sudo can use bot\n├─⊷ *${PREFIX}sudomode off*\n│  └⊷ Normal mode\n│\n╰───────────────`
             }, { quoted: msg });
         }
 
@@ -30,7 +30,7 @@ export default {
 
         if (action !== 'on' && action !== 'off') {
             return sock.sendMessage(chatId, {
-                text: `❌ Invalid option!\n\nUse: \`${PREFIX}sudomode on/off\``
+                text: `╭─⌈ ❌ *INVALID OPTION* ⌋\n│\n├─⊷ *${PREFIX}sudomode on/off*\n│  └⊷ Toggle sudo mode\n│\n╰───────────────`
             }, { quoted: msg });
         }
 

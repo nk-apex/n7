@@ -419,14 +419,7 @@ export default {
        if (!args[0]) {
       const prefix = '.'; // Change this to your bot's prefix
       return await sock.sendMessage(groupId, {
-        text: `📋 *ADD COMMAND*\n` +
-              `*Usage:*\n` +
-              `• ${prefix}add 2547xxxxxxxx\n` +
-              `• ${prefix}add 254xxx,254yyy,254zzz\n` +
-              `*Examples:*\n` +
-              `• ${prefix}add 254712345678\n` +
-              `• ${prefix}add 254712345678,254798765432\n` +
-             ``
+        text: `╭─⌈ 📋 *ADD* ⌋\n│\n├─⊷ *${prefix}add 2547xxxxxxxx*\n│  └⊷ Add single number\n│\n├─⊷ *${prefix}add 254xxx,254yyy,254zzz*\n│  └⊷ Add multiple numbers\n│\n╰───`
       }, { quoted: msg });
     }
     

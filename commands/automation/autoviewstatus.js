@@ -259,24 +259,11 @@ export default {
                 // Show current status
                 const stats = autoViewManager.getStats();
                 
-                let statusText = `👁️ *AUTOVIEWSTATUS*\n\n`;
-                statusText += `Status: ${stats.enabled ? '✅ **ACTIVE**' : '❌ **INACTIVE**'}\n`;
-                // statusText += `📊 Total Viewed: ${stats.totalViewed}\n`;
-                // statusText += `🔄 Consecutive: ${stats.consecutiveViews}\n`;
-                // statusText += `👁️ Mark as Seen: ${stats.settings.markAsSeen ? '✅' : '❌'}\n`;
-                // statusText += `⚡ Delay: ${stats.settings.rateLimitDelay}ms\n\n`;
-                
-                // if (stats.lastViewed) {
-                //     const timeAgo = Math.floor((Date.now() - stats.lastViewed.timestamp) / 60000);
-                //     statusText += `🕒 Last Viewed:\n`;
-                //     statusText += `• From: ${stats.lastViewed.sender}\n`;
-                //     statusText += `• Action: ${stats.lastViewed.action}\n`;
-                //     statusText += `• ${timeAgo < 1 ? 'Just now' : `${timeAgo} minutes ago`}\n`;
-                // }
-                
-                statusText += `\n📋 *Commands:*\n`;
-                statusText += `• \`${prefix}autoviewstatus on - Enable auto viewing\``;
-                statusText += `• \`${prefix}autoviewstatus off - Disable auto viewing\``;
+                let statusText = `╭─⌈ 👁️ *AUTOVIEWSTATUS* ⌋\n│\n`;
+                statusText += `│ Status: ${stats.enabled ? '✅ **ACTIVE**' : '❌ **INACTIVE**'}\n│\n`;
+                statusText += `├─⊷ *${prefix}autoviewstatus on*\n│  └⊷ Enable auto viewing\n│\n`;
+                statusText += `├─⊷ *${prefix}autoviewstatus off*\n│  └⊷ Disable auto viewing\n│\n`;
+                statusText += `╰───`;
              
                 
                 await sock.sendMessage(m.key.remoteJid, { text: statusText }, { quoted: m });
@@ -391,17 +378,16 @@ export default {
                 case 'config':
                     if (args.length < 2) {
                         const settings = autoViewManager.config.settings;
-                        let settingsText = `⚙️ *AUTOVIEWSTATUS SETTINGS*\n\n`;
-                        settingsText += `1. Mark as Seen: ${settings.markAsSeen ? '✅ ON' : '❌ OFF'}\n`;
-                        settingsText += `2. Delay: ${settings.rateLimitDelay}ms\n`;
-                        settingsText += `3. View All: ${settings.viewToAll ? '✅' : '❌'}\n`;
-                        settingsText += `4. Ignore Consecutive: ${settings.ignoreConsecutiveLimit ? '✅' : '❌'}\n\n`;
-                        
-                        settingsText += `*Usage:*\n`;
-                        settingsText += `${prefix}autoviewstatus settings seen on/off\n`;
-                        settingsText += `${prefix}autoviewstatus settings delay <ms>\n`;
-                        settingsText += `${prefix}autoviewstatus settings all on/off\n`;
-                        settingsText += `${prefix}autoviewstatus settings consecutive on/off\n`;
+                        let settingsText = `╭─⌈ ⚙️ *AUTOVIEWSTATUS SETTINGS* ⌋\n│\n`;
+                        settingsText += `│ Mark as Seen: ${settings.markAsSeen ? '✅ ON' : '❌ OFF'}\n`;
+                        settingsText += `│ Delay: ${settings.rateLimitDelay}ms\n`;
+                        settingsText += `│ View All: ${settings.viewToAll ? '✅' : '❌'}\n`;
+                        settingsText += `│ Ignore Consecutive: ${settings.ignoreConsecutiveLimit ? '✅' : '❌'}\n│\n`;
+                        settingsText += `├─⊷ *${prefix}autoviewstatus settings seen on/off*\n│  └⊷ Toggle mark as seen\n│\n`;
+                        settingsText += `├─⊷ *${prefix}autoviewstatus settings delay <ms>*\n│  └⊷ Set viewing delay\n│\n`;
+                        settingsText += `├─⊷ *${prefix}autoviewstatus settings all on/off*\n│  └⊷ Toggle view all\n│\n`;
+                        settingsText += `├─⊷ *${prefix}autoviewstatus settings consecutive on/off*\n│  └⊷ Toggle consecutive viewing\n│\n`;
+                        settingsText += `╰───`;
                         
                         await sock.sendMessage(m.key.remoteJid, { text: settingsText }, { quoted: m });
                         return;
@@ -412,7 +398,7 @@ export default {
                     if (settingName === 'seen') {
                         if (args.length < 3) {
                             await sock.sendMessage(m.key.remoteJid, {
-                                text: `Usage: ${prefix}autoviewstatus settings seen on/off\n\nControls whether statuses are actually marked as "seen".`
+                                text: `╭─⌈ ⚙️ *SETTINGS: SEEN* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings seen on/off*\n│  └⊷ Controls whether statuses are marked as "seen"\n│\n╰───`
                             }, { quoted: m });
                             return;
                         }
@@ -438,7 +424,7 @@ export default {
                     } else if (settingName === 'delay') {
                         if (args.length < 3) {
                             await sock.sendMessage(m.key.remoteJid, {
-                                text: `Usage: ${prefix}autoviewstatus settings delay <milliseconds>\nMinimum: 500ms (0.5 second)`
+                                text: `╭─⌈ ⚙️ *SETTINGS: DELAY* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings delay <ms>*\n│  └⊷ Set delay (minimum 500ms)\n│\n╰───`
                             }, { quoted: m });
                             return;
                         }
@@ -460,7 +446,7 @@ export default {
                     } else if (settingName === 'all') {
                         if (args.length < 3) {
                             await sock.sendMessage(m.key.remoteJid, {
-                                text: `Usage: ${prefix}autoviewstatus settings all on/off\n\nControls whether to view all statuses or selective.`
+                                text: `╭─⌈ ⚙️ *SETTINGS: VIEW ALL* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings all on/off*\n│  └⊷ Toggle viewing all statuses or selective\n│\n╰───`
                             }, { quoted: m });
                             return;
                         }
@@ -486,7 +472,7 @@ export default {
                     } else if (settingName === 'consecutive') {
                         if (args.length < 3) {
                             await sock.sendMessage(m.key.remoteJid, {
-                                text: `Usage: ${prefix}autoviewstatus settings consecutive on/off\n\nControls whether to view consecutive statuses from same user.`
+                                text: `╭─⌈ ⚙️ *SETTINGS: CONSECUTIVE* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings consecutive on/off*\n│  └⊷ Toggle viewing consecutive statuses from same user\n│\n╰───`
                             }, { quoted: m });
                             return;
                         }
@@ -529,13 +515,13 @@ export default {
                 case 'help':
                 case 'cmd':
                     await sock.sendMessage(m.key.remoteJid, {
-                        text: `📖 *AUTOVIEWSTATUS HELP*\n\n*Main Commands:*\n• ${prefix}autoviewstatus - Show status\n• ${prefix}autoviewstatus on - Enable\n• ${prefix}autoviewstatus off - Disable\n\n*Info & Stats:*\n• ${prefix}autoviewstatus stats - Detailed stats\n• ${prefix}autoviewstatus logs - View logs\n• ${prefix}autoviewstatus reset - Clear stats\n\n*Configuration:*\n• ${prefix}autoviewstatus settings - Configure options\n\n*Examples:*\n${prefix}autoviewstatus on\n${prefix}autoviewstatus stats\n${prefix}autoviewstatus settings seen on\n${prefix}autoviewstatus settings delay 2000`
+                        text: `╭─⌈ 📖 *AUTOVIEWSTATUS HELP* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on*\n│  └⊷ Enable auto viewing\n│\n├─⊷ *${prefix}autoviewstatus off*\n│  └⊷ Disable auto viewing\n│\n├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ Detailed statistics\n│\n├─⊷ *${prefix}autoviewstatus logs*\n│  └⊷ View recent logs\n│\n├─⊷ *${prefix}autoviewstatus settings*\n│  └⊷ Configure options\n│\n├─⊷ *${prefix}autoviewstatus reset*\n│  └⊷ Clear stats\n│\n╰───`
                     }, { quoted: m });
                     break;
                     
                 default:
                     await sock.sendMessage(m.key.remoteJid, {
-                        text: `❓ *Invalid Command*\n\nUse:\n• ${prefix}autoviewstatus on/off\n• ${prefix}autoviewstatus stats\n• ${prefix}autoviewstatus settings\n• ${prefix}autoviewstatus help`
+                        text: `╭─⌈ ❓ *AUTOVIEWSTATUS* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on/off*\n│  └⊷ Enable or disable\n│\n├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ View statistics\n│\n├─⊷ *${prefix}autoviewstatus settings*\n│  └⊷ Configure options\n│\n├─⊷ *${prefix}autoviewstatus help*\n│  └⊷ Show all commands\n│\n╰───`
                     }, { quoted: m });
             }
             

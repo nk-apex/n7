@@ -962,24 +962,7 @@ export default {
                 
             case 'status':
             case 'stats':
-                const statsText = `
-📊 *ANTIDELETE STATUS*
-
-✅ *System:* ALWAYS ACTIVE
-🔒 *Mode:* ${antideleteState.mode.toUpperCase()}
-💾 *Storage:* ${antideleteState.stats.totalStorageMB}MB
-📦 *Cached Messages:* ${antideleteState.messageCache.size}
-📸 *Cached Media:* ${antideleteState.mediaCache.size}
-🔍 *Deletions Detected:* ${antideleteState.stats.deletedDetected}
-✅ *Retrieved:* ${antideleteState.stats.retrieved}
-
-💡 *Usage:*
-• \`${prefix}antidelete private\` - Send to DM only
-• \`${prefix}antidelete public\` - Show in chat
-• \`${prefix}antidelete clear\` - Clear cache
-• \`${prefix}antidelete settings\` - Configure
-• \`${prefix}antidelete help\` - Full help
-`;
+                const statsText = `╭─⌈ 📊 *ANTIDELETE STATUS* ⌋\n│\n│ ✅ *System:* ALWAYS ACTIVE\n│ 🔒 *Mode:* ${antideleteState.mode.toUpperCase()}\n│ 💾 *Storage:* ${antideleteState.stats.totalStorageMB}MB\n│ 📦 *Cached:* ${antideleteState.messageCache.size} msgs | 📸 ${antideleteState.mediaCache.size} media\n│ 🔍 *Detected:* ${antideleteState.stats.deletedDetected} | ✅ *Retrieved:* ${antideleteState.stats.retrieved}\n│\n├─⊷ *${prefix}antidelete private*\n│  └⊷ Send to DM only\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antidelete help*\n│  └⊷ Full help\n│\n╰───────────────`;
                 
                 await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
                 break;
@@ -1033,28 +1016,7 @@ export default {
                 const subCommand = args[1]?.toLowerCase();
                 
                 if (!subCommand) {
-                    const settingsText = `
-⚙️ *ANTIDELETE SETTINGS* (Owner Only)
-
-✅ System: ALWAYS ACTIVE
-Current Mode: ${antideleteState.mode.toUpperCase()}
-Data Storage: JSON Format
-
-🔧 *Configuration:*
-• Auto-clean: ${antideleteState.settings.autoCleanEnabled ? '✅ ENABLED' : '❌ DISABLED'}
-• Clean Retrieved: ${antideleteState.settings.autoCleanRetrieved ? '✅ ENABLED' : '❌ DISABLED'}
-• Max Age: ${antideleteState.settings.maxAgeHours} hours
-• Max Storage: ${antideleteState.settings.maxStorageMB}MB
-• Show Group Names: ${antideleteState.settings.showGroupNames ? '✅' : '❌'}
-
-📊 *Usage:*
-• \`${prefix}antidelete settings autoclean on/off\`
-• \`${prefix}antidelete settings cleanretrieved on/off\`
-• \`${prefix}antidelete settings maxage <hours>\`
-• \`${prefix}antidelete settings maxstorage <MB>\`
-• \`${prefix}antidelete settings groupnames on/off\`
-• \`${prefix}antidelete settings save\`
-`;
+                    const settingsText = `╭─⌈ ⚙️ *ANTIDELETE SETTINGS* ⌋\n│\n│ ✅ System: ALWAYS ACTIVE\n│ Mode: ${antideleteState.mode.toUpperCase()} | Storage: JSON\n│\n│ 🔧 Auto-clean: ${antideleteState.settings.autoCleanEnabled ? '✅' : '❌'}\n│ 🔧 Clean Retrieved: ${antideleteState.settings.autoCleanRetrieved ? '✅' : '❌'}\n│ 🔧 Max Age: ${antideleteState.settings.maxAgeHours}h | Max Storage: ${antideleteState.settings.maxStorageMB}MB\n│ 🔧 Group Names: ${antideleteState.settings.showGroupNames ? '✅' : '❌'}\n│\n├─⊷ *${prefix}antidelete settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}antidelete settings cleanretrieved on/off*\n│  └⊷ Toggle clean retrieved\n├─⊷ *${prefix}antidelete settings maxage <hours>*\n│  └⊷ Set max cache age\n├─⊷ *${prefix}antidelete settings maxstorage <MB>*\n│  └⊷ Set max storage\n├─⊷ *${prefix}antidelete settings groupnames on/off*\n│  └⊷ Toggle group names\n├─⊷ *${prefix}antidelete settings save*\n│  └⊷ Save settings\n│\n╰───────────────`;
                     await sock.sendMessage(chatId, { text: settingsText }, { quoted: msg });
                     return;
                 }
@@ -1170,63 +1132,14 @@ Data Storage: JSON Format
                 break;
                 
             case 'help':
-                const helpText = `
-🔍 *ANTIDELETE SYSTEM* (Owner Only)
-
-🎯 *Purpose:*
-Monitor and retrieve DELETED WhatsApp messages
-Shows REAL WhatsApp numbers and group names
-
-✅ *ALWAYS ACTIVE* - Cannot be turned off
-Antidelete is enabled by default and stays active across restarts.
-
-🚀 *Features:*
-• REAL WhatsApp numbers (e.g., @1234567890)
-• Group names display (fetches actual group names)
-• Shows who deleted the message
-• JSON storage format (saves memory)
-• Auto-clean retrieved messages
-• Memory-optimized media handling
-
-🔐 *Modes:*
-• **PRIVATE** (Default) - Deleted messages go to your DM ONLY
-• **PUBLIC** - Deleted messages shown in the original chat
-
-⚙️ *Commands (Owner Only):*
-• \`${prefix}antidelete private\` - Enable PRIVATE mode (DM only)
-• \`${prefix}antidelete public\` - Enable PUBLIC mode (in chat)
-• \`${prefix}antidelete stats\` - View statistics
-• \`${prefix}antidelete clear\` - Clear all data
-• \`${prefix}antidelete settings\` - Configure settings
-• \`${prefix}antidelete help\` - This menu
-
-📱 *Private Mode (Default):*
-✅ Messages sent to your WhatsApp (message yourself)
-✅ Shows real WhatsApp numbers (@1234567890)
-✅ Shows actual group names
-✅ Shows who deleted the message
-❌ Does NOT resend to group or original chat
-
-📢 *Public Mode:*
-✅ Messages shown in the chat where deleted
-✅ Shows real WhatsApp numbers (@1234567890)
-✅ Shows actual group names
-✅ Shows who deleted the message
-❌ Does NOT send to owner DM
-
-📝 *Current Status:*
-Mode: ${antideleteState.mode.toUpperCase()}
-Active: ✅ ALWAYS
-Storage: ${antideleteState.stats.totalStorageMB}MB
-Show Group Names: ${antideleteState.settings.showGroupNames ? '✅' : '❌'}
-`;
+                const helpText = `╭─⌈ 🔍 *ANTIDELETE SYSTEM* ⌋\n│\n│ ✅ ALWAYS ACTIVE - Cannot be turned off\n│\n├─⊷ *${prefix}antidelete private*\n│  └⊷ Deleted messages go to your DM only\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show deleted messages in original chat\n├─⊷ *${prefix}antidelete stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear all data\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure settings\n├─⊷ *${prefix}antidelete help*\n│  └⊷ This menu\n│\n│ 📝 Mode: ${antideleteState.mode.toUpperCase()} | Storage: ${antideleteState.stats.totalStorageMB}MB\n│ Group Names: ${antideleteState.settings.showGroupNames ? '✅' : '❌'}\n│\n╰───────────────`;
                 
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
                 
             default:
                 await sock.sendMessage(chatId, {
-                    text: `🔧 *Antidelete System* (Owner Only)\n\n✅ Status: ALWAYS ACTIVE\n🔒 Mode: ${antideleteState.mode.toUpperCase()}\n💾 Storage: ${antideleteState.stats.totalStorageMB}MB\n\n◉ Shows REAL WhatsApp numbers (@1234567890)\n◉ Shows actual group names\n◉ Shows who deleted the message\n\n💡 Use \`${prefix}antidelete help\` for commands`
+                    text: `╭─⌈ 🔧 *ANTIDELETE* ⌋\n│\n│ ✅ Status: ALWAYS ACTIVE\n│ 🔒 Mode: ${antideleteState.mode.toUpperCase()}\n│ 💾 Storage: ${antideleteState.stats.totalStorageMB}MB\n│\n├─⊷ *${prefix}antidelete help*\n│  └⊷ View all commands\n│\n╰───────────────`
                 }, { quoted: msg });
         }
     }

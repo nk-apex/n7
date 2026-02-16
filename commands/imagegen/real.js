@@ -35,7 +35,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, { 
-          text: `📸 *Photorealistic Image Generator*\n\nUsage: real <prompt>\n\nExamples:\nreal beautiful woman in paris, photorealistic\nreal cyberpunk city at night, 8k, cinematic\nreal astronaut on mars, detailed, photography\n\n🎭 *Realistic Models:*\n• Realistic Vision (best for people)\n• Deliberate (detailed scenes)\n• DreamShaper (versatile)\n• ChilloutMix (Asian realistic)\n• Analog Diffusion (film photography)\n\n💡 *Tips for Realism:*\n• Add "photorealistic", "photography"\n• Specify camera/lens: "85mm portrait"\n• Add lighting: "cinematic lighting"\n• Specify resolution: "8k", "4k"` 
+          text: `╭─⌈ 📸 *PHOTOREALISTIC IMAGE GEN* ⌋\n│\n├─⊷ *real <prompt>*\n│  └⊷ Generate photorealistic AI images\n│\n├─⊷ *Examples:*\n│  └⊷ real cyberpunk city at night, 8k\n│  └⊷ real astronaut on mars, photography\n│\n├─⊷ 🎭 *Models:* Realistic Vision, DreamShaper, Deliberate\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -45,7 +45,7 @@ export default {
       // Check prompt length
       if (prompt.length < 5) {
         await sock.sendMessage(jid, { 
-          text: `❌ *Prompt too short*\n\nPlease provide a more detailed description.\nExample: "real photorealistic portrait of a woman in paris, 85mm lens, cinematic lighting"` 
+          text: `╭─⌈ ❌ *PROMPT TOO SHORT* ⌋\n│\n├─⊷ *real <detailed prompt>*\n│  └⊷ real photorealistic portrait, 85mm lens, cinematic lighting\n│\n╰───` 
         }, { quoted: m });
         return;
       }

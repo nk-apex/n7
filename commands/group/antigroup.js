@@ -233,7 +233,7 @@ export default {
             
             if (!mode || !['warn', 'delete', 'kick'].includes(mode)) {
                 return sock.sendMessage(chatId, { 
-                    text: '⚙️ *Anti-Group-Link Setup*\n\nUsage: `.antigrouplink on [mode]`\n\nAvailable modes:\n• `warn` - Warn users who share other group links\n• `delete` - Delete other group links\n• `kick` - Kick users who share other group links\n\nExample: `.antigrouplink on delete`' 
+                    text: '╭─⌈ ⚙️ *ANTI-GROUP-LINK SETUP* ⌋\n│\n├─⊷ *.antigrouplink on warn*\n│  └⊷ Warn users who share other group links\n│\n├─⊷ *.antigrouplink on delete*\n│  └⊷ Delete other group links\n│\n├─⊷ *.antigrouplink on kick*\n│  └⊷ Kick users who share other group links\n│\n╰───' 
                 }, { quoted: msg });
             }
 
@@ -476,7 +476,7 @@ export default {
             
             if (!linkToCheck) {
                 return sock.sendMessage(chatId, { 
-                    text: 'Usage: `.antigrouplink check [link]`\n\nExample: `.antigrouplink check https://chat.whatsapp.com/ABC123`' 
+                    text: '╭─⌈ 🔍 *ANTI-GROUP-LINK CHECK* ⌋\n│\n├─⊷ *.antigrouplink check [link]*\n│  └⊷ Check a WhatsApp group link\n│\n╰───' 
                 }, { quoted: msg });
             }
             
@@ -511,17 +511,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `
-🚫 *Anti-Group-Link Commands*
-
-Block other WhatsApp group links, allow only THIS group's link.
-
-• \`.antigrouplink on <warn|delete|kick>\`
-• \`.antigrouplink off\`
-• \`.antigrouplink getlink\`
- • \`.antigrouplink resetlink\`
-• \`.antigrouplink exemptadmins [on/off]\`
-`.trim();
+            const helpText = `╭─⌈ 🚫 *ANTI-GROUP-LINK* ⌋\n│\n├─⊷ *.antigrouplink on <warn|delete|kick>*\n│  └⊷ Enable with mode\n│\n├─⊷ *.antigrouplink off*\n│  └⊷ Disable protection\n│\n├─⊷ *.antigrouplink getlink*\n│  └⊷ Show this group's invite link\n│\n├─⊷ *.antigrouplink resetlink*\n│  └⊷ Reset group invite link\n│\n├─⊷ *.antigrouplink exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n│\n├─⊷ *.antigrouplink status*\n│  └⊷ View current status\n│\n╰───`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

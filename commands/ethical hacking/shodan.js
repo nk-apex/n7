@@ -56,11 +56,7 @@ export default {
       const lowerArgs = (args || []).map(a => String(a).toLowerCase());
       if (lowerArgs.includes("help") || lowerArgs.includes("menu") || lowerArgs.includes("info")) {
         const menuText =
-          "🔐 *shodan* — passive lookup (owner/admin only in groups)\n\n" +
-          "Usage:\n" +
-          "• .shodan <ip|host|query> consent — run a passive lookup\n" +
-          "• .shodan help — this message\n\n" +
-          "Notes: Requires SHODAN_API_KEY in env. Returns passive OSINT only.\n";
+          `╭─⌈ 🔐 *SHODAN LOOKUP* ⌋\n│\n├─⊷ *.shodan <ip|host|query> consent*\n│  └⊷ Run a passive lookup\n│\n├─⊷ *.shodan help*\n│  └⊷ Show this menu\n│\n├─⊷ *Note:* Requires SHODAN_API_KEY in env. Returns passive OSINT only.\n│\n╰───`;
         return await sock.sendMessage(jid, { text: menuText }, { quoted: m });
       }
 
@@ -128,8 +124,7 @@ export default {
       if (!args || !args.length || !lowerArgs.includes("consent")) {
         return await sock.sendMessage(jid, {
           text:
-            "⚠️ This command requires *consent* to run. Include the keyword `consent` to confirm you have authorization to query the target.\n\n" +
-            "Examples:\n• .shodan 8.8.8.8 consent\n• .shodan \"apache\" consent"
+            `╭─⌈ ⚠️ *CONSENT REQUIRED* ⌋\n│\n├─⊷ Include the keyword \`consent\` to confirm authorization\n│\n├─⊷ *.shodan 8.8.8.8 consent*\n│  └⊷ Lookup an IP\n│\n├─⊷ *.shodan "apache" consent*\n│  └⊷ Search query\n│\n╰───`
         }, { quoted: m });
       }
 
@@ -147,7 +142,7 @@ export default {
       // Build query (remove the 'consent' token)
       const rawQuery = args.filter(a => String(a).toLowerCase() !== "consent").join(" ").trim();
       if (!rawQuery) {
-        return await sock.sendMessage(jid, { text: "❗ Provide an IP, hostname, or search query. Example: `.shodan 8.8.8.8 consent`" }, { quoted: m });
+        return await sock.sendMessage(jid, { text: `╭─⌈ ❗ *MISSING QUERY* ⌋\n│\n├─⊷ *.shodan 8.8.8.8 consent*\n│  └⊷ Provide an IP, hostname, or search query\n│\n╰───` }, { quoted: m });
       }
 
       // Determine endpoint

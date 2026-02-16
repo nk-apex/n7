@@ -425,19 +425,7 @@ export default {
       query = quoted.text;
     } else {
       await sock.sendMessage(jid, { 
-        text: `🎵 *Spotify Downloader*\n\n` +
-              `💡 *Usage:*\n` +
-              `• \`${PREFIX}spotify song name\`\n` +
-              `• \`${PREFIX}spotify artist - song\`\n` +
-              `• \`${PREFIX}spotify Spotify URL\`\n` +
-              `• Reply to a message with \`${PREFIX}spotify\`\n\n` +
-              `📌 *Examples:*\n` +
-              `• \`${PREFIX}spotify Blinding Lights\`\n` +
-              `• \`${PREFIX}spotify The Weeknd - Save Your Tears\`\n` +
-              `• \`${PREFIX}spotify https://open.spotify.com/track/xxx\`\n` +
-              `• Reply to song name with \`${PREFIX}spotify\`\n\n` +
-              `🔤 *Aliases:* ${PREFIX}spot, ${PREFIX}spdl, ${PREFIX}spotifydl, ${PREFIX}spotid\n\n` +
-              `⚠️ *Note:* Downloads highest quality available`
+        text: `╭─⌈ 🎵 *SPOTIFY DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}spotify <song name>*\n│  └⊷ Search and download from Spotify\n│\n├─⊷ *${PREFIX}spotify <Spotify URL>*\n│  └⊷ Download from direct link\n│\n├─⊷ *Reply with ${PREFIX}spotify*\n│  └⊷ Download song from replied text\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}spotify Blinding Lights\n│  └⊷ ${PREFIX}spotify The Weeknd - Save Your Tears\n│\n├─⊷ *Aliases:* spot, spdl, spotifydl\n│\n╰───`
       }, { quoted: m });
       return;
     }

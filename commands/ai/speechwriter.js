@@ -18,18 +18,7 @@ export default {
       topic = quoted.text;
     } else {
       await sock.sendMessage(jid, { 
-        text: `🎤 *AI Speech Writer*\n\n` +
-              `💡 *Usage:*\n` +
-              `• \`${PREFIX}speechwriter your topic\`\n` +
-              `• \`${PREFIX}speechwriter topic with options\`\n` +
-              `🎯 *Options:*\n` +
-              `• \`${PREFIX}speechwriter topic -length [short/medium/long]\`\n` +
-              `• \`${PREFIX}speechwriter topic -type [dedication/inspirational/formal/casual]\`\n` +
-              `• \`${PREFIX}speechwriter topic -tone [serious/friendly/persuasive/motivational]\`\n\n` +
-              `📌 *Examples:*\n` +
-              `• \`${PREFIX}speechwriter climate change -long -formal -serious\`\n` +
-              `• \`${PREFIX}speechwriter graduation speech -medium -inspirational\`\n` +
-              ``
+        text: `╭─⌈ 🎤 *AI SPEECH WRITER* ⌋\n│\n├─⊷ *${PREFIX}speechwriter <topic>*\n│  └⊷ Generate a speech\n│\n├─⊷ *${PREFIX}speechwriter <topic> -long -formal*\n│  └⊷ With length/type/tone options\n│\n├─⊷ *${PREFIX}speech <topic>*\n│  └⊷ Alias for speechwriter\n│\n╰───`
       }, { quoted: m });
       return;
     }

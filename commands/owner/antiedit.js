@@ -864,47 +864,14 @@ Auto-save: ✅
                 
             case 'help':
             case 'menu':
-                const helpText = `
-🔍 *ANTIEDIT SYSTEM*
-
-🎯 *Three Modes:*
-1. **PUBLIC** - Shows edited messages in the chat where they were edited
-2. **PRIVATE** - Sends edited messages to your DM only  
-3. **OFF** - System is disabled
-
-🚀 *Commands:*
-• \`${prefix}antiedit public\` - Enable PUBLIC mode
-• \`${prefix}antiedit private\` - Enable PRIVATE mode
-• \`${prefix}antiedit on\` - Enable system (private mode)
-• \`${prefix}antiedit off\` - Disable system
-• \`${prefix}antiedit status\` - View statistics
-• \`${prefix}antiedit history <reply>\` - Show edit history of a message
-• \`${prefix}antiedit test\` - Send test message
-• \`${prefix}antiedit clear\` - Clear all cache
-• \`${prefix}antiedit debug\` - Debug information
-• \`${prefix}antiedit help\` - This menu
-
-⚙️ *Features:*
-✅ Captures all edits (text changes)
-✅ Tracks message versions (v1, v2, v3...)
-✅ Shows original vs edited content
-✅ Works with media messages
-✅ History tracking for each message
-✅ Private DM alerts or public chat alerts
-
-📝 *Current Status:*
-Mode: ${antieditState.mode.toUpperCase()}
-Active: ${antieditState.mode === 'off' ? '❌' : '✅'}
-Tracking: ${antieditState.currentMessages.size} messages
-Owner: ${antieditState.ownerJid ? '✅ SET' : '⚠️ NOT SET'}
-`;
+                const helpText = `╭─⌈ 🔍 *ANTIEDIT SYSTEM* ⌋\n│\n├─⊷ *${prefix}antiedit public*\n│  └⊷ Enable PUBLIC mode\n├─⊷ *${prefix}antiedit private*\n│  └⊷ Enable PRIVATE mode\n├─⊷ *${prefix}antiedit on*\n│  └⊷ Enable system (private mode)\n├─⊷ *${prefix}antiedit off*\n│  └⊷ Disable system\n├─⊷ *${prefix}antiedit status*\n│  └⊷ View statistics\n├─⊷ *${prefix}antiedit history <reply>*\n│  └⊷ Show edit history of a message\n├─⊷ *${prefix}antiedit test*\n│  └⊷ Send test message\n├─⊷ *${prefix}antiedit clear*\n│  └⊷ Clear all cache\n├─⊷ *${prefix}antiedit debug*\n│  └⊷ Debug information\n├─⊷ *${prefix}antiedit help*\n│  └⊷ This menu\n│\n│ 📝 Mode: ${antieditState.mode.toUpperCase()} | Active: ${antieditState.mode === 'off' ? '❌' : '✅'}\n│ Tracking: ${antieditState.currentMessages.size} messages\n│\n╰───────────────`;
                 
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
                 
             default:
                 await sock.sendMessage(chatId, {
-                    text: `🔧 *Antiedit System*\n\nCurrent Mode: ${antieditState.mode.toUpperCase()}\nStatus: ${antieditState.mode === 'off' ? '❌ INACTIVE' : '✅ ACTIVE'}\nTracking: ${antieditState.currentMessages.size} messages\n\n💡 Use \`${prefix}antiedit help\` for commands`
+                    text: `╭─⌈ 🔧 *ANTIEDIT* ⌋\n│\n│ Mode: ${antieditState.mode.toUpperCase()}\n│ Status: ${antieditState.mode === 'off' ? '❌ INACTIVE' : '✅ ACTIVE'}\n│ Tracking: ${antieditState.currentMessages.size} messages\n│\n├─⊷ *${prefix}antiedit help*\n│  └⊷ View all commands\n│\n╰───────────────`
                 }, { quoted: msg });
         }
         

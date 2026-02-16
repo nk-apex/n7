@@ -13,27 +13,13 @@ export default {
     try {
       // Show help if no arguments
       if (args.length === 0 || args[0]?.toLowerCase() === 'help') {
-        const helpText = `📊 *TIKTOK ACCOUNT INFO*\n\n` +
-          `📌 *Usage:*\n` +
-          `• \`.tiktokinfo <username>\`\n` +
-          `• \`.ttinfo @username\`\n\n` +
-          
-          `✨ *Information Provided:*\n` +
-          `• Profile picture\n` +
-          `• Followers count\n` +
-          `• Following count\n` +
-          `• Total likes\n` +
-          `• Video count\n` +
-          `• Friends count\n` +
-          `• Bio/description\n` +
-          `• Verified status\n` +
-          `• Private status\n` +
-          `• Account creation date\n` +
-          `• Profile link\n\n` +
-          
-          `🎯 *Examples:*\n` +
-          `\`.tiktokinfo keizzah4189\`\n` +
-          `\`.ttinfo @khaby.lame\``;
+        const helpText = `╭─⌈ 📊 *TIKTOK ACCOUNT INFO* ⌋\n│\n` +
+          `├─⊷ *.tiktokinfo <username>*\n│  └⊷ Get TikTok account information\n│\n` +
+          `├─⊷ *.ttinfo @username*\n│  └⊷ Alias for tiktokinfo\n│\n` +
+          `├─⊷ *Examples:*\n` +
+          `│  └⊷ .tiktokinfo keizzah4189\n` +
+          `│  └⊷ .ttinfo @khaby.lame\n│\n` +
+          `╰───`;
         
         return sock.sendMessage(jid, { text: helpText }, { quoted: m });
       }

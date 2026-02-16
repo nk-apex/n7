@@ -14,13 +14,7 @@ export default {
       // ====== HELP SECTION ======
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `🤖 *WOLFBOT COPILOT*\n\n` +
-                `💡 *Usage:*\n` +
-                `• \`${PREFIX}copilot Hello\`\n` +
-                `• \`${PREFIX}copilot what is quantum computing\`\n` +
-                `• \`${PREFIX}copilot write a poem about moon\`\n` +
-                `• \`${PREFIX}copilot explain prada and sonata\`\n` +
-                ``
+          text: `╭─⌈ 🤖 *COPILOT AI* ⌋\n│\n├─⊷ *${PREFIX}copilot <question>*\n│  └⊷ Ask Copilot anything\n│\n╰───`
         }, { quoted: m });
       }
 

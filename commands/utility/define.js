@@ -20,7 +20,7 @@ export default {
       }
 
       if (!word) {
-        await sock.sendMessage(m.key.remoteJid, { text: "🐺💚 Reply to a word or type `.define word`" }, { quoted: m });
+        await sock.sendMessage(m.key.remoteJid, { text: `╭─⌈ 🐺💚 *DICTIONARY* ⌋\n│\n├─⊷ *define <word>*\n│  └⊷ Get the definition of a word\n│\n├─⊷ *Reply*\n│  └⊷ Reply to a word with .define\n│\n╰───` }, { quoted: m });
         return;
       }
 

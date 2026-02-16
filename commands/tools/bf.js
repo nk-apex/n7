@@ -15,39 +15,13 @@ export default {
     const hasReply = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     
     if (args.length === 0 && !hasReply) {
-      const helpText = `💙 *BOYFRIEND PROFILE EFFECT*\n\n` +
-        `💡 *Usage (Reply-based only):*\n` +
-        `• Reply to any message with \`${PREFIX}bf\`\n` +
-        `• Works exactly like \`${PREFIX}remini\`\n\n` +
-        
-        `✨ *How to use:*\n` +
-        `1. Reply to ANY message\n` +
-        `2. Type \`${PREFIX}bf\`\n` +
-        `3. Get boyfriend profile picture\n\n` +
-        
-        `🎯 *Examples:*\n` +
-        `\`${PREFIX}bf\` (reply to any message)\n` +
-        `\`${PREFIX}boyfriend\` (alias)\n` +
-        `\`${PREFIX}hubby\` (alias)`;
+      const helpText = `╭─⌈ 💙 *BOYFRIEND PROFILE* ⌋\n│\n├─⊷ *${PREFIX}bf*\n│  └⊷ Reply to any message to get boyfriend profile pic\n│\n├─⊷ *Aliases:* boyfriend, hubby\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
 
-    // ====== HELP COMMAND EXPLICIT ======
     if (args[0]?.toLowerCase() === 'help') {
-      const helpText = `💙 *BOYFRIEND PROFILE EFFECT*\n\n` +
-        `💡 *Usage:*\n` +
-        `• \`${PREFIX}bf\` (reply to any message)\n` +
-        `• \`${PREFIX}boyfriend\` (alias)\n` +
-        `• \`${PREFIX}hubby\` (alias)\n\n` +
-        
-        `✨ *How it works:*\n` +
-        `1. Reply to any message\n` +
-        `2. Type command\n` +
-        `3. Gets profile + random handsome guy pic\n` +
-        `4. Creates couple picture\n\n` +
-        
-        `📌 *Example:* Reply to a message with \`${PREFIX}bf\``;
+      const helpText = `╭─⌈ 💙 *BOYFRIEND PROFILE* ⌋\n│\n├─⊷ *${PREFIX}bf*\n│  └⊷ Reply to any message to create couple picture\n│\n├─⊷ *Aliases:* boyfriend, hubby\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }

@@ -56,12 +56,7 @@ export default {
     try {
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `🎬 *VIDEO DOWNLOADER*\n\n` +
-                `📌 *Usage:* \`${prefix}video song name\`\n` +
-                `📝 *Examples:*\n` +
-                `• \`${prefix}video funny cats\`\n` +
-                `• \`${prefix}video https://youtube.com/...\`\n\n` +
-                `✨ Downloads video from YouTube`
+          text: `╭─⌈ 🎬 *VIDEO DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}video <name/URL>*\n│  └⊷ Download video from YouTube\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}video funny cats\n│  └⊷ ${prefix}video https://youtube.com/...\n│\n╰───`
         }, { quoted: m });
       }
 
@@ -71,7 +66,7 @@ export default {
 
       if (!searchQuery) {
         return sock.sendMessage(jid, { 
-          text: `❌ Please provide video name or URL\nExample: ${prefix}video funny cats`
+          text: `╭─⌈ ❌ *NO QUERY PROVIDED* ⌋\n│\n├─⊷ *${prefix}video <name/URL>*\n│  └⊷ Example: ${prefix}video funny cats\n│\n╰───`
         }, { quoted: m });
       }
 

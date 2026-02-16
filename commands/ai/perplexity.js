@@ -12,13 +12,7 @@ export default {
     // Check if query is provided
     if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `🤖 *PERPLEXITY AI*\n\n` +
-              `📌 *Usage:* \`${PREFIX}perplexity your question\`\n` +
-              `📝 *Examples:*\n` +
-              `• \`${PREFIX}perplexity current weather\`\n` +
-              `• \`${PREFIX}perplexity news today\`\n` +
-              `• \`${PREFIX}perplexity how to learn coding\`\n\n` +
-              `✨ Web-informed AI responses`
+        text: `╭─⌈ 🤖 *PERPLEXITY AI* ⌋\n│\n├─⊷ *${PREFIX}perplexity <question>*\n│  └⊷ Ask Perplexity anything\n│\n├─⊷ *${PREFIX}plex <question>*\n│  └⊷ Alias for perplexity\n│\n├─⊷ *${PREFIX}searchai <question>*\n│  └⊷ Alias for perplexity\n│\n╰───`
       }, { quoted: m });
     }
 

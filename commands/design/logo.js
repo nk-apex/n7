@@ -9,7 +9,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `🎨 *Logo Maker*\n\n${global.prefix}logo <text>\n\n*Other Styles:*\n${global.prefix}neonlogo <text>\n${global.prefix}firelogo <text>\n${global.prefix}goldlogo <text>\n${global.prefix}shadowlogo <text>\n${global.prefix}gradientlogo <text>\n\n*Example:*\n${global.prefix}logo WOLF` 
+          text: `╭─⌈ 🎨 *LOGO MAKER* ⌋\n│\n├─⊷ *logo*\n│  └⊷ ${global.prefix}logo <text>\n│\n├─⊷ *Other Styles:*\n│  └⊷ ${global.prefix}neonlogo <text>\n│  └⊷ ${global.prefix}firelogo <text>\n│  └⊷ ${global.prefix}goldlogo <text>\n│  └⊷ ${global.prefix}shadowlogo <text>\n│  └⊷ ${global.prefix}gradientlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ ${global.prefix}logo WOLF\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -20,7 +20,7 @@ export default {
     } catch (error) {
       console.error("❌ [LOGO] ERROR:", error);
       await sock.sendMessage(jid, { 
-        text: `❌ Error creating logo: ${error.message}` 
+        text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ ${error.message}\n│\n╰───` 
       }, { quoted: m });
     }
   },

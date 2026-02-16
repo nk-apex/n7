@@ -42,7 +42,7 @@ export default {
 
         if (!quotedMessage) {
             return sock.sendMessage(jid, {
-                text: `🎤 *TRANSCRIBE*\n\nReply to an audio or voice note with \`${PREFIX}totext\` to convert speech to text.`
+                text: `╭─⌈ 🎤 *TRANSCRIBE* ⌋\n│\n├─⊷ *${PREFIX}totext (reply to audio)*\n│  └⊷ Convert speech to text\n│\n├─⊷ *${PREFIX}transcribe (reply to audio)*\n│  └⊷ Alias for totext\n│\n╰───`
             }, { quoted: m });
         }
 

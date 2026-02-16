@@ -10,7 +10,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `🩸 *Advanced Blood Logo*\n\nUsage: bloodlogo <text>\n\n*Example:*\nbloodlogo BLOOD\nbloodlogo GORE\nbloodlogo HORROR` 
+          text: `╭─⌈ 🩸 *BLOOD LOGO* ⌋\n│\n├─⊷ *bloodlogo*\n│  └⊷ bloodlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ bloodlogo BLOOD\n│  └⊷ bloodlogo GORE\n│  └⊷ bloodlogo HORROR\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -19,7 +19,7 @@ export default {
       
       if (text.length > 10) {
         await sock.sendMessage(jid, { 
-          text: `❌ Text too long! Please use maximum 10 characters.\n\nYour text: "${text}" (${text.length} characters)` 
+          text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ Text too long!\n│  └⊷ Maximum 10 characters\n│  └⊷ Your text: "${text}" (${text.length} chars)\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -40,7 +40,7 @@ export default {
     } catch (error) {
       console.error("❌ [BLOODLOGO] ERROR:", error);
       await sock.sendMessage(jid, { 
-        text: `❌ Error creating blood logo: ${error.message}\n\nPlease try again with shorter text.` 
+        text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ ${error.message}\n│  └⊷ Please try again with shorter text\n│\n╰───` 
       }, { quoted: m });
     }
   },

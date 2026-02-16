@@ -7,16 +7,7 @@ export default {
     const sender = msg.key.remoteJid;
     
     if (!args[0]) {
-      const helpText = `🚫 *Advanced Block Detection*\n\n` +
-        `*Usage:*\n` +
-        `• !blockdetect <phone_number>\n` +
-        `• !blockdetect @mention (in groups)\n\n` +
-        `*Accuracy:* ~70-80% using multiple detection methods\n` +
-        `*Methods:* Profile, Status, Presence, Chat, Last Seen\n\n` +
-        `*Examples:*\n` +
-        `!blockdetect 1234567890\n` +
-        `!blockdetect @user\n\n` +
-        `⚠️ *Disclaimer:* Not 100% accurate. Respect privacy.`;
+      const helpText = `╭─⌈ 🚫 *BLOCK DETECTION* ⌋\n│\n├─⊷ *blockdetect <phone_number>*\n│  └⊷ Check if a number has blocked you\n├─⊷ *blockdetect @mention*\n│  └⊷ Check mentioned user in groups\n│\n│ 🎯 Accuracy: ~70-80%\n│ ⚠️ Not 100% accurate. Respect privacy.\n│\n╰───────────────`;
       
       await sock.sendMessage(sender, { text: helpText }, { quoted: msg });
       return;

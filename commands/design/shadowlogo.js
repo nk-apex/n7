@@ -10,7 +10,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `👻 *Shadow Logo*\n\nUsage: shadowlogo <text>\n\n*Example:*\nshadowlogo WOLF\nshadowlogo SHADOW\nshadowlogo DARK` 
+          text: `╭─⌈ 👻 *SHADOW LOGO* ⌋\n│\n├─⊷ *shadowlogo*\n│  └⊷ shadowlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ shadowlogo WOLF\n│  └⊷ shadowlogo SHADOW\n│  └⊷ shadowlogo DARK\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -19,7 +19,7 @@ export default {
       
       if (text.length > 12) {
         await sock.sendMessage(jid, { 
-          text: `❌ Text too long! Max 12 characters.\nYour text: "${text}" (${text.length} chars)` 
+          text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ Text too long!\n│  └⊷ Maximum 12 characters\n│  └⊷ Your text: "${text}" (${text.length} chars)\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -38,7 +38,7 @@ export default {
     } catch (error) {
       console.error("❌ [SHADOWLOGO] ERROR:", error);
       await sock.sendMessage(jid, { 
-        text: `❌ Error creating shadow logo: ${error.message}` 
+        text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ ${error.message}\n│\n╰───` 
       }, { quoted: m });
     }
   },

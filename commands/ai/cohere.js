@@ -19,13 +19,7 @@ export default {
       query = m.quoted.text;
     } else {
       return sock.sendMessage(jid, {
-        text: `🤖 *Cohere AI*\n\n` +
-              `💡 *Usage:*\n` +
-              `• \`${PREFIX}cohere your question\`\n` +
-              `• Reply to a message with \`${PREFIX}cohere\`\n\n` +
-              `📌 *Examples:*\n` +
-              `• \`${PREFIX}cohere What is machine learning?\`\n` +
-              `• \`${PREFIX}cohere Write a poem about nature\`\n`
+        text: `╭─⌈ 🤖 *COHERE AI* ⌋\n│\n├─⊷ *${PREFIX}cohere <question>*\n│  └⊷ Ask Cohere anything\n│\n├─⊷ *${PREFIX}coherai <question>*\n│  └⊷ Alias for cohere\n│\n├─⊷ *${PREFIX}cohai <question>*\n│  └⊷ Alias for cohere\n│\n╰───`
       }, { quoted: m });
     }
 

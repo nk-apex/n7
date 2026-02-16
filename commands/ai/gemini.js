@@ -17,14 +17,7 @@ export default {
       query = quoted.text;
     } else {
       await sock.sendMessage(jid, { 
-        text: `✨ *Google Gemini AI*\n` +
-              `💡 *Usage:*\n` +
-              `• \`${PREFIX}gemini your question\`\n` +
-              `• Reply to a message with \`${PREFIX}gemini\`\n\n` +
-              `📌 *Examples:*\n` +
-              `• \`${PREFIX}gemini What is quantum computing?\`\n` +
-              `• \`${PREFIX}gemini Write a poem about the ocean\`\n` +
-              `• \`${PREFIX}gemini Explain machine learning simply\``
+        text: `╭─⌈ ✨ *GOOGLE GEMINI AI* ⌋\n│\n├─⊷ *${PREFIX}gemini <question>*\n│  └⊷ Ask Gemini anything\n│\n├─⊷ *${PREFIX}googleai <question>*\n│  └⊷ Alias for gemini\n│\n├─⊷ *${PREFIX}gem <question>*\n│  └⊷ Alias for gemini\n│\n╰───`
       }, { quoted: m });
       return;
     }

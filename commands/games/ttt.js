@@ -561,34 +561,41 @@ function updateStats(userId, won) {
 }
 
 async function showHelp(sock, m, chatId) {
-    const helpText = `
-🎮 *TIC TAC TOE COMMANDS* 🎮
-
-*Start Games:*
-• \`.ttt @friend\`
-• \`.ttt ai\`
-• \`.ttt join\`
-• \`.ttt list\` 
-
-*Game Commands:*
-• \`.ttt move [1-9]\`
-• \`.ttt board\`
-• \`.ttt surrender\`
-• \`.ttt accept\`
-• \`.ttt decline\`
-
-*Info Commands:*
-• \`.ttt stats\`
-• \`.ttt leaderboard\`
-• \`.ttt help\`
-
-📍 *Board Positions:*
-1️⃣ 2️⃣ 3️⃣
-4️⃣ 5️⃣ 6️⃣
-7️⃣ 8️⃣ 9️⃣
-
-*Example:* \`.ttt move 5\` places in center
-    `.trim();
+    const helpText = `╭─⌈ 🎮 *TIC TAC TOE* ⌋
+│
+├─⊷ *.ttt @friend*
+│  └⊷ Challenge a friend
+│
+├─⊷ *.ttt ai*
+│  └⊷ Play against AI
+│
+├─⊷ *.ttt join*
+│  └⊷ Join open game
+│
+├─⊷ *.ttt list*
+│  └⊷ List open games
+│
+├─⊷ *.ttt move [1-9]*
+│  └⊷ Place your mark
+│
+├─⊷ *.ttt board*
+│  └⊷ Show current board
+│
+├─⊷ *.ttt surrender*
+│  └⊷ Give up current game
+│
+├─⊷ *.ttt accept / decline*
+│  └⊷ Respond to challenge
+│
+├─⊷ *.ttt stats*
+│  └⊷ Your statistics
+│
+├─⊷ *.ttt leaderboard*
+│  └⊷ Top players
+│
+├─⊷ 📍 Positions: 1️⃣2️⃣3️⃣ / 4️⃣5️⃣6️⃣ / 7️⃣8️⃣9️⃣
+│
+╰───`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }

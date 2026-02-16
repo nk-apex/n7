@@ -14,7 +14,7 @@ export default {
       const query = args.join(" ");
       if (!query || query.includes("--help")) {
         return sock.sendMessage(m.key.remoteJid, {
-          text: `🎨 *AI Logo Generator*\n━━━━━━━━━━━━━━━━━\nGenerate professional logos with AI\n\n*Usage:* .logoai TechStart\n*Options:*\n• --style=modern/minimal/vintage/playful\n• --color=blue/red/green/purple\n• --industry=tech/food/fashion/health\n\n*Example:* .logoai CoffeeShop --style=vintage --color=brown`
+          text: `╭─⌈ 🎨 *AI LOGO GENERATOR* ⌋\n│\n├─⊷ *.logoai <company name>*\n│  └⊷ Generate AI logo\n│\n├─⊷ *.logoai <name> --style=<style>*\n│  └⊷ modern/minimal/vintage/playful\n│\n├─⊷ *.logoai <name> --color=<color>*\n│  └⊷ blue/red/green/purple\n│\n╰───`
         }, { quoted: m });
       }
 

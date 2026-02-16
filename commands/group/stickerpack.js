@@ -1929,12 +1929,7 @@ export default {
                              `⏱️ *Default collection time:* ${config.defaultCollectionTime}s\n` +
                              `📈 *Max collection limit:* ${config.maxStickersPerCollection}\n` +
                              `🎯 *Max per pack:* ${config.maxStickersPerPack}\n\n` +
-                             `*Commands:*\n` +
-                             `• \`.stickerpack create [name]\` - Make new WhatsApp pack\n` +
-                             `• \`.stickerpack collect [time]\` - Collect stickers\n` +
-                             `• \`.stickerpack stop\` - Stop collection\n` +
-                             `• \`.stickerpack clear\` - Clear all stickers\n` +
-                             `• \`.stickerpack time [seconds]\` - Set time`;
+                             `\n╭─⌈ 📦 *STICKER PACK COMMANDS* ⌋\n│\n├─⊷ *.stickerpack create [name]*\n│  └⊷ Make new WhatsApp pack\n│\n├─⊷ *.stickerpack collect [time]*\n│  └⊷ Collect stickers\n│\n├─⊷ *.stickerpack stop*\n│  └⊷ Stop collection\n│\n├─⊷ *.stickerpack clear*\n│  └⊷ Clear all stickers\n│\n├─⊷ *.stickerpack time [seconds]*\n│  └⊷ Set collection time\n│\n╰───`;
             
             await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
 
@@ -2020,48 +2015,7 @@ export default {
         } else {
             // Show help
             const config = loadConfig();
-            const helpText = `
-📦 *WhatsApp Sticker Pack Creator - WolfPack*
-
-Create proper WhatsApp sticker packs from collected group stickers!
-
-*How it works:*
-1. Start collection with \`.stickerpack collect [time]\`
-2. Send stickers in the group (they get saved automatically)
-3. Create pack with \`.stickerpack create [name]\`
-
-*Main Commands:*
-• \`.stickerpack create [name]\` - Create proper WhatsApp pack
-• \`.stickerpack collect [seconds]\` - Start collecting (default: ${config.defaultCollectionTime}s)
-• \`.stickerpack stop\` - Stop current collection
-• \`.stickerpack time [seconds]\` - Set default collection time
-
-*Management Commands:*
-• \`.stickerpack list\` - List all created packs
-• \`.stickerpack info [number]\` - Show pack details
-• \`.stickerpack stats\` - Show statistics
-• \`.stickerpack clear\` - Clear all collected stickers
-• \`.stickerpack help\` - Show this help
-
-*Examples:*
-• \`.stickerpack collect 60\` - Collect stickers for 60 seconds
-• \`.stickerpack create Memes\` - Create "Memes" WhatsApp pack
-• \`.stickerpack time 180\` - Set default to 3 minutes
-
-*Features:*
-✅ Creates proper WhatsApp sticker packs with tray icon
-✅ Automatic sticker collection and storage
-✅ Persistent storage across bot restarts
-✅ Organized by chat/group
-✅ Pack metadata and structure
-
-*Notes:*
-• Only admins can create packs
-• Maximum ${config.maxStickersPerPack} stickers per pack
-• Maximum ${config.maxStickersPerCollection} stickers per collection
-• Stickers are saved to files for future use
-• Check terminal for detailed processing logs
-`.trim();
+            const helpText = `╭─⌈ 📦 *STICKER PACK CREATOR* ⌋\n│\n├─⊷ *.stickerpack create [name]*\n│  └⊷ Create proper WhatsApp pack\n│\n├─⊷ *.stickerpack collect [seconds]*\n│  └⊷ Start collecting (default: ${config.defaultCollectionTime}s)\n│\n├─⊷ *.stickerpack stop*\n│  └⊷ Stop current collection\n│\n├─⊷ *.stickerpack time [seconds]*\n│  └⊷ Set default collection time\n│\n├─⊷ *.stickerpack list*\n│  └⊷ List all created packs\n│\n├─⊷ *.stickerpack info [number]*\n│  └⊷ Show pack details\n│\n├─⊷ *.stickerpack stats*\n│  └⊷ Show statistics\n│\n├─⊷ *.stickerpack clear*\n│  └⊷ Clear all collected stickers\n│\n├─⊷ *.stickerpack help*\n│  └⊷ Show this help\n│\n│ Max ${config.maxStickersPerPack}/pack, ${config.maxStickersPerCollection}/collection\n╰───`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

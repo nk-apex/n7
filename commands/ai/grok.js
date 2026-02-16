@@ -18,14 +18,7 @@ export default {
       query = quoted.text;
     } else {
       await sock.sendMessage(jid, { 
-        text: `🤖 *X AI Grok*\n` +
-              `💡 *Usage:*\n` +
-              `• \`${PREFIX}grok your question\`\n` +
-              `• \`${PREFIX}grok explain something\`\n` +
-              `📌 *Examples:*\n` +
-              `• \`${PREFIX}grok What is quantum computing?\`\n` +
-              `• \`${PREFIX}grok How to learn programming?\`\n` +
-           ``
+        text: `╭─⌈ 🤖 *X AI GROK* ⌋\n│\n├─⊷ *${PREFIX}grok <question>*\n│  └⊷ Ask Grok anything\n│\n├─⊷ *${PREFIX}xgrok <question>*\n│  └⊷ Alias for grok\n│\n├─⊷ *${PREFIX}xai <question>*\n│  └⊷ Alias for grok\n│\n╰───`
       }, { quoted: m });
       return;
     }

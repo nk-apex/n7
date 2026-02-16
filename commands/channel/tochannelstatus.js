@@ -565,19 +565,7 @@ function isChannelJid(jid) {
 
 // 📌 Get help text
 function getHelpText() {
-    return `📢 *CHANNEL STATUS UPDATE COMMAND*\n\n` +
-           `*Posts to channel status (Updates tab), not regular chat!*\n\n` +
-           `*Usage in a channel:*\n` +
-           `• \`.channelstatus Your text here\` (text only)\n` +
-           `• \`.channelstatus Caption here\` + 📷 Image\n` +
-           `• \`.channelstatus\` + 🎥 Video\n` +
-           `• \`.channelstatus\` + 🎤 Voice note\n` +
-           `• \`.channelstatus\` + 😀 Sticker\n\n` +
-           `*Requirements:*\n` +
-           `• Bot must be in the channel\n` +
-           `• Works only in WhatsApp Channels\n` +
-           `• Media must be fully loaded\n\n` +
-           `*Tip:* If media fails, try resending it or use text first.`;
+    return `╭─⌈ 📢 *CHANNEL STATUS UPDATE* ⌋\n│\n│ Posts to channel status (Updates tab)\n│\n├─⊷ *.channelstatus Your text here*\n│  └⊷ Send text only\n│\n├─⊷ *.channelstatus Caption here* + 📷 Image\n│  └⊷ Send image with caption\n│\n├─⊷ *.channelstatus* + 🎥 Video\n│  └⊷ Send video\n│\n├─⊷ *.channelstatus* + 🎤 Voice note\n│  └⊷ Send voice note\n│\n├─⊷ *.channelstatus* + 😀 Sticker\n│  └⊷ Send sticker\n│\n╰───\n_Bot must be in the channel • Media must be fully loaded_`;
 }
 
 // 📌 Parse command

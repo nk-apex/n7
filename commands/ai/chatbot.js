@@ -642,27 +642,19 @@ export default {
       const currentModel = AI_MODELS[config.preferredModel] || AI_MODELS.gpt;
 
       const helpText =
-        `🐺 *W.O.L.F - AI Chatbot*\n` +
-        `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `${modeEmoji[config.mode] || '🔴'} *Status:* ${config.mode.toUpperCase()}\n` +
-        `${currentModel.icon} *Model:* ${currentModel.name}\n\n` +
-        `⚙️ *Commands:*\n` +
-        `• \`${PREFIX}chatbot on\` - Enable everywhere\n` +
-        `• \`${PREFIX}chatbot off\` - Disable\n` +
-        `• \`${PREFIX}chatbot groups\` - Groups only\n` +
-        `• \`${PREFIX}chatbot dms\` - DMs only\n` +
-        `• \`${PREFIX}chatbot both\` - All chats\n` +
-        `• \`${PREFIX}chatbot model\` - Switch AI model\n` +
-        `• \`${PREFIX}chatbot stats\` - View stats\n` +
-        `• \`${PREFIX}chatbot clear\` - Reset history\n` +
-        `• \`${PREFIX}chatbot settings\` - View config\n\n` +
-        `🎯 *Interactive Features:*\n` +
-        `Just chat naturally!\n` +
-        `• _"generate an image"_ → asks you to describe it\n` +
-        `• _"play Shape of You"_ → finds & plays it\n` +
-        `• _"play a video"_ → asks what video\n` +
-        `• _"download song Believer"_ → downloads it\n\n` +
-        `⚡ *Powered by WolfTech*`;
+        `╭─⌈ 🐺 *W.O.L.F CHATBOT* ⌋\n│\n` +
+        `│ ${modeEmoji[config.mode] || '🔴'} Status: ${config.mode.toUpperCase()}\n` +
+        `│ ${currentModel.icon} Model: ${currentModel.name}\n│\n` +
+        `├─⊷ *${PREFIX}chatbot on*\n│  └⊷ Enable everywhere\n│\n` +
+        `├─⊷ *${PREFIX}chatbot off*\n│  └⊷ Disable chatbot\n│\n` +
+        `├─⊷ *${PREFIX}chatbot groups*\n│  └⊷ Groups only\n│\n` +
+        `├─⊷ *${PREFIX}chatbot dms*\n│  └⊷ DMs only\n│\n` +
+        `├─⊷ *${PREFIX}chatbot both*\n│  └⊷ All chats\n│\n` +
+        `├─⊷ *${PREFIX}chatbot model*\n│  └⊷ Switch AI model\n│\n` +
+        `├─⊷ *${PREFIX}chatbot stats*\n│  └⊷ View stats\n│\n` +
+        `├─⊷ *${PREFIX}chatbot clear*\n│  └⊷ Reset history\n│\n` +
+        `├─⊷ *${PREFIX}chatbot settings*\n│  └⊷ View config\n│\n` +
+        `╰───`;
 
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }

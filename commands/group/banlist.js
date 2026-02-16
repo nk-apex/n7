@@ -211,19 +211,7 @@ export default {
         // Method 4: Show help
         else {
             return sock.sendMessage(chatId, { 
-                text: `⚡ *EX Command*\n\n` +
-                      `*Usage:*\n` +
-                      `• \`.ex @user\` - Mention user\n` +
-                      `• \`.ex 947xxxxxxxx\` - Phone number\n` +
-                      `• Reply to user with \`.ex\`\n\n` +
-                      `*Features:*\n` +
-                      `✅ Removes from group\n` +
-                      `✅ Auto-kick if rejoins\n` +
-                      `✅ Admin only\n` +
-                      `✅ Permanent ban\n\n` +
-                      `*Example:*\n` +
-                      `\`.ex @spammer Violating rules\`\n` +
-                      `\`.ex 94712345678\``
+                text: `╭─⌈ ⚡ *EX COMMAND* ⌋\n│\n├─⊷ *.ex @user*\n│  └⊷ Mention user to ban & kick\n│\n├─⊷ *.ex 947xxxxxxxx*\n│  └⊷ Use phone number\n│\n├─⊷ *.ex* (reply)\n│  └⊷ Reply to user\n│\n│ ✅ Removes, auto-kick on rejoin, permanent ban\n╰───`
             }, { quoted: msg });
         }
 

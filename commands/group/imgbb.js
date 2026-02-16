@@ -17,17 +17,7 @@ export default {
         return sock.sendMessage(
           jid,
           {
-            text: `📸 *ImgBB URL Generator*\n\n` +
-                  `Reply to an image with *${global.prefix || '.'}imgbb* to get a direct URL.\n\n` +
-                  `✅ *Features:*\n` +
-                  `• Permanent image URLs\n` +
-                  `• Direct image links\n` +
-                  `• High quality storage\n` +
-                  `• No expiration\n\n` +
-                  `📝 *Usage:*\n` +
-                  `1. Send or reply to an image\n` +
-                  `2. Type: .imgbb\n` +
-                  `3. Get direct URL instantly`
+            text: `╭─⌈ 📸 *IMGBB* ⌋\n│\n├─⊷ *.imgbb* (reply to image)\n│  └⊷ Upload and get direct URL\n│\n│ ✅ Permanent URLs, high quality, no expiration\n╰───`
           },
           { quoted: m }
         );

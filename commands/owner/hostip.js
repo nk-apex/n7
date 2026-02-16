@@ -505,13 +505,12 @@ export default {
                         response += `\n`;
                     }
                     
-                    response += `⚡ *Quick Commands:*\n`;
-                    response += `├─ \`${PREFIX}hostip local\` - Local network only\n`;
-                    response += `├─ \`${PREFIX}hostip public\` - Public IP only\n`;
-                    response += `├─ \`${PREFIX}hostip test\` - Connection test\n`;
-                    response += `├─ \`${PREFIX}hostip scan [host]\` - Port scan\n`;
-                    response += `├─ \`${PREFIX}hostip dns [domain]\` - DNS lookup\n`;
-                    response += `└─ \`${PREFIX}hostip whois [ip]\` - WHOIS lookup`;
+                    response += `├─⊷ *${PREFIX}hostip local*\n│  └⊷ Local network only\n`;
+                    response += `├─⊷ *${PREFIX}hostip public*\n│  └⊷ Public IP only\n`;
+                    response += `├─⊷ *${PREFIX}hostip test*\n│  └⊷ Connection test\n`;
+                    response += `├─⊷ *${PREFIX}hostip scan [host]*\n│  └⊷ Port scan\n`;
+                    response += `├─⊷ *${PREFIX}hostip dns [domain]*\n│  └⊷ DNS lookup\n`;
+                    response += `├─⊷ *${PREFIX}hostip whois [ip]*\n│  └⊷ WHOIS lookup\n╰───────────────`;
                     
                     await sock.sendMessage(chatId, {
                         text: response
@@ -952,7 +951,7 @@ export default {
                 
                 if (!domain) {
                     return sock.sendMessage(chatId, {
-                        text: `❌ *Domain required*\n\nUsage: \`${PREFIX}hostip dns <domain>\`\nExample: \`${PREFIX}hostip dns google.com\``
+                        text: `╭─⌈ ❌ *HOSTIP DNS* ⌋\n│\n├─⊷ *${PREFIX}hostip dns <domain>*\n│  └⊷ e.g. ${PREFIX}hostip dns google.com\n│\n╰───────────────`
                     }, { quoted: msg });
                 }
                 
@@ -1048,7 +1047,7 @@ export default {
                 
                 if (!query) {
                     return sock.sendMessage(chatId, {
-                        text: `❌ *IP or Domain required*\n\nUsage: \`${PREFIX}hostip whois <ip_or_domain>\`\nExamples:\n• \`${PREFIX}hostip whois 8.8.8.8\`\n• \`${PREFIX}hostip whois google.com\``
+                        text: `╭─⌈ ❌ *HOSTIP WHOIS* ⌋\n│\n├─⊷ *${PREFIX}hostip whois <ip_or_domain>*\n│  └⊷ e.g. ${PREFIX}hostip whois 8.8.8.8\n│\n╰───────────────`
                     }, { quoted: msg });
                 }
                 
@@ -1201,33 +1200,16 @@ export default {
                 break;
                 
             case 'help':
-                let helpText = `🌐 *HOSTIP COMMAND HELP*\n\n`;
-                
-                helpText += `📋 *Available Commands:*\n`;
-                helpText += `├─ \`${PREFIX}hostip\` - All network information (default)\n`;
-                helpText += `├─ \`${PREFIX}hostip local\` - Local network only\n`;
-                helpText += `├─ \`${PREFIX}hostip public\` - Public IP and geolocation\n`;
-                helpText += `├─ \`${PREFIX}hostip test\` - Internet connection test\n`;
-                helpText += `├─ \`${PREFIX}hostip scan [host]\` - Port scan\n`;
-                helpText += `├─ \`${PREFIX}hostip dns [domain]\` - DNS lookup\n`;
-                helpText += `├─ \`${PREFIX}hostip whois [ip/domain]\` - WHOIS lookup\n`;
-                helpText += `└─ \`${PREFIX}hostip help\` - This help message\n\n`;
-                
-                helpText += `🎯 *Examples:*\n`;
-                helpText += `├─ \`${PREFIX}hostip public\`\n`;
-                helpText += `├─ \`${PREFIX}hostip test\`\n`;
-                helpText += `├─ \`${PREFIX}hostip dns google.com\`\n`;
-                helpText += `├─ \`${PREFIX}hostip scan localhost\`\n`;
-                helpText += `└─ \`${PREFIX}hostip whois 8.8.8.8\`\n\n`;
-                
-                helpText += `🔧 *Features:*\n`;
-                helpText += `├─ Public IP detection\n`;
-                helpText += `├─ Geolocation information\n`;
-                helpText += `├─ Network interface details\n`;
-                helpText += `├─ Port scanning\n`;
-                helpText += `├─ DNS record lookup\n`;
-                helpText += `├─ WHOIS information\n`;
-                helpText += `└─ Connection testing`;
+                let helpText = `╭─⌈ 🌐 *HOSTIP HELP* ⌋\n│\n`;
+                helpText += `├─⊷ *${PREFIX}hostip*\n│  └⊷ All network information\n`;
+                helpText += `├─⊷ *${PREFIX}hostip local*\n│  └⊷ Local network only\n`;
+                helpText += `├─⊷ *${PREFIX}hostip public*\n│  └⊷ Public IP and geolocation\n`;
+                helpText += `├─⊷ *${PREFIX}hostip test*\n│  └⊷ Internet connection test\n`;
+                helpText += `├─⊷ *${PREFIX}hostip scan [host]*\n│  └⊷ Port scan\n`;
+                helpText += `├─⊷ *${PREFIX}hostip dns [domain]*\n│  └⊷ DNS lookup\n`;
+                helpText += `├─⊷ *${PREFIX}hostip whois [ip/domain]*\n│  └⊷ WHOIS lookup\n`;
+                helpText += `├─⊷ *${PREFIX}hostip help*\n│  └⊷ This help message\n`;
+                helpText += `│\n╰───────────────`;
                 
                 await sock.sendMessage(chatId, {
                     text: helpText
@@ -1236,7 +1218,7 @@ export default {
                 
             default:
                 await sock.sendMessage(chatId, {
-                    text: `❌ *Unknown hostip command*\n\nUse \`${PREFIX}hostip help\` to see all available commands.\n\nQuick start: \`${PREFIX}hostip public\``
+                    text: `╭─⌈ ❌ *HOSTIP* ⌋\n│\n│ Unknown command.\n│\n├─⊷ *${PREFIX}hostip help*\n│  └⊷ See all available commands\n│\n╰───────────────`
                 }, { quoted: msg });
         }
     }

@@ -671,38 +671,41 @@ async function showHelp(sock, m, chatId, userData) {
     
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    const helpText = `
-🪙 *COIN FLIP COMMANDS* 🪙
-
-💰 *Your Balance:* ${userData.balance} 🪙
-
-🎯 *Basic Game:*
-• \`.coinflip heads 100\` - Bet 100 on heads
-• \`.coinflip tails 200\` - Bet 200 on tails
-• \`.coinflip 50\` - Bet 50 on last choice
-
-⚔️ *Challenges:*
-• \`.coinflip challenge @user 500\` - Challenge player
-• \`.coinflip accept\` - Accept challenge
-• \`.coinflip cancel\` - Cancel your challenges
-
-📊 *Info Commands:*
-• \`.coinflip stats\` - Your statistics
-• \`.coinflip leaderboard\` - Top players
-• \`.coinflip daily\` - Daily bonus
-• \`.coinflip balance\` - Check balance
-
-💰 *Payouts:*
-• Single player: 1.9x (5% house edge)
-• Challenge: Winner takes all pot
-• Minimum bet: 10 🪙
-• Challenge min: 50 🪙
-
-💡 *Tips:*
-• Bet on your lucky side!
-• Challenge friends for bigger pots
-• Claim daily bonus every 24h
-    `.trim();
+    const helpText = `╭─⌈ 🪙 *COIN FLIP* ⌋
+│
+│ 💰 *Balance:* ${userData.balance} 🪙
+│
+├─⊷ *.coinflip heads 100*
+│  └⊷ Bet 100 on heads
+│
+├─⊷ *.coinflip tails 200*
+│  └⊷ Bet 200 on tails
+│
+├─⊷ *.coinflip 50*
+│  └⊷ Bet 50 on last choice
+│
+├─⊷ *.coinflip challenge @user 500*
+│  └⊷ Challenge a player
+│
+├─⊷ *.coinflip accept*
+│  └⊷ Accept challenge
+│
+├─⊷ *.coinflip cancel*
+│  └⊷ Cancel your challenges
+│
+├─⊷ *.coinflip stats*
+│  └⊷ Your statistics
+│
+├─⊷ *.coinflip leaderboard*
+│  └⊷ Top players
+│
+├─⊷ *.coinflip daily*
+│  └⊷ Daily bonus
+│
+├─⊷ *.coinflip balance*
+│  └⊷ Check balance
+│
+╰───`;
     
     await sock.sendMessage(chatId, {
         text: helpText,

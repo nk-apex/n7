@@ -34,30 +34,7 @@ export default {
 
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === "help") {
-      const helpText = `👥 *CREATE GROUP COMMAND*\n\n` +
-        `💡 *Usage:*\n` +
-        `• \`${PREFIX}creategroup GroupName\`\n` +
-        `• \`${PREFIX}creategroup "Group Name"\`\n` +
-        `• \`${PREFIX}creategroup GroupName 1234567890 9876543210\`\n` +
-        `• \`${PREFIX}creategroup Family 1234567890 -d "Family group chat"\`\n\n` +
-        
-        `⚙️ *Options:*\n` +
-        `• \`-d "description"\` - Set group description\n` +
-        `• \`-a\` - Make announcements only (admins can post)\n` +
-        `• \`-r\` - Restrict (only admins can change settings)\n\n` +
-        
-        `📋 *Requirements:*\n` +
-        `• Group name: 1-25 characters\n` +
-        `• Participants: Must be WhatsApp numbers\n` +
-        `• Numbers: Include country code (e.g., 254...)\n` +
-        `• Bot: Must be in participants' contacts\n\n` +
-        
-        `🔧 *Aliases:* \`${PREFIX}cg\`, \`${PREFIX}makegroup\`, \`${PREFIX}newgroup\`\n\n` +
-        
-        `💡 *Examples:*\n` +
-        `\`${PREFIX}cg MyGroup\`\n` +
-        `\`${PREFIX}cg "Office Team" 254712345678 254798765432\`\n` +
-        `\`${PREFIX}cg Family 254712345678 -d "Our family chat group"\``;
+      const helpText = `╭─⌈ 👥 *CREATE GROUP* ⌋\n│\n├─⊷ *${PREFIX}creategroup GroupName*\n│  └⊷ Create group with name\n│\n├─⊷ *${PREFIX}creategroup GroupName 254xxx 254yyy*\n│  └⊷ Create with participants\n│\n├─⊷ *-d "description"*\n│  └⊷ Set group description\n│\n├─⊷ *-a*\n│  └⊷ Announcements only\n│\n├─⊷ *-r*\n│  └⊷ Restrict settings to admins\n│\n│ 🔧 Aliases: \`${PREFIX}cg\`, \`${PREFIX}makegroup\`, \`${PREFIX}newgroup\`\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }

@@ -159,17 +159,7 @@ export default {
             query = m.quoted.text;
         } else {
             return sock.sendMessage(jid, {
-                text: `📸 *Image Search*\n\n` +
-                    `💡 *Usage:*\n` +
-                    `• \`${PREFIX}image your search query\`\n` +
-                    `• \`${PREFIX}image cats -limit 5\`\n` +
-                    `• Reply to a message with \`${PREFIX}image\`\n\n` +
-                    `📌 *Examples:*\n` +
-                    `• \`${PREFIX}image beautiful sunset\`\n` +
-                    `• \`${PREFIX}img anime wallpapers\`\n` +
-                    `• \`${PREFIX}pic cute animals -limit 3\`\n\n` +
-                    `🔤 *Aliases:* \`${PREFIX}img\`, \`${PREFIX}pic\`, \`${PREFIX}photo\`\n` +
-                    `⚠️ *Note:* Maximum 10 images per search`
+                text: `╭─⌈ 📸 *IMAGE SEARCH* ⌋\n│\n├─⊷ *${PREFIX}image <query>*\n│  └⊷ Search and download images from the web\n│\n├─⊷ *${PREFIX}image <query> -limit <n>*\n│  └⊷ Set number of results (max 10)\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}image beautiful sunset\n│  └⊷ ${PREFIX}pic cute animals -limit 3\n│\n├─⊷ *Aliases:* img, pic, photo\n│\n╰───`
             }, { quoted: m });
         }
 

@@ -244,7 +244,7 @@ export default {
             const action = (args[1] || 'notify').toLowerCase();
             if (!['notify', 'warn', 'kick', 'revert'].includes(action)) {
                 return sock.sendMessage(chatId, {
-                    text: `📢 *Anti-Promote Setup*\n\nUsage: \`${PREFIX}antipromote on <action>\`\n\n*Actions:*\n• \`notify\` — Just notify when someone is promoted\n• \`warn\` — Warn the promoter\n• \`kick\` — Demote back + remove promoter\n• \`revert\` — Demote the promoted user back\n\nExample: \`${PREFIX}antipromote on revert\``
+                    text: `╭─⌈ 📢 *ANTI-PROMOTE SETUP* ⌋\n│\n├─⊷ *${PREFIX}antipromote on notify*\n│  └⊷ Just notify when someone is promoted\n│\n├─⊷ *${PREFIX}antipromote on warn*\n│  └⊷ Warn the promoter\n│\n├─⊷ *${PREFIX}antipromote on kick*\n│  └⊷ Demote back + remove promoter\n│\n├─⊷ *${PREFIX}antipromote on revert*\n│  └⊷ Demote the promoted user back\n│\n╰───`
                 }, { quoted: msg });
             }
 
@@ -285,7 +285,7 @@ export default {
             if (!['notify', 'warn', 'kick', 'revert'].includes(action)) {
                 const current = config[chatId]?.action || 'notify';
                 return sock.sendMessage(chatId, {
-                    text: `📢 *Current Mode: ${current.toUpperCase()}*\n\n\`${PREFIX}antipromote mode notify\` — Notification only\n\`${PREFIX}antipromote mode warn\` — Warn the promoter\n\`${PREFIX}antipromote mode kick\` — Demote + kick promoter\n\`${PREFIX}antipromote mode revert\` — Demote promoted user`
+                    text: `╭─⌈ 📢 *ANTI-PROMOTE MODE* ⌋\n│\n│ Current: *${current.toUpperCase()}*\n│\n├─⊷ *${PREFIX}antipromote mode notify*\n│  └⊷ Notification only\n│\n├─⊷ *${PREFIX}antipromote mode warn*\n│  └⊷ Warn the promoter\n│\n├─⊷ *${PREFIX}antipromote mode kick*\n│  └⊷ Demote + kick promoter\n│\n├─⊷ *${PREFIX}antipromote mode revert*\n│  └⊷ Demote promoted user\n│\n╰───`
                 }, { quoted: msg });
             }
 
@@ -333,7 +333,7 @@ export default {
             const action = gc?.action || 'notify';
 
             await sock.sendMessage(chatId, {
-                text: `📢 *Anti-Promote System*\n\n• Status: ${isOn ? '✅ ON' : '❌ OFF'} (default: OFF)\n• Mode: ${action.toUpperCase()}\n\n*Commands:*\n• \`${PREFIX}antipromote on [notify|warn|kick|revert]\` — Enable with mode\n• \`${PREFIX}antipromote off\` — Disable\n• \`${PREFIX}antipromote mode <notify|warn|kick|revert>\` — Change mode\n• \`${PREFIX}antipromote status\` — View status\n• \`${PREFIX}antipromote resetwarns\` — Clear warnings\n\n💡 _Disabled by default. Enable per-group._\n\n🛡️ _For demotion protection, use_ \`${PREFIX}antidemote\``
+                text: `╭─⌈ 📢 *ANTI-PROMOTE* ⌋\n│\n│ Status: ${isOn ? '✅ ON' : '❌ OFF'} • Mode: ${action.toUpperCase()}\n│\n├─⊷ *${PREFIX}antipromote on [notify|warn|kick|revert]*\n│  └⊷ Enable with mode\n│\n├─⊷ *${PREFIX}antipromote off*\n│  └⊷ Disable\n│\n├─⊷ *${PREFIX}antipromote mode <notify|warn|kick|revert>*\n│  └⊷ Change mode\n│\n├─⊷ *${PREFIX}antipromote status*\n│  └⊷ View status\n│\n├─⊷ *${PREFIX}antipromote resetwarns*\n│  └⊷ Clear warnings\n│\n│ 💡 _Disabled by default. Enable per-group._\n│ 🛡️ _For demotion protection, use_ \`${PREFIX}antidemote\`\n╰───`
             }, { quoted: msg });
         }
     }

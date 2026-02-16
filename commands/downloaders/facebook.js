@@ -388,7 +388,7 @@ export default {
     
     if (!args || !args[0]) {
       await sock.sendMessage(jid, { 
-        text: `📘 *Facebook Downloader*\n💡 *Usage:*\n• \`${prefix}facebook <url>\`\n\n📌 *Examples:*\n• \`${prefix}facebook https://fb.watch/xyz\`\n• \`${prefix}facebook https://www.facebook.com/share/r/19yRtboAYn/\`\n• \`${prefix}facebook https://facebook.com/username/videos/123456789/\`` 
+        text: `╭─⌈ 📘 *Facebook Downloader* ⌋\n│\n├─⊷ *${prefix}facebook <url>*\n│  └⊷ Download videos from Facebook\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}facebook https://fb.watch/xyz\n│  └⊷ ${prefix}facebook https://www.facebook.com/share/r/19yRtboAYn/\n│  └⊷ ${prefix}facebook https://facebook.com/username/videos/123456789/\n│\n╰───` 
       }, { quoted: m });
       return;
     }

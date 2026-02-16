@@ -12,36 +12,14 @@ export default {
     
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `😂 *WOLFBOT JOKES*\n\n` +
-        `💡 *Usage:*\n` +
-        `• \`${PREFIX}joke\` - Random joke\n` +
-        `• \`${PREFIX}joke daily\` - Daily joke\n` +
-        `• \`${PREFIX}joke dark\` - Dark humor\n` +
-        `• \`${PREFIX}joke pun\` - Pun jokes\n` +
-        `• \`${PREFIX}joke list\` - Show categories\n` +
-``;
+      const helpText = `╭─⌈ 😂 *WOLFBOT JOKES* ⌋\n│\n├─⊷ *${PREFIX}joke*\n│  └⊷ Random joke\n│\n├─⊷ *${PREFIX}joke daily*\n│  └⊷ Daily joke\n│\n├─⊷ *${PREFIX}joke dark*\n│  └⊷ Dark humor\n│\n├─⊷ *${PREFIX}joke pun*\n│  └⊷ Pun jokes\n│\n├─⊷ *${PREFIX}joke list*\n│  └⊷ Show categories\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
 
     // ====== LIST CATEGORIES ======
     if (args[0].toLowerCase() === 'list') {
-      const categoriesText = `📋 *JOKE CATEGORIES*\n\n` +
-        `🎭 *Available Categories:*\n` +
-        `1. *general* - General jokes (default)\n` +
-        `2. *programming* - Tech & programming jokes\n` +
-        `3. *dark* - Dark humor (18+)\n` +
-        `4. *pun* - Pun jokes\n` +
-        `5. *knock* - Knock-knock jokes\n` +
-        `6. *dad* - Dad jokes\n` +
-        `7. *random* - Completely random\n\n` +
-        
-        `💡 *Usage:*\n` +
-        `\`${PREFIX}joke programming\`\n` +
-        `\`${PREFIX}joke dark\`\n` +
-        `\`${PREFIX}joke pun\`\n\n` +
-        
-       ``;
+      const categoriesText = `╭─⌈ 📋 *JOKE CATEGORIES* ⌋\n│\n├─⊷ *${PREFIX}joke general*\n│  └⊷ General jokes (default)\n│\n├─⊷ *${PREFIX}joke programming*\n│  └⊷ Tech & programming jokes\n│\n├─⊷ *${PREFIX}joke dark*\n│  └⊷ Dark humor (18+)\n│\n├─⊷ *${PREFIX}joke pun*\n│  └⊷ Pun jokes\n│\n├─⊷ *${PREFIX}joke knock*\n│  └⊷ Knock-knock jokes\n│\n├─⊷ *${PREFIX}joke dad*\n│  └⊷ Dad jokes\n│\n├─⊷ *${PREFIX}joke random*\n│  └⊷ Completely random\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: categoriesText }, { quoted: m });
     }

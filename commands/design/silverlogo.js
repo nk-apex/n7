@@ -10,7 +10,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `⚪ *Silver Logo*\n\nUsage: silverlogo <text>\n\n*Example:*\nsilverlogo WOLF\nsilverlogo SILVER\nsilverlogo PREMIUM` 
+          text: `╭─⌈ ⚪ *SILVER LOGO* ⌋\n│\n├─⊷ *silverlogo*\n│  └⊷ silverlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ silverlogo WOLF\n│  └⊷ silverlogo SILVER\n│  └⊷ silverlogo PREMIUM\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -19,7 +19,7 @@ export default {
       
       if (text.length > 15) {
         await sock.sendMessage(jid, { 
-          text: `❌ Text too long! Please use maximum 15 characters.\n\nYour text: "${text}" (${text.length} characters)` 
+          text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ Text too long!\n│  └⊷ Maximum 15 characters\n│  └⊷ Your text: "${text}" (${text.length} chars)\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -40,7 +40,7 @@ export default {
     } catch (error) {
       console.error("❌ [SILVERLOGO] ERROR:", error);
       await sock.sendMessage(jid, { 
-        text: `❌ Error creating silver logo: ${error.message}\n\nPlease try again with shorter text.` 
+        text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ ${error.message}\n│  └⊷ Please try again with shorter text\n│\n╰───` 
       }, { quoted: m });
     }
   },

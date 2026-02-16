@@ -458,7 +458,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, { 
-          text: `🎨 *WolfTech AI Image Generator*\n\nUsage: imagine <prompt>\n\n*Examples:*\nimagine anime girl with blue hair and sword\nimagine cyberpunk city with flying cars\nimagine fantasy dragon on mountain\nimagine minimalist logo for tech company\n\n*Style Options:*\nimagine style:anime prompt:a cat\nimagine style:cyberpunk prompt:futuristic city\nimagine style:fantasy prompt:mystical forest\n\n*Available Styles:*\nanime, realistic, cyberpunk, fantasy, digital_art, oil_painting, watercolor, pixel_art, logo, minimalist\n\n*Commands:*\n• imagine list - Show all styles\n• imagine styles - Available styles\n• imagine help - More information` 
+          text: `╭─⌈ 🎨 *AI IMAGE GENERATOR* ⌋\n│\n├─⊷ *imagine <prompt>*\n│  └⊷ Generate AI images with multiple styles\n│\n├─⊷ *imagine style:<name> prompt:<text>*\n│  └⊷ Use specific style (anime, cyberpunk, fantasy, etc.)\n│\n├─⊷ *imagine list*\n│  └⊷ Show all available styles\n│\n├─⊷ *Examples:*\n│  └⊷ imagine anime girl with blue hair\n│  └⊷ imagine style:cyberpunk futuristic city\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -497,7 +497,7 @@ export default {
       // Check prompt length
       if (prompt.length < 3) {
         await sock.sendMessage(jid, { 
-          text: `❌ *Prompt too short*\n\nPlease provide a more detailed description.\nExample: "imagine a beautiful sunset over mountains"\nExample: "imagine style:cyberpunk futuristic city at night"` 
+          text: `╭─⌈ ❌ *PROMPT TOO SHORT* ⌋\n│\n├─⊷ *imagine <detailed prompt>*\n│  └⊷ imagine a beautiful sunset over mountains\n│  └⊷ imagine style:cyberpunk futuristic city\n│\n╰───` 
         }, { quoted: m });
         return;
       }

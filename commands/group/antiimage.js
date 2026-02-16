@@ -732,7 +732,7 @@ export default {
             
             if (!mode || !['warn', 'delete', 'kick'].includes(mode)) {
                 return sock.sendMessage(chatId, { 
-                    text: '⚙️ *Anti-Image Setup*\n\nUsage: `.antiimage on [mode]`\n\nAvailable modes:\n• `warn` - Warn users who share images\n• `delete` - Delete images automatically\n• `kick` - Kick users who share images\n\nExample: `.antiimage on delete`' 
+                    text: '╭─⌈ ⚙️ *ANTI-IMAGE SETUP* ⌋\n│\n├─⊷ *.antiimage on warn*\n│  └⊷ Warn users who share images\n│\n├─⊷ *.antiimage on delete*\n│  └⊷ Delete images automatically\n│\n├─⊷ *.antiimage on kick*\n│  └⊷ Kick users who share images\n│\n╰───' 
                 }, { quoted: msg });
             }
 
@@ -859,14 +859,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `
-🖼️ *Anti-Image Commands*
-
-• \`.antiimage on <delete|warn|kick>\`
-• \`.antiimage off\`
-• \`.antiimage exemptadmins [on/off]\`
-  
-`.trim();
+            const helpText = `╭─⌈ 🖼️ *ANTI-IMAGE* ⌋\n│\n├─⊷ *.antiimage on <delete|warn|kick>*\n│  └⊷ Enable with mode\n│\n├─⊷ *.antiimage off*\n│  └⊷ Disable protection\n│\n├─⊷ *.antiimage exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n│\n╰───`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

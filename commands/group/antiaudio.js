@@ -109,7 +109,7 @@ export default {
             
             if (!mode || !['warn', 'delete', 'kick'].includes(mode)) {
                 return sock.sendMessage(chatId, { 
-                    text: '⚙️ *Anti-Audio Setup*\n\nUsage: `.antiaudio on [mode]`\n\nAvailable modes:\n• `warn` - Warn users who share audio/voice messages\n• `delete` - Delete audio automatically\n• `kick` - Kick users who share audio\n\nExample: `.antiaudio on delete`' 
+                    text: '╭─⌈ ⚙️ *ANTI-AUDIO SETUP* ⌋\n│\n├─⊷ *.antiaudio on warn*\n│  └⊷ Warn users who share audio/voice messages\n│\n├─⊷ *.antiaudio on delete*\n│  └⊷ Delete audio automatically\n│\n├─⊷ *.antiaudio on kick*\n│  └⊷ Kick users who share audio\n│\n╰───' 
                 }, { quoted: msg });
             }
 
@@ -238,7 +238,7 @@ export default {
                 
                 if (typesToAdd.length === 0) {
                     return sock.sendMessage(chatId, { 
-                        text: 'Usage: `.antiaudio types add [type]`\n\nValid types:\n• audio - All audio messages\n• voice - Voice notes only\n• music - Music files only\n\nExample: `.antiaudio types add voice`' 
+                        text: '╭─⌈ 🎵 *ANTI-AUDIO TYPES* ⌋\n│\n├─⊷ *.antiaudio types add audio*\n│  └⊷ All audio messages\n│\n├─⊷ *.antiaudio types add voice*\n│  └⊷ Voice notes only\n│\n├─⊷ *.antiaudio types add music*\n│  └⊷ Music files only\n│\n╰───' 
                     }, { quoted: msg });
                 }
                 
@@ -273,7 +273,7 @@ export default {
                 
                 if (typesToRemove.length === 0) {
                     return sock.sendMessage(chatId, { 
-                        text: 'Usage: `.antiaudio types remove [type]`\n\nValid types: audio, voice, music\n\nExample: `.antiaudio types remove music`' 
+                        text: '╭─⌈ 🎵 *ANTI-AUDIO TYPES REMOVE* ⌋\n│\n├─⊷ *.antiaudio types remove [type]*\n│  └⊷ Valid types: audio, voice, music\n│\n╰───' 
                     }, { quoted: msg });
                 }
                 
@@ -324,7 +324,7 @@ export default {
             }
             else {
                 await sock.sendMessage(chatId, { 
-                    text: '📋 *Audio Types Management*\n\nUsage:\n• `.antiaudio types add [type]`\n• `.antiaudio types remove [type]`\n• `.antiaudio types list`\n\nValid types:\n• audio - All audio messages\n• voice - Voice notes only\n• music - Music files only' 
+                    text: '╭─⌈ 📋 *ANTI-AUDIO TYPES* ⌋\n│\n├─⊷ *.antiaudio types add [type]*\n│  └⊷ Add audio type to block\n│\n├─⊷ *.antiaudio types remove [type]*\n│  └⊷ Remove audio type from block\n│\n├─⊷ *.antiaudio types list*\n│  └⊷ View blocked types\n│\n│ Valid types: audio, voice, music\n╰───' 
                 }, { quoted: msg });
             }
         }
@@ -371,14 +371,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `
-🎵 *Anti-Audio Commands*
-
-• \`.antiaudio on <warn|delete|kick> [types]\`
-• \`.antiaudio off\`
-• \`.antiaudio types [add/remove/list] [types]\`
-• \`.antiaudio exemptadmins [on/off]\`
-`.trim();
+            const helpText = `╭─⌈ 🎵 *ANTI-AUDIO* ⌋\n│\n├─⊷ *.antiaudio on <warn|delete|kick>*\n│  └⊷ Enable with mode\n│\n├─⊷ *.antiaudio off*\n│  └⊷ Disable anti-audio\n│\n├─⊷ *.antiaudio types [add/remove/list]*\n│  └⊷ Manage blocked audio types\n│\n├─⊷ *.antiaudio exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n│\n├─⊷ *.antiaudio status*\n│  └⊷ View current status\n│\n╰───`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

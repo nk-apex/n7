@@ -492,26 +492,7 @@ export default {
     
     // Show help if no arguments
     if (args.length === 0) {
-      const helpText = `🔍 *NETWORK SCANNER (NMAP)*\n\n` +
-        `Perform network reconnaissance and security analysis\n\n` +
-        `*Usage:*\n` +
-        `.nmap <target>\n` +
-        `.nmap <target> -f (fast scan)\n` +
-        `.nmap <target> -p 80,443 (specific ports)\n` +
-        `.nmap <target> -s (stealth/slow)\n` +
-        `.nmap <target> -v (verbose)\n\n` +
-        `*Examples:*\n` +
-        `.nmap example.com\n` +
-        `.nmap 192.168.1.1 -f\n` +
-        `.nmap google.com -p 80,443,8080\n\n` +
-        `*What it scans:*\n` +
-        `• DNS records (A, MX, TXT, NS)\n` +
-        `• Common ports (22, 80, 443, etc.)\n` +
-        `• Security headers\n` +
-        `• Subdomain enumeration\n` +
-        `• WHOIS information\n` +
-        `• Vulnerability assessment\n\n` +
-        `⚠️ *Disclaimer:* Use only on systems you own or have permission to scan!`;
+      const helpText = `╭─⌈ 🔍 *NETWORK SCANNER (NMAP)* ⌋\n│\n├─⊷ *.nmap <target>*\n│  └⊷ Basic network scan\n│\n├─⊷ *.nmap <target> -f*\n│  └⊷ Fast scan\n│\n├─⊷ *.nmap <target> -p 80,443*\n│  └⊷ Specific ports scan\n│\n├─⊷ *.nmap <target> -s*\n│  └⊷ Stealth/slow scan\n│\n├─⊷ *.nmap <target> -v*\n│  └⊷ Verbose scan\n│\n├─⊷ *What it scans:*\n│  └⊷ DNS records, common ports, security headers, subdomains, WHOIS, vulnerabilities\n│\n├─⊷ ⚠️ *Disclaimer:* Use only on systems you own or have permission to scan!\n│\n╰───`;
       
       await sendUpdate(helpText);
       return;
@@ -535,7 +516,7 @@ export default {
     
     // Validate target
     if (!isValidHost(target)) {
-      await sendUpdate(`❌ *Invalid Target*\n\nPlease provide a valid domain or IP address.\n\nExamples:\n• .nmap example.com\n• .nmap 192.168.1.1\n• .nmap 8.8.8.8`);
+      await sendUpdate(`╭─⌈ ❌ *INVALID TARGET* ⌋\n│\n├─⊷ Provide a valid domain or IP address\n│\n├─⊷ *.nmap example.com*\n├─⊷ *.nmap 192.168.1.1*\n├─⊷ *.nmap 8.8.8.8*\n│\n╰───`);
       return;
     }
     

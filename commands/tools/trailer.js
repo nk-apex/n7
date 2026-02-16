@@ -86,14 +86,7 @@ export default {
       searchQuery = quoted.text.trim();
         } else {
       const helpText = 
-        `🎬 *MOVIE TRAILER DOWNLOADER*\n\n` +
-        `📌 *Usage:* \`.trailer movie name\`\n` +
-        `📝 *Examples:*\n` +
-        `• \`.trailer Interstellar\`\n` +
-        `• \`.trailer https://youtube.com/trailer-url\`\n` +
-        `• \`.trailer Avengers Endgame\`\n` +
-        `• \`.trailer John Wick 4\`\n\n` +
-        `✨ Downloads official movie trailers from YouTube`;
+        `╭─⌈ 🎬 *MOVIE TRAILER* ⌋\n│\n├─⊷ *.trailer <movie name>*\n│  └⊷ Download official movie trailer\n│\n├─⊷ *.trailer <YouTube URL>*\n│  └⊷ Download trailer from URL\n│\n├─⊷ *Examples:*\n│  └⊷ .trailer Interstellar\n│  └⊷ .trailer John Wick 4\n│\n╰───`;
       
       await sock.sendMessage(jid, { text: helpText }, { quoted: m });
       return;

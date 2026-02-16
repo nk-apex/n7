@@ -37,13 +37,7 @@ export default {
 
         if (args.length === 0) {
             return sock.sendMessage(jid, {
-                text: `📊 *Warning Limit Settings*\n\n` +
-                    `Current limit: *${currentLimit}* warnings\n\n` +
-                    `💡 *Usage:*\n` +
-                    `• \`${PREFIX}setwarn 5\` - Set limit to 5\n` +
-                    `• \`${PREFIX}setwarn 10\` - Set limit to 10\n\n` +
-                    `📝 Users get kicked after reaching the limit.\n` +
-                    `⚠️ Valid range: 1 - 20`
+                text: `╭─⌈ 📊 *WARNING LIMIT* ⌋\n│\n│  Current: *${currentLimit}* warnings\n│\n├─⊷ *${PREFIX}setwarn <number>*\n│  └⊷ Set warning limit (1-20)\n│\n├─⊷ *${PREFIX}setwarn 5*\n│  └⊷ Set limit to 5 warnings\n│\n│  📝 Users get kicked after limit\n│\n╰───`
             }, { quoted: msg });
         }
 

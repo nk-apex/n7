@@ -13,7 +13,7 @@ export default {
       const mentioned = message?.extendedTextMessage?.contextInfo?.mentionedJid;
       if (!mentioned || mentioned.length === 0) {
         return await sock.sendMessage(key.remoteJid, {
-          text: '🕊️⚠️ *Mention the user you want to release from the snare.*',
+          text: '╭─⌈ 🕊️ *UNBLOCK* ⌋\n│\n├─⊷ *Tag a user*\n│  └⊷ Mention the user to unblock in group\n│\n╰───────────────',
         }, { quoted: msg });
       }
       target = mentioned[0];
@@ -21,13 +21,13 @@ export default {
       // In DM: use number if given
       if (!args[0]) {
         return await sock.sendMessage(key.remoteJid, {
-          text: '🕊️⚠️ *Provide the number of the user to release.*\nExample: .wolfrelease 254712345678',
+          text: '╭─⌈ 🕊️ *UNBLOCK* ⌋\n│\n├─⊷ *unblock <number>*\n│  └⊷ Provide number to unblock in DM\n│\n│ 💡 Example: .wolfrelease 254712345678\n│\n╰───────────────',
         }, { quoted: msg });
       }
       let number = args[0].replace(/[^0-9]/g, ''); // remove spaces/symbols
       if (number.length < 8) {
         return await sock.sendMessage(key.remoteJid, {
-          text: '⚠️ Invalid number. Try again like:\n`.wolfrelease 2547xxxxxxx`',
+          text: '╭─⌈ ⚠️ *INVALID NUMBER* ⌋\n│\n├─⊷ *unblock <number>*\n│  └⊷ Example: .wolfrelease 2547xxxxxxx\n│\n╰───────────────',
         }, { quoted: msg });
       }
       target = `${number}@s.whatsapp.net`;

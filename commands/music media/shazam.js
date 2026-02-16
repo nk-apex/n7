@@ -147,12 +147,7 @@ export default {
 
             if (!quoted && !hasAudio && !hasVideo && args.length === 0) {
                 return sock.sendMessage(jid, {
-                    text: `🎵 *Song Identification*\n\n` +
-                        `*Usage:*\n` +
-                        `• Reply to audio/voice note with \`shazam\`\n` +
-                        `• Send audio with caption \`shazam\`\n` +
-                        `• \`shazam song name\` to search by text\n\n` +
-                        `*Best with 10-15 second clear audio clips*`
+                    text: `╭─⌈ 🎵 *SONG IDENTIFICATION* ⌋\n│\n├─⊷ *shazam*\n│  └⊷ Reply to audio/voice note to identify\n│\n├─⊷ *shazam <song name>*\n│  └⊷ Search by text\n│\n├─⊷ *Send audio with caption shazam*\n│  └⊷ Best with 10-15 second clear clips\n│\n╰───`
                 }, { quoted: m });
             }
 

@@ -39,14 +39,7 @@ export default {
 
         if (args.length === 0) {
             return sock.sendMessage(jid, {
-                text: `📝 *NGL Attack*\n\n` +
-                    `*Usage:*\n` +
-                    `• \`.nglattack <username> <count> [custom message]\`\n\n` +
-                    `*Examples:*\n` +
-                    `• \`.nglattack john 5\` — sends 5 random messages\n` +
-                    `• \`.nglattack john 3 hello there\` — sends "hello there" 3 times\n\n` +
-                    `*Max:* 20 messages per run\n` +
-                    `*Note:* Username only, not the full link`
+                text: `╭─⌈ 📝 *NGL ATTACK* ⌋\n│\n├─⊷ *.nglattack <username> <count> [message]*\n│  └⊷ Send anonymous NGL messages\n│\n├─⊷ *.nglattack john 5*\n│  └⊷ Sends 5 random positive messages\n│\n├─⊷ *.nglattack john 3 hello there*\n│  └⊷ Sends "hello there" 3 times\n│\n├─⊷ *Max:* 20 messages per run\n├─⊷ *Note:* Username only, not the full link\n│\n╰───`
             }, { quoted: m });
         }
 

@@ -12,7 +12,7 @@ export default {
       const query = args.join(" ");
       if (!query) {
         return sock.sendMessage(m.key.remoteJid, {
-          text: "🏢 *Brand Logo Fetcher*\n━━━━━━━━━━━━━━━━━\nGet official logos of companies\n\n*Usage:* .brandlogo google.com\n.brandlogo Starbucks\n.brandlogo nike\n\n*Works with:*\n• Company names\n• Domain names\n• Brand names"
+          text: `╭─⌈ 🏢 *BRAND LOGO* ⌋\n│\n├─⊷ *.brandlogo <domain>*\n│  └⊷ Fetch official brand logo\n│\n├─⊷ *.brandlogo <brand name>*\n│  └⊷ Search by brand name\n│\n╰───`
         }, { quoted: m });
       }
 

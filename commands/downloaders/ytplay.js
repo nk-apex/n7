@@ -725,7 +725,7 @@ export default {
 
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `🎵 *YouTube Audio Player*\n\nUsage:\n• \`ytplay song name\`\n• \`ytplay https://youtube.com/...\`\n\nExample: ytplay Not Like Us\nExample: ytplay https://youtu.be/dQw4w9WgXcQ`
+          text: `╭─⌈ 🎵 *YouTube Audio Player* ⌋\n│\n├─⊷ *ytplay <song name>*\n│  └⊷ Play audio from YouTube\n│\n├─⊷ *ytplay <url>*\n│  └⊷ Play audio from YouTube link\n│\n├─⊷ *Examples:*\n│  └⊷ ytplay Not Like Us\n│  └⊷ ytplay https://youtu.be/dQw4w9WgXcQ\n│\n╰───`
         }, { quoted: m });
         return;
       }

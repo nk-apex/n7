@@ -124,18 +124,17 @@ export default {
     if (!args[0]) {
       const currentStyle = getCurrentMenuStyle();
       
-      let styleList = `🎨 *MENU STYLE MANAGEMENT*\n\n`;
-      styleList += `📊 Current Style: Style ${currentStyle}\n\n`;
-      styleList += `📋 Available Styles:\n`;
-      styleList += `1️⃣   Image Menu\n`;
-      styleList += `2️⃣   Text Only\n`;
-      styleList += `3️⃣   Full Descriptions\n`;
-      styleList += `4️⃣   Ad Style\n`;
-      styleList += `5️⃣   Faded\n`;
-      styleList += `6️⃣   Faded + Image\n`;
-      styleList += `7️⃣   Image + Text\n\n`;
-      styleList += `Usage: \`${PREFIX}menustyle <1-7>\`\n`;
-      styleList += `Example: \`${PREFIX}menustyle 3\``;
+      let styleList = `╭─⌈ 🎨 *MENU STYLE* ⌋\n│\n`;
+      styleList += `│  📊 Current: Style ${currentStyle}\n│\n`;
+      styleList += `├─⊷ *${PREFIX}menustyle <1-7>*\n`;
+      styleList += `│  └⊷ 1️⃣ Image Menu\n`;
+      styleList += `│  └⊷ 2️⃣ Text Only\n`;
+      styleList += `│  └⊷ 3️⃣ Full Descriptions\n`;
+      styleList += `│  └⊷ 4️⃣ Ad Style\n`;
+      styleList += `│  └⊷ 5️⃣ Faded\n`;
+      styleList += `│  └⊷ 6️⃣ Faded + Image\n`;
+      styleList += `│  └⊷ 7️⃣ Image + Text\n│\n`;
+      styleList += `╰───`;
       
       return sock.sendMessage(jid, { 
         text: styleList 
@@ -151,7 +150,7 @@ export default {
       return sock.sendMessage(
         jid,
         {
-          text: `❌ Invalid style number!\n\nValid styles: 1 to 7\n\nUsage: \`${PREFIX}menustyle <1-7>\`\nExample: \`${PREFIX}menustyle 3\``
+          text: `╭─⌈ ❌ *INVALID STYLE* ⌋\n│\n├─⊷ *${PREFIX}menustyle <1-7>*\n│  └⊷ Valid styles: 1 to 7\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}menustyle 3\n│\n╰───`
         },
         { 
           quoted: m // Reply format

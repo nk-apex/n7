@@ -239,26 +239,7 @@ export default {
     },
 
     async showHelp(sock, m) {
-        const helpText = `🎵 *SUNO AI MUSIC GENERATOR - SURBET EDITION*\n\n` +
-                        `*Commands:*\n` +
-                        `.suno generate [style] [theme:your theme]\n` +
-                        `.suno quick [viral|lofi|workout]\n` +
-                        `.suno templates\n` +
-                        `.suno themes\n` +
-                        `.suno help\n\n` +
-                        `*Examples:*\n` +
-                        `.suno generate pop_hit\n` +
-                        `.suno generate emotional_ballad theme:"lost love"\n` +
-                        `.suno quick viral\n` +
-                        `.suno templates\n\n` +
-                        `*Styles Available:*\n` +
-                        `pop_hit, emotional_ballad, edm_banger, hiphop_vibe, indie_folk\n\n` +
-                        `*Success Rates:*\n` +
-                        `Pop: 92% | EDM: 90% | Ballad: 88% | Hip Hop: 85%\n\n` +
-                        `*Note:* Currently in simulation mode. To enable real generation:\n` +
-                        `1. Get Suno API key from suno.ai\n` +
-                        `2. Replace simulateSunoAPI() with real API call\n` +
-                        `3. Add your API key to environment variables`;
+        const helpText = `╭─⌈ 🎵 *SUNO AI MUSIC* ⌋\n│\n├─⊷ *.suno generate <style>*\n│  └⊷ Generate song with style\n│\n├─⊷ *.suno quick <viral|lofi|workout>*\n│  └⊷ Quick song generation\n│\n├─⊷ *.suno templates*\n│  └⊷ View available templates\n│\n├─⊷ *.suno themes*\n│  └⊷ View suggested themes\n│\n├─⊷ *.suno help*\n│  └⊷ Show this help\n│\n╰───`;
         
         await sock.sendMessage(m.key.remoteJid, { text: helpText }, { quoted: m });
     },

@@ -13,20 +13,7 @@ export default {
     
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `📝 *WOLFBOT SUMMARIZER*\n\n` +
-        `💡 *Summarize long text into key points*\n\n` +
-        `📌 *Usage:*\n` +
-        `• \`${PREFIX}summarize your long text here\`\n` +
-        `• \`${PREFIX}summary article text\`\n` +
-        `• \`${PREFIX}summarize lecture notes...\`\n\n` +
-        `📖 *Examples:*\n` +
-        `• \`${PREFIX}summarize The quick brown fox jumps over the lazy dog...\`\n` +
-        `• \`${PREFIX}summary Meeting notes: We discussed...\`\n\n` +
-        `⚙️ *Features:*\n` +
-        `• Extracts main ideas\n` +
-        `• Removes redundancy\n` +
-        `• Preserves key information\n` +
-        `• Adjusts length automatically`;
+      const helpText = `╭─⌈ 📝 *SUMMARIZER* ⌋\n│\n├─⊷ *${PREFIX}summarize <text>*\n│  └⊷ Summarize long text\n│\n├─⊷ *${PREFIX}summary <text>*\n│  └⊷ Alias for summarize\n│\n├─⊷ *${PREFIX}summarize brief: <text>*\n│  └⊷ Brief 1-2 sentence summary\n│\n├─⊷ *${PREFIX}summarize bullets: <text>*\n│  └⊷ Summary in bullet points\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
@@ -49,7 +36,7 @@ export default {
     // Minimum text length check
     if (textToSummarize.length < 20) {
       return sock.sendMessage(jid, {
-        text: `❌ *Text Too Short*\n\nPlease provide at least 20 characters to summarize.\nExample: \`${PREFIX}summarize Your long text here...\``
+        text: `╭─⌈ ❌ *TEXT TOO SHORT* ⌋\n│\n├─⊷ *${PREFIX}summarize <text>*\n│  └⊷ Provide at least 20 characters\n│\n╰───`
       }, { quoted: m });
     }
 

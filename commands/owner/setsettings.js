@@ -33,7 +33,7 @@ export default {
         
         if (args.length < 2) {
             return await sock.sendMessage(remoteJid, {
-                text: `⚙️ *SET SETTING*\n\nUsage: .setsetting <key> <value>\n\nExamples:\n• .setsetting BOT_NAME "My Bot"\n• .setsetting PREFIX !\n• .setsetting AUTO_REPLY true\n\nUse .getsettings to see all available settings`
+                text: `╭─⌈ ⚙️ *SET SETTING* ⌋\n│\n├─⊷ *.setsetting <key> <value>*\n│  └⊷ Update a bot setting\n├─⊷ *.getsettings*\n│  └⊷ See all available settings\n│\n╰───────────────`
             }, { quoted: msg });
         }
         

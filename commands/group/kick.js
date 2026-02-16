@@ -74,7 +74,7 @@ export default {
 
     if (!participants.length) {
       return sock.sendMessage(msg.key.remoteJid, { 
-        text: '❗ Usage:\n• Mention user(s): @kick @user\n• Reply to user: @kick (in reply)\n• Use number: @kick 1234567890' 
+        text: '╭─⌈ ❗ *KICK* ⌋\n│\n├─⊷ *@kick @user*\n│  └⊷ Mention user(s) to kick\n│\n├─⊷ *@kick* (in reply)\n│  └⊷ Reply to user to kick\n│\n├─⊷ *@kick 1234567890*\n│  └⊷ Use number to kick\n│\n╰───' 
       }, { quoted: msg });
     }
 

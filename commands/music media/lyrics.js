@@ -122,7 +122,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `🎵 *Lyrics Finder*\n\n${global.prefix}lyrics <song name>\n\nExamples:\n${global.prefix}lyrics "Home by NF"\n${global.prefix}lyrics "Blinding Lights The Weeknd"\n${global.prefix}lyrics "Shape of You Ed Sheeran"` 
+          text: `╭─⌈ 🎵 *LYRICS FINDER* ⌋\n│\n├─⊷ *${global.prefix}lyrics <song name>*\n│  └⊷ Search for song lyrics\n│\n├─⊷ *Examples:*\n│  └⊷ ${global.prefix}lyrics Home by NF\n│  └⊷ ${global.prefix}lyrics Blinding Lights The Weeknd\n│\n╰───` 
         }, { quoted: m });
         return;
       }

@@ -1064,40 +1064,17 @@ async function handleStats(sock, m, args, editMessage) {
 // Handle help command
 async function handleHelp(sock, m, args, editMessage) {
   const helpText = 
-    `🔒 *Shutdown Command Help*\n\n` +
-    `*Usage:* !shutdown [time] [reason=...]\n` +
-    `*Aliases:* !sleep, !pause, !offline\n\n` +
-    
-    `*Basic Commands:*\n` +
-    `• \`!shutdown 30s\` - Shutdown for 30 seconds\n` +
-    `• \`!shutdown 5m reason=Maintenance\` - 5 minutes with reason\n` +
-    `• \`!shutdown 2h\` - Shutdown for 2 hours\n` +
-    `• \`!shutdown 1d\` - Shutdown for 1 day\n\n` +
-    
-    `*Time Formats:*\n` +
-    `• s, sec, second - Seconds\n` +
-    `• m, min, minute - Minutes\n` +
-    `• h, hour - Hours\n` +
-    `• d, day - Days\n\n` +
-    
-    `*Control Commands:*\n` +
-    `• \`!shutdown status\` - Show active shutdowns\n` +
-    `• \`!shutdown cancel <id>\` - Cancel a shutdown\n` +
-    `• \`!shutdown cancel all\` - Cancel all shutdowns\n` +
-    `• \`!shutdown extend <id> <time>\` - Extend shutdown\n` +
-    `• \`!shutdown pause <id>\` - Pause shutdown timer\n` +
-    `• \`!shutdown resume <id>\` - Resume paused shutdown\n` +
-    `• \`!shutdown stats\` - Show shutdown statistics\n` +
-    `• \`!shutdown help\` - Show this help\n\n` +
-    
-    `*Examples:*\n` +
-    `• \`!shutdown 10s\` - Quick 10 second shutdown\n` +
-    `• \`!shutdown 30m reason=System_update\` - 30 min with reason\n` +
-    `• \`!shutdown extend abc123 15m\` - Extend by 15 min\n` +
-    `• \`!shutdown pause abc123\` - Pause shutdown\n` +
-    `• \`!shutdown cancel all\` - Cancel all and resume\n\n` +
-    
-    `*Note:* During shutdown, bot will not respond to commands.`;
+    `╭─⌈ 🔒 *SHUTDOWN HELP* ⌋\n│\n` +
+    `├─⊷ *!shutdown [time]*\n│  └⊷ Shutdown bot (e.g. 30s, 5m, 2h, 1d)\n` +
+    `├─⊷ *!shutdown [time] reason=...*\n│  └⊷ Shutdown with reason\n` +
+    `├─⊷ *!shutdown status*\n│  └⊷ Show active shutdowns\n` +
+    `├─⊷ *!shutdown cancel <id|all>*\n│  └⊷ Cancel shutdown(s)\n` +
+    `├─⊷ *!shutdown extend <id> <time>*\n│  └⊷ Extend shutdown duration\n` +
+    `├─⊷ *!shutdown pause <id>*\n│  └⊷ Pause shutdown timer\n` +
+    `├─⊷ *!shutdown resume <id>*\n│  └⊷ Resume paused shutdown\n` +
+    `├─⊷ *!shutdown stats*\n│  └⊷ Show shutdown statistics\n` +
+    `├─⊷ *!shutdown help*\n│  └⊷ This help menu\n` +
+    `│\n│ ⏱️ Time: s/m/h/d | Aliases: !sleep, !pause, !offline\n│\n╰───────────────`;
   
   await editMessage(helpText);
 }

@@ -10,7 +10,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `✨ *Chrome Logo*\n\nUsage: chromelogo <text>\n\n*Example:*\nchromelogo WOLF\nchromelogo CHROME\nchromelogo SHINE` 
+          text: `╭─⌈ ✨ *CHROME LOGO* ⌋\n│\n├─⊷ *chromelogo*\n│  └⊷ chromelogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ chromelogo WOLF\n│  └⊷ chromelogo CHROME\n│  └⊷ chromelogo SHINE\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -19,7 +19,7 @@ export default {
       
       if (text.length > 15) {
         await sock.sendMessage(jid, { 
-          text: `❌ Text too long! Please use maximum 15 characters.\n\nYour text: "${text}" (${text.length} characters)` 
+          text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ Text too long!\n│  └⊷ Maximum 15 characters\n│  └⊷ Your text: "${text}" (${text.length} chars)\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -40,7 +40,7 @@ export default {
     } catch (error) {
       console.error("❌ [CHROMELOGO] ERROR:", error);
       await sock.sendMessage(jid, { 
-        text: `❌ Error creating chrome logo: ${error.message}\n\nPlease try again with shorter text.` 
+        text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ ${error.message}\n│  └⊷ Please try again with shorter text\n│\n╰───` 
       }, { quoted: m });
     }
   },

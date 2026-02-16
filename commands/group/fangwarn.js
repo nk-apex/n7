@@ -39,7 +39,7 @@ export default {
 
         if (!targetUser) {
             return sock.sendMessage(jid, {
-                text: `⚠️ *Reply to a user or mention them!*\n\nUsage:\n• Reply: \`${PREFIX}warn\`\n• Mention: \`${PREFIX}warn @user\`\n• With reason: \`${PREFIX}warn @user spamming\``
+                text: `╭─⌈ ⚠️ *WARN* ⌋\n│\n├─⊷ *${PREFIX}warn* (reply)\n│  └⊷ Reply to user to warn\n│\n├─⊷ *${PREFIX}warn @user*\n│  └⊷ Mention user to warn\n│\n├─⊷ *${PREFIX}warn @user spamming*\n│  └⊷ Warn with reason\n│\n╰───`
             }, { quoted: msg });
         }
 

@@ -172,23 +172,7 @@ export default {
         const enabled = config[chatId]?.enabled || false;
         const action = config[chatId]?.action || 'block';
         return sock.sendMessage(chatId, {
-            text: `🛡️ *ANTI-BUG PROTECTION*\n\n` +
-                `Detects and blocks bug bot attacks that crash WhatsApp.\n\n` +
-                `📊 *Status:* ${enabled ? '✅ ENABLED' : '❌ DISABLED'}\n` +
-                `⚡ *Action:* ${action.toUpperCase()}\n\n` +
-                `💡 *Usage:*\n` +
-                `• \`${PREFIX}antibug on\` - Enable\n` +
-                `• \`${PREFIX}antibug off\` - Disable\n` +
-                `• \`${PREFIX}antibug action block\` - Block attacker\n` +
-                `• \`${PREFIX}antibug action kick\` - Kick attacker\n` +
-                `• \`${PREFIX}antibug action delete\` - Delete only\n` +
-                `• \`${PREFIX}antibug status\` - Check status\n\n` +
-                `🔍 *Detects:*\n` +
-                `• Text crash exploits\n` +
-                `• VCF bomb attacks\n` +
-                `• Unicode overflow bugs\n` +
-                `• Protocol crash attempts\n` +
-                `• Button/list overflow attacks`
+            text: `╭─⌈ 🛡️ *ANTI-BUG* ⌋\n│\n│ Status: ${enabled ? '✅ ENABLED' : '❌ DISABLED'} • Action: ${action.toUpperCase()}\n│\n├─⊷ *${PREFIX}antibug on*\n│  └⊷ Enable protection\n│\n├─⊷ *${PREFIX}antibug off*\n│  └⊷ Disable protection\n│\n├─⊷ *${PREFIX}antibug action <block|kick|delete>*\n│  └⊷ Set action on detection\n│\n├─⊷ *${PREFIX}antibug status*\n│  └⊷ Check current status\n│\n│ 🔍 Detects: text crash, VCF bomb, unicode overflow, protocol crash, button/list overflow\n╰───`
         }, { quoted: msg });
     }
 };

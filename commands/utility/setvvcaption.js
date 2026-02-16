@@ -32,7 +32,7 @@ export default {
             const current = existing?.customCaption || 'Retrieved by WOLFBOT';
 
             return sock.sendMessage(chatId, {
-                text: `📝 *View-Once Caption Settings*\n\nCurrent caption: "${current}"\n\n*Usage:*\n• \`${PREFIX}setvvcaption My custom text\` - Set caption\n• \`${PREFIX}setvvcaption reset\` - Reset to default\n• \`${PREFIX}setvvcaption none\` - Disable caption`
+                text: `╭─⌈ 📝 *VIEW-ONCE CAPTION* ⌋\n│\n│  Current: "${current}"\n│\n├─⊷ *${PREFIX}setvvcaption <text>*\n│  └⊷ Set custom caption\n│\n├─⊷ *${PREFIX}setvvcaption reset*\n│  └⊷ Reset to default\n│\n├─⊷ *${PREFIX}setvvcaption none*\n│  └⊷ Disable caption\n│\n╰───`
             }, { quoted: msg });
         }
 

@@ -13,11 +13,7 @@ export default {
       // Check if movie name is provided
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `🎬 *MOVIE SEARCH*\n\n` +
-                `📌 Provide a movie title\n` +
-                `📝 *Example:* \`${PREFIX}movie Lucifer\`\n` +
-                `📝 *Example:* \`${PREFIX}movie The Originals\`\n\n` +
-                `✨ Search for any movie and get detailed information!`
+          text: `╭─⌈ 🎬 *MOVIE SEARCH* ⌋\n│\n├─⊷ *${PREFIX}movie <title>*\n│  └⊷ Search for movie information\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}movie Lucifer\n│  └⊷ ${PREFIX}movie The Originals\n│\n╰───`
         }, { quoted: m });
       }
 
@@ -41,13 +37,7 @@ export default {
 
       if (!response.data?.status || !response.data.result) {
         return sock.sendMessage(jid, {
-          text: `❌ *Movie Not Found*\n\n` +
-                `No results found for: "${movieName}"\n\n` +
-                `💡 *Suggestions:*\n` +
-                `• Check spelling\n` +
-                `• Try different title\n` +
-                `• Use exact movie name\n\n` +
-                `📝 *Example:* \`${PREFIX}movie Avengers\``
+          text: `╭─⌈ ❌ *MOVIE NOT FOUND* ⌋\n│\n│  No results for: "${movieName}"\n│\n├─⊷ *Tips:*\n│  └⊷ Check spelling\n│  └⊷ Try exact movie name\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}movie Avengers\n│\n╰───`
         }, { quoted: m });
       }
 

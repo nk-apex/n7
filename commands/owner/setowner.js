@@ -30,7 +30,7 @@
 //             const originalOwner = this.getOriginalOwner();
             
 //             return sock.sendMessage(chatId, {
-//                 text: `👑 *OWNER NAME MANAGEMENT*\n\n📝 Current Display Name: *${currentOwner}*\n🔗 Original Owner: ${originalOwner}\n\n💡 This changes only the display name in the menu, not the actual owner.\n\nUsage: \`${PREFIX}setowner <new_name>\`\nExample: \`${PREFIX}setowner WolfMaster\`\n\n🔧 Use \`${PREFIX}resetowner\` to reset to original owner.`
+//                 text: `╭─⌈ 👑 *SET OWNER* ⌋\n│\n│ 📝 Current: *${currentOwner}*\n│ 🔗 Original: ${originalOwner}\n│\n├─⊷ *${PREFIX}setowner <name>*\n│  └⊷ Change display name in menu\n├─⊷ *${PREFIX}resetowner*\n│  └⊷ Reset to original owner\n│\n╰───────────────`
 //             }, { quoted: msg });
 //         }
         
@@ -226,7 +226,7 @@ export default {
             const originalOwner = this.getOriginalOwner();
             
             return sock.sendMessage(chatId, {
-                text: `👑 *OWNER NAME MANAGEMENT*\n\n📝 Current Display Name: *${currentOwner}*\n🔗 Original Owner: ${originalOwner}\n\n💡 This changes only the display name in the menu, not the actual owner.\n\nUsage: \`${PREFIX}setowner <new_name>\`\nExample: \`${PREFIX}setowner WolfMaster\`\n\n🔧 Use \`${PREFIX}resetowner\` to reset to original owner.`
+                text: `╭─⌈ 👑 *SET OWNER* ⌋\n│\n│ 📝 Current: *${currentOwner}*\n│ 🔗 Original: ${originalOwner}\n│\n├─⊷ *${PREFIX}setowner <name>*\n│  └⊷ Change display name in menu\n├─⊷ *${PREFIX}resetowner*\n│  └⊷ Reset to original owner\n│\n╰───────────────`
             }, { quoted: msg });
         }
         

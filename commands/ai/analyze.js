@@ -56,7 +56,7 @@ export default {
         try { await sock.sendMessage(chatId, { delete: processingMsg.key }); } catch(e) {}
         
         return sock.sendMessage(chatId, {
-          text: `📊 *Content Analyzer*\n\nI can analyze various types of content:\n\n• Images (reply .analyze to image)\n• Videos (reply .analyze to video)\n• Documents (reply .analyze to document)\n• Text (reply .analyze to text or .analyze <text>)\n\nExamples:\n• Reply .analyze to a photo\n• .analyze What can you tell me about this picture?\n• .analyze Summarize this document\n\nSupported APIs: OpenAI GPT-4 Vision & Gemini Pro Vision`
+          text: `╭─⌈ 📊 *CONTENT ANALYZER* ⌋\n│\n├─⊷ *.analyze <text>*\n│  └⊷ Analyze text content\n│\n├─⊷ *.analyze (reply to image)*\n│  └⊷ Analyze image with AI vision\n│\n├─⊷ *.analyze (reply to video)*\n│  └⊷ Analyze video content\n│\n├─⊷ *.analyze (reply to document)*\n│  └⊷ Analyze document content\n│\n╰───`
         }, { quoted: m });
       }
       

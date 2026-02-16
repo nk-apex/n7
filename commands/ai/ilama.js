@@ -12,13 +12,7 @@ export default {
     // Check if query is provided
     if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `🤖 *LLAMA AI CHATBOT*\n\n` +
-              `❌ Please provide a query/question\n\n` +
-              `📌 *Usage:* \`${PREFIX}ilama your question\`\n` +
-              `📝 *Examples:*\n` +
-              `• \`${PREFIX}ilama What is quantum computing?\`\n` +
-              `• \`${PREFIX}ilama Explain machine learning\`\n` +
-               `✨ Powered by Llama AI model`
+        text: `╭─⌈ 🤖 *LLAMA AI* ⌋\n│\n├─⊷ *${PREFIX}ilama <question>*\n│  └⊷ Ask Llama AI anything\n│\n├─⊷ *${PREFIX}llama <question>*\n│  └⊷ Alias for ilama\n│\n╰───`
       }, { quoted: m });
     }
 

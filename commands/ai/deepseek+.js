@@ -20,22 +20,7 @@ export default {
       
       if (!query && !quoted) {
         return sock.sendMessage(jid, {
-          text: `📎 *WolfBot DeepSeek+* 🧠\n\n` +
-                `*File Analysis via OpenRouter*\n\n` +
-                `*Usage:*\n` +
-                `1. Reply to file + .deepseek+ <question>\n` +
-                `2. .deepseek+ What's in this? [reply]\n\n` +
-                `*Supported Files:*\n` +
-                `📸 Images (JPG, PNG, GIF)\n` +
-                `📄 PDF, TXT, DOC, DOCX\n` +
-                `💻 Code files (JS, PY, JAVA)\n` +
-                `📊 CSV, XLSX, PPTX\n` +
-                `🎥 Videos (MP4, short clips)\n\n` +
-                `*Models:*\n` +
-                `• DeepSeek Chat (default)\n` +
-                `• DeepSeek Coder (--code)\n` +
-                `• Gemini Pro Vision (--vision)\n\n` +
-                `💰 *Powered by OpenRouter*`
+          text: `╭─⌈ 📎 *DEEPSEEK+ AI* 🧠 ⌋\n│\n├─⊷ *.deepseek+ <question> (reply to file)*\n│  └⊷ Analyze file with DeepSeek\n│\n├─⊷ *.ds+ <question> (reply to file)*\n│  └⊷ Alias for deepseek+\n│\n├─⊷ *.deepseek+ --code <question>*\n│  └⊷ Use DeepSeek Coder model\n│\n├─⊷ *.deepseek+ --vision <question>*\n│  └⊷ Use Gemini Pro Vision model\n│\n╰───`
         }, { quoted: m });
       }
 

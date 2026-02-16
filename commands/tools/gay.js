@@ -15,37 +15,13 @@ export default {
     const hasReply = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     
     if (args.length === 0 && !hasReply) {
-      const helpText = `🏳️‍🌈 *RAINBOW PROFILE EFFECT*\n\n` +
-        `💡 *Usage (Reply-based only):*\n` +
-        `• Reply to any message with \`${PREFIX}gay\`\n` +
-        `• Works exactly like \`${PREFIX}remini\`\n\n` +
-        
-        `✨ *How to use:*\n` +
-        `1. Reply to ANY message\n` +
-        `2. Type \`${PREFIX}gay\`\n` +
-        `3. Get rainbow profile picture\n\n` +
-        
-        `🎯 *Examples:*\n` +
-        `\`${PREFIX}gay\` (reply to any message)\n` +
-        `\`${PREFIX}rainbow\` (alias)\n` +
-        `\`${PREFIX}pride\` (alias)`;
+      const helpText = `╭─⌈ 🏳️‍🌈 *RAINBOW PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gay*\n│  └⊷ Reply to any message to get rainbow profile pic\n│\n├─⊷ *Aliases:* rainbow, pride\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
 
-    // ====== HELP COMMAND EXPLICIT ======
     if (args[0]?.toLowerCase() === 'help') {
-      const helpText = `🏳️‍🌈 *RAINBOW PROFILE EFFECT*\n\n` +
-        `💡 *Usage:*\n` +
-        `• \`${PREFIX}gay\` (reply to any message)\n` +
-        `• \`${PREFIX}rainbow\` (alias)\n\n` +
-        
-        `✨ *Works like remini:*\n` +
-        `1. Reply to any message\n` +
-        `2. Type command\n` +
-        `3. Get result\n\n` +
-        
-        `📌 *Example:* Reply to a message with \`${PREFIX}gay\``;
+      const helpText = `╭─⌈ 🏳️‍🌈 *RAINBOW PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gay*\n│  └⊷ Reply to any message for rainbow effect\n│\n├─⊷ *Aliases:* rainbow, pride\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }

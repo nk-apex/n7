@@ -10,7 +10,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `💨 *Smoke Logo*\n\nUsage: smokelogo <text>\n\n*Example:*\nsmokelogo SMOKE\nsmokelogo VAPOR\nsmokelogo MIST` 
+          text: `╭─⌈ 💨 *SMOKE LOGO* ⌋\n│\n├─⊷ *smokelogo*\n│  └⊷ smokelogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ smokelogo SMOKE\n│  └⊷ smokelogo VAPOR\n│  └⊷ smokelogo MIST\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -19,7 +19,7 @@ export default {
       
       if (text.length > 10) {
         await sock.sendMessage(jid, { 
-          text: `❌ Text too long! Please use maximum 10 characters.\n\nYour text: "${text}" (${text.length} characters)` 
+          text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ Text too long!\n│  └⊷ Maximum 10 characters\n│  └⊷ Your text: "${text}" (${text.length} chars)\n│\n╰───` 
         }, { quoted: m });
         return;
       }
@@ -40,7 +40,7 @@ export default {
     } catch (error) {
       console.error("❌ [SMOKELOGO] ERROR:", error);
       await sock.sendMessage(jid, { 
-        text: `❌ Error creating smoke logo: ${error.message}\n\nPlease try again with shorter text.` 
+        text: `╭─⌈ ❌ *ERROR* ⌋\n│\n├─⊷ ${error.message}\n│  └⊷ Please try again with shorter text\n│\n╰───` 
       }, { quoted: m });
     }
   },

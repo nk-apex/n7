@@ -47,7 +47,7 @@ export default {
         try {
             if (args.length === 0) {
                 return sock.sendMessage(jid, {
-                    text: `💖 *SWEET LOVE VIDEO CARD*\n\n📌 *Usage:* \`${prefix}lovevideo text\`\n📝 *Example:* \`${prefix}lovevideo I love Silent Wolf\``
+                    text: `╭─⌈ 💖 *LOVE VIDEO CARD* ⌋\n│\n├─⊷ *${prefix}lovevideo <text>*\n│  └⊷ Create sweet love video card (max 50 chars)\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}lovevideo I love Silent Wolf\n│\n╰───`
                 }, { quoted: m });
             }
 

@@ -18,18 +18,7 @@ export default {
       query = quoted.text;
     } else {
       await sock.sendMessage(jid, { 
-        text: `🎭 *Venice AI*\n\n` +
-              `💡 *Usage:*\n` +
-              `• \`${PREFIX}venice your question\`\n` +
-              `• \`${PREFIX}venice explain something\`\n` +
-              `• Reply to a message with \`${PREFIX}venice\`\n\n` +
-              `📌 *Examples:*\n` +
-              `• \`${PREFIX}venice What is creative writing?\`\n` +
-              `• \`${PREFIX}veniceai Generate a story idea\`\n` +
-              `• \`${PREFIX}vai Help me brainstorm\`\n` +
-              `• Reply to a text with \`${PREFIX}venice\`\n\n` +
-              `🔤 *Aliases:* \`${PREFIX}veniceai\`, \`${PREFIX}vai\`, \`${PREFIX}ven\`\n\n` +
-              `🎨 *Features:* Strong in creativity, storytelling, and brainstorming`
+        text: `╭─⌈ 🎭 *VENICE AI* ⌋\n│\n├─⊷ *${PREFIX}venice <question>*\n│  └⊷ Ask Venice anything\n│\n├─⊷ *${PREFIX}veniceai <question>*\n│  └⊷ Alias for venice\n│\n├─⊷ *${PREFIX}vai <question>*\n│  └⊷ Alias for venice\n│\n╰───`
       }, { quoted: m });
       return;
     }

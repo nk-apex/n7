@@ -63,13 +63,7 @@ export default {
     
     if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `🎵 *SONG DOWNLOADER*\n\n` +
-              `📌 *Usage:* \`${prefix}song song name\`\n` +
-              `📝 *Examples:*\n` +
-              `• \`${prefix}song Home by NF\`\n` +
-              `• \`${prefix}song https://youtube.com/...\`\n` +
-              `• \`${prefix}song Ed Sheeran Shape of You\`\n\n` +
-              `✨ Downloads audio from YouTube using Keith API`
+        text: `╭─⌈ 🎵 *SONG DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}song <song name>*\n│  └⊷ Download audio with embedded thumbnail\n│\n├─⊷ *${prefix}song <YouTube URL>*\n│  └⊷ Download from direct link\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}song Home by NF\n│  └⊷ ${prefix}song Ed Sheeran Shape of You\n│\n╰───`
       }, { quoted: m });
     }
     

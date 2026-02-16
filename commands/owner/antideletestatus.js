@@ -739,24 +739,7 @@ export default {
         switch (command) {
             case 'status':
             case 'stats': {
-                const statsText = `📊 *STATUS ANTIDELETE STATS*
-
-✅ Status: ALWAYS ON (Private Mode)
-
-📈 *Statistics:*
-• Statuses cached: ${statusAntideleteState.statusCache.size}
-• Deleted detected: ${statusAntideleteState.stats.deletedDetected}
-• Retrieved: ${statusAntideleteState.stats.retrieved}
-• Media captured: ${statusAntideleteState.stats.mediaCaptured}
-• Sent to DM: ${statusAntideleteState.stats.sentToDm}
-• Storage: ${statusAntideleteState.stats.totalStorageMB}MB
-
-💡 *Usage:*
-• \`${prefix}antideletestatus stats\` - View stats
-• \`${prefix}antideletestatus list\` - Recent deleted statuses
-• \`${prefix}antideletestatus clear\` - Clear cache
-• \`${prefix}antideletestatus settings\` - Configure
-• \`${prefix}antideletestatus help\` - Full help`;
+                const statsText = `╭─⌈ 📊 *STATUS ANTIDELETE STATS* ⌋\n│\n│ ✅ ALWAYS ON (Private Mode)\n│ 📦 Cached: ${statusAntideleteState.statusCache.size} | 🔍 Deleted: ${statusAntideleteState.stats.deletedDetected}\n│ ✅ Retrieved: ${statusAntideleteState.stats.retrieved} | 📸 Media: ${statusAntideleteState.stats.mediaCaptured}\n│ 📩 Sent to DM: ${statusAntideleteState.stats.sentToDm} | 💾 ${statusAntideleteState.stats.totalStorageMB}MB\n│\n├─⊷ *${prefix}antideletestatus stats*\n│  └⊷ View stats\n├─⊷ *${prefix}antideletestatus list*\n│  └⊷ Recent deleted statuses\n├─⊷ *${prefix}antideletestatus clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antideletestatus settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antideletestatus help*\n│  └⊷ Full help\n│\n╰───────────────`;
 
                 await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
                 break;
@@ -838,21 +821,7 @@ export default {
                 const subCommand = args[1]?.toLowerCase();
 
                 if (!subCommand) {
-                    const settingsText = `⚙️ *STATUS ANTIDELETE SETTINGS*
-
-Status: ✅ ALWAYS ON (Private Mode)
-
-🔧 *Configuration:*
-• Auto-clean: ${statusAntideleteState.settings.autoCleanEnabled ? '✅' : '❌'}
-• Clean Retrieved: ${statusAntideleteState.settings.autoCleanRetrieved ? '✅' : '❌'}
-• Max Age: ${statusAntideleteState.settings.maxAgeHours} hours
-• Max Storage: ${statusAntideleteState.settings.maxStorageMB}MB
-
-📊 *Commands:*
-• \`${prefix}ads settings autoclean on/off\`
-• \`${prefix}ads settings cleanretrieved on/off\`
-• \`${prefix}ads settings maxage <hours>\`
-• \`${prefix}ads settings maxstorage <MB>\``;
+                    const settingsText = `╭─⌈ ⚙️ *STATUS ANTIDELETE SETTINGS* ⌋\n│\n│ ✅ ALWAYS ON (Private Mode)\n│\n│ 🔧 Auto-clean: ${statusAntideleteState.settings.autoCleanEnabled ? '✅' : '❌'}\n│ 🔧 Clean Retrieved: ${statusAntideleteState.settings.autoCleanRetrieved ? '✅' : '❌'}\n│ 🔧 Max Age: ${statusAntideleteState.settings.maxAgeHours}h | Max Storage: ${statusAntideleteState.settings.maxStorageMB}MB\n│\n├─⊷ *${prefix}ads settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}ads settings cleanretrieved on/off*\n│  └⊷ Toggle clean retrieved\n├─⊷ *${prefix}ads settings maxage <hours>*\n│  └⊷ Set max cache age\n├─⊷ *${prefix}ads settings maxstorage <MB>*\n│  └⊷ Set max storage\n│\n╰───────────────`;
                     await sock.sendMessage(chatId, { text: settingsText }, { quoted: msg });
                     return;
                 }
@@ -926,29 +895,7 @@ Status: ✅ ALWAYS ON (Private Mode)
             }
 
             case 'help': {
-                const helpText = `🔍 *STATUS ANTIDELETE SYSTEM*
-
-✅ ALWAYS ON - No off switch
-Deleted WhatsApp statuses are automatically sent to your DM
-
-🚀 *Features:*
-• Always active from startup
-• Shows correct WhatsApp numbers
-• Media capture (images, videos, audio)
-• Auto-clean old cache
-• Storage management
-
-⚙️ *Commands:*
-• \`${prefix}ads stats\` - View statistics
-• \`${prefix}ads list\` - Recent deleted statuses
-• \`${prefix}ads clear\` - Clear all cached data
-• \`${prefix}ads settings\` - Configure settings
-• \`${prefix}ads help\` - This menu
-
-📝 *Current:*
-Status: ✅ ALWAYS ON
-Cached: ${statusAntideleteState.statusCache.size} statuses
-Storage: ${statusAntideleteState.stats.totalStorageMB}MB`;
+                const helpText = `╭─⌈ 🔍 *STATUS ANTIDELETE SYSTEM* ⌋\n│\n│ ✅ ALWAYS ON - Deleted statuses sent to your DM\n│\n├─⊷ *${prefix}ads stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}ads list*\n│  └⊷ Recent deleted statuses\n├─⊷ *${prefix}ads clear*\n│  └⊷ Clear all cached data\n├─⊷ *${prefix}ads settings*\n│  └⊷ Configure settings\n├─⊷ *${prefix}ads help*\n│  └⊷ This menu\n│\n│ 📝 Cached: ${statusAntideleteState.statusCache.size} | Storage: ${statusAntideleteState.stats.totalStorageMB}MB\n│\n╰───────────────`;
 
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
