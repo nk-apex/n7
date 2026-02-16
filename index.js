@@ -632,66 +632,47 @@ setupProcessFilter();
 // Ultra clean logger
 class UltraCleanLogger {
     static log(...args) {
-        const message = args.join(' ').toLowerCase();
+        const message = args.join(' ');
+        const lowerMessage = message.toLowerCase();
+        
+        const featurePrefixes = [
+            'antidelete', 'status antidelete', '[antidelete]', '[status-ad]',
+            '[ad-status]', 'anti-viewonce', '[av]', 'antidemote', 'antipromote',
+            'antilink', 'antiaudio', 'antivideo', 'antisticker', 'antibug',
+            'autoreact', 'autoread', 'autorecord', 'autotyp', 'autoview',
+            'reactowner', 'welcome', 'goodbye', 'sudo', 'wolfbot', 'defibrillator',
+            '[stub]', '[asm', 'command', '✅', '❌', '👥', '👤', '📊',
+            '🔧', '🐺', '🚀', '🔍', '⚠️', '📱', '🗑️', '📤', '👑',
+            '🎯', '🛡️', '🎵', '🎬', '📘', '📷', '💾', '🔒'
+        ];
+        
+        const isFeatureLog = featurePrefixes.some(p => lowerMessage.includes(p));
+        if (isFeatureLog) {
+            const timestamp = chalk.gray(`[${new Date().toLocaleTimeString()}]`);
+            originalConsoleMethods.log(timestamp, ...args);
+            return;
+        }
         
         const suppressPatterns = [
-            'buffer',
-            'timeout',
-            'transaction',
-            'failed to decrypt',
-            'received error',
-            'sessionerror',
-            'bad mac',
-            'stream errored',
-            'baileys',
-            'whatsapp',
-            'ws',
-            'closing session',
-            'sessionentry',
-            '_chains',
-            'registrationid',
-            'currentratchet',
-            'indexinfo',
-            'pendingprekey',
-            'ephemeralkeypair',
-            'lastremoteephemeralkey',
-            'rootkey',
-            'basekey',
-            'signal',
-            'key',
-            'ratchet',
-            'encryption',
-            'decryption',
-            'qr',
-            'scan',
-            'pairing',
-            'connection.update',
-            'creds.update',
-            'messages.upsert',
-            'group',
-            'participant',
-            'metadata',
-            'presence.update',
-            'chat.update',
-            'message.receipt.update',
-            'message.update',
-            'keystore',
-            'keypair',
-            'pubkey',
-            'privkey',
-            '<buffer',
-            '05 ',
-            '0x',
-            'signalkey',
-            'signalprotocol',
-            'sessionstate',
-            'senderkey',
-            'groupcipher',
-            'signalgroup'
+            'closing session', 'sessionentry', '_chains',
+            'registrationid', 'currentratchet', 'indexinfo',
+            'pendingprekey', 'ephemeralkeypair', 'lastremoteephemeralkey',
+            'rootkey', 'basekey', 'signalprotocol', 'signalkey',
+            'signalgroup', 'signalstore', 'signalrepository',
+            'sessioncipher', 'sessionbuilder', 'sessionstate',
+            'senderkeystore', 'senderkeydistribution', 'keyexchange',
+            'groupcipher', 'ratchet', 'chainkey',
+            'keypair', 'pubkey', 'privkey', 'keystore',
+            '<buffer', '05 ', '0x',
+            'failed to decrypt', 'bad mac', 'stream errored',
+            'sessionerror', 'received error',
+            'connection.update', 'creds.update', 'messages.upsert',
+            'presence.update', 'chat.update', 'message.receipt.update',
+            'message.update'
         ];
         
         for (const pattern of suppressPatterns) {
-            if (message.includes(pattern)) {
+            if (lowerMessage.includes(pattern)) {
                 return;
             }
         }
@@ -705,13 +686,8 @@ class UltraCleanLogger {
     }
     
     static error(...args) {
-        const message = args.join(' ');
-        if (message.toLowerCase().includes('fatal') || 
-            message.toLowerCase().includes('critical') ||
-            message.includes('❌')) {
-            const timestamp = chalk.red(`[${new Date().toLocaleTimeString()}]`);
-            originalConsoleMethods.error(timestamp, ...args);
-        }
+        const timestamp = chalk.red(`[${new Date().toLocaleTimeString()}]`);
+        originalConsoleMethods.error(timestamp, ...args);
     }
     
     static success(...args) {
@@ -732,12 +708,13 @@ class UltraCleanLogger {
             'bad mac',
             'closing session',
             'stream errored',
-            'signal',
+            'signalprotocol',
             'ratchet',
-            'session',
-            'buffer',
-            'encryption',
-            'decryption'
+            'sessioncipher',
+            'sessionbuilder',
+            'sessionentry',
+            'sessionstate',
+            'sessionerror'
         ];
         for (const pattern of warnSuppress) {
             if (message.includes(pattern)) return;
