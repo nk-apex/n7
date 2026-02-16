@@ -605,6 +605,30 @@ export async function statusAntideleteHandleUpdate(update) {
     }
 }
 
+async function retrySend(sendFn, maxRetries = 5) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            if (!statusAntideleteState.sock) {
+                console.log(`⚠️ Status Antidelete: No socket, waiting for reconnect (attempt ${attempt}/${maxRetries})...`);
+                await new Promise(r => setTimeout(r, attempt * 3000));
+                continue;
+            }
+            await sendFn();
+            return true;
+        } catch (err) {
+            const msg = (err.message || '').toLowerCase();
+            const isConnectionError = msg.includes('connection closed') || msg.includes('connection lost') || msg.includes('timed out') || msg.includes('not open');
+            if (isConnectionError && attempt < maxRetries) {
+                console.log(`⚠️ Status Antidelete: Send attempt ${attempt}/${maxRetries} failed (${err.message}), waiting ${attempt * 3}s for reconnect...`);
+                await new Promise(r => setTimeout(r, attempt * 3000));
+                continue;
+            }
+            throw err;
+        }
+    }
+    return false;
+}
+
 async function sendStatusToOwnerDM(statusData, deletedByNumber) {
     try {
         if (!statusAntideleteState.sock || !statusAntideleteState.ownerJid) {
@@ -638,36 +662,42 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
 
                 if (buffer && buffer.length > 0) {
                     if (statusData.type === 'image') {
-                        await statusAntideleteState.sock.sendMessage(ownerJid, {
+                        await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, {
                             image: buffer,
                             caption: detailsText,
                             mimetype: mediaCache.mimetype
-                        });
+                        }));
                     } else if (statusData.type === 'video') {
-                        await statusAntideleteState.sock.sendMessage(ownerJid, {
+                        await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, {
                             video: buffer,
                             caption: detailsText,
                             mimetype: mediaCache.mimetype
-                        });
+                        }));
                     } else if (statusData.type === 'audio' || statusData.type === 'voice') {
-                        await statusAntideleteState.sock.sendMessage(ownerJid, {
-                            audio: buffer,
-                            mimetype: mediaCache.mimetype,
-                            ptt: statusData.type === 'voice'
+                        await retrySend(async () => {
+                            await statusAntideleteState.sock.sendMessage(ownerJid, {
+                                audio: buffer,
+                                mimetype: mediaCache.mimetype,
+                                ptt: statusData.type === 'voice'
+                            });
+                            await statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText });
                         });
-                        await statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText });
                     } else {
-                        await statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText });
+                        await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
                     }
                 } else {
-                    await statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText });
+                    await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
                 }
             } catch (mediaError) {
                 console.error('❌ Status Antidelete: Media send error:', mediaError.message);
-                await statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText });
+                try {
+                    await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, { 
+                        text: detailsText + `\n\n❌ 𝗠𝗲𝗱𝗶𝗮 𝗰𝗼𝘂𝗹𝗱 𝗻𝗼𝘁 𝗯𝗲 𝗿𝗲𝗰𝗼𝘃𝗲𝗿𝗲𝗱`
+                    }));
+                } catch {}
             }
         } else {
-            await statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText });
+            await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
         }
 
         console.log(`📤 Status Antidelete: Sent to owner DM - Posted by ${senderNumber}`);
@@ -706,6 +736,16 @@ export async function initStatusAntidelete(sock) {
 
     } catch (error) {
         console.error('❌ Status Antidelete: Initialization error:', error.message);
+    }
+}
+
+export function updateStatusAntideleteSock(sock) {
+    if (sock) {
+        statusAntideleteState.sock = sock;
+        if (sock.user?.id) {
+            statusAntideleteState.ownerJid = jidNormalizedUser(sock.user.id);
+        }
+        console.log(`🔄 Status Antidelete: Socket refreshed (owner: ${statusAntideleteState.ownerJid})`);
     }
 }
 

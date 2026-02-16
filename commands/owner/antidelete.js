@@ -696,17 +696,22 @@ export async function antideleteHandleUpdate(update) {
     }
 }
 
-async function retrySend(sendFn, maxRetries = 3) {
+async function retrySend(sendFn, maxRetries = 5) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
+            if (!antideleteState.sock) {
+                console.log(`⚠️ Antidelete: No socket, waiting for reconnect (attempt ${attempt}/${maxRetries})...`);
+                await new Promise(r => setTimeout(r, attempt * 3000));
+                continue;
+            }
             await sendFn();
             return true;
         } catch (err) {
             const msg = (err.message || '').toLowerCase();
             const isConnectionError = msg.includes('connection closed') || msg.includes('connection lost') || msg.includes('timed out') || msg.includes('not open');
             if (isConnectionError && attempt < maxRetries) {
-                console.log(`⚠️ Antidelete: Send attempt ${attempt}/${maxRetries} failed (${err.message}), retrying in ${attempt * 2}s...`);
-                await new Promise(r => setTimeout(r, attempt * 2000));
+                console.log(`⚠️ Antidelete: Send attempt ${attempt}/${maxRetries} failed (${err.message}), waiting ${attempt * 3}s for reconnect...`);
+                await new Promise(r => setTimeout(r, attempt * 3000));
                 continue;
             }
             throw err;
@@ -941,6 +946,16 @@ export async function initAntidelete(sock) {
         
     } catch (error) {
         console.error('❌ Antidelete: Initialization error:', error.message);
+    }
+}
+
+export function updateAntideleteSock(sock) {
+    if (sock) {
+        antideleteState.sock = sock;
+        if (sock.user?.id) {
+            antideleteState.ownerJid = jidNormalizedUser(sock.user.id);
+        }
+        console.log(`🔄 Antidelete: Socket refreshed (owner: ${antideleteState.ownerJid})`);
     }
 }
 

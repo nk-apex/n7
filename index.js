@@ -570,10 +570,10 @@ import antidemote from './commands/group/antidemote.js';
 import banCommand from './commands/group/ban.js';
 
 // Import antidelete system (listeners registered in index.js, always active)
-import { initAntidelete, antideleteStoreMessage, antideleteHandleUpdate } from './commands/owner/antidelete.js';
+import { initAntidelete, antideleteStoreMessage, antideleteHandleUpdate, updateAntideleteSock } from './commands/owner/antidelete.js';
 
 // Import status antidelete system (always on, handles status messages exclusively)
-import { initStatusAntidelete, statusAntideleteStoreMessage, statusAntideleteHandleUpdate } from './commands/owner/antideletestatus.js';
+import { initStatusAntidelete, statusAntideleteStoreMessage, statusAntideleteHandleUpdate, updateStatusAntideleteSock } from './commands/owner/antideletestatus.js';
 
 // Import W.O.L.F chatbot system
 import { isChatbotActiveForChat, handleChatbotMessage } from './commands/ai/chatbot.js';
@@ -4217,6 +4217,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         console.error('❌ Antidelete init error:', err.message);
                         antideleteInitDone = false;
                     });
+                } else {
+                    updateAntideleteSock(sock);
                 }
                 
                 if (!statusAntideleteInitDone) {
@@ -4225,6 +4227,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         console.error('❌ Status Antidelete init error:', err.message);
                         statusAntideleteInitDone = false;
                     });
+                } else {
+                    updateStatusAntideleteSock(sock);
                 }
                 
                 UltraCleanLogger.info('🔑 Sudo system ready (using signal LID mapping)');
