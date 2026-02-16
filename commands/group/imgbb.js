@@ -82,10 +82,11 @@ export default {
         return sock.sendMessage(jid, { text: `❌ *Upload Failed:* ${result.error}` }, { quoted: m });
       }
 
-      const successText = `✅ *ImgBB Upload Successful!*\n\n` +
-        `📐 ${result.width || '?'} × ${result.height || '?'} • ${fileSizeMB.toFixed(2)} MB\n\n` +
-        `🔗 *URL:* ${result.url}\n\n` +
-        `🐺 _Silent Wolf_`;
+      const successText = `╭─⌈ 📸 *IMGBB UPLOAD* ⌋\n` +
+        `├─⊷ *Status:* Uploaded ✅\n` +
+        `├─⊷ *Size:* ${result.width || '?'} × ${result.height || '?'} • ${fileSizeMB.toFixed(2)} MB\n` +
+        `├─⊷ *URL:* ${result.url}\n` +
+        `╰─── *WOLFBOT* ───`;
 
       try {
         const { createRequire } = await import('module');
@@ -94,7 +95,7 @@ export default {
         await sendInteractiveMessage(sock, jid, {
           image: { url: result.thumb || result.url },
           text: successText,
-          footer: '🐺 Silent Wolf',
+          footer: 'WOLFBOT',
           interactiveButtons: [
             {
               name: 'cta_copy',

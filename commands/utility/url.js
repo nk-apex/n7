@@ -517,22 +517,13 @@ export default {
         
         if (!quoted && !hasUrl) {
             return sock.sendMessage(jid, {
-                text: `📤 *URL Upload Command*\n\n` +
-                      `*Upload media and get permanent URLs*\n\n` +
-                      `📝 *Usage:*\n` +
-                      `• Reply to any media with \`.url\`\n` +
-                      `• Or: \`.url <image_url>\`\n\n` +
-                      `✅ *Supported Files:*\n` +
-                      `📷 Images: JPG, PNG, GIF, WebP\n` +
-                      `🎥 Videos: MP4, MOV, AVI, WebM\n` +
-                      `📄 Documents: PDF, TXT, DOC, XLS\n` +
-                      `🎵 Audio: MP3, WAV, OGG\n\n` +
-                      `📊 *Max Sizes:*\n` +
-                      `• ImgBB: 32MB (images only)\n` +
-                      `• Telegraph: 5MB (images)\n` +
-                      `• 0x0.st: 512MB (any file)\n` +
-                      `• File.io: 2GB (any file)\n\n` +
-                      `*Example:* Reply to an image with \`.url\``
+                text: `╭─⌈ 📤 *URL UPLOAD* ⌋\n` +
+                      `├─⊷ *.url* (reply to media)\n` +
+                      `│  └⊷ Upload & get permanent URL\n` +
+                      `├─⊷ *.url <image_url>*\n` +
+                      `│  └⊷ Re-upload from URL\n` +
+                      `├─⊷ *Supported:* Images, Videos, Docs, Audio\n` +
+                      `╰─── *WOLFBOT* ───`
             }, { quoted: m });
         }
         
@@ -614,10 +605,12 @@ export default {
             
             const { url, service, permanent, thumb, width, height } = uploadResult;
             
-            const successCaption = `✅ *Upload Successful!*\n\n` +
-                `📐 ${width && height ? `${width} × ${height} • ` : ''}${fileSizeMB.toFixed(2)} MB\n\n` +
-                `🔗 *URL:* ${url}\n\n` +
-                ``;
+            const successCaption = `╭─⌈ 📤 *URL UPLOAD* ⌋\n` +
+                `├─⊷ *Status:* Uploaded ✅\n` +
+                `├─⊷ *Size:* ${width && height ? `${width} × ${height} • ` : ''}${fileSizeMB.toFixed(2)} MB\n` +
+                `├─⊷ *Service:* ${service}\n` +
+                `├─⊷ *URL:* ${url}\n` +
+                `╰─── *WOLFBOT* ───`;
 
             try {
                 const { createRequire } = await import('module');
@@ -625,7 +618,7 @@ export default {
                 const { sendInteractiveMessage } = require('gifted-btns');
                 await sendInteractiveMessage(sock, jid, {
                     text: successCaption,
-                    footer: '🐺 Silent Wolf',
+                    footer: 'WOLFBOT',
                     interactiveButtons: [
                         {
                             name: 'cta_copy',
