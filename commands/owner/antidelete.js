@@ -598,7 +598,10 @@ export async function antideleteHandleUpdate(update) {
         const msgId = msgKey.id;
         const chatJid = msgKey.remoteJidAlt || msgKey.remoteJid;
         
-        if (chatJid?.endsWith('@lid')) return;
+        if (chatJid?.endsWith('@lid') && !chatJid?.endsWith('@g.us')) {
+            console.log(`⚠️ Antidelete: Skipping LID-only chat ${chatJid?.substring(0, 20)}`);
+            return;
+        }
         
         const isStatus = chatJid === 'status@broadcast';
         
@@ -608,8 +611,12 @@ export async function antideleteHandleUpdate(update) {
         
         const isDeleted = 
             update.message === null ||
-            update.update?.status === 6 ||
             update.update?.message === null ||
+            update.update?.status === 6 ||
+            update.update?.messageStubType === 1 ||
+            update.update?.messageStubType === 2 ||
+            update.messageStubType === 1 ||
+            update.messageStubType === 2 ||
             update.messageStubType === 7 ||
             update.messageStubType === 8;
         
@@ -689,6 +696,25 @@ export async function antideleteHandleUpdate(update) {
     }
 }
 
+async function retrySend(sendFn, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            await sendFn();
+            return true;
+        } catch (err) {
+            const msg = (err.message || '').toLowerCase();
+            const isConnectionError = msg.includes('connection closed') || msg.includes('connection lost') || msg.includes('timed out') || msg.includes('not open');
+            if (isConnectionError && attempt < maxRetries) {
+                console.log(`⚠️ Antidelete: Send attempt ${attempt}/${maxRetries} failed (${err.message}), retrying in ${attempt * 2}s...`);
+                await new Promise(r => setTimeout(r, attempt * 2000));
+                continue;
+            }
+            throw err;
+        }
+    }
+    return false;
+}
+
 async function sendToOwnerDM(messageData, deletedByNumber) {
     try {
         if (!antideleteState.sock || !antideleteState.ownerJid) {
@@ -728,59 +754,63 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
                 
                 if (buffer && buffer.length > 0) {
                     if (messageData.type === 'sticker') {
-                        const stickerMsg = await antideleteState.sock.sendMessage(ownerJid, {
-                            sticker: buffer,
-                            mimetype: mediaCache.mimetype
+                        await retrySend(async () => {
+                            const stickerMsg = await antideleteState.sock.sendMessage(ownerJid, {
+                                sticker: buffer,
+                                mimetype: mediaCache.mimetype
+                            });
+                            await antideleteState.sock.sendMessage(ownerJid, { 
+                                text: detailsText 
+                            }, { 
+                                quoted: stickerMsg 
+                            });
                         });
-                        
-                        await antideleteState.sock.sendMessage(ownerJid, { 
-                            text: detailsText 
-                        }, { 
-                            quoted: stickerMsg 
-                        });
-                        
                     } else if (messageData.type === 'image') {
-                        await antideleteState.sock.sendMessage(ownerJid, {
+                        await retrySend(() => antideleteState.sock.sendMessage(ownerJid, {
                             image: buffer,
                             caption: detailsText,
                             mimetype: mediaCache.mimetype
-                        });
+                        }));
                     } else if (messageData.type === 'video') {
-                        await antideleteState.sock.sendMessage(ownerJid, {
+                        await retrySend(() => antideleteState.sock.sendMessage(ownerJid, {
                             video: buffer,
                             caption: detailsText,
                             mimetype: mediaCache.mimetype
-                        });
+                        }));
                     } else if (messageData.type === 'audio' || messageData.type === 'voice') {
-                        await antideleteState.sock.sendMessage(ownerJid, {
-                            audio: buffer,
-                            mimetype: mediaCache.mimetype,
-                            ptt: messageData.type === 'voice'
+                        await retrySend(async () => {
+                            await antideleteState.sock.sendMessage(ownerJid, {
+                                audio: buffer,
+                                mimetype: mediaCache.mimetype,
+                                ptt: messageData.type === 'voice'
+                            });
+                            await antideleteState.sock.sendMessage(ownerJid, { text: detailsText });
                         });
-                        await antideleteState.sock.sendMessage(ownerJid, { text: detailsText });
                     } else if (messageData.type === 'document') {
-                        await antideleteState.sock.sendMessage(ownerJid, {
+                        await retrySend(() => antideleteState.sock.sendMessage(ownerJid, {
                             document: buffer,
                             fileName: messageData.text || 'deleted_file',
                             mimetype: mediaCache.mimetype,
                             caption: detailsText
-                        });
+                        }));
                     } else {
-                        await antideleteState.sock.sendMessage(ownerJid, {
+                        await retrySend(() => antideleteState.sock.sendMessage(ownerJid, {
                             text: detailsText + `\n\n◉ 𝗠𝗲𝗱𝗶𝗮 𝗧𝘆𝗽𝗲: ${messageData.type}`
-                        });
+                        }));
                     }
                 } else {
-                    await antideleteState.sock.sendMessage(ownerJid, { text: detailsText });
+                    await retrySend(() => antideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
                 }
             } catch (mediaError) {
                 console.error('❌ Antidelete: Media send error:', mediaError.message);
-                await antideleteState.sock.sendMessage(ownerJid, { 
-                    text: detailsText + `\n\n❌ 𝗠𝗲𝗱𝗶𝗮 𝗰𝗼𝘂𝗹𝗱 𝗻𝗼𝘁 𝗯𝗲 𝗿𝗲𝗰𝗼𝘃𝗲𝗿𝗲𝗱` 
-                });
+                try {
+                    await retrySend(() => antideleteState.sock.sendMessage(ownerJid, { 
+                        text: detailsText + `\n\n❌ 𝗠𝗲𝗱𝗶𝗮 𝗰𝗼𝘂𝗹𝗱 𝗻𝗼𝘁 𝗯𝗲 𝗿𝗲𝗰𝗼𝘃𝗲𝗿𝗲𝗱` 
+                    }));
+                } catch {}
             }
         } else {
-            await antideleteState.sock.sendMessage(ownerJid, { text: detailsText });
+            await retrySend(() => antideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
         }
         
         console.log(`📤 Antidelete: Sent to owner DM: ${senderNumber} → ${messageData.chatName}`);
@@ -818,62 +848,66 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
                 
                 if (buffer && buffer.length > 0) {
                     if (messageData.type === 'sticker') {
-                        const stickerMsg = await antideleteState.sock.sendMessage(chatJid, {
-                            sticker: buffer,
-                            mimetype: mediaCache.mimetype
+                        await retrySend(async () => {
+                            const stickerMsg = await antideleteState.sock.sendMessage(chatJid, {
+                                sticker: buffer,
+                                mimetype: mediaCache.mimetype
+                            });
+                            await antideleteState.sock.sendMessage(chatJid, { 
+                                text: detailsText 
+                            }, { 
+                                quoted: stickerMsg 
+                            });
                         });
-                        
-                        await antideleteState.sock.sendMessage(chatJid, { 
-                            text: detailsText 
-                        }, { 
-                            quoted: stickerMsg 
-                        });
-                        
                     } else if (messageData.type === 'image') {
                         detailsText = `⚠️ Deleted Image\n${detailsText}`;
-                        await antideleteState.sock.sendMessage(chatJid, {
+                        await retrySend(() => antideleteState.sock.sendMessage(chatJid, {
                             image: buffer,
                             caption: detailsText,
                             mimetype: mediaCache.mimetype
-                        });
+                        }));
                     } else if (messageData.type === 'video') {
                         detailsText = `⚠️ Deleted Video\n${detailsText}`;
-                        await antideleteState.sock.sendMessage(chatJid, {
+                        await retrySend(() => antideleteState.sock.sendMessage(chatJid, {
                             video: buffer,
                             caption: detailsText,
                             mimetype: mediaCache.mimetype
-                        });
+                        }));
                     } else if (messageData.type === 'audio' || messageData.type === 'voice') {
-                        await antideleteState.sock.sendMessage(chatJid, {
-                            audio: buffer,
-                            mimetype: mediaCache.mimetype,
-                            ptt: messageData.type === 'voice'
+                        await retrySend(async () => {
+                            await antideleteState.sock.sendMessage(chatJid, {
+                                audio: buffer,
+                                mimetype: mediaCache.mimetype,
+                                ptt: messageData.type === 'voice'
+                            });
+                            await antideleteState.sock.sendMessage(chatJid, { text: detailsText });
                         });
-                        await antideleteState.sock.sendMessage(chatJid, { text: detailsText });
                     } else if (messageData.type === 'document') {
                         detailsText = `⚠️ Deleted Document\n${detailsText}`;
-                        await antideleteState.sock.sendMessage(chatJid, {
+                        await retrySend(() => antideleteState.sock.sendMessage(chatJid, {
                             document: buffer,
                             fileName: messageData.text || 'deleted_file',
                             mimetype: mediaCache.mimetype,
                             caption: detailsText
-                        });
+                        }));
                     } else {
-                        await antideleteState.sock.sendMessage(chatJid, {
+                        await retrySend(() => antideleteState.sock.sendMessage(chatJid, {
                             text: detailsText + `\n\n◉ 𝗠𝗲𝗱𝗶𝗮 𝗧𝘆𝗽𝗲: ${messageData.type}`
-                        });
+                        }));
                     }
                 } else {
-                    await antideleteState.sock.sendMessage(chatJid, { text: detailsText });
+                    await retrySend(() => antideleteState.sock.sendMessage(chatJid, { text: detailsText }));
                 }
             } catch (mediaError) {
                 console.error('❌ Antidelete: Media send error:', mediaError.message);
-                await antideleteState.sock.sendMessage(chatJid, { 
-                    text: detailsText + `\n\n❌ 𝗠𝗲𝗱𝗶𝗮 𝗰𝗼𝘂𝗹𝗱 𝗻𝗼𝘁 𝗯𝗲 𝗿𝗲𝗰𝗼𝘃𝗲𝗿𝗲𝗱` 
-                });
+                try {
+                    await retrySend(() => antideleteState.sock.sendMessage(chatJid, { 
+                        text: detailsText + `\n\n❌ 𝗠𝗲𝗱𝗶𝗮 𝗰𝗼𝘂𝗹𝗱 𝗻𝗼𝘁 𝗯𝗲 𝗿𝗲𝗰𝗼𝘃𝗲𝗿𝗲𝗱` 
+                    }));
+                } catch {}
             }
         } else {
-            await antideleteState.sock.sendMessage(chatJid, { text: detailsText });
+            await retrySend(() => antideleteState.sock.sendMessage(chatJid, { text: detailsText }));
         }
         
         console.log(`📤 Antidelete: Sent to chat ${messageData.chatName} (Public Mode)`);

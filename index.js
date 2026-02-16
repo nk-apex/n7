@@ -4646,6 +4646,23 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
             if (msg.messageStubType || msg.labels?.length > 0) return;
 
+            const normalizedUpsertContent = normalizeMessageContent(msg.message) || msg.message;
+            const upsertProtoMsg = normalizedUpsertContent?.protocolMessage;
+            if (upsertProtoMsg && (upsertProtoMsg.type === 0 || upsertProtoMsg.type === 4)) {
+                const revokedMsgId = upsertProtoMsg.key?.id;
+                if (revokedMsgId) {
+                    const revokedChatJid = upsertProtoMsg.key?.remoteJid || msg.key?.remoteJid;
+                    console.log(`[ANTIDELETE] Protocol revoke detected via upsert for ${revokedMsgId} in ${revokedChatJid}`);
+                    antideleteHandleUpdate({
+                        key: { ...msg.key, id: revokedMsgId, remoteJid: revokedChatJid },
+                        update: { message: null, messageStubType: 1 }
+                    }).catch(err => {
+                        console.log(`❌ [ANTIDELETE] Revoke handle error: ${err.message}`);
+                    });
+                }
+                return;
+            }
+
             if (msg.pushName && msg.key) {
                 const senderJid = msg.key.participant || msg.key.remoteJid;
                 if (senderJid && !senderJid.includes('status') && !senderJid.includes('broadcast')) {
