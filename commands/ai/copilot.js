@@ -14,7 +14,7 @@ export default {
       // ====== HELP SECTION ======
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `╭─⌈ 🤖 *COPILOT AI* ⌋\n│\n├─⊷ *${PREFIX}copilot <question>*\n│  └⊷ Ask Copilot anything\n│\n╰───`
+          text: `╭─⌈ 🤖 *COPILOT AI* ⌋\n├─⊷ *${PREFIX}copilot <question>*\n│  └⊷ Ask Copilot anything\n╰───`
         }, { quoted: m });
       }
 

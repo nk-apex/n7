@@ -56,7 +56,7 @@ export default {
         try { await sock.sendMessage(chatId, { delete: processingMsg.key }); } catch(e) {}
         
         return sock.sendMessage(chatId, {
-          text: `╭─⌈ 📊 *CONTENT ANALYZER* ⌋\n│\n├─⊷ *.analyze <text>*\n│  └⊷ Analyze text content\n│\n├─⊷ *.analyze (reply to image)*\n│  └⊷ Analyze image with AI vision\n│\n├─⊷ *.analyze (reply to video)*\n│  └⊷ Analyze video content\n│\n├─⊷ *.analyze (reply to document)*\n│  └⊷ Analyze document content\n│\n╰───`
+          text: `╭─⌈ 📊 *CONTENT ANALYZER* ⌋\n├─⊷ *.analyze <text>*\n│  └⊷ Analyze text content\n├─⊷ *.analyze (reply to image)*\n│  └⊷ Analyze image with AI vision\n├─⊷ *.analyze (reply to video)*\n│  └⊷ Analyze video content\n├─⊷ *.analyze (reply to document)*\n│  └⊷ Analyze document content\n╰───`
         }, { quoted: m });
       }
       

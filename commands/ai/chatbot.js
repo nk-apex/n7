@@ -642,18 +642,18 @@ export default {
       const currentModel = AI_MODELS[config.preferredModel] || AI_MODELS.gpt;
 
       const helpText =
-        `╭─⌈ 🐺 *W.O.L.F CHATBOT* ⌋\n│\n` +
+        `╭─⌈ 🐺 *W.O.L.F CHATBOT* ⌋\n` +
         `│ ${modeEmoji[config.mode] || '🔴'} Status: ${config.mode.toUpperCase()}\n` +
-        `│ ${currentModel.icon} Model: ${currentModel.name}\n│\n` +
-        `├─⊷ *${PREFIX}chatbot on*\n│  └⊷ Enable everywhere\n│\n` +
-        `├─⊷ *${PREFIX}chatbot off*\n│  └⊷ Disable chatbot\n│\n` +
-        `├─⊷ *${PREFIX}chatbot groups*\n│  └⊷ Groups only\n│\n` +
-        `├─⊷ *${PREFIX}chatbot dms*\n│  └⊷ DMs only\n│\n` +
-        `├─⊷ *${PREFIX}chatbot both*\n│  └⊷ All chats\n│\n` +
-        `├─⊷ *${PREFIX}chatbot model*\n│  └⊷ Switch AI model\n│\n` +
-        `├─⊷ *${PREFIX}chatbot stats*\n│  └⊷ View stats\n│\n` +
-        `├─⊷ *${PREFIX}chatbot clear*\n│  └⊷ Reset history\n│\n` +
-        `├─⊷ *${PREFIX}chatbot settings*\n│  └⊷ View config\n│\n` +
+        `│ ${currentModel.icon} Model: ${currentModel.name}\n` +
+        `├─⊷ *${PREFIX}chatbot on*\n│  └⊷ Enable everywhere\n` +
+        `├─⊷ *${PREFIX}chatbot off*\n│  └⊷ Disable chatbot\n` +
+        `├─⊷ *${PREFIX}chatbot groups*\n│  └⊷ Groups only\n` +
+        `├─⊷ *${PREFIX}chatbot dms*\n│  └⊷ DMs only\n` +
+        `├─⊷ *${PREFIX}chatbot both*\n│  └⊷ All chats\n` +
+        `├─⊷ *${PREFIX}chatbot model*\n│  └⊷ Switch AI model\n` +
+        `├─⊷ *${PREFIX}chatbot stats*\n│  └⊷ View stats\n` +
+        `├─⊷ *${PREFIX}chatbot clear*\n│  └⊷ Reset history\n` +
+        `├─⊷ *${PREFIX}chatbot settings*\n│  └⊷ View config\n` +
         `╰───`;
 
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });

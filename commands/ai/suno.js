@@ -239,7 +239,7 @@ export default {
     },
 
     async showHelp(sock, m) {
-        const helpText = `╭─⌈ 🎵 *SUNO AI MUSIC* ⌋\n│\n├─⊷ *.suno generate <style>*\n│  └⊷ Generate song with style\n│\n├─⊷ *.suno quick <viral|lofi|workout>*\n│  └⊷ Quick song generation\n│\n├─⊷ *.suno templates*\n│  └⊷ View available templates\n│\n├─⊷ *.suno themes*\n│  └⊷ View suggested themes\n│\n├─⊷ *.suno help*\n│  └⊷ Show this help\n│\n╰───`;
+        const helpText = `╭─⌈ 🎵 *SUNO AI MUSIC* ⌋\n├─⊷ *.suno generate <style>*\n│  └⊷ Generate song with style\n├─⊷ *.suno quick <viral|lofi|workout>*\n│  └⊷ Quick song generation\n├─⊷ *.suno templates*\n│  └⊷ View available templates\n├─⊷ *.suno themes*\n│  └⊷ View suggested themes\n├─⊷ *.suno help*\n│  └⊷ Show this help\n╰───`;
         
         await sock.sendMessage(m.key.remoteJid, { text: helpText }, { quoted: m });
     },

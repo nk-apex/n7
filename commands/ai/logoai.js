@@ -14,7 +14,7 @@ export default {
       const query = args.join(" ");
       if (!query || query.includes("--help")) {
         return sock.sendMessage(m.key.remoteJid, {
-          text: `╭─⌈ 🎨 *AI LOGO GENERATOR* ⌋\n│\n├─⊷ *.logoai <company name>*\n│  └⊷ Generate AI logo\n│\n├─⊷ *.logoai <name> --style=<style>*\n│  └⊷ modern/minimal/vintage/playful\n│\n├─⊷ *.logoai <name> --color=<color>*\n│  └⊷ blue/red/green/purple\n│\n╰───`
+          text: `╭─⌈ 🎨 *AI LOGO GENERATOR* ⌋\n├─⊷ *.logoai <company name>*\n│  └⊷ Generate AI logo\n├─⊷ *.logoai <name> --style=<style>*\n│  └⊷ modern/minimal/vintage/playful\n├─⊷ *.logoai <name> --color=<color>*\n│  └⊷ blue/red/green/purple\n╰───`
         }, { quoted: m });
       }
 

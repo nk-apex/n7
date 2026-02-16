@@ -20,7 +20,7 @@ export default {
       
       if (!query && !quoted) {
         return sock.sendMessage(jid, {
-          text: `╭─⌈ 📎 *DEEPSEEK+ AI* 🧠 ⌋\n│\n├─⊷ *.deepseek+ <question> (reply to file)*\n│  └⊷ Analyze file with DeepSeek\n│\n├─⊷ *.ds+ <question> (reply to file)*\n│  └⊷ Alias for deepseek+\n│\n├─⊷ *.deepseek+ --code <question>*\n│  └⊷ Use DeepSeek Coder model\n│\n├─⊷ *.deepseek+ --vision <question>*\n│  └⊷ Use Gemini Pro Vision model\n│\n╰───`
+          text: `╭─⌈ 📎 *DEEPSEEK+ AI* 🧠 ⌋\n├─⊷ *.deepseek+ <question> (reply to file)*\n│  └⊷ Analyze file with DeepSeek\n├─⊷ *.ds+ <question> (reply to file)*\n│  └⊷ Alias for deepseek+\n├─⊷ *.deepseek+ --code <question>*\n│  └⊷ Use DeepSeek Coder model\n├─⊷ *.deepseek+ --vision <question>*\n│  └⊷ Use Gemini Pro Vision model\n╰───`
         }, { quoted: m });
       }
 

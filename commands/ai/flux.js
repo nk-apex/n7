@@ -18,7 +18,7 @@ export default {
     // Check if query is provided
     if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎨 *FLUX AI* ⌋\n│\n├─⊷ *${PREFIX}flux <prompt>*\n│  └⊷ Generate AI image from text\n│\n├─⊷ *${PREFIX}fluxai <prompt>*\n│  └⊷ Alias for flux\n│\n╰───`
+        text: `╭─⌈ 🎨 *FLUX AI* ⌋\n├─⊷ *${PREFIX}flux <prompt>*\n│  └⊷ Generate AI image from text\n├─⊷ *${PREFIX}fluxai <prompt>*\n│  └⊷ Alias for flux\n╰───`
       }, { quoted: m });
     }
 

@@ -13,7 +13,7 @@ export default {
     
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `╭─⌈ 📝 *SUMMARIZER* ⌋\n│\n├─⊷ *${PREFIX}summarize <text>*\n│  └⊷ Summarize long text\n│\n├─⊷ *${PREFIX}summary <text>*\n│  └⊷ Alias for summarize\n│\n├─⊷ *${PREFIX}summarize brief: <text>*\n│  └⊷ Brief 1-2 sentence summary\n│\n├─⊷ *${PREFIX}summarize bullets: <text>*\n│  └⊷ Summary in bullet points\n│\n╰───`;
+      const helpText = `╭─⌈ 📝 *SUMMARIZER* ⌋\n├─⊷ *${PREFIX}summarize <text>*\n│  └⊷ Summarize long text\n├─⊷ *${PREFIX}summary <text>*\n│  └⊷ Alias for summarize\n├─⊷ *${PREFIX}summarize brief: <text>*\n│  └⊷ Brief 1-2 sentence summary\n├─⊷ *${PREFIX}summarize bullets: <text>*\n│  └⊷ Summary in bullet points\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
@@ -36,7 +36,7 @@ export default {
     // Minimum text length check
     if (textToSummarize.length < 20) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *TEXT TOO SHORT* ⌋\n│\n├─⊷ *${PREFIX}summarize <text>*\n│  └⊷ Provide at least 20 characters\n│\n╰───`
+        text: `╭─⌈ ❌ *TEXT TOO SHORT* ⌋\n├─⊷ *${PREFIX}summarize <text>*\n│  └⊷ Provide at least 20 characters\n╰───`
       }, { quoted: m });
     }
 
