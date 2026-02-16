@@ -63,42 +63,27 @@ export default {
       let fileType = "unknown";
       
       if (quoted) {
-        const processingMsg = await sock.sendMessage(jid, {
-          text: `📎 *Downloading file...*\n\n` +
-                `Preparing for ${modelName} analysis`
-        }, { quoted: m });
+        await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
         fileData = await downloadAndProcessFile(sock, quoted);
         
         if (!fileData) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           return sock.sendMessage(jid, {
             text: `❌ *File Download Failed*\n\n` +
                   `Could not download the file.\n` +
                   `Make sure file isn't too large.\n\n` +
-                  `💡 Try sending the file again.`,
-            edit: processingMsg.key
-          });
+                  `💡 Try sending the file again.`
+          }, { quoted: m });
         }
 
         fileName = fileData.name;
         fileType = fileData.type;
-        
-        await sock.sendMessage(jid, {
-          text: `✅ *File Ready:* ${fileName}\n` +
-                `📁 Type: ${fileType}\n` +
-                `📊 Size: ${(fileData.size / 1024).toFixed(2)} KB\n` +
-                `🔍 Analyzing with ${modelName}...`,
-          edit: processingMsg.key
-        });
       }
 
-      // Send processing message
-      const finalProcessingMsg = await sock.sendMessage(jid, {
-        text: `🔍 *${modelName} is analyzing...*\n\n` +
-              `${fileData ? `📎 File: ${fileName}\n` : ''}` +
-              `Query: ${cleanQuery || 'Analyzing file content'}\n` +
-              `Via: OpenRouter API`
-      }, { quoted: m });
+      if (!quoted) {
+        await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
+      }
 
       // Call OpenRouter API with file
       const result = await callOpenRouterWithFile(
@@ -122,14 +107,14 @@ export default {
           suggestion = "DeepSeek vision may not support this file. Try --vision flag for Gemini";
         }
         
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         return sock.sendMessage(jid, {
           text: `❌ *Analysis Error*\n\n` +
                 `*Model:* ${modelName}\n` +
                 `*File:* ${fileName}\n` +
                 `*Error:* ${errorMsg}\n\n` +
-                `💡 *Solution:* ${suggestion}`,
-          edit: finalProcessingMsg.key
-        });
+                `💡 *Solution:* ${suggestion}`
+        }, { quoted: m });
       }
 
       // Format and send response
@@ -142,10 +127,8 @@ export default {
         result.usage
       );
 
-      await sock.sendMessage(jid, {
-        text: analysisReply,
-        edit: finalProcessingMsg.key
-      });
+      await sock.sendMessage(jid, { text: analysisReply }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
       // Show cost if significant
       if (result.usage?.total_cost && result.usage.total_cost > 0.001) {
@@ -158,6 +141,7 @@ export default {
     } catch (err) {
       console.error("❌ [DEEPSEEK+ ERROR]:", err);
       
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
         text: `📎 *DeepSeek+ Error*\n\n` +
               `*Details:* ${err.message}\n\n` +

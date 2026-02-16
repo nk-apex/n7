@@ -337,12 +337,7 @@ export default {
         );
       }
 
-      // Send initial processing message
-      const processingMsg = await sock.sendMessage(
-        jid,
-        { text: "⏳ *Downloading image from WhatsApp...*" },
-        { quoted: m }
-      );
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Download image from WhatsApp
       let imageBuffer;
@@ -405,16 +400,6 @@ export default {
         );
       }
 
-      // Update status
-      await sock.sendMessage(
-        jid,
-        {
-          text: `🔄 *Uploading image for processing...*\n` +
-                `Size: ${fileSizeMB.toFixed(2)} MB`,
-          edit: processingMsg.key
-        }
-      );
-
       // Upload to free image hosting
       console.log("🌐 Uploading to image hosting...");
       const uploadedUrl = await uploadToFreeImageHosting(imageBuffer);
@@ -424,17 +409,6 @@ export default {
       }
 
       console.log(`✅ Image uploaded: ${uploadedUrl}`);
-
-      // Update status
-      await sock.sendMessage(
-        jid,
-        {
-          text: `🤖 *Processing with AI...*\n` +
-                `Removing background...\n` +
-                `Please wait...`,
-          edit: processingMsg.key
-        }
-      );
 
       // Call removebg API with URL parameter
       console.log(`🔗 Calling removebg API with URL: ${uploadedUrl}`);
@@ -481,15 +455,6 @@ export default {
       } catch (apiErr) {
         console.error("❌ RemoveBG API Error:", apiErr.message);
         
-        // Try alternative API endpoint
-        await sock.sendMessage(
-          jid,
-          {
-            text: `🔄 *Trying alternative method...*`,
-            edit: processingMsg.key
-          }
-        );
-        
         try {
           // Try with different parameter name
           const response2 = await axios.get(
@@ -511,16 +476,6 @@ export default {
 
       console.log(`✅ RemoveBG result: ${resultUrl}`);
       
-      // Update status
-      await sock.sendMessage(
-        jid,
-        {
-          text: `✅ *Background removed!*\n` +
-                `⬇️ *Sending result...*`,
-          edit: processingMsg.key
-        }
-      );
-
       // Send the processed image
       await sock.sendMessage(
         jid,
@@ -533,20 +488,12 @@ export default {
         { quoted: m }
       );
 
-      // Final success message
-      await sock.sendMessage(
-        jid,
-        {
-          text: `🎉 *Background removal complete!*\n\n` +
-                `Size: ${fileSizeMB.toFixed(2)} MB → Processed\n` +
-                `Result: Transparent PNG\n` +
-                `Status: ✅ Success`,
-          edit: processingMsg.key
-        }
-      );
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('❌ [RemoveBG] ERROR:', error);
+      
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       
       let errorMessage = '❌ *Background removal failed*\n\n';
       

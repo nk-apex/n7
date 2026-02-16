@@ -107,12 +107,7 @@ export default {
     }
 
     try {
-      // ====== PROCESSING MESSAGE ======
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `⚡ *MISTRAL AI*\n` +
-              `🚀 *Initializing Mistral...*\n` +
-              `📝 "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // ====== API REQUEST (Using Keith's Mistral API) ======
       const apiUrl = 'https://apiskeith.vercel.app/ai/mistral';
@@ -140,15 +135,6 @@ export default {
 
       console.log(`✅ Mistral Response status: ${response.status}`);
       
-      // ====== UPDATE STATUS ======
-      await sock.sendMessage(jid, {
-        text: `⚡ *MISTRAL AI*\n` +
-              `🚀 *Initializing...* ✅\n` +
-              `🧠 *Processing with Mistral AI...*\n` +
-              `⚡ *Generating intelligent response...*`,
-        edit: statusMsg.key
-      });
-
       // ====== PARSE RESPONSE ======
       let aiResponse = '';
       let metadata = {
@@ -249,10 +235,8 @@ export default {
       resultText += `🔓 *Open Source AI Model*`;
 
       // ====== SEND FINAL ANSWER ======
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('❌ [Mistral AI] ERROR:', error);
@@ -305,6 +289,7 @@ export default {
       
       // Try to send error message
       try {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
           text: errorMessage
         }, { quoted: m });

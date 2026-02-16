@@ -26,11 +26,7 @@ export default {
     const encodedQuery = encodeURIComponent(query);
     
     try {
-      // Show generating status
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `🎨 *Generating image...*\n` +
-             ``
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Call Flux API with arraybuffer response
       const apiUrl = `https://apiskeith.vercel.app/ai/flux?q=${encodedQuery}`;
@@ -78,17 +74,7 @@ export default {
       fs.unlinkSync(filePath);
       console.log(`[FLUX] Temporary file deleted: ${filePath}`);
 
-      // Update status message
-      await sock.sendMessage(jid, {
-        text: `✅ *Image Generated Successfully!*\n` +
-              `🖼️ *Image sent above*\n` +``,
-        edit: statusMsg.key
-      });
-
-      // Send success reaction
-      await sock.sendMessage(jid, {
-        react: { text: '✅', key: m.key }
-      });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('[FLUX] Error:', error.message);

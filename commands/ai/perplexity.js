@@ -24,11 +24,7 @@ export default {
     //     react: { text: '🔍', key: m.key }
     //   });
 
-       const statusMsg = await sock.sendMessage(jid, {
-        text: `🔍 *Perplexity Thinking...*\n` +
-              `💭 *Question:* "${query}"\n` +
-             ``
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Try multiple API endpoints
       const apiEndpoints = [

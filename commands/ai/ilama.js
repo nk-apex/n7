@@ -20,12 +20,7 @@ export default {
     const encodedQuery = encodeURIComponent(query);
     
     try {
-      // Show thinking status
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `🤖 *Thinking...*\n\n` +
-              `💭 *Question:* "${query}"\n` +
-             ``
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Call Llama API
       const apiUrl = `https://apiskeith.vercel.app/ai/ilama?q=${encodedQuery}`;
@@ -59,18 +54,7 @@ export default {
         text: formattedResponse
       }, { quoted: m });
 
-      // Update status message
-      await sock.sendMessage(jid, {
-        text: `💭 *Question:* "${query}"\n` +
-              `📝 *Response sent above*\n` +
-            ``,
-        edit: statusMsg.key
-      });
-
-      // Send success reaction
-      await sock.sendMessage(jid, {
-        react: { text: '✅', key: m.key }
-      });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('[ILAMA] Error:', error.message);

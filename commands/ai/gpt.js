@@ -58,11 +58,7 @@ export default {
 
     try {
       // ====== PROCESSING MESSAGE ======
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `⚡ *WOLFBOT GPT-5*\n\n` +
-              `🚀 *Initializing GPT-5...*\n\n` +
-              `📝 "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // ====== API REQUEST ======
       const apiUrl = 'https://iamtkm.vercel.app/ai/gpt5';
@@ -90,14 +86,6 @@ export default {
 
       console.log(`✅ GPT-5 Response status: ${response.status}`);
       
-      // ====== UPDATE STATUS ======
-      await sock.sendMessage(jid, {
-        text: `⚡ *WOLFBOT GPT-5*\n` +
-              `🚀 *Initializing...* ✅\n` +
-              `🧠 *Processing with GPT-5...*\n` +
-              `⚡ *Generating response...*`,
-        edit: statusMsg.key
-      });
 
       // ====== PARSE RESPONSE ======
       let aiResponse = '';
@@ -197,10 +185,8 @@ export default {
       resultText += `\n⚡ *Powered by WOLFTECH*`;
 
       // ====== SEND FINAL ANSWER ======
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('❌ [GPT-5] ERROR:', error);
@@ -241,22 +227,10 @@ export default {
       errorMessage += `4. Use \`${PREFIX}copilot\` as alternative\n`;
       
       // Send error message
-      try {
-        if (m.messageId) {
-          await sock.sendMessage(jid, {
-            text: errorMessage,
-            edit: m.messageId
-          });
-        } else {
-          await sock.sendMessage(jid, {
-            text: errorMessage
-          }, { quoted: m });
-        }
-      } catch (sendError) {
-        await sock.sendMessage(jid, {
-          text: '❌ GPT-5 service is currently unavailable.'
-        }, { quoted: m });
-      }
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+      await sock.sendMessage(jid, {
+        text: errorMessage
+      }, { quoted: m });
     }
   },
 };

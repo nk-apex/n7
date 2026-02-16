@@ -26,12 +26,7 @@ export default {
     console.log(`🤖 [GROK] Query: "${query}"`);
 
     try {
-      // Send initial status
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🤖 *X AI GROK*\n` +
-              `⚡ *Connecting to X AI...*\n` +
-              `💭 "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Make API request to Keith's Grok API
       const apiUrl = `https://apiskeith.vercel.app/ai/grok?q=${encodeURIComponent(query)}`;
@@ -55,15 +50,6 @@ export default {
 
       console.log(`✅ [GROK] Response status: ${response.status}`);
       
-      // Update status
-      await sock.sendMessage(jid, {
-        text: `🤖 *X AI GROK*\n` +
-              `⚡ *Connecting...* ✅\n` +
-              `💭 *Processing your query...*\n` +
-              `⚡ *Generating Grok response...*`,
-        edit: statusMsg.key
-      });
-
       // Parse response
       let grokResponse = '';
       let metadata = {
@@ -160,10 +146,8 @@ export default {
 
       // Send final answer
       console.log('📤 Sending final response to WhatsApp');
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
       console.log(`✅ Grok response sent successfully`);
 
@@ -234,6 +218,7 @@ export default {
       // Send error message
       try {
         console.log('📤 Sending error message to user');
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
           text: errorMessage
         }, { quoted: m });

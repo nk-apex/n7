@@ -23,11 +23,7 @@ export default {
     }
 
     try {
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `✨ *GOOGLE GEMINI*\n` +
-              `⚡ *Connecting to Gemini AI...*\n` +
-              `💭 "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       const response = await axios({
         method: 'POST',
@@ -100,10 +96,8 @@ export default {
       const model = response.data?.model || 'Gemini';
       resultText += `⚡ *Powered by ${model}*`;
 
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       let errorMessage = `❌ *GEMINI AI ERROR*\n\n`;
@@ -125,6 +119,7 @@ export default {
       errorMessage += `2. Wait a moment and retry\n`;
       errorMessage += `3. Use other AI: \`${PREFIX}gpt\`, \`${PREFIX}bard\`, \`${PREFIX}copilot\``;
       
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
         text: errorMessage
       }, { quoted: m });

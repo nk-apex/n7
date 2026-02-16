@@ -78,11 +78,7 @@ export default {
 
     try {
       // ====== PROCESSING MESSAGE ======
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `⚡ *BLACKBOX AI*\n` +
-              `🚀 *Initializing Blackbox...*\n` +
-              `📝 "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // ====== API REQUEST (Using Keith's Blackbox API) ======
       const apiUrl = 'https://apiskeith.vercel.app/ai/blackbox';
@@ -110,12 +106,6 @@ export default {
 
       console.log(`✅ Blackbox Response status: ${response.status}`);
       
-      // ====== UPDATE STATUS ======
-      await sock.sendMessage(jid, {
-        text: `⚡ *BLACKBOX AI* Initializing...\n` +
-           ``,
-        edit: statusMsg.key
-      });
 
       // ====== PARSE RESPONSE ======
       let aiResponse = '';
@@ -207,10 +197,8 @@ export default {
      //resultText += `⚡ *Powered by Keith API | Blackbox AI*`;
 
       // ====== SEND FINAL ANSWER ======
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('❌ [Blackbox AI] ERROR:', error);
@@ -263,16 +251,10 @@ export default {
       
       // Try to send error message
       try {
-        if (m.messageId) {
-          await sock.sendMessage(jid, {
-            text: errorMessage,
-            edit: m.messageId
-          });
-        } else {
-          await sock.sendMessage(jid, {
-            text: errorMessage
-          }, { quoted: m });
-        }
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+        await sock.sendMessage(jid, {
+          text: errorMessage
+        }, { quoted: m });
       } catch (sendError) {
         console.error('Failed to send error message:', sendError);
       }

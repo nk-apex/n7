@@ -67,12 +67,7 @@ export default {
     }
 
     try {
-      // ====== PROCESSING MESSAGE ======
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `⚡ *META AI*\n\n` +
-              `🚀 *Initializing Meta AI...*\n\n` +
-              `📝 "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // ====== API REQUEST (Using Keith's API) ======
       const apiUrl = 'https://apiskeith.vercel.app/ai/metai';
@@ -99,15 +94,6 @@ export default {
 
       console.log(`✅ Meta AI Response status: ${response.status}`);
       
-      // ====== UPDATE STATUS ======
-      await sock.sendMessage(jid, {
-        text: `⚡ *META AI*\n` +
-              `🚀 *Initializing...* ✅\n` +
-              `🧠 *Processing with Meta AI...*\n` +
-              `⚡ *Generating response...*`,
-        edit: statusMsg.key
-      });
-
       // ====== PARSE RESPONSE ======
       let aiResponse = '';
       let metadata = {
@@ -180,10 +166,8 @@ export default {
      // resultText += `⚡ *Powered by Keith API | Meta AI Technology*`;
 
       // ====== SEND FINAL ANSWER ======
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('❌ [Meta AI] ERROR:', error);
@@ -231,6 +215,7 @@ export default {
       
       // Send error message
       try {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
           text: errorMessage
         }, { quoted: m });

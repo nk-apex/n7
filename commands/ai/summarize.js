@@ -59,16 +59,7 @@ export default {
     }
 
     try {
-      // ====== PROCESSING MESSAGE ======
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `📝 *WOLFBOT SUMMARIZER*\n\n` +
-              `⚡ *Analyzing text...*\n\n` +
-              `📊 *Stats:*\n` +
-              `• Characters: ${cleanText.length}\n` +
-              `• Words: ${cleanText.split(/\s+/).length}\n` +
-              `• Type: ${summaryType.charAt(0).toUpperCase() + summaryType.slice(1)}\n\n` +
-              `⏳ *Processing...*`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // ====== ENHANCED PROMPT FOR SUMMARIZATION ======
       let summaryPrompt = `Please summarize the following text`;
@@ -116,14 +107,6 @@ export default {
         }
       });
 
-      // ====== UPDATE STATUS ======
-      await sock.sendMessage(jid, {
-        text: `📝 *WOLFBOT SUMMARIZER*\n` +
-              `⚡ *Analyzing...* ✅\n` +
-              `🧠 *Generating summary...*\n` +
-              `⏳ *Finalizing...*`,
-        edit: statusMsg.key
-      });
 
       // ====== PARSE RESPONSE ======
       let summary = '';
@@ -187,10 +170,8 @@ export default {
       resultText += `⚡ *Powered by WOLFTECH*`;
 
       // ====== SEND FINAL ANSWER ======
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('❌ [Summarizer] ERROR:', error);
@@ -217,6 +198,7 @@ export default {
       errorMessage += `4. Use \`${PREFIX}gpt\` for complex queries\n`;
       
       try {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
           text: errorMessage
         }, { quoted: m });

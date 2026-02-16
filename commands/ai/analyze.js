@@ -28,41 +28,28 @@ export default {
         }, { quoted: m });
       }
       
-      // Send processing message
-      const processingMsg = await sock.sendMessage(chatId, {
-        text: "🔍 *Analyzing content...*\n\nPlease wait while I examine this carefully...",
-        quoted: m
-      });
-      
-      let analysisResult = "";
-      
-      if (isImage) {
-        // Analyze image
-        analysisResult = await analyzeImage(quotedMsg, query, apiKey);
-      } else if (isVideo) {
-        // Analyze video (describe it)
-        analysisResult = await analyzeVideo(quotedMsg, query, apiKey);
-      } else if (isDocument) {
-        // Analyze document
-        analysisResult = await analyzeDocument(quotedMsg, query, apiKey);
-      } else if (isText) {
-        // Analyze text
-        analysisResult = await analyzeText(quotedMsg, query, apiKey);
-      } else if (query) {
-        // Analyze provided query as text
-        analysisResult = await analyzeQuery(query, apiKey);
-      } else {
-        // Delete processing message
-        try { await sock.sendMessage(chatId, { delete: processingMsg.key }); } catch(e) {}
-        
+      if (!isImage && !isVideo && !isDocument && !isText && !query) {
         return sock.sendMessage(chatId, {
           text: `╭─⌈ 📊 *CONTENT ANALYZER* ⌋\n├─⊷ *.analyze <text>*\n│  └⊷ Analyze text content\n├─⊷ *.analyze (reply to image)*\n│  └⊷ Analyze image with AI vision\n├─⊷ *.analyze (reply to video)*\n│  └⊷ Analyze video content\n├─⊷ *.analyze (reply to document)*\n│  └⊷ Analyze document content\n╰───`
         }, { quoted: m });
       }
-      
-      // Delete processing message
-      try { await sock.sendMessage(chatId, { delete: processingMsg.key }); } catch(e) {}
-      
+
+      await sock.sendMessage(chatId, { react: { text: '⏳', key: m.key } });
+
+      let analysisResult = "";
+
+      if (isImage) {
+        analysisResult = await analyzeImage(quotedMsg, query, apiKey);
+      } else if (isVideo) {
+        analysisResult = await analyzeVideo(quotedMsg, query, apiKey);
+      } else if (isDocument) {
+        analysisResult = await analyzeDocument(quotedMsg, query, apiKey);
+      } else if (isText) {
+        analysisResult = await analyzeText(quotedMsg, query, apiKey);
+      } else if (query) {
+        analysisResult = await analyzeQuery(query, apiKey);
+      }
+
       // Send analysis result
       const formattedResult = `
 🔬 *AI ANALYSIS REPORT* 🔬
@@ -76,9 +63,11 @@ ${analysisResult}
       `.trim();
       
       await sock.sendMessage(chatId, { text: formattedResult }, { quoted: m });
+      await sock.sendMessage(chatId, { react: { text: '✅', key: m.key } });
       
     } catch (error) {
       console.error("Analyze Error:", error);
+      await sock.sendMessage(m.key.remoteJid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(m.key.remoteJid, {
         text: `❌ *Analysis Failed*\n\nError: ${error.message}\n\nMake sure you have:\n1. Valid API key in .env\n2. Supported image/document format\n3. Internet connection`
       }, { quoted: m });

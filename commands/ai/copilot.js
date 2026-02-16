@@ -21,11 +21,7 @@ export default {
       const query = args.join(' ');
       
       // ====== PROCESSING MESSAGE ======
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `🤖 *WOLFBOT COPILOT*\n\n` +
-              `💭 *Processing your request...*\n\n` +
-              `🔍 "${query.substring(0, 60)}${query.length > 60 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       console.log(`🤖 Copilot query: "${query}"`);
       
@@ -49,13 +45,6 @@ export default {
 
       console.log(`✅ Copilot API response:`, response.data);
       
-      // ====== UPDATE STATUS ======
-      await sock.sendMessage(jid, {
-        text: `🤖 *WOLFBOT COPILOT*` +
-              `💭 *Processing...* ✅` +
-              `⚡ *Formatting response...*`,
-        edit: statusMsg.key
-      });
 
       // ====== PARSE RESPONSE ======
       let aiResponse = '';
@@ -124,10 +113,8 @@ export default {
       resultText += `⚡ *Powered by WolfTech*`;
       
       // ====== SEND FINAL ANSWER ======
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('❌ [COPILOT] ERROR:', error);
@@ -162,18 +149,10 @@ export default {
       errorMessage += `3. Wait 1-2 minutes and retry\n`;
       errorMessage += `4. Contact bot admin if persistent`;
       
-      // Try to send error with edit
-      try {
-        await sock.sendMessage(jid, {
-          text: errorMessage,
-          edit: m.messageId || null
-        });
-      } catch (editError) {
-        // Fallback to new message
-        await sock.sendMessage(jid, {
-          text: errorMessage
-        }, { quoted: m });
-      }
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+      await sock.sendMessage(jid, {
+        text: errorMessage
+      }, { quoted: m });
     }
   },
 };

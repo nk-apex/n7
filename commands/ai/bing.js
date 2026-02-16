@@ -47,11 +47,7 @@ export default {
     }
 
     try {
-      // Show generating status
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `🎨 *Generating AI Image...*\n\n` +
-                 ``
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       const { width, height } = reso[resolution];
       
@@ -105,17 +101,7 @@ export default {
         caption: caption
       }, { quoted: m });
 
-      // Update status message
-      await sock.sendMessage(jid, {
-        text: `✅ *Image Generated Successfully!*\n\n` +
-             `✨ AI Art created with Bing/Image Creator`,
-        edit: statusMsg.key
-      });
-
-      // Send success reaction
-      await sock.sendMessage(jid, {
-        react: { text: '✅', key: m.key }
-      });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
       console.error('[BING] Error:', error.message);

@@ -83,13 +83,7 @@ export default {
         return;
       }
 
-      // Send initial status
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🎤 *SPEECH WRITER*\n` +
-              `✍️ *Crafting speech...*\n` +
-              `📝 Topic: "${topic.substring(0, 50)}${topic.length > 50 ? '...' : ''}"\n` +
-              `⚙️ Options: ${options.length}, ${options.type}, ${options.tone}`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Build API URL
       const apiUrl = `https://apiskeith.vercel.app/ai/speechwriter?topic=${encodeURIComponent(topic)}&length=${options.length}&type=${options.type}&tone=${options.tone}`;
@@ -113,14 +107,6 @@ export default {
 
       console.log(`✅ [SPEECHWRITER] Response status: ${response.status}`);
       
-      // Update status
-      await sock.sendMessage(jid, {
-        text: `🎤 *SPEECH WRITER*\n` +
-              `✍️ *Crafting speech...* ✅\n` +
-              `📝 *Formatting professionally...*\n` +
-              `🎯 *Finalizing speech content...*`,
-        edit: statusMsg.key
-      });
 
       // Parse response
       let speech = '';
@@ -198,10 +184,8 @@ export default {
 
       // Send final speech
       console.log('📤 Sending generated speech to WhatsApp');
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
       console.log(`✅ Speech generated successfully for topic: "${topic}"`);
 
@@ -265,6 +249,7 @@ export default {
       // Send error message
       try {
         console.log('📤 Sending error message to user');
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
           text: errorMessage
         }, { quoted: m });

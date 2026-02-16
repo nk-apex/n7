@@ -107,11 +107,7 @@ export default {
 
     try {
       // ====== PROCESSING MESSAGE ======
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `⚡ *GOOGLE BARD*\n` +
-              `🚀 *Connecting to Google AI...*\n` +
-              `📝 "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // ====== API REQUEST (Using Keith's Bard API) ======
       const apiUrl = 'https://apiskeith.vercel.app/ai/bard';
@@ -141,14 +137,6 @@ export default {
 
       console.log(`✅ Bard Response status: ${response.status}`);
       
-      // ====== UPDATE STATUS ======
-      await sock.sendMessage(jid, {
-        text: `⚡ *GOOGLE BARD*\n` +
-              `🚀 *Connecting...* ✅\n` +
-              `🔍 *Searching Google AI...*\n` +
-              `⚡ *Generating intelligent response...*`,
-        edit: statusMsg.key
-      });
 
       // ====== PARSE RESPONSE ======
       let aiResponse = '';
@@ -273,10 +261,8 @@ export default {
 
       // ====== SEND FINAL ANSWER ======
       console.log('📤 Sending final response to WhatsApp');
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
       console.log(`✅ Bard response sent successfully`);
 
@@ -347,6 +333,7 @@ export default {
       // Try to send error message
       try {
         console.log('📤 Sending error message to user');
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
           text: errorMessage
         }, { quoted: m });

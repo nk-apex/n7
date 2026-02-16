@@ -26,12 +26,7 @@ export default {
     console.log(`🎭 [VENICE] Query: "${query}"`);
 
     try {
-      // Send initial status
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🎭 *VENICE AI*\n` +
-              `⚡ *Connecting to Venice AI...*\n` +
-              `💭 "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       let veniceResponse = '';
       let apiUsed = '';
@@ -149,15 +144,6 @@ export default {
         }
       }
 
-      // Update status
-      await sock.sendMessage(jid, {
-        text: `🎭 *VENICE AI*\n` +
-              `⚡ *Processing...* ✅\n` +
-              `💭 *Thinking creatively...*\n` +
-              `🎨 *Generating imaginative response...*`,
-        edit: statusMsg.key
-      });
-
       // Clean and format response
       veniceResponse = veniceResponse.trim();
       console.log(`📝 [VENICE] Response length: ${veniceResponse.length} characters`);
@@ -228,10 +214,8 @@ export default {
 
       // Send final answer
       console.log('📤 Sending Venice AI response to WhatsApp');
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
       console.log(`✅ Venice response sent via ${apiUsed}`);
 
@@ -270,6 +254,7 @@ export default {
 
       // Send error message
       try {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
           text: errorMessage
         }, { quoted: m });

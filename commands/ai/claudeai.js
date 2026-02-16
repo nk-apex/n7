@@ -26,11 +26,7 @@ export default {
 
     try {
       // Send initial status
-      const statusMsg = await sock.sendMessage(jid, { 
-        text: `🧠 *CLAUDE AI*\n` +
-              `⚡ *Connecting to Anthropic...*\n` +
-              `💭 "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       // Make API request to Keith's Claude AI API
       const apiUrl = `https://apiskeith.vercel.app/ai/claudeai?q=${encodeURIComponent(query)}`;
@@ -55,14 +51,6 @@ export default {
 
       console.log(`✅ [CLAUDE] Response status: ${response.status}`);
       
-      // Update status
-      await sock.sendMessage(jid, {
-        text: `🧠 *CLAUDE AI*\n` +
-              `⚡ *Connecting...* ✅\n` +
-              `💭 *Processing with Claude...*\n` +
-              `⚡ *Generating intelligent response...*`,
-        edit: statusMsg.key
-      });
 
       // Parse response
       let claudeResponse = '';
@@ -160,10 +148,8 @@ export default {
 
       // Send final answer
       console.log('📤 Sending final response to WhatsApp');
-      await sock.sendMessage(jid, {
-        text: resultText,
-        edit: statusMsg.key
-      });
+      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
       console.log(`✅ Claude AI response sent successfully`);
 
@@ -234,6 +220,7 @@ export default {
       // Send error message
       try {
         console.log('📤 Sending error message to user');
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, {
           text: errorMessage
         }, { quoted: m });
