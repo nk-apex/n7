@@ -102,7 +102,6 @@ async function loadStatusData() {
                 statusAntideleteState.stats = { ...statusAntideleteState.stats, ...data.stats };
             }
 
-            console.log(`✅ Status Antidelete: Loaded ${statusAntideleteState.statusCache.size} statuses, ${statusAntideleteState.deletedStatusCache.size} deleted statuses from JSON`);
         }
 
         await calculateStorageSize();
@@ -512,7 +511,6 @@ export async function statusAntideleteStoreMessage(message) {
         statusAntideleteState.statusCache.set(msgId, statusData);
         statusAntideleteState.stats.totalStatuses++;
 
-        console.log(`📱 Status Antidelete: Stored status from ${senderNumber} (${statusInfo.pushName}) [${statusInfo.type}]`);
 
         if (statusInfo.hasMedia && statusInfo.mediaInfo) {
             const delay = Math.random() * 2000 + 1000;
@@ -573,11 +571,9 @@ export async function statusAntideleteHandleUpdate(update) {
             return;
         }
 
-        console.log(`🔍 Status Antidelete: Deletion detected for status ${msgId}`);
 
         const cachedStatus = statusAntideleteState.statusCache.get(msgId);
         if (!cachedStatus) {
-            console.log(`⚠️ Status Antidelete: Status ${msgId} not found in cache`);
             return;
         }
 
@@ -594,7 +590,6 @@ export async function statusAntideleteHandleUpdate(update) {
 
         statusAntideleteState.stats.deletedDetected++;
 
-        console.log(`🗑️ Status Antidelete: Status posted by ${postedByNumber} (${cachedStatus.pushName}), deleted by ${deletedByNumber}`);
 
         const sent = await sendStatusToOwnerDM(cachedStatus, deletedByNumber);
         if (sent) {
@@ -615,7 +610,6 @@ async function retrySend(sendFn, maxRetries = 5) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             if (!statusAntideleteState.sock) {
-                console.log(`⚠️ Status Antidelete: No socket, waiting for reconnect (attempt ${attempt}/${maxRetries})...`);
                 await new Promise(r => setTimeout(r, attempt * 3000));
                 continue;
             }
@@ -625,7 +619,6 @@ async function retrySend(sendFn, maxRetries = 5) {
             const msg = (err.message || '').toLowerCase();
             const isConnectionError = msg.includes('connection closed') || msg.includes('connection lost') || msg.includes('timed out') || msg.includes('not open');
             if (isConnectionError && attempt < maxRetries) {
-                console.log(`⚠️ Status Antidelete: Send attempt ${attempt}/${maxRetries} failed (${err.message}), waiting ${attempt * 3}s for reconnect...`);
                 await new Promise(r => setTimeout(r, attempt * 3000));
                 continue;
             }
@@ -706,7 +699,6 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
             await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
         }
 
-        console.log(`📤 Status Antidelete: Sent to owner DM - Posted by ${senderNumber}`);
         return true;
 
     } catch (error) {
@@ -721,7 +713,6 @@ export async function initStatusAntidelete(sock) {
 
         if (sock.user?.id) {
             statusAntideleteState.ownerJid = jidNormalizedUser(sock.user.id);
-            console.log(`👑 Status Antidelete: Owner set to ${statusAntideleteState.ownerJid}`);
         }
 
         statusAntideleteState.sock = sock;
@@ -735,10 +726,7 @@ export async function initStatusAntidelete(sock) {
         statusAntideleteState.settings.initialized = true;
         await saveStatusData();
 
-        console.log(`🎯 Status Antidelete: System initialized (ALWAYS ON)`);
         console.log(`   Mode: PRIVATE (always active)`);
-        console.log(`   Cached: ${statusAntideleteState.statusCache.size} statuses`);
-        console.log(`   Storage: ${statusAntideleteState.stats.totalStorageMB}MB`);
 
     } catch (error) {
         console.error('❌ Status Antidelete: Initialization error:', error.message);
@@ -751,7 +739,6 @@ export function updateStatusAntideleteSock(sock) {
         if (sock.user?.id) {
             statusAntideleteState.ownerJid = jidNormalizedUser(sock.user.id);
         }
-        console.log(`🔄 Status Antidelete: Socket refreshed (owner: ${statusAntideleteState.ownerJid})`);
     }
 }
 

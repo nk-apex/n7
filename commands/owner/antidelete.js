@@ -153,7 +153,6 @@ async function loadData() {
                 antideleteState.stats = { ...antideleteState.stats, ...data.stats };
             }
             
-            console.log(`✅ Antidelete: Loaded ${antideleteState.messageCache.size} messages, ${antideleteState.mediaCache.size} media, ${antideleteState.groupCache.size} groups from JSON`);
         }
         
         await calculateStorageSize();
@@ -273,7 +272,6 @@ async function cleanRetrievedMessage(msgId) {
         
         debouncedSave();
         
-        console.log(`🧹 Antidelete: Cleaned retrieved message ${msgId} from JSON`);
         
     } catch (error) {
         console.error('❌ Antidelete: Error cleaning retrieved message:', error.message);
@@ -283,11 +281,9 @@ async function cleanRetrievedMessage(msgId) {
 async function autoCleanCache() {
     try {
         if (!antideleteState.settings.autoCleanEnabled) {
-            console.log('🔄 Antidelete: Auto-clean disabled, skipping...');
             return;
         }
         
-        console.log('🧹 Antidelete: Starting auto-clean from JSON...');
         const now = Date.now();
         const maxAge = antideleteState.settings.maxAgeHours * 60 * 60 * 1000;
         let cleanedCount = 0;
@@ -326,16 +322,13 @@ async function autoCleanCache() {
         
         await calculateStorageSize();
         if (antideleteState.stats.totalStorageMB > antideleteState.settings.maxStorageMB) {
-            console.log(`⚠️ Antidelete: Storage limit reached (${antideleteState.stats.totalStorageMB}MB > ${antideleteState.settings.maxStorageMB}MB)`);
             await forceCleanup();
         }
         
         if (cleanedCount > 0 || cleanedMedia > 0) {
             antideleteState.stats.cacheCleans++;
             await saveData();
-            console.log(`✅ Antidelete: Auto-clean completed. Cleaned ${cleanedCount} messages, ${cleanedMedia} media files.`);
         } else {
-            console.log('✅ Antidelete: Auto-clean completed (nothing to clean).');
         }
         
     } catch (error) {
@@ -345,7 +338,6 @@ async function autoCleanCache() {
 
 async function forceCleanup() {
     try {
-        console.log('⚠️ Antidelete: Force cleanup initiated...');
         
         const files = await fs.readdir(MEDIA_DIR);
         const fileStats = await Promise.all(
@@ -409,14 +401,12 @@ function startAutoClean() {
         await autoCleanCache();
     }, CACHE_CLEAN_INTERVAL);
     
-    console.log(`🔄 Antidelete: Auto-clean scheduled every ${CACHE_CLEAN_INTERVAL / 1000 / 60 / 60} hours`);
 }
 
 function stopAutoClean() {
     if (antideleteState.cleanupInterval) {
         clearInterval(antideleteState.cleanupInterval);
         antideleteState.cleanupInterval = null;
-        console.log('🛑 Antidelete: Auto-clean stopped');
     }
 }
 
@@ -456,7 +446,6 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
         
         const maxSize = 10 * 1024 * 1024;
         if (buffer.length > maxSize) {
-            console.log(`⚠️ Antidelete: Media too large (${Math.round(buffer.length/1024/1024)}MB), skipping...`);
             return null;
         }
         
@@ -479,7 +468,6 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
         
         await calculateStorageSize();
         
-        console.log(`📸 Antidelete: Saved ${messageType} media: ${filename} (${Math.round(buffer.length/1024)}KB)`);
         return filePath;
         
     } catch (error) {
@@ -627,7 +615,6 @@ export async function antideleteHandleUpdate(update) {
         const chatJid = msgKey.remoteJidAlt || msgKey.remoteJid;
         
         if (chatJid?.endsWith('@lid') && !chatJid?.endsWith('@g.us')) {
-            console.log(`⚠️ Antidelete: Skipping LID-only chat ${chatJid?.substring(0, 20)}`);
             return;
         }
         
@@ -656,11 +643,9 @@ export async function antideleteHandleUpdate(update) {
             return;
         }
         
-        console.log(`🔍 Antidelete: Checking deletion for ${msgId} in ${chatJid}`);
         
         const cachedMessage = antideleteState.messageCache.get(msgId);
         if (!cachedMessage) {
-            console.log(`⚠️ Antidelete: Message ${msgId} not found in cache`);
             return;
         }
         
@@ -683,7 +668,6 @@ export async function antideleteHandleUpdate(update) {
             const ownerNumber = antideleteState.ownerJid ? antideleteState.ownerJid.split('@')[0].split(':')[0] : null;
             const senderNumber = cachedMessage.senderJid ? cachedMessage.senderJid.split('@')[0].split(':')[0] : null;
             if (ownerNumber && senderNumber === ownerNumber) {
-                console.log(`⚠️ Antidelete: Skipping owner's own deletion`);
                 return;
             }
         }
@@ -716,7 +700,6 @@ export async function antideleteHandleUpdate(update) {
         if (sent) {
             antideleteState.stats.retrieved++;
             await saveData();
-            console.log(`✅ Antidelete: Retrieved deleted message from ${cachedMessage.pushName} (${cachedMessage.realNumber}) (Mode: ${antideleteState.mode})`);
         }
         
     } catch (error) {
@@ -728,7 +711,6 @@ async function retrySend(sendFn, maxRetries = 5) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             if (!antideleteState.sock) {
-                console.log(`⚠️ Antidelete: No socket, waiting for reconnect (attempt ${attempt}/${maxRetries})...`);
                 await new Promise(r => setTimeout(r, attempt * 3000));
                 continue;
             }
@@ -738,7 +720,6 @@ async function retrySend(sendFn, maxRetries = 5) {
             const msg = (err.message || '').toLowerCase();
             const isConnectionError = msg.includes('connection closed') || msg.includes('connection lost') || msg.includes('timed out') || msg.includes('not open');
             if (isConnectionError && attempt < maxRetries) {
-                console.log(`⚠️ Antidelete: Send attempt ${attempt}/${maxRetries} failed (${err.message}), waiting ${attempt * 3}s for reconnect...`);
                 await new Promise(r => setTimeout(r, attempt * 3000));
                 continue;
             }
@@ -846,7 +827,6 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
             await retrySend(() => antideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
         }
         
-        console.log(`📤 Antidelete: Sent to owner DM: ${senderNumber} → ${messageData.chatName}`);
         return true;
         
     } catch (error) {
@@ -943,7 +923,6 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
             await retrySend(() => antideleteState.sock.sendMessage(chatJid, { text: detailsText }));
         }
         
-        console.log(`📤 Antidelete: Sent to chat ${messageData.chatName} (Public Mode)`);
         return true;
         
     } catch (error) {
@@ -960,7 +939,6 @@ export async function initAntidelete(sock) {
         
         if (sock.user?.id) {
             antideleteState.ownerJid = jidNormalizedUser(sock.user.id);
-            console.log(`👑 Antidelete: Owner set to ${antideleteState.ownerJid}`);
         }
         
         if (antideleteState.settings.autoCleanEnabled) {
@@ -993,7 +971,6 @@ export async function initAntidelete(sock) {
         process.on('SIGINT', flushOnExit);
         process.on('SIGTERM', flushOnExit);
         
-        console.log(`🎯 Antidelete: System initialized (Mode: ${antideleteState.mode.toUpperCase()}, ALWAYS ACTIVE)`);
         
     } catch (error) {
         console.error('❌ Antidelete: Initialization error:', error.message);
@@ -1006,7 +983,6 @@ export function updateAntideleteSock(sock) {
         if (sock.user?.id) {
             antideleteState.ownerJid = jidNormalizedUser(sock.user.id);
         }
-        console.log(`🔄 Antidelete: Socket refreshed (owner: ${antideleteState.ownerJid})`);
     }
 }
 

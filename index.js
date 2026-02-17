@@ -686,7 +686,10 @@ const ultraSilentLogger = {
     success: () => {},
     warning: () => {},
     event: () => {},
-    command: () => {}
+    command: (...args) => {
+        const timestamp = chalk.gray(`[${new Date().toLocaleTimeString()}]`);
+        originalConsoleMethods.log(timestamp, chalk.cyan('⚡'), ...args);
+    }
 };
 
 // Anti-viewonce configuration
@@ -5014,7 +5017,6 @@ async function handleViewOnceDetection(sock, msg) {
         const sender = msg.key.participant || msg.key.remoteJid;
         const senderShort = sender.split('@')[0].split(':')[0];
 
-        originalConsoleMethods.log(`🔐 [ANTI-VIEWONCE] Detected ${type} from ${senderShort}`);
 
         const cleanMedia = { ...media };
         delete cleanMedia.viewOnce;
@@ -5034,9 +5036,7 @@ async function handleViewOnceDetection(sock, msg) {
                     reuploadRequest: sock.updateMediaMessage
                 }
             );
-            originalConsoleMethods.log(`🔐 [ANTI-VIEWONCE] Downloaded via downloadMediaMessage: ${buffer?.length || 0} bytes`);
         } catch (dlErr1) {
-            originalConsoleMethods.log(`⚠️ [ANTI-VIEWONCE] downloadMediaMessage failed: ${dlErr1.message}, trying stream method...`);
             try {
                 const stream = await downloadContentFromMessage(cleanMedia, type);
                 const chunks = [];
@@ -5044,9 +5044,7 @@ async function handleViewOnceDetection(sock, msg) {
                     chunks.push(chunk);
                 }
                 buffer = Buffer.concat(chunks);
-                originalConsoleMethods.log(`🔐 [ANTI-VIEWONCE] Downloaded via stream: ${buffer?.length || 0} bytes`);
             } catch (dlErr2) {
-                originalConsoleMethods.log(`⚠️ [ANTI-VIEWONCE] Stream failed, trying original media...`);
                 try {
                     const stream2 = await downloadContentFromMessage(media, type);
                     const chunks2 = [];
@@ -5054,16 +5052,13 @@ async function handleViewOnceDetection(sock, msg) {
                         chunks2.push(chunk);
                     }
                     buffer = Buffer.concat(chunks2);
-                    originalConsoleMethods.log(`🔐 [ANTI-VIEWONCE] Downloaded via original media stream: ${buffer?.length || 0} bytes`);
                 } catch (dlErr3) {
-                    originalConsoleMethods.log(`❌ [ANTI-VIEWONCE] All download methods failed: ${dlErr3.message}`);
                     return;
                 }
             }
         }
 
         if (!buffer || buffer.length === 0) {
-            originalConsoleMethods.log('❌ [ANTI-VIEWONCE] Empty buffer after download');
             return;
         }
 
@@ -5078,7 +5073,6 @@ async function handleViewOnceDetection(sock, msg) {
         mediaPayload.fileName = filename;
 
         if (config.mode === 'public') {
-            originalConsoleMethods.log(`📤 [ANTI-VIEWONCE] Resending ${type} (${sizeKB}KB) in chat ${chatId}`);
 
             await sock.sendMessage(chatId, {
                 text: `🔐 *VIEW-ONCE ${type.toUpperCase()} REVEALED*\n\n` +
@@ -5090,11 +5084,9 @@ async function handleViewOnceDetection(sock, msg) {
 
             await sock.sendMessage(chatId, mediaPayload);
 
-            originalConsoleMethods.log(`✅ [ANTI-VIEWONCE] ${type} revealed in chat`);
 
         } else {
             const normalizedOwner = jidNormalizedUser(ownerJid);
-            originalConsoleMethods.log(`📤 [ANTI-VIEWONCE] Sending ${type} (${sizeKB}KB) to owner ${normalizedOwner.split('@')[0]}`);
 
             const infoText = `🔐 *VIEW-ONCE CAPTURED*\n\n` +
                            `*From:* ${senderShort}\n` +
@@ -5108,7 +5100,6 @@ async function handleViewOnceDetection(sock, msg) {
             await sock.sendMessage(normalizedOwner, { text: infoText });
             await sock.sendMessage(normalizedOwner, mediaPayload);
 
-            originalConsoleMethods.log(`✅ [ANTI-VIEWONCE] ${type} sent to owner DM`);
         }
 
         try {
