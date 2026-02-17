@@ -72,7 +72,7 @@ export default {
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         if (!quoted) {
             return sock.sendMessage(chatId, {
-                text: `📇 *View VCF*\n\nReply to a VCF file with \`${PREFIX}viewvcf\` to list contacts as JSON with username and phone number.`
+                text: `╭─⌈ 📇 *VIEW VCF* ⌋\n├─⊷ Reply to a *.vcf* file with\n│  └⊷ *${PREFIX}viewvcf*\n├─⊷ Lists contacts as JSON\n╰─── *WOLFBOT* ───`
             }, { quoted: msg });
         }
 
@@ -123,18 +123,17 @@ export default {
                 contacts: displayContacts
             };
 
-            let text = `📇 *VCF CONTACTS — JSON*\n`;
-            text += `📊 Total: *${total}* contacts`;
+            let text = `╭─⌈ 📇 *VCF CONTACTS* ⌋\n├─⊷ *Total:* ${total} contacts`;
             if (truncated) {
-                text += ` _(showing first ${MAX_DISPLAY})_`;
+                text += ` _(first ${MAX_DISPLAY})_`;
             }
-            text += `\n\n`;
+            text += `\n╰─── *WOLFBOT* ───\n\n`;
             text += '```\n';
             text += JSON.stringify(jsonOutput, null, 2);
             text += '\n```';
 
             if (truncated) {
-                text += `\n\n_...and ${total - MAX_DISPLAY} more contacts_`;
+                text += `\n\n_...and ${total - MAX_DISPLAY} more_`;
             }
 
             await sock.sendMessage(chatId, { text }, { quoted: msg });

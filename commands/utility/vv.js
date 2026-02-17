@@ -427,7 +427,7 @@ export default {
                     }
                     
                     return sock.sendMessage(chatId, { 
-                        text: `🗑️ *Cleared Temporary Files*\n\nDeleted ${deletedCount} files from download cache.` 
+                        text: `╭─⌈ 🗑️ *CACHE CLEARED* ⌋\n├─⊷ Deleted ${deletedCount} files\n╰─── *WOLFBOT* ───` 
                     }, { quoted: msg });
                     
                 } catch (error) {
@@ -444,7 +444,7 @@ export default {
                     const newCaption = args.slice(2).join(' ');
                     if (!newCaption) {
                         return sock.sendMessage(chatId, { 
-                            text: `❌ Usage: \`.vv caption set [text]\`\n\nExample: \`.vv caption set WolfBot is the Alpha\`\n\nUse \`.vv caption set none\` to disable caption.` 
+                            text: `╭─⌈ ❌ *VV CAPTION* ⌋\n├─⊷ *.vv caption set <text>*\n│  └⊷ Set custom caption\n├─⊷ *.vv caption set none*\n│  └⊷ Disable caption\n╰─── *WOLFBOT* ───` 
                         }, { quoted: msg });
                     }
                     
@@ -453,7 +453,7 @@ export default {
                     savePreferences();
                     
                     return sock.sendMessage(chatId, { 
-                        text: `✅ *Caption Updated*\n\nNew caption: ${newCaption === 'none' ? 'Disabled' : `"${newCaption}"`}\n\nThis will be shown on downloaded view-once media.` 
+                        text: `╭─⌈ ✅ *CAPTION UPDATED* ⌋\n├─⊷ ${newCaption === 'none' ? 'Disabled' : `"${newCaption}"`}\n╰─── *WOLFBOT* ───` 
                     }, { quoted: msg });
                 }
                 else if (action === 'default') {
@@ -462,7 +462,7 @@ export default {
                     savePreferences();
                     
                     return sock.sendMessage(chatId, { 
-                        text: `✅ *Caption Reset to Default*\n\nCaption: "${CONFIG.DEFAULT_CAPTION}"` 
+                        text: `╭─⌈ ✅ *CAPTION RESET* ⌋\n├─⊷ "${CONFIG.DEFAULT_CAPTION}"\n╰─── *WOLFBOT* ───` 
                     }, { quoted: msg });
                 }
                 else if (action === 'show') {
@@ -470,12 +470,12 @@ export default {
                     const status = current === '' ? 'Disabled' : `"${current}"`;
                     
                     return sock.sendMessage(chatId, { 
-                        text: `📝 *Current Caption*\n\n${status}\n\nDefault: "${CONFIG.DEFAULT_CAPTION}"\n\nCommands:\n• \`.vv caption set [text]\` - Set custom caption\n• \`.vv caption default\` - Reset to default\n• \`.vv caption show\` - Show current` 
+                        text: `╭─⌈ 📝 *VV CAPTION* ⌋\n├─⊷ *Current:* ${status}\n├─⊷ *Default:* "${CONFIG.DEFAULT_CAPTION}"\n╰─── *WOLFBOT* ───` 
                     }, { quoted: msg });
                 }
                 else {
                     return sock.sendMessage(chatId, { 
-                        text: `⚙️ *Caption Settings*\n\nCommands:\n• \`.vv caption set [text]\` - Set custom caption\n• \`.vv caption default\` - Reset to default\n• \`.vv caption show\` - Show current\n\nExample: \`.vv caption set WolfBot is the Alpha\`` 
+                        text: `╭─⌈ 📝 *VV CAPTION* ⌋\n├─⊷ *.vv caption set <text>*\n│  └⊷ Set custom caption\n├─⊷ *.vv caption default*\n│  └⊷ Reset to default\n├─⊷ *.vv caption show*\n│  └⊷ Show current\n╰─── *WOLFBOT* ───` 
                     }, { quoted: msg });
                 }
             }
@@ -493,7 +493,7 @@ export default {
                         savePreferences();
                         
                         return sock.sendMessage(chatId, { 
-                            text: `✅ *Sender Info ${toggle ? 'Enabled' : 'Disabled'}*\n\nSender information will ${toggle ? 'now be shown' : 'no longer be shown'} on downloaded media.` 
+                            text: `╭─⌈ ✅ *SENDER INFO ${toggle ? 'ON' : 'OFF'}* ⌋\n╰─── *WOLFBOT* ───` 
                         }, { quoted: msg });
                     }
                     else if (type === 'file') {
@@ -502,7 +502,7 @@ export default {
                         savePreferences();
                         
                         return sock.sendMessage(chatId, { 
-                            text: `✅ *File Info ${toggle ? 'Enabled' : 'Disabled'}*\n\nFile information (size, duration, etc.) will ${toggle ? 'now be shown' : 'no longer be shown'} on downloaded media.` 
+                            text: `╭─⌈ ✅ *FILE INFO ${toggle ? 'ON' : 'OFF'}* ⌋\n╰─── *WOLFBOT* ───` 
                         }, { quoted: msg });
                     }
                     else if (type === 'original') {
@@ -511,32 +511,25 @@ export default {
                         savePreferences();
                         
                         return sock.sendMessage(chatId, { 
-                            text: `✅ *Original Caption ${toggle ? 'Enabled' : 'Disabled'}*\n\nOriginal captions will ${toggle ? 'now be shown' : 'no longer be shown'} on downloaded media.` 
+                            text: `╭─⌈ ✅ *ORIGINAL CAPTION ${toggle ? 'ON' : 'OFF'}* ⌋\n╰─── *WOLFBOT* ───` 
                         }, { quoted: msg });
                     }
                     else {
                         return sock.sendMessage(chatId, { 
-                            text: `❌ Usage: \`.vv info [on/off] [type]\`\n\nTypes:\n• sender - Sender information\n• file - File information\n• original - Original caption\n\nExample: \`.vv info off sender\`` 
+                            text: `╭─⌈ ⚙️ *VV INFO* ⌋\n├─⊷ *.vv info on/off sender*\n├─⊷ *.vv info on/off file*\n├─⊷ *.vv info on/off original*\n╰─── *WOLFBOT* ───` 
                         }, { quoted: msg });
                     }
                 }
                 else if (action === 'status') {
                     const prefs = getChatPreferences(chatId);
                     
-                    let statusText = `⚙️ *Information Display Settings*\n\n`;
-                    statusText += `• Sender info: ${prefs.showSenderInfo ? '✅ ON' : '❌ OFF'}\n`;
-                    statusText += `• File info: ${prefs.showFileInfo ? '✅ ON' : '❌ OFF'}\n`;
-                    statusText += `• Original caption: ${prefs.showOriginalCaption ? '✅ ON' : '❌ OFF'}\n\n`;
-                    statusText += `Commands:\n`;
-                    statusText += `• \`.vv info on sender\` - Show sender info\n`;
-                    statusText += `• \`.vv info off file\` - Hide file info\n`;
-                    statusText += `• \`.vv info status\` - Show current settings`;
-                    
-                    return sock.sendMessage(chatId, { text: statusText }, { quoted: msg });
+                    return sock.sendMessage(chatId, { 
+                        text: `╭─⌈ ⚙️ *VV INFO STATUS* ⌋\n├─⊷ *Sender:* ${prefs.showSenderInfo ? '✅ ON' : '❌ OFF'}\n├─⊷ *File:* ${prefs.showFileInfo ? '✅ ON' : '❌ OFF'}\n├─⊷ *Original:* ${prefs.showOriginalCaption ? '✅ ON' : '❌ OFF'}\n╰─── *WOLFBOT* ───` 
+                    }, { quoted: msg });
                 }
                 else {
                     return sock.sendMessage(chatId, { 
-                        text: `⚙️ *Information Display Settings*\n\nControl what information is shown on downloaded media.\n\nCommands:\n• \`.vv info [on/off] [type]\` - Toggle info display\n• \`.vv info status\` - Show current settings\n\nTypes: sender, file, original\nExample: \`.vv info off sender\`` 
+                        text: `╭─⌈ ⚙️ *VV INFO* ⌋\n├─⊷ *.vv info on/off sender*\n├─⊷ *.vv info on/off file*\n├─⊷ *.vv info on/off original*\n├─⊷ *.vv info status*\n╰─── *WOLFBOT* ───` 
                     }, { quoted: msg });
                 }
             }
@@ -544,57 +537,18 @@ export default {
                 const prefs = getChatPreferences(chatId);
                 const captionStatus = prefs.customCaption === '' ? 'Disabled' : `"${prefs.customCaption}"`;
                 
-                let settingsText = `⚙️ *VV Downloader Settings*\n\n`;
-                settingsText += `📝 *Caption:* ${captionStatus}\n`;
-                settingsText += `👤 *Sender info:* ${prefs.showSenderInfo ? '✅ ON' : '❌ OFF'}\n`;
-                settingsText += `📊 *File info:* ${prefs.showFileInfo ? '✅ ON' : '❌ OFF'}\n`;
-                settingsText += `📝 *Original caption:* ${prefs.showOriginalCaption ? '✅ ON' : '❌ OFF'}\n\n`;
-                settingsText += `*Commands:*\n`;
-                settingsText += `• \`.vv caption\` - Manage caption\n`;
-                settingsText += `• \`.vv info\` - Toggle information display\n`;
-                settingsText += `• \`.vv help\` - Full help\n`;
-                settingsText += `• \`.vv clean\` - Clear temporary files`;
-                
-                return sock.sendMessage(chatId, { text: settingsText }, { quoted: msg });
+                return sock.sendMessage(chatId, { 
+                    text: `╭─⌈ ⚙️ *VV SETTINGS* ⌋\n├─⊷ *Caption:* ${captionStatus}\n├─⊷ *Sender:* ${prefs.showSenderInfo ? '✅ ON' : '❌ OFF'}\n├─⊷ *File:* ${prefs.showFileInfo ? '✅ ON' : '❌ OFF'}\n├─⊷ *Original:* ${prefs.showOriginalCaption ? '✅ ON' : '❌ OFF'}\n╰─── *WOLFBOT* ───` 
+                }, { quoted: msg });
             }
             else if (subCommand === 'help') {
-                const helpText = `
-📥 *View-Once Downloader (VV)*
-
-Download and display view-once media directly in chat.
-
-⚡ *How to use:*
-Reply to any view-once message with \`.vv\`
-
-🔧 *Caption & Settings Commands:*
-• \`.vv caption set [text]\` - Set custom caption
-• \`.vv caption default\` - Reset to default
-• \`.vv caption show\` - Show current caption
-• \`.vv info [on/off] [type]\` - Toggle info display
-• \`.vv info status\` - Show info settings
-• \`.vv settings\` - Show all settings
-
-📊 *Info Types (for .vv info):*
-• sender - Who sent the media
-• file - File size, duration, dimensions
-• original - Original caption from sender
-
-📝 *Default Caption:*
-"${CONFIG.DEFAULT_CAPTION}"
-
-🛠️ *Utility Commands:*
-• \`.vv clean\` - Clear temporary files
-• \`.vv help\` - Show this help
-
-📁 *Temporary storage:* \`${CONFIG.SAVE_DIR}\`
-⚠️ *Max file size:* ${CONFIG.MAX_SIZE_MB}MB
-                `.trim();
-                
-                return sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
+                return sock.sendMessage(chatId, { 
+                    text: `╭─⌈ 📥 *VIEW-ONCE (VV)* ⌋\n├─⊷ Reply to view-once with *.vv*\n├─⊷ *.vv caption set <text>*\n│  └⊷ Set custom caption\n├─⊷ *.vv caption default*\n│  └⊷ Reset caption\n├─⊷ *.vv info on/off <type>*\n│  └⊷ Toggle: sender, file, original\n├─⊷ *.vv settings*\n│  └⊷ View all settings\n├─⊷ *.vv clean*\n│  └⊷ Clear temp files\n╰─── *WOLFBOT* ───` 
+                }, { quoted: msg });
             }
             
             return sock.sendMessage(chatId, { 
-                text: `📥 *View-Once Downloader*\n\nReply to a view-once message with \`.vv\` to download and show it.\n\nManage settings:\n• \`.vv caption\` - Set custom caption\n• \`.vv info\` - Toggle information\n• \`.vv settings\` - View all settings\n• \`.vv help\` - Full help guide\n\nDefault caption: "${CONFIG.DEFAULT_CAPTION}"` 
+                text: `╭─⌈ 📥 *VIEW-ONCE (VV)* ⌋\n├─⊷ Reply to view-once with *.vv*\n├─⊷ *.vv caption* — Manage caption\n├─⊷ *.vv info* — Toggle info display\n├─⊷ *.vv settings* — View settings\n├─⊷ *.vv help* — Full help\n╰─── *WOLFBOT* ───` 
             }, { quoted: msg });
         }
         
@@ -609,7 +563,7 @@ Reply to any view-once message with \`.vv\`
         // Check if quoted message is view-once
         if (!isViewOnceMessage(quotedMessage)) {
             return sock.sendMessage(chatId, { 
-                text: '❌ The quoted message is not a view-once media.\n\nReply only to view-once photos, videos, or audio messages.' 
+                text: '❌ Not a view-once message. Reply to a view-once photo, video, or audio.' 
             }, { quoted: msg });
         }
         
@@ -628,7 +582,7 @@ Reply to any view-once message with \`.vv\`
             if (!result.success) {
                 // Send error message
                 await sock.sendMessage(chatId, { 
-                    text: `❌ *Download Failed!*\n\nError: ${result.error}\n\nPossible reasons:\n• The media has already expired\n• File is too large (max ${CONFIG.MAX_SIZE_MB}MB)\n• Network issues\n• Unsupported media type` 
+                    text: `╭─⌈ ❌ *DOWNLOAD FAILED* ⌋\n├─⊷ ${result.error}\n╰─── *WOLFBOT* ───` 
                 }, { quoted: msg });
             }
             
@@ -637,7 +591,7 @@ Reply to any view-once message with \`.vv\`
             
             // Send error message
             await sock.sendMessage(chatId, { 
-                text: `❌ *Unexpected Error!*\n\n${error.message}\n\nPlease try again.` 
+                text: `╭─⌈ ❌ *ERROR* ⌋\n├─⊷ ${error.message}\n╰─── *WOLFBOT* ───` 
             }, { quoted: msg });
         }
     }
