@@ -1247,7 +1247,7 @@ export default {
                 break;
                 
             case 'help':
-                const helpText = `╭─⌈ 🔍 *ANTIDELETE SYSTEM* ⌋\n│\n├─⊷ *${prefix}antidelete private*\n│  └⊷ Send to DM only\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}antidelete stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear all data\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antidelete help*\n│  └⊷ This menu\n╰───`;
+                const helpText = `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF'}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰───`;
                 
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
