@@ -687,6 +687,17 @@ class UltraCleanLogger {
     }
     
     static error(...args) {
+        const message = args.join(' ').toLowerCase();
+        const errorSuppress = [
+            'bad mac', 'failed to decrypt', 'decrypt', 'session error',
+            'sessioncipher', 'sessionbuilder', 'session_cipher',
+            'signalprotocol', 'ratchet', 'closed session',
+            'stream errored', 'verifymac', 'libsignal',
+            'hmac', 'pre-key', 'prekey'
+        ];
+        for (const pattern of errorSuppress) {
+            if (message.includes(pattern)) return;
+        }
         const timestamp = chalk.red(`[${new Date().toLocaleTimeString()}]`);
         originalConsoleMethods.error(timestamp, ...args);
     }
