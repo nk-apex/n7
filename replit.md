@@ -46,6 +46,7 @@ The bot operates on Node.js 20, utilizing ESM modules. Its core logic resides in
 *   **Image Generator Captions**: AI image generators (imagine, flux, bing) use "Created by WOLFBOT" caption.
 *   **Persistent Warn System**: Per-group warnings and limits saved to `./data/warnings/warnings.json` and `./data/warnings/limits.json`, surviving bot restarts.
 *   **Approve/Reject All**: Group commands (`approveall`, `rejectall`) to bulk approve or reject pending group join requests using Baileys' `groupRequestParticipantsList` and `groupRequestParticipantsUpdate` APIs. Processes in batches of 5 with throttling.
+*   **Chatbot Whitelist System**: W.O.L.F chatbot supports per-group and per-DM whitelisting. Commands: `addgroup`, `removegroup`, `listgroups`, `cleargroups` for groups; `adddm`, `removedm`, `listdms`, `cleardms` for DMs. When whitelists are set, the chatbot only responds in those specific chats. Config stored in `./data/chatbot/chatbot_config.json` with `allowedGroups` and `allowedDMs` arrays.
 
 ## External Dependencies
 *   `@whiskeysockets/baileys`: Core WhatsApp Web API integration.

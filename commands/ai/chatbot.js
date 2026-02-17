@@ -263,7 +263,7 @@ function loadConfig() {
       return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
     }
   } catch (e) {}
-  return { mode: 'off', preferredModel: 'gpt', stats: { totalQueries: 0, modelsUsed: {} } };
+  return { mode: 'off', preferredModel: 'gpt', allowedGroups: [], allowedDMs: [], stats: { totalQueries: 0, modelsUsed: {} } };
 }
 
 function saveConfig(config) {
@@ -413,6 +413,21 @@ export function isChatbotActiveForChat(chatId) {
 
   const isGroup = chatId.endsWith('@g.us');
   const isDM = chatId.endsWith('@s.whatsapp.net') || chatId.endsWith('@lid');
+
+  const allowedGroups = config.allowedGroups || [];
+  const allowedDMs = config.allowedDMs || [];
+
+  if (isGroup && allowedGroups.length > 0) {
+    return allowedGroups.includes(chatId);
+  }
+
+  if (isDM && allowedDMs.length > 0) {
+    const normalized = chatId.split('@')[0].split(':')[0];
+    return allowedDMs.some(dm => {
+      const normDM = dm.split('@')[0].split(':')[0];
+      return normDM === normalized;
+    });
+  }
 
   if (config.mode === 'on' || config.mode === 'both') return true;
   if (config.mode === 'groups' && isGroup) return true;
@@ -641,10 +656,17 @@ export default {
       };
       const currentModel = AI_MODELS[config.preferredModel] || AI_MODELS.gpt;
 
+      const allowedGroups = config.allowedGroups || [];
+      const allowedDMs = config.allowedDMs || [];
+      const whitelistInfo = (allowedGroups.length > 0 || allowedDMs.length > 0)
+        ? `│ 📋 Whitelist: ${allowedGroups.length} groups, ${allowedDMs.length} DMs\n`
+        : '';
+
       const helpText =
         `╭─⌈ 🐺 *W.O.L.F CHATBOT* ⌋\n` +
         `│ ${modeEmoji[config.mode] || '🔴'} Status: ${config.mode.toUpperCase()}\n` +
         `│ ${currentModel.icon} Model: ${currentModel.name}\n` +
+        whitelistInfo +
         `├─⊷ *${PREFIX}chatbot on*\n│  └⊷ Enable everywhere\n` +
         `├─⊷ *${PREFIX}chatbot off*\n│  └⊷ Disable chatbot\n` +
         `├─⊷ *${PREFIX}chatbot groups*\n│  └⊷ Groups only\n` +
@@ -654,6 +676,15 @@ export default {
         `├─⊷ *${PREFIX}chatbot stats*\n│  └⊷ View stats\n` +
         `├─⊷ *${PREFIX}chatbot clear*\n│  └⊷ Reset history\n` +
         `├─⊷ *${PREFIX}chatbot settings*\n│  └⊷ View config\n` +
+        `├─⌈ 📋 *WHITELIST* ⌋\n` +
+        `├─⊷ *${PREFIX}chatbot addgroup*\n│  └⊷ Add this group\n` +
+        `├─⊷ *${PREFIX}chatbot removegroup*\n│  └⊷ Remove this group\n` +
+        `├─⊷ *${PREFIX}chatbot listgroups*\n│  └⊷ List allowed groups\n` +
+        `├─⊷ *${PREFIX}chatbot cleargroups*\n│  └⊷ Clear all groups\n` +
+        `├─⊷ *${PREFIX}chatbot adddm <number>*\n│  └⊷ Add a DM\n` +
+        `├─⊷ *${PREFIX}chatbot removedm <number>*\n│  └⊷ Remove a DM\n` +
+        `├─⊷ *${PREFIX}chatbot listdms*\n│  └⊷ List allowed DMs\n` +
+        `├─⊷ *${PREFIX}chatbot cleardms*\n│  └⊷ Clear all DMs\n` +
         `╰───`;
 
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
@@ -754,6 +785,19 @@ export default {
       const model = AI_MODELS[config.preferredModel] || AI_MODELS.gpt;
       const modeEmoji = { off: '🔴', on: '🟢', groups: '👥', dms: '💬', both: '🌐' };
 
+      const aGroups = config.allowedGroups || [];
+      const aDMs = config.allowedDMs || [];
+      let whitelistSection = '';
+      if (aGroups.length > 0 || aDMs.length > 0) {
+        whitelistSection = `\n📋 *Whitelist:*\n`;
+        if (aGroups.length > 0) {
+          whitelistSection += `  👥 ${aGroups.length} group(s)\n`;
+        }
+        if (aDMs.length > 0) {
+          whitelistSection += `  💬 ${aDMs.length} DM(s)\n`;
+        }
+      }
+
       const settingsText =
         `🐺 *W.O.L.F Settings*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
         `${modeEmoji[config.mode] || '🔴'} *Mode:* ${config.mode.toUpperCase()}\n` +
@@ -761,12 +805,155 @@ export default {
         `🔄 *Auto-Fallback:* Enabled\n` +
         `💾 *Memory:* 20 msgs (1hr timeout)\n` +
         `🎯 *Interactive:* Images, Music, Videos\n` +
-        `📊 *Queries:* ${config.stats?.totalQueries || 0}\n\n` +
+        `📊 *Queries:* ${config.stats?.totalQueries || 0}\n` +
+        whitelistSection + `\n` +
         `🤖 *Models (${Object.keys(AI_MODELS).length}):*\n` +
         Object.entries(AI_MODELS).map(([k, v]) => `  ${v.icon} ${v.name} (\`${k}\`)`).join('\n') +
         `\n\n⚡ *Powered by WolfTech*`;
 
       return sock.sendMessage(jid, { text: settingsText }, { quoted: m });
+    }
+
+    if (subCommand === 'addgroup') {
+      if (!jid.endsWith('@g.us')) {
+        return sock.sendMessage(jid, {
+          text: `❌ This command must be used inside a group chat.`
+        }, { quoted: m });
+      }
+      if (!config.allowedGroups) config.allowedGroups = [];
+      if (config.allowedGroups.includes(jid)) {
+        return sock.sendMessage(jid, {
+          text: `⚠️ This group is already in the whitelist.`
+        }, { quoted: m });
+      }
+      config.allowedGroups.push(jid);
+      saveConfig(config);
+      let groupName = jid.split('@')[0];
+      const cached = globalThis.groupMetadataCache?.get(jid);
+      if (cached?.data?.subject) groupName = cached.data.subject;
+      return sock.sendMessage(jid, {
+        text: `🐺 *W.O.L.F*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n✅ Group added to whitelist!\n\n👥 *Group:* ${groupName}\n📋 *Total:* ${config.allowedGroups.length} group(s)\n\n_W.O.L.F will only respond in whitelisted chats._`
+      }, { quoted: m });
+    }
+
+    if (subCommand === 'removegroup') {
+      if (!jid.endsWith('@g.us')) {
+        return sock.sendMessage(jid, {
+          text: `❌ This command must be used inside a group chat.`
+        }, { quoted: m });
+      }
+      if (!config.allowedGroups) config.allowedGroups = [];
+      const idx = config.allowedGroups.indexOf(jid);
+      if (idx === -1) {
+        return sock.sendMessage(jid, {
+          text: `⚠️ This group is not in the whitelist.`
+        }, { quoted: m });
+      }
+      config.allowedGroups.splice(idx, 1);
+      saveConfig(config);
+      return sock.sendMessage(jid, {
+        text: `🐺 *W.O.L.F*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🗑️ Group removed from whitelist!\n📋 *Remaining:* ${config.allowedGroups.length} group(s)`
+      }, { quoted: m });
+    }
+
+    if (subCommand === 'listgroups') {
+      const groups = config.allowedGroups || [];
+      if (groups.length === 0) {
+        return sock.sendMessage(jid, {
+          text: `🐺 *W.O.L.F*\n\n📋 No groups in whitelist.\n_W.O.L.F responds in all groups based on mode._`
+        }, { quoted: m });
+      }
+      let listText = `🐺 *W.O.L.F - Whitelisted Groups*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      for (let i = 0; i < groups.length; i++) {
+        const gid = groups[i];
+        let gName = gid.split('@')[0];
+        const cached = globalThis.groupMetadataCache?.get(gid);
+        if (cached?.data?.subject) gName = cached.data.subject;
+        listText += `${i + 1}. 👥 *${gName}*\n`;
+      }
+      listText += `\n📋 *Total:* ${groups.length} group(s)`;
+      return sock.sendMessage(jid, { text: listText }, { quoted: m });
+    }
+
+    if (subCommand === 'cleargroups') {
+      config.allowedGroups = [];
+      saveConfig(config);
+      return sock.sendMessage(jid, {
+        text: `🐺 *W.O.L.F*\n\n🗑️ All groups removed from whitelist!\n_W.O.L.F will respond based on mode setting._`
+      }, { quoted: m });
+    }
+
+    if (subCommand === 'adddm') {
+      const number = (args[1] || '').replace(/[^0-9]/g, '');
+      if (!number || number.length < 7) {
+        return sock.sendMessage(jid, {
+          text: `❌ Please provide a valid phone number.\n\n*Usage:* \`${PREFIX}chatbot adddm 2547xxxxxxxx\``
+        }, { quoted: m });
+      }
+      if (!config.allowedDMs) config.allowedDMs = [];
+      const dmJid = `${number}@s.whatsapp.net`;
+      const exists = config.allowedDMs.some(dm => {
+        const normDM = dm.split('@')[0].split(':')[0];
+        return normDM === number;
+      });
+      if (exists) {
+        return sock.sendMessage(jid, {
+          text: `⚠️ +${number} is already in the DM whitelist.`
+        }, { quoted: m });
+      }
+      config.allowedDMs.push(dmJid);
+      saveConfig(config);
+      return sock.sendMessage(jid, {
+        text: `🐺 *W.O.L.F*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n✅ DM added to whitelist!\n\n💬 *Number:* +${number}\n📋 *Total:* ${config.allowedDMs.length} DM(s)\n\n_W.O.L.F will only respond in whitelisted DMs._`
+      }, { quoted: m });
+    }
+
+    if (subCommand === 'removedm') {
+      const number = (args[1] || '').replace(/[^0-9]/g, '');
+      if (!number || number.length < 7) {
+        return sock.sendMessage(jid, {
+          text: `❌ Please provide a valid phone number.\n\n*Usage:* \`${PREFIX}chatbot removedm 2547xxxxxxxx\``
+        }, { quoted: m });
+      }
+      if (!config.allowedDMs) config.allowedDMs = [];
+      const idx = config.allowedDMs.findIndex(dm => {
+        const normDM = dm.split('@')[0].split(':')[0];
+        return normDM === number;
+      });
+      if (idx === -1) {
+        return sock.sendMessage(jid, {
+          text: `⚠️ +${number} is not in the DM whitelist.`
+        }, { quoted: m });
+      }
+      config.allowedDMs.splice(idx, 1);
+      saveConfig(config);
+      return sock.sendMessage(jid, {
+        text: `🐺 *W.O.L.F*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🗑️ DM removed from whitelist!\n\n💬 *Number:* +${number}\n📋 *Remaining:* ${config.allowedDMs.length} DM(s)`
+      }, { quoted: m });
+    }
+
+    if (subCommand === 'listdms') {
+      const dms = config.allowedDMs || [];
+      if (dms.length === 0) {
+        return sock.sendMessage(jid, {
+          text: `🐺 *W.O.L.F*\n\n📋 No DMs in whitelist.\n_W.O.L.F responds in all DMs based on mode._`
+        }, { quoted: m });
+      }
+      let listText = `🐺 *W.O.L.F - Whitelisted DMs*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      for (let i = 0; i < dms.length; i++) {
+        const num = dms[i].split('@')[0].split(':')[0];
+        listText += `${i + 1}. 💬 *+${num}*\n`;
+      }
+      listText += `\n📋 *Total:* ${dms.length} DM(s)`;
+      return sock.sendMessage(jid, { text: listText }, { quoted: m });
+    }
+
+    if (subCommand === 'cleardms') {
+      config.allowedDMs = [];
+      saveConfig(config);
+      return sock.sendMessage(jid, {
+        text: `🐺 *W.O.L.F*\n\n🗑️ All DMs removed from whitelist!\n_W.O.L.F will respond based on mode setting._`
+      }, { quoted: m });
     }
 
     return sock.sendMessage(jid, {
