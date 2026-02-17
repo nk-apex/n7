@@ -1077,7 +1077,7 @@ export default {
             case 'stats':
                 const statusIcon = antideleteState.enabled ? '✅' : '❌';
                 const statusLabel = antideleteState.enabled ? 'ACTIVE' : 'OFF';
-                const statsText = `╭─⌈ 📊 *ANTIDELETE STATUS* ⌋\n├─⊷ *System:* ${statusIcon} ${statusLabel}\n├─⊷ *Mode:* ${antideleteState.mode.toUpperCase()}\n├─⊷ *Storage:* ${antideleteState.stats.totalStorageMB}MB\n├─⊷ *Cached:* ${antideleteState.messageCache.size} msgs | ${antideleteState.mediaCache.size} media\n├─⊷ *Detected:* ${antideleteState.stats.deletedDetected} | *Retrieved:* ${antideleteState.stats.retrieved}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure\n╰───`;
+                const statsText = `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF'}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰───`;
                 
                 await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
                 break;
