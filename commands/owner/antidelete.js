@@ -1254,7 +1254,7 @@ export default {
                 
             default:
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🔧 *ANTIDELETE* ⌋\n│\n├─⊷ *${prefix}antidelete help*\n│  └⊷ View all commands\n╰───`
+                    text: `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF'}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰───`
                 }, { quoted: msg });
         }
     }
