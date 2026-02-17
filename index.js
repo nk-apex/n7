@@ -589,6 +589,7 @@ const __dirname = dirname(__filename);
 const SESSION_DIR = './session';
 const BOT_NAME = process.env.BOT_NAME || 'WOLFBOT';
 const VERSION = '1.1.5';
+global.VERSION = VERSION;
 const DEFAULT_PREFIX = process.env.PREFIX || '.';
 const OWNER_FILE = './owner.json';
 const PREFIX_CONFIG_FILE = './prefix_config.json';
