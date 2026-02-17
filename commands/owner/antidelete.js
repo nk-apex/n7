@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import fsSync from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
@@ -13,6 +14,23 @@ const SETTINGS_FILE = path.join(STORAGE_DIR, 'settings.json');
 
 const CACHE_CLEAN_INTERVAL = 24 * 60 * 60 * 1000;
 const MAX_CACHE_AGE = 24 * 60 * 60 * 1000;
+const MAX_MESSAGE_CACHE = 2000;
+const SAVE_DEBOUNCE_MS = 30000;
+
+let saveDebounceTimer = null;
+let savePending = false;
+
+function debouncedSave() {
+    savePending = true;
+    if (saveDebounceTimer) return;
+    saveDebounceTimer = setTimeout(async () => {
+        saveDebounceTimer = null;
+        if (savePending) {
+            savePending = false;
+            await saveData();
+        }
+    }, SAVE_DEBOUNCE_MS);
+}
 
 let antideleteState = {
     enabled: true,
@@ -226,7 +244,7 @@ async function getGroupName(chatJid) {
                     cachedAt: Date.now()
                 });
                 
-                await saveData();
+                debouncedSave();
                 return groupName;
             } catch (error) {
                 console.log(`⚠️ Could not fetch group name for ${chatJid}:`, error.message);
@@ -250,7 +268,7 @@ async function cleanRetrievedMessage(msgId) {
         antideleteState.messageCache.delete(msgId);
         antideleteState.mediaCache.delete(msgId);
         
-        await saveData();
+        debouncedSave();
         
         console.log(`🧹 Antidelete: Cleaned retrieved message ${msgId} from JSON`);
         
@@ -564,21 +582,28 @@ export async function antideleteStoreMessage(message) {
         antideleteState.messageCache.set(msgId, messageData);
         antideleteState.stats.totalMessages++;
         
+        if (antideleteState.messageCache.size > MAX_MESSAGE_CACHE) {
+            const entries = [...antideleteState.messageCache.entries()];
+            const toRemove = entries.slice(0, entries.length - MAX_MESSAGE_CACHE);
+            for (const [key] of toRemove) {
+                antideleteState.messageCache.delete(key);
+                antideleteState.mediaCache.delete(key);
+            }
+        }
+        
         if (hasMedia && mediaInfo) {
             const delayMs = Math.random() * 2000 + 1000;
             setTimeout(async () => {
                 try {
                     await downloadAndSaveMedia(msgId, mediaInfo.message, type, mediaInfo.mimetype);
-                    await saveData();
+                    debouncedSave();
                 } catch (error) {
                     console.error('❌ Antidelete: Async media download failed:', error.message);
                 }
             }, delayMs);
         }
         
-        if (antideleteState.messageCache.size % 10 === 0) {
-            await saveData();
-        }
+        debouncedSave();
         
         return messageData;
         
@@ -941,6 +966,28 @@ export async function initAntidelete(sock) {
         
         antideleteState.settings.initialized = true;
         await saveData();
+        
+        const flushOnExit = () => {
+            if (savePending) {
+                try {
+                    const data = {
+                        mode: antideleteState.mode,
+                        messageCache: Array.from(antideleteState.messageCache.entries()),
+                        mediaCache: Array.from(antideleteState.mediaCache.entries()).map(([key, value]) => {
+                            return [key, { filePath: value.filePath, type: value.type, mimetype: value.mimetype, size: value.size, savedAt: value.savedAt }];
+                        }),
+                        groupCache: Array.from(antideleteState.groupCache.entries()),
+                        stats: antideleteState.stats,
+                        savedAt: Date.now()
+                    };
+                    fsSync.writeFileSync(CACHE_FILE, JSON.stringify(data));
+                    savePending = false;
+                } catch {}
+            }
+        };
+        process.on('beforeExit', flushOnExit);
+        process.on('SIGINT', flushOnExit);
+        process.on('SIGTERM', flushOnExit);
         
         console.log(`🎯 Antidelete: System initialized (Mode: ${antideleteState.mode.toUpperCase()}, ALWAYS ACTIVE)`);
         

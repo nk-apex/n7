@@ -67,7 +67,9 @@ The bot operates on Node.js 20, utilizing ESM modules. Its core logic resides in
 *   **Node.js Upgrade**: Upgraded from Node.js 18 to Node.js 20 to satisfy `@whiskeysockets/baileys` v7 engine requirement (Node.js 20+).
 
 ### Performance & Stability Improvements
-*   **Memory Management**: Raised memory thresholds (warning: 900MB, critical: 1200MB) to prevent unnecessary restarts on Replit. Added proper cache cleanup with size limits for LID cache, group metadata cache, contact names, and message store.
+*   **Memory Management**: Lowered memory thresholds (warning: 500MB, high: 700MB, critical restart: 900MB). Aggressive cache cleanup: LID cache capped at 2000→1000, group metadata 50→20, contacts 2000→1000, message store 200 max.
+*   **Console Display Fix**: `displayIncomingMessage` converted from async to fully synchronous. Uses `getInstantSenderNumber()` which reads only from cache (no network calls). Messages now appear in console instantly when received, eliminating hours-long display lag.
+*   **Antidelete Optimization**: Debounced `saveData()` with 30-second minimum interval (was every 10 messages). Message cache capped at 2000 entries with automatic pruning of oldest. Shutdown flush handler ensures data is saved on process exit.
 *   **Defibrillator Optimization**: Reduced monitoring overhead - heartbeat every 5min (was 1min), health checks every 5min (was 1min), owner reports every 10min (was 5min), response timeout 2min (was 30s). Max restarts per hour reduced from 3 to 2.
 *   **Session Decryption Recovery**: Added smart recovery for "failed to decrypt" / "bad mac" errors. Instead of full session reset, clears only signal keys (sender-key, session, pre-key, app-state-sync files) while preserving creds.json, then auto-reconnects.
 *   **Incoming Message Console Display**: All incoming messages are displayed in a beautiful bordered console format showing sender name, phone number, group/DM origin, group name, message type icon, and content preview.

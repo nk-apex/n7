@@ -2334,12 +2334,12 @@ class ProfessionalDefibrillator {
             let statusEmoji = "🟢";
             let statusText = "Excellent";
             
-            if (memoryMB > 600) {
+            if (memoryMB > 500) {
                 statusEmoji = "🟡";
                 statusText = "Good";
             }
             
-            if (memoryMB > 900) {
+            if (memoryMB > 700) {
                 statusEmoji = "🔴";
                 statusText = "Warning";
             }
@@ -2428,10 +2428,10 @@ class ProfessionalDefibrillator {
             const memoryUsage = process.memoryUsage();
             const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
             
-            if (memoryMB > 900) {
+            if (memoryMB > 700) {
                 UltraCleanLogger.critical(`High memory usage: ${memoryMB}MB`);
                 await this.handleHighMemory(sock, memoryMB);
-            } else if (memoryMB > 600) {
+            } else if (memoryMB > 500) {
                 UltraCleanLogger.warning(`Moderate memory usage: ${memoryMB}MB`);
             }
             
@@ -2482,43 +2482,43 @@ class ProfessionalDefibrillator {
         const afterFree = Math.round(process.memoryUsage().rss / 1024 / 1024);
         UltraCleanLogger.info(`Memory after cleanup: ${afterFree}MB (freed ${memoryMB - afterFree}MB)`);
         
-        if (afterFree > 1200 && this.canRestart()) {
+        if (afterFree > 900 && this.canRestart()) {
             await this.sendMemoryWarning(sock, afterFree);
             UltraCleanLogger.critical('Critical memory usage after cleanup, restarting...');
             await this.restartBot(sock, 'High memory usage');
-        } else if (afterFree > 900) {
+        } else if (afterFree > 700) {
             await this.sendMemoryWarning(sock, afterFree);
         }
     }
     
     freeMemory() {
         try {
-            if (lidPhoneCache && lidPhoneCache.size > 5000) {
+            if (lidPhoneCache && lidPhoneCache.size > 2000) {
                 const entries = [...lidPhoneCache.entries()];
                 lidPhoneCache.clear();
-                entries.slice(-2000).forEach(([k, v]) => lidPhoneCache.set(k, v));
-                UltraCleanLogger.info(`LID cache trimmed to 2000 entries`);
+                entries.slice(-1000).forEach(([k, v]) => lidPhoneCache.set(k, v));
+                UltraCleanLogger.info(`LID cache trimmed to 1000 entries`);
             }
-            if (phoneLidCache && phoneLidCache.size > 5000) {
+            if (phoneLidCache && phoneLidCache.size > 2000) {
                 const entries = [...phoneLidCache.entries()];
                 phoneLidCache.clear();
-                entries.slice(-2000).forEach(([k, v]) => phoneLidCache.set(k, v));
+                entries.slice(-1000).forEach(([k, v]) => phoneLidCache.set(k, v));
             }
-            if (groupMetadataCache && groupMetadataCache.size > 100) {
+            if (groupMetadataCache && groupMetadataCache.size > 50) {
                 const entries = [...groupMetadataCache.entries()];
                 groupMetadataCache.clear();
-                entries.slice(-30).forEach(([k, v]) => groupMetadataCache.set(k, v));
+                entries.slice(-20).forEach(([k, v]) => groupMetadataCache.set(k, v));
                 UltraCleanLogger.info(`Group metadata cache trimmed`);
             }
-            if (global.contactNames && global.contactNames.size > 5000) {
+            if (global.contactNames && global.contactNames.size > 2000) {
                 const entries = [...global.contactNames.entries()];
                 global.contactNames.clear();
-                entries.slice(-2000).forEach(([k, v]) => global.contactNames.set(k, v));
+                entries.slice(-1000).forEach(([k, v]) => global.contactNames.set(k, v));
             }
-            if (store && store.messages && store.messages.size > 80) {
+            if (store && store.messages && store.messages.size > 50) {
                 const entries = [...store.messages.entries()];
                 store.messages.clear();
-                entries.slice(-50).forEach(([k, v]) => store.messages.set(k, v));
+                entries.slice(-30).forEach(([k, v]) => store.messages.set(k, v));
                 UltraCleanLogger.info(`Message store trimmed`);
             }
             if (global.gc) {
@@ -2601,8 +2601,8 @@ class ProfessionalDefibrillator {
                                  `📊 *Current Usage:* ${memoryMB}MB\n\n` +
                                  `🎯 *Thresholds:*\n` +
                                  `├─ Normal: < 600MB\n` +
-                                 `├─ Warning: 600-900MB\n` +
-                                 `└─ Critical: > 900MB\n\n` +
+                                 `├─ Warning: 500-700MB\n` +
+                                 `└─ Critical: > 700MB\n\n` +
                                  `🛠️ *Actions Taken:*\n` +
                                  `• Garbage collection forced\n` +
                                  `• Cache cleared\n` +
@@ -3542,7 +3542,7 @@ function cleanSession(preserveExisting = false) {
 class MessageStore {
     constructor() {
         this.messages = new Map();
-        this.maxMessages = 500;
+        this.maxMessages = 200;
     }
     
     addMessage(jid, messageId, message) {
@@ -3849,7 +3849,7 @@ function setupHerokuKeepAlive() {
             const memoryUsage = process.memoryUsage();
             const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
             
-            if (memoryMB > 900) {
+            if (memoryMB > 700) {
                 UltraCleanLogger.warning(`⚠️ High memory usage on Heroku: ${memoryMB}MB`);
                 
                 // Force garbage collection if available
@@ -5426,7 +5426,24 @@ async function resolveRealNumberForDisplay(senderJid, chatId, sock) {
     return `LID:${raw.substring(0, 8)}...`;
 }
 
-async function displayIncomingMessage(msg, sock) {
+function getInstantSenderNumber(senderJid) {
+    if (!senderJid) return 'unknown';
+    const raw = senderJid.split('@')[0].split(':')[0];
+    const full = senderJid.split('@')[0];
+
+    if (!senderJid.includes('@lid')) {
+        const num = raw.replace(/[^0-9]/g, '');
+        if (num.length >= 7 && num.length <= 15) return `+${num}`;
+        return `+${raw}`;
+    }
+
+    const cached = lidPhoneCache.get(raw) || lidPhoneCache.get(full) || getPhoneFromLid(raw) || getPhoneFromLid(full);
+    if (cached) return `+${cached}`;
+
+    return `LID:${raw.substring(0, 8)}...`;
+}
+
+function displayIncomingMessage(msg, sock) {
     try {
         if (!msg || !msg.key) return;
         
@@ -5437,7 +5454,7 @@ async function displayIncomingMessage(msg, sock) {
         const senderJid = isFromMe ? (sock.user?.id || chatId) : (msg.key.participant || chatId);
         const isGroup = chatId.endsWith('@g.us');
         
-        const senderNum = isFromMe ? getDisplayNumber(sock.user?.id || '') : await resolveRealNumberForDisplay(senderJid, chatId, sock);
+        const senderNum = isFromMe ? getDisplayNumber(sock.user?.id || '') : getInstantSenderNumber(senderJid);
         const pushName = isFromMe ? '👑 Owner' : (msg.pushName || 'Unknown');
         
         const msgType = getMessageTypeLabel(msg.message);
