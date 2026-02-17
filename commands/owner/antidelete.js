@@ -167,29 +167,39 @@ async function saveData() {
     try {
         await ensureDirs();
         
+        const recentMessages = [];
+        let count = 0;
+        const maxToSave = 500;
+        for (const entry of antideleteState.messageCache.entries()) {
+            if (++count > antideleteState.messageCache.size - maxToSave) {
+                recentMessages.push(entry);
+            }
+        }
+        
+        const mediaCacheArr = [];
+        for (const [key, value] of antideleteState.mediaCache.entries()) {
+            mediaCacheArr.push([key, {
+                filePath: value.filePath,
+                type: value.type,
+                mimetype: value.mimetype,
+                size: value.size,
+                savedAt: value.savedAt
+            }]);
+        }
+        
         const data = {
             enabled: antideleteState.enabled,
             mode: antideleteState.mode,
-            messageCache: Array.from(antideleteState.messageCache.entries()),
-            mediaCache: Array.from(antideleteState.mediaCache.entries()).map(([key, value]) => {
-                return [key, {
-                    filePath: value.filePath,
-                    type: value.type,
-                    mimetype: value.mimetype,
-                    size: value.size,
-                    savedAt: value.savedAt
-                }];
-            }),
+            messageCache: recentMessages,
+            mediaCache: mediaCacheArr,
             groupCache: Array.from(antideleteState.groupCache.entries()),
             stats: antideleteState.stats,
             savedAt: Date.now()
         };
         
-        await fs.writeFile(CACHE_FILE, JSON.stringify(data, null, 2));
-        
-        await fs.writeFile(SETTINGS_FILE, JSON.stringify(antideleteState.settings, null, 2));
-        
-        console.log(`💾 Antidelete: Saved data to JSON (${antideleteState.messageCache.size} messages, ${antideleteState.mediaCache.size} media, ${antideleteState.groupCache.size} groups)`);
+        const jsonStr = JSON.stringify(data);
+        await fs.writeFile(CACHE_FILE, jsonStr);
+        await fs.writeFile(SETTINGS_FILE, JSON.stringify(antideleteState.settings));
         
     } catch (error) {
         console.error('❌ Antidelete: Error saving JSON data:', error.message);
@@ -225,43 +235,31 @@ function getRealWhatsAppNumber(jid) {
     }
 }
 
-async function getGroupName(chatJid) {
-    try {
-        if (!chatJid || !chatJid.includes('@g.us')) {
-            return 'Private Chat';
-        }
-        
-        if (antideleteState.groupCache.has(chatJid)) {
-            const groupInfo = antideleteState.groupCache.get(chatJid);
-            return groupInfo.name || 'Group Chat';
-        }
-        
-        if (antideleteState.sock) {
-            try {
-                const groupData = await antideleteState.sock.groupMetadata(chatJid);
-                const groupName = groupData.subject || 'Group Chat';
-                
-                antideleteState.groupCache.set(chatJid, {
-                    name: groupName,
-                    subject: groupData.subject,
-                    id: groupData.id,
-                    size: groupData.participants?.length || 0,
-                    cachedAt: Date.now()
-                });
-                
-                debouncedSave();
-                return groupName;
-            } catch (error) {
-                console.log(`⚠️ Could not fetch group name for ${chatJid}:`, error.message);
-            }
-        }
-        
-        return 'Group Chat';
-        
-    } catch (error) {
-        console.error('❌ Antidelete: Error getting group name:', error.message);
-        return 'Group Chat';
+function getGroupName(chatJid) {
+    if (!chatJid || !chatJid.includes('@g.us')) {
+        return 'Private Chat';
     }
+    if (antideleteState.groupCache.has(chatJid)) {
+        const groupInfo = antideleteState.groupCache.get(chatJid);
+        return groupInfo.name || 'Group Chat';
+    }
+    const gmdCache = globalThis.groupMetadataCache;
+    if (gmdCache) {
+        const cached = gmdCache.get(chatJid);
+        if (cached && cached.data && cached.data.subject) {
+            const groupName = cached.data.subject;
+            antideleteState.groupCache.set(chatJid, {
+                name: groupName,
+                subject: cached.data.subject,
+                id: chatJid,
+                size: cached.data.participants?.length || 0,
+                cachedAt: Date.now()
+            });
+            debouncedSave();
+            return groupName;
+        }
+    }
+    return chatJid.split('@')[0];
 }
 
 async function cleanRetrievedMessage(msgId) {
@@ -563,7 +561,7 @@ export async function antideleteStoreMessage(message) {
         if (isStatus) {
             chatName = 'WhatsApp Status';
         } else if (chatJid.includes('@g.us')) {
-            chatName = await getGroupName(chatJid);
+            chatName = getGroupName(chatJid);
         } else {
             chatName = getRealWhatsAppNumber(chatJid);
         }

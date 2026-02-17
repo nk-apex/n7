@@ -110,112 +110,43 @@ const _keepRef = {
     context: console.context
 };
 
-// OPTIMIZED: Cache regex patterns for faster filtering
-const suppressPatterns = [
-    // Session patterns
-    'closing session',
-    'sessionentry',
-    'registrationid',
-    'currentratchet',
-    'indexinfo',
-    'pendingprekey',
-    'ephemeralkeypair',
-    'lastremoteephemeralkey',
-    'rootkey',
-    'basekey',
-    'signalkey',
-    'signalprotocol',
-    '_chains',
-    'chains',
-    'chainkey',
-    'ratchet',
-    'cipher',
-    'decrypt',
-    'encrypt',
-    'key',
-    'prekey',
-    'signedkey',
-    'identitykey',
-    'sessionstate',
-    'keystore',
-    'senderkey',
-    'groupcipher',
-    'signalgroup',
-    'signalstore',
-    'signalrepository',
-    'signalprotocolstore',
-    'sessioncipher',
-    'sessionbuilder',
-    'senderkeystore',
-    'senderkeydistribution',
-    'keyexchange',
-    // Buffer patterns
-    'buffer',
-    '<buffer',
-    'byte',
-    '05 ',  // Hexadecimal patterns
-    '0x',
-    'pubkey',
-    'privkey',
-    // Baileys internal patterns
-    'baileys',
-    'whatsapp',
-    'ws',
-    'qr',
-    'scan',
-    'pairing',
-    'connection.update',
-    'creds.update',
-    'messages.upsert',
-    'group',
-    'participant',
-    'metadata',
-    'presence.update',
-    'chat.update',
-    'message.receipt.update',
-    'message.update',
-    'timeout',
-    'transaction',
-    'failed to decrypt',
-    'received error',
-    'sessionerror',
-    'bad mac',
-    'stream errored'
+const _noisyTokens = [
+    'closing session','sessionentry','registrationid','currentratchet',
+    'indexinfo','pendingprekey','ephemeralkeypair','lastremoteephemeralkey',
+    'rootkey','basekey','signalkey','signalprotocol','_chains','chains',
+    'chainkey','ratchet','cipher','decrypt','encrypt','prekey','signedkey',
+    'identitykey','sessionstate','keystore','senderkey','groupcipher',
+    'signalgroup','signalstore','signalrepository','signalprotocolstore',
+    'sessioncipher','sessionbuilder','senderkeystore','senderkeydistribution',
+    'keyexchange','buffer','<buffer','byte','05 ','0x','pubkey','privkey',
+    'baileys','whatsapp','qr','scan','pairing','connection.update',
+    'creds.update','messages.upsert','presence.update','chat.update',
+    'message.receipt.update','message.update','timeout','transaction',
+    'failed to decrypt','received error','sessionerror','bad mac',
+    'stream errored','autoreact','autoview','autoreactstatus','autoviewstatus',
+    '[asm-debug]'
 ];
 
-// OPTIMIZED: Faster filter function with early returns
+const _importantTokens = [
+    'defibrillator','command','┌','│','└','╔','║','╚',
+    '✅','❌','👥','👤','📊','🔧','🐺','🚀','⚠️',
+    '📱','🗑️','📤','👑','🎯','🛡️','🎵','🎬','📘',
+    '📷','💾','🔒','🔍','💬'
+];
 const shouldShowLog = (args) => {
     if (args.length === 0) return true;
-    
     const firstArg = args[0];
     if (typeof firstArg !== 'string') return true;
-    
     const lowerMsg = firstArg.toLowerCase();
-    
-    // Fast escape for important logs
-    if (lowerMsg.includes('defibrillator') || 
-        lowerMsg.includes('command') || 
-        lowerMsg.includes('✅') || 
-        lowerMsg.includes('❌') ||
-        lowerMsg.includes('👥') ||
-        lowerMsg.includes('👤') ||
-        lowerMsg.includes('📊') ||
-        lowerMsg.includes('🔧') ||
-        lowerMsg.includes('🐺') ||
-        lowerMsg.includes('🚀')) {
-        return true;
+    for (let i = 0; i < _importantTokens.length; i++) {
+        if (lowerMsg.includes(_importantTokens[i])) return true;
     }
-    
-    // Check if it's baileys noise
-    const noisyPatterns = [
-        'closing session', 'sessionentry', 'registrationid',
-        'currentratchet', 'buffer', '05 ', '0x', 'failed to decrypt'
-    ];
-    
-    return !noisyPatterns.some(pattern => lowerMsg.includes(pattern));
+    for (let i = 0; i < _noisyTokens.length; i++) {
+        if (lowerMsg.includes(_noisyTokens[i])) return false;
+    }
+    return true;
 };
 
-// Override console methods
 for (const method of Object.keys(originalConsoleMethods)) {
     if (typeof console[method] === 'function') {
         console[method] = function(...args) {
@@ -231,28 +162,20 @@ function setupProcessFilter() {
     const originalStdoutWrite = process.stdout.write;
     const originalStderrWrite = process.stderr.write;
     
-    const sessionPatterns = [
-        'closing session',
-        'sessionentry',
-        'registrationid',
-        'currentratchet',
-        'indexinfo',
-        'pendingprekey',
-        '_chains',
-        'ephemeralkeypair',
-        'lastremoteephemeralkey',
-        'rootkey',
-        'basekey'
+    const _stdoutNoisy = [
+        'closing session','sessionentry','registrationid','currentratchet',
+        'indexinfo','pendingprekey','_chains','ephemeralkeypair',
+        'lastremoteephemeralkey','rootkey','basekey','signalprotocol',
+        'ratchet','chainkey','senderkey','groupcipher','sessioncipher',
+        'sessionbuilder'
     ];
     
     const filterOutput = (chunk) => {
-        const chunkStr = chunk.toString();
-        const lowerChunk = chunkStr.toLowerCase();
-        
-        for (const pattern of sessionPatterns) {
-            if (lowerChunk.includes(pattern)) {
-                return false;
-            }
+        if (typeof chunk !== 'string' && !Buffer.isBuffer(chunk)) return true;
+        const lowerChunk = (typeof chunk === 'string' ? chunk : chunk.toString()).toLowerCase();
+        if (lowerChunk.length < 5) return true;
+        for (let i = 0; i < _stdoutNoisy.length; i++) {
+            if (lowerChunk.includes(_stdoutNoisy[i])) return false;
         }
         return true;
     };
@@ -374,6 +297,7 @@ function getDisplayNumber(senderJid) {
 }
 
 const groupMetadataCache = new Map();
+globalThis.groupMetadataCache = groupMetadataCache;
 const GROUP_CACHE_TTL = 5 * 60 * 1000;
 const groupDiagDone = new Set();
 
@@ -631,72 +555,51 @@ console.clear();
 setupProcessFilter();
 
 // Ultra clean logger
+const _logSuppressSet = new Set([
+    'closing session','sessionentry','_chains','registrationid','currentratchet',
+    'indexinfo','pendingprekey','ephemeralkeypair','lastremoteephemeralkey',
+    'rootkey','basekey','signalprotocol','signalkey','signalgroup','signalstore',
+    'signalrepository','sessioncipher','sessionbuilder','sessionstate',
+    'senderkeystore','senderkeydistribution','keyexchange','groupcipher',
+    'ratchet','chainkey','keypair','pubkey','privkey','keystore',
+    '<buffer','05 ','0x','failed to decrypt','bad mac','stream errored',
+    'sessionerror','received error','connection.update','creds.update',
+    'messages.upsert','presence.update','chat.update','message.receipt.update',
+    'message.update','[asm-debug]','autoreact','autoview'
+]);
+const _logSuppressArr = [..._logSuppressSet];
+const _errSuppressArr = [
+    'bad mac','failed to decrypt','decrypt','session error','sessioncipher',
+    'sessionbuilder','session_cipher','signalprotocol','ratchet','closed session',
+    'stream errored','verifymac','libsignal','hmac','pre-key','prekey'
+];
+const _warnSuppressArr = [
+    'decrypted message with closed session','failed to decrypt','bad mac',
+    'closing session','stream errored','signalprotocol','ratchet',
+    'sessioncipher','sessionbuilder','sessionentry','sessionstate','sessionerror'
+];
+function _isLogSuppressed(msg) {
+    for (let i = 0; i < _logSuppressArr.length; i++) {
+        if (msg.includes(_logSuppressArr[i])) return true;
+    }
+    return false;
+}
+
 class UltraCleanLogger {
     static log(...args) {
-        const message = args.join(' ');
-        const lowerMessage = message.toLowerCase();
-        
-        const featurePrefixes = [
-            'antidelete', 'status antidelete', '[antidelete]', '[status-ad]',
-            '[ad-status]', 'anti-viewonce', '[av]', 'antidemote', 'antipromote',
-            'antilink', 'antiaudio', 'antivideo', 'antisticker', 'antibug',
-            'autoreact', 'autoread', 'autorecord', 'autotyp', 'autoview',
-            'reactowner', 'welcome', 'goodbye', 'sudo', 'wolfbot', 'defibrillator',
-            '[stub]', '[asm', 'command', '✅', '❌', '👥', '👤', '📊',
-            '🔧', '🐺', '🚀', '🔍', '⚠️', '📱', '🗑️', '📤', '👑',
-            '🎯', '🛡️', '🎵', '🎬', '📘', '📷', '💾', '🔒'
-        ];
-        
-        const isFeatureLog = featurePrefixes.some(p => lowerMessage.includes(p));
-        if (isFeatureLog) {
-            const timestamp = chalk.gray(`[${new Date().toLocaleTimeString()}]`);
-            originalConsoleMethods.log(timestamp, ...args);
-            return;
+        const firstArg = args[0];
+        if (typeof firstArg === 'string') {
+            const lower = firstArg.toLowerCase();
+            if (_isLogSuppressed(lower)) return;
         }
-        
-        const suppressPatterns = [
-            'closing session', 'sessionentry', '_chains',
-            'registrationid', 'currentratchet', 'indexinfo',
-            'pendingprekey', 'ephemeralkeypair', 'lastremoteephemeralkey',
-            'rootkey', 'basekey', 'signalprotocol', 'signalkey',
-            'signalgroup', 'signalstore', 'signalrepository',
-            'sessioncipher', 'sessionbuilder', 'sessionstate',
-            'senderkeystore', 'senderkeydistribution', 'keyexchange',
-            'groupcipher', 'ratchet', 'chainkey',
-            'keypair', 'pubkey', 'privkey', 'keystore',
-            '<buffer', '05 ', '0x',
-            'failed to decrypt', 'bad mac', 'stream errored',
-            'sessionerror', 'received error',
-            'connection.update', 'creds.update', 'messages.upsert',
-            'presence.update', 'chat.update', 'message.receipt.update',
-            'message.update'
-        ];
-        
-        for (const pattern of suppressPatterns) {
-            if (lowerMessage.includes(pattern)) {
-                return;
-            }
-        }
-        
         const timestamp = chalk.gray(`[${new Date().toLocaleTimeString()}]`);
-        const cleanArgs = args.map(arg => 
-            typeof arg === 'string' ? arg.replace(/\n\s+/g, ' ') : arg
-        );
-        
-        originalConsoleMethods.log(timestamp, ...cleanArgs);
+        originalConsoleMethods.log(timestamp, ...args);
     }
     
     static error(...args) {
         const message = args.join(' ').toLowerCase();
-        const errorSuppress = [
-            'bad mac', 'failed to decrypt', 'decrypt', 'session error',
-            'sessioncipher', 'sessionbuilder', 'session_cipher',
-            'signalprotocol', 'ratchet', 'closed session',
-            'stream errored', 'verifymac', 'libsignal',
-            'hmac', 'pre-key', 'prekey'
-        ];
-        for (const pattern of errorSuppress) {
-            if (message.includes(pattern)) return;
+        for (let i = 0; i < _errSuppressArr.length; i++) {
+            if (message.includes(_errSuppressArr[i])) return;
         }
         const timestamp = chalk.red(`[${new Date().toLocaleTimeString()}]`);
         originalConsoleMethods.error(timestamp, ...args);
@@ -714,22 +617,8 @@ class UltraCleanLogger {
     
     static warning(...args) {
         const message = args.join(' ').toLowerCase();
-        const warnSuppress = [
-            'decrypted message with closed session',
-            'failed to decrypt',
-            'bad mac',
-            'closing session',
-            'stream errored',
-            'signalprotocol',
-            'ratchet',
-            'sessioncipher',
-            'sessionbuilder',
-            'sessionentry',
-            'sessionstate',
-            'sessionerror'
-        ];
-        for (const pattern of warnSuppress) {
-            if (message.includes(pattern)) return;
+        for (let i = 0; i < _warnSuppressArr.length; i++) {
+            if (message.includes(_warnSuppressArr[i])) return;
         }
         const timestamp = chalk.yellow(`[${new Date().toLocaleTimeString()}]`);
         originalConsoleMethods.log(timestamp, chalk.yellow('⚠️'), ...args);
@@ -4584,13 +4473,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }
 
                 if (msg.key?.remoteJid === 'status@broadcast' && msg.messageStubType) {
-                    console.log(`[STATUS-AD] Status stub event type=${msg.messageStubType} from ${msg.key?.participant?.split('@')[0] || 'unknown'}`);
                     statusAntideleteHandleUpdate({
                         key: msg.key,
                         update: { message: null, messageStubType: msg.messageStubType }
-                    }).catch(err => {
-                        originalConsoleMethods.log(`❌ [STATUS-AD] Stub handle error: ${err.message}`);
-                    });
+                    }).catch(() => {});
                     return;
                 }
 
@@ -4698,55 +4584,21 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     handleAutoReact(sock, msg.key).catch(() => {});
                 }
                 try {
-                    const rawMsgKeys = msg.message ? Object.keys(msg.message).filter(k => k !== 'messageContextInfo' && k !== 'senderKeyDistributionMessage') : [];
-                    const sender = msg.key?.participant || msg.key?.remoteJid;
-                    originalConsoleMethods.log(`[ASM-DEBUG] Status received from ${sender?.split(':')[0]?.split('@')[0]} | raw keys: ${rawMsgKeys.join(',')}`);
-                    
-                    for (const rk of rawMsgKeys) {
-                        const val = msg.message[rk];
-                        if (val && typeof val === 'object') {
-                            const subKeys = Object.keys(val);
-                            originalConsoleMethods.log(`[ASM-DEBUG] ${rk} sub-keys: ${subKeys.join(',')}`);
-                            if (val.contextInfo) {
-                                const ctxKeys = Object.keys(val.contextInfo);
-                                originalConsoleMethods.log(`[ASM-DEBUG] ${rk}.contextInfo keys: ${ctxKeys.join(',')}`);
-                                if (val.contextInfo.mentionedJid?.length) {
-                                    originalConsoleMethods.log(`[ASM-DEBUG] mentionedJid: ${JSON.stringify(val.contextInfo.mentionedJid)}`);
-                                }
-                                if (val.contextInfo.groupMentions?.length) {
-                                    originalConsoleMethods.log(`[ASM-DEBUG] groupMentions: ${JSON.stringify(val.contextInfo.groupMentions)}`);
-                                }
-                            }
-                            if (rk === 'groupMentionedMessage' || rk === 'statusMentionMessage') {
-                                originalConsoleMethods.log(`[ASM-DEBUG] ${rk} content: ${JSON.stringify(val).substring(0, 500)}`);
-                            }
-                        }
-                    }
-
                     const { handleStatusMention } = await import('./commands/group/antistatusmention.js');
-                    handleStatusMention(sock, msg).catch(err => {
-                        originalConsoleMethods.log('[ASM] Handler error:', err.message);
-                    });
-                } catch (e) {
-                    originalConsoleMethods.log('[ASM] Import error:', e.message);
-                }
+                    handleStatusMention(sock, msg).catch(() => {});
+                } catch {}
                 const normalizedContent = normalizeMessageContent(msg.message) || msg.message;
                 const protoMsg = normalizedContent?.protocolMessage;
                 if (protoMsg && (protoMsg.type === 0 || protoMsg.type === 4)) {
                     const revokedId = protoMsg.key?.id;
                     if (revokedId) {
-                        console.log(`[STATUS-AD] Protocol revoke detected via upsert for ${revokedId}`);
                         statusAntideleteHandleUpdate({
                             key: { ...msg.key, id: revokedId },
                             update: { message: null, messageStubType: 1 }
-                        }).catch(err => {
-                            originalConsoleMethods.log(`❌ [STATUS-AD] Revoke handle error: ${err.message}`);
-                        });
+                        }).catch(() => {});
                     }
                 } else {
-                    statusAntideleteStoreMessage(msg).catch(err => {
-                        originalConsoleMethods.log(`❌ [STATUS-AD] Store error: ${err.message}`);
-                    });
+                    statusAntideleteStoreMessage(msg).catch(() => {});
                 }
                 return;
             }
@@ -4765,8 +4617,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 for (const update of updates) {
                     const updateChatJid = update.key?.remoteJid;
                     if (updateChatJid === 'status@broadcast') {
-                        const updateKeys = update.update ? Object.keys(update.update) : [];
-                        console.log(`[STATUS-AD] messages.update for status ${update.key?.id?.substring(0,8)} | update keys: ${updateKeys.join(',')} | participant: ${update.key?.participant?.split('@')[0] || 'none'}`);
                         await statusAntideleteHandleUpdate(update);
                     } else {
                         await antideleteHandleUpdate(update);

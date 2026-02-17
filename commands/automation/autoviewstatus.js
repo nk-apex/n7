@@ -47,9 +47,7 @@ class AutoViewManager {
         this.lastViewTime = 0;
         
         // Log initialization
-        console.log(`👁️ AutoViewStatus initialized: ${this.config.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}`);
-        console.log(`⚡ Viewing delay: ${this.config.settings.rateLimitDelay}ms`);
-        console.log(`👁️ Mark as seen: ${this.config.settings.markAsSeen ? '✅' : '❌'}`);
+        
     }
     
     loadConfig() {
@@ -200,15 +198,10 @@ class AutoViewManager {
             // Add to logs
             this.addLog(cleanSender, 'viewed');
             
-            console.log(`👁️ AutoView: Viewed ${cleanSender}'s status`);
             return true;
             
         } catch (error) {
-            console.error('❌ Error viewing status:', error.message);
-            
-            // Handle rate limiting by increasing delay
             if (error.message?.includes('rate-overlimit')) {
-                console.log('⚠️ Rate limit hit, increasing delay...');
                 this.config.settings.rateLimitDelay = Math.min(
                     this.config.settings.rateLimitDelay * 2,
                     5000

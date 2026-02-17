@@ -80,9 +80,7 @@ class AutoReactManager {
         this.cleanupOldReactedStatuses();
         
         // Log initialization
-        console.log(`🐺 AutoReactStatus initialized: ${this.config.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}`);
-        console.log(`🎭 Default mode: ${this.config.mode}`);
-        console.log(`😄 Default emoji: ${this.config.fixedEmoji}`);
+        
     }
     
     loadConfig() {
@@ -325,22 +323,17 @@ class AutoReactManager {
         
         // Check if we've already reacted to this status
         if (this.hasReactedToStatus(statusKey)) {
-            console.log(`🐺 Skipping already reacted status: ${statusKey.id}`);
             return false;
         }
         
-        // Check rate limiting
         const now = Date.now();
         if (now - this.lastReactionTime < this.config.settings.rateLimitDelay) {
-            console.log(`🐺 Rate limiting, waiting...`);
             return false;
         }
         
-        // Check if we should react to consecutive statuses
         if (!this.config.settings.ignoreConsecutiveLimit && 
             this.config.lastSender === sender && 
             this.config.consecutiveReactions >= 3) {
-            console.log(`🐺 Skipping consecutive status from ${sender}`);
             return false;
         }
         
@@ -368,7 +361,6 @@ class AutoReactManager {
             
             // If status is older than 48 hours, it's probably expired/deleted
             if (timeSinceStatus > 48 * 60 * 60 * 1000) {
-                console.log(`🐺 Status ${statusKey.id} is too old, skipping`);
                 return false;
             }
             
@@ -388,24 +380,16 @@ class AutoReactManager {
             const cleanSender = sender.split('@')[0];
             const statusId = statusKey.id;
             
-            console.log(`🐺 Processing status from ${cleanSender}, ID: ${statusId}`);
-            
-            // Check if we should react
             if (!this.shouldReact(sender, statusKey)) {
                 return false;
             }
             
-            // Verify status still exists (basic check)
             const statusExists = await this.checkIfStatusExists(sock, statusKey);
             if (!statusExists) {
-                console.log(`🐺 Status ${statusId} doesn't exist or is too old, skipping`);
                 return false;
             }
             
-            // Get reaction emoji (ONE emoji only)
             const reactionEmoji = this.getReaction();
-            
-            console.log(`🐺 Attempting to react with: ${reactionEmoji}`);
             
             // React to status
             await sock.relayMessage(
@@ -436,15 +420,10 @@ class AutoReactManager {
             // Add to logs
             this.addLog(cleanSender, reactionEmoji, statusId, 'status');
             
-            console.log(`✅ AutoReact: Reacted to ${cleanSender}'s status with ${reactionEmoji}`);
             return true;
             
         } catch (error) {
-            console.error('❌ Error reacting to status:', error.message);
-            
-            // Handle rate limiting by increasing delay
             if (error.message?.includes('rate-overlimit') || error.message?.includes('rate limit')) {
-                console.log('⚠️ Rate limit hit, increasing delay...');
                 this.config.settings.rateLimitDelay = Math.min(
                     this.config.settings.rateLimitDelay * 2,
                     10000
@@ -452,9 +431,7 @@ class AutoReactManager {
                 this.saveConfig();
             }
             
-            // Handle message not found (deleted status)
             if (error.message?.includes('not found') || error.message?.includes('message deleted')) {
-                console.log(`🐺 Status was deleted, marking as reacted anyway`);
                 this.markStatusAsReacted(statusKey);
             }
             
