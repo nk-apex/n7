@@ -1236,28 +1236,9 @@ export default {
     
     // Help section
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `✍️ *TEXT HUMANIZER*\n\n` +
-        `Transform AI-generated text into natural human-like writing\n\n` +
-        `📌 *Usage:*\n` +
-        `• \`${PREFIX}humanizer your text here\`\n` +
-        `• Reply to any message with \`${PREFIX}humanizer\`\n` +
-        `• Add style: \`${PREFIX}humanizer text casual\`\n\n` +
-        `🎨 *Available Styles:*\n` +
-        `• \`casual\` - Everyday conversation\n` +
-        `• \`professional\` - Business/work\n` +
-        `• \`creative\` - Storytelling/creative\n` +
-        `• \`academic\` - Educational content\n` +
-        `• \`social\` - Social media posts\n` +
-        `• \`email\` - Email communication\n` +
-        `• \`blog\` - Blog/article writing\n\n` +
-        `✨ *Features:*\n` +
-        `• Removes AI patterns\n` +
-        `• Adds natural variation\n` +
-        `• Improves readability\n` +
-        `• Adjusts tone and style\n` +
-        `• Preserves original meaning`;
-      
-      return sock.sendMessage(jid, { text: helpText }, { quoted: m });
+      return sock.sendMessage(jid, {
+        text: `╭─⌈ ✍️ *TEXT HUMANIZER* ⌋\n├─⊷ *${PREFIX}humanizer <text>*\n│  └⊷ Humanize AI-generated text\n├─⊷ *${PREFIX}humanizer <text> <style>*\n│  └⊷ casual, professional, creative,\n│  └⊷ academic, social, email, blog\n├─⊷ Reply to message with *${PREFIX}humanizer*\n│  └⊷ Humanize quoted text\n╰───`
+      }, { quoted: m });
     }
 
     // Parse style if provided
@@ -1286,9 +1267,7 @@ export default {
 
     if (!text || text.length < 10) {
       return sock.sendMessage(jid, {
-        text: `❌ *Text Too Short*\n\n` +
-              `Please provide at least 10 characters to humanize.\n` +
-              `Example: \`${PREFIX}humanizer This is an AI-generated text that needs to sound more natural.\``
+        text: `╭─⌈ ❌ *TEXT TOO SHORT* ⌋\n├─⊷ Provide at least 10 characters\n╰───`
       }, { quoted: m });
     }
 

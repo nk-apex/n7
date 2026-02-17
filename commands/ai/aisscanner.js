@@ -1028,18 +1028,7 @@ export default {
     // Help section
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
       return sock.sendMessage(jid, {
-        text: `🔬 *ADVANCED AI DETECTOR*\n\n` +
-              `Detects AI-generated text with multiple analysis methods\n\n` +
-              `📌 *Usage:*\n` +
-              `• \`${PREFIX}aiscanner your text here\`\n` +
-              `• Reply to any message with \`${PREFIX}aiscanner\`\n\n` +
-              `⚡ *Features:*\n` +
-              `• Multi-method analysis (7+ detection techniques)\n` +
-              `• Confidence scoring\n` +
-              `• Detailed indicators\n` +
-              `• Writing style analysis\n` +
-              `• Plagiarism check (optional)\n\n` +
-              `📊 *Accuracy:* ~85-92% based on text length`
+        text: `╭─⌈ 🔬 *AI SCANNER* ⌋\n├─⊷ *${PREFIX}aiscanner <text>*\n│  └⊷ Detect AI-generated text\n├─⊷ Reply to message with *${PREFIX}aiscanner*\n│  └⊷ Scan quoted text\n╰───`
       }, { quoted: m });
     }
 
@@ -1058,17 +1047,14 @@ export default {
 
     if (!text || text.length < 20) {
       return sock.sendMessage(jid, {
-        text: `❌ *Text Too Short*\n\n` +
-              `Please provide at least 20 characters for accurate analysis.\n` +
-              `Minimum recommended: 50+ characters.\n\n` +
-              `Example: \`${PREFIX}aiscanner This is a longer sample text that will provide more accurate detection results.\``
+        text: `╭─⌈ ❌ *TEXT TOO SHORT* ⌋\n├─⊷ Provide at least 20 characters\n├─⊷ 50+ recommended for accuracy\n╰───`
       }, { quoted: m });
     }
 
     // Warn for very short text
     if (text.length < 50) {
       await sock.sendMessage(jid, {
-        text: `⚠️ *Note:* Text is short (${text.length} chars). Accuracy improves with longer text (50+ chars recommended).`
+        text: `⚠️ Short text (${text.length} chars) — accuracy improves with 50+ chars.`
       }, { quoted: m });
     }
 
