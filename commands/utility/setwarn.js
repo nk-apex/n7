@@ -37,7 +37,7 @@ export default {
 
         if (args.length === 0) {
             return sock.sendMessage(jid, {
-                text: `╭─⌈ 📊 *WARNING LIMIT* ⌋\n│\n│  Current: *${currentLimit}* warnings\n│\n├─⊷ *${PREFIX}setwarn <number>*\n│  └⊷ Set warning limit (1-20)\n│\n├─⊷ *${PREFIX}setwarn 5*\n│  └⊷ Set limit to 5 warnings\n│\n│  📝 Users get kicked after limit\n│\n╰───`
+                text: `╭─⌈ 📊 *WARN LIMIT* ⌋\n├─⊷ *Current:* ${currentLimit} warnings\n├─⊷ *${PREFIX}setwarn <1-20>*\n│  └⊷ Set warning limit\n╰─── *WOLFBOT* ───`
             }, { quoted: msg });
         }
 
@@ -52,10 +52,7 @@ export default {
         setWarnLimit(jid, limit);
 
         await sock.sendMessage(jid, {
-            text: `✅ *Warning Limit Updated!*\n\n` +
-                `📊 Previous: ${currentLimit}\n` +
-                `📊 New limit: *${limit}*\n\n` +
-                `Users will be kicked after ${limit} warning(s).`
+            text: `╭─⌈ ✅ *WARN LIMIT UPDATED* ⌋\n├─⊷ *Previous:* ${currentLimit}\n├─⊷ *New:* ${limit}\n├─⊷ Kick after ${limit} warning(s)\n╰─── *WOLFBOT* ───`
         }, { quoted: msg });
     }
 };

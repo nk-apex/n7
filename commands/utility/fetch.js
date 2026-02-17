@@ -86,21 +86,7 @@ export default {
     
     // Show help if no arguments
     if (args.length === 0) {
-      const helpMessage = `🎯 *FETCH COMMAND - Advanced API Fetcher*\n\n` +
-        `*Usage:*\n` +
-        `• .fetch <url> - Fetch data from URL\n` +
-        `• .fetch <url> -d - Download media files\n` +
-        `• .fetch <url> -j - Pretty JSON format\n` +
-        `• .fetch <url> -h - Show response headers\n` +
-        `• .fetch <url> -r - Raw response\n` +
-        `• .fetch <url> -s - Silent mode (no final message)\n` +
-        `• Reply to URL with .fetch\n\n` +
-        `*Examples:*\n` +
-        `• .fetch https://api.github.com/users/octocat\n` +
-        `• .fetch https://apiskeith.vercel.app/download/audio?url=https://youtube.com/watch?v=60ItHLz5WEA -d\n` +
-        `• .fetch https://jsonplaceholder.typicode.com/posts/1 -j`;
-      
-      await sock.sendMessage(jid, { text: helpMessage }, { quoted: m });
+      await sock.sendMessage(jid, { text: `╭─⌈ 🎯 *FETCH* ⌋\n├─⊷ *.fetch <url>*\n│  └⊷ Fetch data from URL\n├─⊷ *.fetch <url> -d*\n│  └⊷ Download media files\n├─⊷ *.fetch <url> -j*\n│  └⊷ Pretty JSON format\n├─⊷ *.fetch <url> -h*\n│  └⊷ Show response headers\n├─⊷ *.fetch <url> -r*\n│  └⊷ Raw response\n├─⊷ Reply to URL with *.fetch*\n╰─── *WOLFBOT* ───` }, { quoted: m });
       return;
     }
     
@@ -150,8 +136,7 @@ export default {
     }
     
     try {
-      // Send initial processing message
-      await sock.sendMessage(jid, { text: `🔍 *Processing request...*\n\nFetching: ${url}` }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
       
       // Setup fetch with timeout
       const controller = new AbortController();
@@ -251,7 +236,7 @@ export default {
           } else if (isImage) {
     await sock.sendMessage(jid, {
         image: fileBuffer,
-        caption: `✅ *Fetch Complete!*\n\n╭━━━━━━━━━━━━━━━━━╮\n│  🖼️ *File:* ${filename}\n│  📏 *Size:* ${formatFileSize(stats.size)}\n│  🎯 *Type:* Image\n│  🔗 *Source:* ${url}\n│  📡 *Status:* ${status} ${statusText}\n│  📊 *Content-Type:* ${contentType.split(';')[0]}\n╰━━━━━━━━━━━━━━━━╯\n\n_Image successfully fetched from API_`
+        caption: `╭─⌈ 🖼️ *FETCH RESULT* ⌋\n├─⊷ *File:* ${filename}\n├─⊷ *Size:* ${formatFileSize(stats.size)}\n├─⊷ *Status:* ${status} ${statusText}\n├─⊷ *Type:* ${contentType.split(';')[0]}\n╰─── *WOLFBOT* ───`
     }, { quoted: m });
 } 
           
@@ -281,7 +266,7 @@ export default {
           }
           
           await sock.sendMessage(jid, {
-            text: `✅ *JSON API Response*\n\n╭━━━━━━━━━━━━━━━━━╮\n│  🔗 *URL:* ${url}\n│  📡 *Status:* ${status} ${statusText}\n│  📊 *Content-Type:* ${contentType.split(';')[0]}\n│  📏 *Size:* ${formatFileSize(jsonSize)}\n│  📅 *Date:* ${new Date().toLocaleTimeString()}\n╰━━━━━━━━━━━━━━━━╯\n\n📄 *Data:*\n\`\`\`json\n${displayJson}\`\`\`${truncationNote}`
+            text: `╭─⌈ 📄 *FETCH RESULT* ⌋\n├─⊷ *Status:* ${status} ${statusText}\n├─⊷ *Type:* ${contentType.split(';')[0]}\n├─⊷ *Size:* ${formatFileSize(jsonSize)}\n╰─── *WOLFBOT* ───\n\n\`\`\`json\n${displayJson}\`\`\`${truncationNote}`
           }, { quoted: m });
           
         } else if (isText) {
@@ -315,7 +300,7 @@ export default {
           }
           
           await sock.sendMessage(jid, {
-            text: `✅ *Text API Response*\n\n╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮\n│  🔗 *URL:* ${url}\n│  📡 *Status:* ${status} ${statusText}\n│  📊 *Content-Type:* ${contentTypeInfo}\n│  📏 *Size:* ${formatFileSize(textSize)}\n│  📅 *Date:* ${new Date().toLocaleTimeString()}\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n${options.raw ? '📄 *Raw Response:*\n```\n' + text.substring(0, 1500) + (textSize > 1500 ? '...' : '') + '\n```' : displayText}${truncationNote}`
+            text: `╭─⌈ 📄 *FETCH RESULT* ⌋\n├─⊷ *Status:* ${status} ${statusText}\n├─⊷ *Type:* ${contentTypeInfo}\n├─⊷ *Size:* ${formatFileSize(textSize)}\n╰─── *WOLFBOT* ───\n\n${options.raw ? '```\n' + text.substring(0, 1500) + (textSize > 1500 ? '...' : '') + '\n```' : displayText}${truncationNote}`
           }, { quoted: m });
           
         } else {
@@ -324,7 +309,7 @@ export default {
           const bufferSize = buffer.byteLength;
           
           await sock.sendMessage(jid, {
-            text: `⚠️ *Binary API Response*\n\n╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮\n│  🔗 *URL:* ${url}\n│  📡 *Status:* ${status} ${statusText}\n│  📊 *Content-Type:* ${contentType || 'Unknown'}\n│  📏 *Size:* ${formatFileSize(bufferSize)}\n│  📅 *Date:* ${new Date().toLocaleTimeString()}\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n⚠️ This API returned binary data (not text/JSON).\n\n💡 Try: .fetch ${url} -d to download if it's media\n💡 Or check if the API endpoint is correct.`
+            text: `╭─⌈ ⚠️ *BINARY RESPONSE* ⌋\n├─⊷ *Status:* ${status} ${statusText}\n├─⊷ *Type:* ${contentType || 'Unknown'}\n├─⊷ *Size:* ${formatFileSize(bufferSize)}\n├─⊷ Use *.fetch <url> -d* to download\n╰─── *WOLFBOT* ───`
           }, { quoted: m });
         }
         
@@ -332,8 +317,9 @@ export default {
         clearTimeout(timeout);
         
         if (fetchError.name === 'AbortError' || fetchError.message.includes('timeout')) {
+          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, {
-            text: `⏱️ *Request Timeout*\n\n╭━━━━━━━━━━━━━━━━━━━━━━━╮\n│  🔗 *URL:* ${url}\n│  ⏱️ *Timeout:* 30 seconds\n╰━━━━━━━━━━━━━━━━━━━━━━━╯\n\nThe request timed out.\n\n*Possible issues:*\n• Server is too slow\n• Network connection issue\n• API endpoint not responding\n\n💡 Try again later or use a different endpoint.`
+            text: `╭─⌈ ⏱️ *TIMEOUT* ⌋\n├─⊷ *URL:* ${url}\n├─⊷ Request timed out (30s)\n╰─── *WOLFBOT* ───`
           }, { quoted: m });
         } else {
           throw fetchError;
@@ -343,50 +329,10 @@ export default {
     } catch (error) {
       console.error('Fetch command error:', error);
       
-      let errorMessage = `❌ *Fetch Failed*\n\n╭━━━━━━━━━━━━━━━━━━━━━╮\n│  🔗 *URL:* ${url || 'Unknown'}\n│  💥 *Error:* ${error.message}\n╰━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      
-      // Provide specific help based on error
-      if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
-        errorMessage += `*DNS Resolution Failed*\n\n`;
-        errorMessage += `The domain name could not be resolved.\n`;
-        errorMessage += `• Check if the URL is correct\n`;
-        errorMessage += `• Try without www/https\n`;
-        errorMessage += `• Domain might not exist\n`;
-      } else if (error.message.includes('ECONNREFUSED')) {
-        errorMessage += `*Connection Refused*\n\n`;
-        errorMessage += `The server refused the connection.\n`;
-        errorMessage += `• Server might be down\n`;
-        errorMessage += `• Port might be blocked\n`;
-        errorMessage += `• Check firewall settings\n`;
-      } else if (error.message.includes('CERT') || error.message.includes('SSL')) {
-        errorMessage += `*SSL Certificate Error*\n\n`;
-        errorMessage += `There's an issue with the SSL certificate.\n`;
-        errorMessage += `• Certificate might be expired\n`;
-        errorMessage += `• Try using http:// instead of https://\n`;
-        errorMessage += `• Website might be insecure\n`;
-      } else if (error.message.includes('Unexpected token') || error.message.includes('JSON')) {
-        errorMessage += `*Invalid JSON Response*\n\n`;
-        errorMessage += `The API returned invalid JSON.\n`;
-        errorMessage += `• Use .fetch <url> -r for raw response\n`;
-        errorMessage += `• Check API documentation\n`;
-        errorMessage += `• Might be HTML instead of JSON\n`;
-      } else if (error.message.includes('404')) {
-        errorMessage += `*Endpoint Not Found (404)*\n\n`;
-        errorMessage += `The requested URL was not found.\n`;
-        errorMessage += `• Check if the URL is correct\n`;
-        errorMessage += `• API endpoint might have changed\n`;
-        errorMessage += `• Try a different path\n`;
-      } else if (error.message.includes('403')) {
-        errorMessage += `*Access Forbidden (403)*\n\n`;
-        errorMessage += `You don't have permission to access this.\n`;
-        errorMessage += `• API might require authentication\n`;
-        errorMessage += `• Check API documentation\n`;
-        errorMessage += `• Might be rate limited\n`;
-      }
-      
-      errorMessage += `\n💡 *Tip:* Use .fetch -h for help with the command`;
-      
-      await sock.sendMessage(jid, { text: errorMessage }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+      await sock.sendMessage(jid, {
+        text: `╭─⌈ ❌ *FETCH FAILED* ⌋\n├─⊷ *URL:* ${url || 'Unknown'}\n├─⊷ *Error:* ${error.message}\n╰─── *WOLFBOT* ───`
+      }, { quoted: m });
     }
   }
 };

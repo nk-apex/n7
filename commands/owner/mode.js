@@ -52,11 +52,11 @@ export default {
             let modeList = '';
             for (const [mode, info] of Object.entries(modes)) {
                 const isCurrent = mode === currentMode ? ' ✅' : '';
-                modeList += `${info.icon} *${mode}* - ${info.description}${isCurrent}\n`;
+                modeList += `├─⊷ *${mode}* — ${info.description}${isCurrent}\n`;
             }
             
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 🤖 *BOT MODE* ⌋\n│\n├─⊷ *${PREFIX}mode <mode_name>*\n│  └⊷ Change bot mode\n╰───`
+                text: `╭─⌈ 🤖 *BOT MODE* ⌋\n├─⊷ *Current:* ${modes[currentMode]?.name || currentMode}\n│\n${modeList}│\n├─⊷ *${PREFIX}mode <name>*\n│  └⊷ Switch mode\n╰─── *WOLFBOT* ───`
             }, { quoted: msg });
         }
         
@@ -65,7 +65,7 @@ export default {
         if (!modes[requestedMode]) {
             const validModes = Object.keys(modes).join(', ');
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ ❌ *INVALID MODE* ⌋\n│\n├─⊷ *${PREFIX}mode <mode_name>*\n│  └⊷ Set bot mode\n╰───`
+                text: `╭─⌈ ❌ *INVALID MODE* ⌋\n├─⊷ Available: ${validModes}\n├─⊷ *${PREFIX}mode <name>*\n╰─── *WOLFBOT* ───`
             }, { quoted: msg });
         }
         
@@ -95,12 +95,8 @@ export default {
             
             const modeInfo = modes[requestedMode];
             
-            let successMsg = `✅ *Mode Updated Successfully!*\n\n`;
-            successMsg += `${modeInfo.icon} New Mode: *${modeInfo.name}*\n`;
-            successMsg += `📝 ${modeInfo.description}`;
-            
             await sock.sendMessage(chatId, {
-                text: successMsg
+                text: `╭─⌈ ✅ *MODE UPDATED* ⌋\n├─⊷ *Mode:* ${modeInfo.name}\n├─⊷ ${modeInfo.description}\n╰─── *WOLFBOT* ───`
             }, { quoted: msg });
             
             console.log(`✅ Mode changed to ${requestedMode} by ${cleaned.cleanNumber}`);

@@ -327,44 +327,17 @@ export default {
         
         // Show current status if no command
         if (!command) {
-            let statusMessage = `🤖 *AUTO BIO SYSTEM*\n\n`;
-            
-            statusMessage += `📊 *Current Status:* ${config.enabled ? '✅ ENABLED (Default)' : '❌ DISABLED'}\n`;
-            statusMessage += `⏰ *Interval:* Every ${config.interval} minutes\n`;
-            statusMessage += `📝 *Format:* ${config.format}\n`;
-            statusMessage += `🔄 *Last Update:* ${config.lastUpdate ? getTimeSince(config.lastUpdate) : 'Never'}\n`;
-            statusMessage += `📈 *Total Updates:* ${config.updateCount}\n`;
-            
-            // Show current real-time data
-            statusMessage += `\n📱 *Current Time:* ${getRealTime()}\n`;
-            statusMessage += `📅 *Current Date:* ${getRealDate()}\n`;
-            
-            if (config.weather.enabled) {
-                statusMessage += `\n🌤️ *Weather:* ✅ ENABLED\n`;
-                statusMessage += `📍 *Location:* ${config.weather.city}, ${config.weather.country}\n`;
-                statusMessage += `🔑 *API Key:* ${config.weather.apiKey ? '✅ Set' : '❌ Not set'}\n`;
-            } else {
-                statusMessage += `\n🌤️ *Weather:* ❌ DISABLED\n`;
-            }
-            
-            statusMessage += `\n📋 *Available Formats:*\n`;
-            Object.keys(templates).forEach(format => {
-                statusMessage += `├─ *${format}* - ${format === 'default' ? '(Default)' : ''}\n`;
-            });
-            statusMessage += `└─ *custom* - Use custom template\n`;
-            
-            statusMessage += `\n⚡ *Usage:*\n`;
-            statusMessage += `• \`${PREFIX}autobio on\` - Enable auto bio\n`;
-            statusMessage += `• \`${PREFIX}autobio off\` - Disable auto bio\n`;
-            statusMessage += `• \`${PREFIX}autobio interval 10\` - Set interval (minutes)\n`;
-            statusMessage += `• \`${PREFIX}autobio format realtime\` - Change format\n`;
-            statusMessage += `• \`${PREFIX}autobio test\` - Test bio update\n`;
-            statusMessage += `• \`${PREFIX}autobio weather Nairobi KE\` - Enable weather\n`;
-            statusMessage += `• \`${PREFIX}autobio now\` - Show current real-time info\n`;
-            statusMessage += `• \`${PREFIX}autobio weather off\` - Disable weather`;
-            
+            const formatList = Object.keys(templates).join(', ');
             return sock.sendMessage(chatId, {
-                text: statusMessage
+                text: `╭─⌈ 🤖 *AUTO BIO* ⌋\n` +
+                    `├─⊷ *Status:* ${config.enabled ? '✅ ON' : '❌ OFF'} | *Format:* ${config.format}\n` +
+                    `├─⊷ *Interval:* ${config.interval}min | *Updates:* ${config.updateCount}\n` +
+                    `├─⊷ *${PREFIX}autobio on/off*\n│  └⊷ Toggle auto bio\n` +
+                    `├─⊷ *${PREFIX}autobio format <name>*\n│  └⊷ ${formatList}\n` +
+                    `├─⊷ *${PREFIX}autobio interval <min>*\n│  └⊷ Set update interval\n` +
+                    `├─⊷ *${PREFIX}autobio test*\n│  └⊷ Test bio update now\n` +
+                    `├─⊷ *${PREFIX}autobio weather <city> <code>*\n│  └⊷ Enable weather in bio\n` +
+                    `╰─── *WOLFBOT* ───`
             }, { quoted: msg });
         }
         
