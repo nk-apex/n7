@@ -2358,7 +2358,9 @@ class ProfessionalDefibrillator {
                                 `🩺 *Health:* ${statusText}\n\n` +
                                 `_Last updated: ${new Date().toLocaleTimeString()}_`;
             
-            await sock.sendMessage(this.ownerJid, { text: reportMessage });
+            const sendPromise = sock.sendMessage(this.ownerJid, { text: reportMessage });
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
+            await Promise.race([sendPromise, timeoutPromise]);
             
             this.lastOwnerReport = now;
             UltraCleanLogger.info('Owner heartbeat report sent');
@@ -2375,30 +2377,19 @@ class ProfessionalDefibrillator {
             const currentPrefix = getCurrentPrefix();
             const platform = detectPlatform();
             const version = VERSION;
+            const memoryMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
             
-            const startupMessage = `🚀 *${BOT_NAME} v${version} STARTED SUCCESSFULLY*\n\n` +
-                                 `✅ *Professional Defibrillator Activated*\n\n` +
-                                 `📋 *System Info:*\n` +
-                                 `├─ Version: ${version}\n` +
-                                 `├─ Platform: ${platform}\n` +
-                                 `├─ Prefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\n` +
-                                 `├─ Mode: ${BOT_MODE}\n` +
-                                 `├─ Member Detection: ✅ ACTIVE\n` +
-                                 `├─ Anti-ViewOnce: ✅ ACTIVE\n` +
-                                 `└─ Status: 24/7 Ready!\n\n` +
-                                 `🩺 *Defibrillator Features:*\n` +
-                                 `├─ Terminal Heartbeat: Every 10s\n` +
-                                 `├─ Owner Reports: Every 1m\n` +
-                                 `├─ Auto Health Checks: Every 15s\n` +
-                                 `├─ Memory Monitoring: Active\n` +
-                                 `├─ Auto-restart: Enabled\n` +
-                                 `├─ Command Tracking: Active\n` +
-                                 `├─ Member Detection: ✅ ACTIVE\n` +
-                                 `└─ Anti-ViewOnce: ✅ ACTIVE\n\n` +
-                                 `🎉 *Bot is now under professional monitoring!*\n` +
-                                 `_Any issues will be automatically detected and resolved._`;
+            const startupMessage = `╭─⌈ 🚀 *${BOT_NAME} v${version} STARTED* ⌋\n` +
+                                 `├─⊷ *Platform:* ${platform}\n` +
+                                 `├─⊷ *Prefix:* ${isPrefixless ? 'none' : currentPrefix}\n` +
+                                 `├─⊷ *Mode:* ${BOT_MODE}\n` +
+                                 `├─⊷ *Memory:* ${memoryMB}MB\n` +
+                                 `├─⊷ *Monitoring:* ✅ Active\n` +
+                                 `╰───`;
             
-            await sock.sendMessage(this.ownerJid, { text: startupMessage });
+            const sendPromise = sock.sendMessage(this.ownerJid, { text: startupMessage });
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
+            await Promise.race([sendPromise, timeoutPromise]);
             UltraCleanLogger.success('Startup report sent to owner');
             
         } catch (error) {
@@ -4251,7 +4242,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     autoConnectOnStart.trigger(sock).catch(() => {});
                 }
                 
-                (async () => {
+                setTimeout(async () => {
                     try {
                         const autojoinConfigPath = './data/autojoin/config.json';
                         if (!fs.existsSync(autojoinConfigPath)) {
@@ -4261,7 +4252,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
                         let allGroups = null;
                         try {
-                            allGroups = await sock.groupFetchAllParticipating();
+                            const fetchPromise = sock.groupFetchAllParticipating();
+                            const fetchTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000));
+                            allGroups = await Promise.race([fetchPromise, fetchTimeout]);
                         } catch (_) {}
 
                         const CHANNEL_JID = "120363424199376597@newsletter";
@@ -4316,7 +4309,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     } catch (e) {
                         UltraCleanLogger.info(`⚠️ Auto-follow/join config error: ${e.message}`);
                     }
-                })();
+                }, 8000);
                 
                 setTimeout(() => {
                     defibrillator.startMonitoring(sock);
@@ -4330,16 +4323,15 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         
                         const successMessage = `╭⊷『 🐺 WOLFBOT 』\n│\n├⊷ *Name:* ${BOT_NAME}\n├⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├⊷ *Owner:* (${displayOwnerNumber})\n├⊷ *Platform:* ${detectPlatform()}\n├⊷ *Mode:* ${BOT_MODE}\n└⊷ *Status:* ✅ Connected\n\n╰⊷ *Silent Wolf Online* 🐾`;
                         
-                        if (ownerInfo && ownerInfo.ownerJid) {
-                            await sock.sendMessage(ownerInfo.ownerJid, { text: successMessage });
-                            console.log(chalk.green(`✅ Connection message sent to owner: ${ownerInfo.ownerJid}`));
-                        } else {
-                            await sock.sendMessage(sock.user.id, { text: successMessage });
-                            console.log(chalk.yellow(`⚠️ Sent to bot's own JID: ${sock.user.id}`));
-                        }
+                        const targetJid = (ownerInfo && ownerInfo.ownerJid) ? ownerInfo.ownerJid : sock.user.id;
+                        const sendPromise = sock.sendMessage(targetJid, { text: successMessage });
+                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
+                        await Promise.race([sendPromise, timeoutPromise]);
+                        console.log(chalk.green(`✅ Connection message sent to owner`));
                         hasSentConnectionMessage = true;
                     } catch (sendError) {
                         console.log(chalk.red('❌ Could not send connection message:'), sendError.message);
+                        hasSentConnectionMessage = true;
                     }
                 }, 500);
                 

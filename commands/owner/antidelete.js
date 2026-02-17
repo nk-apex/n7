@@ -114,6 +114,10 @@ async function loadData() {
         if (await fs.access(CACHE_FILE).then(() => true).catch(() => false)) {
             const data = JSON.parse(await fs.readFile(CACHE_FILE, 'utf8'));
             
+            if (typeof data.enabled === 'boolean') {
+                antideleteState.enabled = data.enabled;
+            }
+            
             if (data.mode && (data.mode === 'private' || data.mode === 'public')) {
                 antideleteState.mode = data.mode;
             }
@@ -164,6 +168,7 @@ async function saveData() {
         await ensureDirs();
         
         const data = {
+            enabled: antideleteState.enabled,
             mode: antideleteState.mode,
             messageCache: Array.from(antideleteState.messageCache.entries()),
             mediaCache: Array.from(antideleteState.mediaCache.entries()).map(([key, value]) => {
@@ -487,7 +492,7 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
 
 export async function antideleteStoreMessage(message) {
     try {
-        if (!antideleteState.sock) return;
+        if (!antideleteState.enabled || !antideleteState.sock) return;
         
         const msgKey = message.key;
         if (!msgKey || !msgKey.id || msgKey.fromMe) return;
@@ -615,7 +620,7 @@ export async function antideleteStoreMessage(message) {
 
 export async function antideleteHandleUpdate(update) {
     try {
-        if (!antideleteState.sock) return;
+        if (!antideleteState.enabled || !antideleteState.sock) return;
         
         const msgKey = update.key;
         if (!msgKey || !msgKey.id) return;
@@ -971,6 +976,7 @@ export async function initAntidelete(sock) {
             if (savePending) {
                 try {
                     const data = {
+                        enabled: antideleteState.enabled,
                         mode: antideleteState.mode,
                         messageCache: Array.from(antideleteState.messageCache.entries()),
                         mediaCache: Array.from(antideleteState.mediaCache.entries()).map(([key, value]) => {
@@ -1039,26 +1045,39 @@ export default {
         
         switch (command) {
             case 'public':
+                antideleteState.enabled = true;
                 antideleteState.mode = 'public';
                 await saveData();
                 await sock.sendMessage(chatId, {
-                    text: `✅ *ANTIDELETE: PUBLIC*\n\nDeleted messages will be resent in the original chat where they were deleted.`
+                    text: `╭─⌈ ✅ *ANTIDELETE: PUBLIC* ⌋\n├─⊷ Deleted messages will be resent\n│  └⊷ In the original chat\n╰───`
                 }, { quoted: msg });
                 break;
                 
             case 'private':
             case 'on':
             case 'enable':
+                antideleteState.enabled = true;
                 antideleteState.mode = 'private';
                 await saveData();
                 await sock.sendMessage(chatId, {
-                    text: `✅ *ANTIDELETE: PRIVATE*\n\nDeleted messages will be sent to your DM only.`
+                    text: `╭─⌈ ✅ *ANTIDELETE: PRIVATE* ⌋\n├─⊷ Deleted messages will be\n│  └⊷ Sent to your DM only\n╰───`
+                }, { quoted: msg });
+                break;
+                
+            case 'off':
+            case 'disable':
+                antideleteState.enabled = false;
+                await saveData();
+                await sock.sendMessage(chatId, {
+                    text: `╭─⌈ ❌ *ANTIDELETE: OFF* ⌋\n├─⊷ Antidelete is now disabled\n│  └⊷ Deleted messages will not be tracked\n╰───`
                 }, { quoted: msg });
                 break;
                 
             case 'status':
             case 'stats':
-                const statsText = `╭─⌈ 📊 *ANTIDELETE STATUS* ⌋\n│\n│ ✅ *System:* ALWAYS ACTIVE\n│ 🔒 *Mode:* ${antideleteState.mode.toUpperCase()}\n│ 💾 *Storage:* ${antideleteState.stats.totalStorageMB}MB\n│ 📦 *Cached:* ${antideleteState.messageCache.size} msgs | 📸 ${antideleteState.mediaCache.size} media\n│ 🔍 *Detected:* ${antideleteState.stats.deletedDetected} | ✅ *Retrieved:* ${antideleteState.stats.retrieved}\n│\n├─⊷ *${prefix}antidelete private*\n│  └⊷ Send to DM only\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antidelete help*\n│  └⊷ Full help\n│\n╰───`;
+                const statusIcon = antideleteState.enabled ? '✅' : '❌';
+                const statusLabel = antideleteState.enabled ? 'ACTIVE' : 'OFF';
+                const statsText = `╭─⌈ 📊 *ANTIDELETE STATUS* ⌋\n├─⊷ *System:* ${statusIcon} ${statusLabel}\n├─⊷ *Mode:* ${antideleteState.mode.toUpperCase()}\n├─⊷ *Storage:* ${antideleteState.stats.totalStorageMB}MB\n├─⊷ *Cached:* ${antideleteState.messageCache.size} msgs | ${antideleteState.mediaCache.size} media\n├─⊷ *Detected:* ${antideleteState.stats.deletedDetected} | *Retrieved:* ${antideleteState.stats.retrieved}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}antidelete clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antidelete settings*\n│  └⊷ Configure\n╰───`;
                 
                 await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
                 break;
