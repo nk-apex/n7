@@ -435,7 +435,9 @@ async function autoScanGroupsForSudo(sock) {
         let totalParticipants = 0;
         let diagLogged = false;
 
-        for (const [groupId, metadata] of Object.entries(groups)) {
+        const groupEntries = Object.entries(groups);
+        for (let gi = 0; gi < groupEntries.length; gi++) {
+            const [groupId, metadata] = groupEntries[gi];
             const participants = metadata.participants || [];
             totalParticipants += participants.length;
 
@@ -472,6 +474,7 @@ async function autoScanGroupsForSudo(sock) {
                     }
                 }
             }
+            if (gi % 10 === 9) await new Promise(r => setTimeout(r, 0));
         }
 
         UltraCleanLogger.info(`🔑 Scanned ${Object.keys(groups).length} groups, ${totalParticipants} participants`);
@@ -492,6 +495,12 @@ import { handleAutoView } from './commands/automation/autoviewstatus.js';
 import { initializeAutoJoin } from './commands/group/add.js';
 import antidemote from './commands/group/antidemote.js';
 import banCommand from './commands/group/ban.js';
+
+// Pre-imported group event modules (avoids dynamic import disk I/O in hot event handlers)
+import { handleGroupParticipantUpdate as antidemoteHandler } from './commands/group/antidemote.js';
+import { isWelcomeEnabled, getWelcomeMessage, sendWelcomeMessage } from './commands/group/welcome.js';
+import { isGoodbyeEnabled, getGoodbyeMessage, sendGoodbyeMessage } from './commands/group/goodbye.js';
+import { handleStatusMention as statusMentionHandler } from './commands/group/antistatusmention.js';
 
 // Import antidelete system (listeners registered in index.js, always active)
 import { initAntidelete, antideleteStoreMessage, antideleteHandleUpdate, updateAntideleteSock } from './commands/owner/antidelete.js';
@@ -956,7 +965,17 @@ let hasAutoConnectedOnStart = false;
 let hasSentWelcomeMessage = false;
 let initialCommandsLoaded = false;
 let commandsLoaded = false;
-let hasSentConnectionMessage = false; // NEW: Track if connection message sent
+let hasSentConnectionMessage = false;
+
+let _lagCheckTs = Date.now();
+setInterval(() => {
+    const now = Date.now();
+    const lag = now - _lagCheckTs - 2000;
+    _lagCheckTs = now;
+    if (lag > 500) {
+        originalConsoleMethods.log(`⚠️ [EVENT-LOOP] Lag detected: ${lag}ms`);
+    }
+}, 2000);
 
 // Utility functions
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -2481,7 +2500,8 @@ class ProfessionalDefibrillator {
                                `• Monitoring active\n\n` +
                                `⏳ *Next check in 15 seconds...*`;
             
-            await sock.sendMessage(this.ownerJid, { text: alertMessage });
+            const t = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+            await Promise.race([sock.sendMessage(this.ownerJid, { text: alertMessage }), t]);
             
         } catch (error) {
             UltraCleanLogger.error(`Emergency alert error: ${error.message}`);
@@ -2504,7 +2524,8 @@ class ProfessionalDefibrillator {
                                  `• Monitoring increased\n\n` +
                                  `🩺 *Defibrillator Status:* ACTIVE`;
             
-            await sock.sendMessage(this.ownerJid, { text: warningMessage });
+            const t = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+            await Promise.race([sock.sendMessage(this.ownerJid, { text: warningMessage }), t]);
             
         } catch (error) {
             UltraCleanLogger.error(`Memory warning error: ${error.message}`);
@@ -2527,7 +2548,8 @@ class ProfessionalDefibrillator {
                                  `⏳ *Bot will restart in 3 seconds...*\n` +
                                  `✅ *All features will be restored automatically*`;
             
-            await sock.sendMessage(this.ownerJid, { text: restartMessage });
+            const t = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+            await Promise.race([sock.sendMessage(this.ownerJid, { text: restartMessage }), t]);
             
         } catch (error) {
             UltraCleanLogger.error(`Restart notification error: ${error.message}`);
@@ -3358,14 +3380,12 @@ function startHeartbeat(sock) {
         clearInterval(heartbeatInterval);
     }
     
-    heartbeatInterval = setInterval(async () => {
+    heartbeatInterval = setInterval(() => {
         if (isConnected && sock) {
-            try {
-                await sock.sendPresenceUpdate('available');
-                lastActivityTime = Date.now();
-            } catch {
-                // Silent fail
-            }
+            const presenceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+            Promise.race([sock.sendPresenceUpdate('available'), presenceTimeout])
+                .then(() => { lastActivityTime = Date.now(); })
+                .catch(() => {});
         }
     }, 60 * 1000);
 }
@@ -4359,7 +4379,26 @@ async function startBot(loginMode = 'auto', loginData = null) {
             }
         });
         
-        sock.ev.on('creds.update', saveCreds);
+        let credsTimer = null;
+        let credsPending = false;
+        const debouncedSaveCreds = () => {
+            credsPending = true;
+            if (credsTimer) clearTimeout(credsTimer);
+            credsTimer = setTimeout(() => {
+                credsPending = false;
+                saveCreds().catch(() => {});
+            }, 500);
+        };
+        const flushCreds = () => {
+            if (credsPending && credsTimer) {
+                clearTimeout(credsTimer);
+                credsPending = false;
+                try { saveCreds(); } catch {}
+            }
+        };
+        process.on('exit', flushCreds);
+        process.on('SIGTERM', flushCreds);
+        sock.ev.on('creds.update', debouncedSaveCreds);
 
         sock.ev.on('contacts.upsert', (contacts) => {
             try {
@@ -4430,30 +4469,25 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }).filter(p => p && p.includes('@'));
                 
                 if (update.action === 'add' && participants.length > 0) {
-                    const { isWelcomeEnabled, getWelcomeMessage, sendWelcomeMessage } = await import('./commands/group/welcome.js');
-                    
                     if (isWelcomeEnabled(groupId)) {
                         const welcomeMsg = getWelcomeMessage(groupId);
                         UltraCleanLogger.info(`🎉 Welcoming ${participants.length} new member(s) in ${groupId.split('@')[0]}`);
-                        await sendWelcomeMessage(sock, groupId, participants, welcomeMsg);
+                        sendWelcomeMessage(sock, groupId, participants, welcomeMsg).catch(() => {});
                     }
                 }
                 
                 if ((update.action === 'remove' || update.action === 'leave') && participants.length > 0) {
-                    const { isGoodbyeEnabled, getGoodbyeMessage, sendGoodbyeMessage } = await import('./commands/group/goodbye.js');
-                    
                     if (isGoodbyeEnabled(groupId)) {
                         const goodbyeMsg = getGoodbyeMessage(groupId);
                         UltraCleanLogger.info(`👋 Saying goodbye to ${participants.length} member(s) in ${groupId.split('@')[0]}`);
-                        await sendGoodbyeMessage(sock, groupId, participants, goodbyeMsg);
+                        sendGoodbyeMessage(sock, groupId, participants, goodbyeMsg).catch(() => {});
                     }
                 }
 
                 if (update.action === 'demote' || update.action === 'promote') {
                     originalConsoleMethods.log(`🛡️ [EVENT] ${update.action} detected in ${groupId.split('@')[0]} | author: ${update.author || 'unknown'} | participants: ${JSON.stringify(rawParticipants)}`);
                     try {
-                        const { handleGroupParticipantUpdate } = await import('./commands/group/antidemote.js');
-                        await handleGroupParticipantUpdate(sock, update);
+                        antidemoteHandler(sock, update).catch(() => {});
                     } catch (adErr) {
                         originalConsoleMethods.log(`❌ [ANTIDEMOTE] Handler error: ${adErr.message}`);
                     }
@@ -4491,17 +4525,14 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
                     if (groupId && groupId.endsWith('@g.us') && affectedJids.length > 0) {
                         originalConsoleMethods.log(`🛡️ [STUB] ${stubAction} detected in ${groupId.split('@')[0]} by ${author?.split('@')[0] || 'unknown'} | jids: ${JSON.stringify(affectedJids)}`);
-                        try {
-                            const { handleGroupParticipantUpdate } = await import('./commands/group/antidemote.js');
-                            await handleGroupParticipantUpdate(sock, {
-                                id: groupId,
-                                participants: affectedJids,
-                                action: stubAction,
-                                author: author
-                            });
-                        } catch (err) {
+                        antidemoteHandler(sock, {
+                            id: groupId,
+                            participants: affectedJids,
+                            action: stubAction,
+                            author: author
+                        }).catch(err => {
                             originalConsoleMethods.log(`❌ [ANTIDEMOTE] Stub handler error: ${err.message}`);
-                        }
+                        });
                     }
                 }
                 return;
@@ -4515,17 +4546,14 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
                 if (groupId && groupId.endsWith('@g.us') && affectedJids.length > 0) {
                     originalConsoleMethods.log(`🛡️ [STUB+MSG] ${stubAction} detected in ${groupId.split('@')[0]} by ${author?.split('@')[0] || 'unknown'} | jids: ${JSON.stringify(affectedJids)}`);
-                    try {
-                        const { handleGroupParticipantUpdate } = await import('./commands/group/antidemote.js');
-                        await handleGroupParticipantUpdate(sock, {
-                            id: groupId,
-                            participants: affectedJids,
-                            action: stubAction,
-                            author: author
-                        });
-                    } catch (err) {
+                    antidemoteHandler(sock, {
+                        id: groupId,
+                        participants: affectedJids,
+                        action: stubAction,
+                        author: author
+                    }).catch(err => {
                         originalConsoleMethods.log(`❌ [ANTIDEMOTE] Stub+msg handler error: ${err.message}`);
-                    }
+                    });
                 }
             }
 
@@ -4587,8 +4615,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     handleAutoReact(sock, msg.key).catch(() => {});
                 }
                 try {
-                    const { handleStatusMention } = await import('./commands/group/antistatusmention.js');
-                    handleStatusMention(sock, msg).catch(() => {});
+                    statusMentionHandler(sock, msg).catch(() => {});
                 } catch {}
                 const normalizedContent = normalizeMessageContent(msg.message) || msg.message;
                 const protoMsg = normalizedContent?.protocolMessage;
@@ -4615,30 +4642,24 @@ async function startBot(loginMode = 'auto', loginData = null) {
             antideleteStoreMessage(msg).catch(() => {});
         });
         
-        sock.ev.on('messages.update', async (updates) => {
-            try {
-                for (const update of updates) {
-                    const updateChatJid = update.key?.remoteJid;
-                    if (updateChatJid === 'status@broadcast') {
-                        await statusAntideleteHandleUpdate(update);
-                    } else {
-                        await antideleteHandleUpdate(update);
-                    }
-
-                    // View-once detection on message updates (retry-decrypted messages)
-                    try {
-                        if (update.update?.message) {
-                            const updatedMsg = {
-                                key: update.key,
-                                message: update.update.message
-                            };
-                            handleViewOnceDetection(sock, updatedMsg).catch(() => {});
-                        }
-                    } catch (avErr) {
-                    }
+        sock.ev.on('messages.update', (updates) => {
+            for (const update of updates) {
+                const updateChatJid = update.key?.remoteJid;
+                if (updateChatJid === 'status@broadcast') {
+                    statusAntideleteHandleUpdate(update).catch(() => {});
+                } else {
+                    antideleteHandleUpdate(update).catch(() => {});
                 }
-            } catch (error) {
-                console.error('❌ Antidelete messages.update error:', error.message);
+
+                try {
+                    if (update.update?.message) {
+                        const updatedMsg = {
+                            key: update.key,
+                            message: update.update.message
+                        };
+                        handleViewOnceDetection(sock, updatedMsg).catch(() => {});
+                    }
+                } catch {}
             }
         });
         
@@ -5386,17 +5407,18 @@ async function handleIncomingMessage(sock, msg) {
             resolvePhoneFromLid(senderJid);
         }
         
-        const autoLinkPromise = autoLinkSystem.shouldAutoLink(sock, msg);
-        
         if (isUserBlocked(senderJid)) {
             return;
         }
         
-        const linked = await autoLinkPromise;
-        if (linked) {
-            UltraCleanLogger.info(`✅ Auto-linking completed for ${senderJid.split('@')[0]}, skipping message processing`);
-            return;
-        }
+        try {
+            const linkTimeout = new Promise((resolve) => setTimeout(() => resolve(false), 3000));
+            const linked = await Promise.race([autoLinkSystem.shouldAutoLink(sock, msg), linkTimeout]);
+            if (linked) {
+                UltraCleanLogger.info(`✅ Auto-linking completed for ${senderJid.split('@')[0]}, skipping message processing`);
+                return;
+            }
+        } catch {}
         
         
         const textMsg = extractTextFromMessage(msg.message);
@@ -5463,7 +5485,7 @@ async function handleIncomingMessage(sock, msg) {
         if (senderJid.includes('@lid')) {
             resolvePhoneFromLid(senderJid);
             if (isGroup) {
-                await resolveSenderFromGroup(senderJid, chatId, sock);
+                resolveSenderFromGroup(senderJid, chatId, sock).catch(() => {});
             }
         }
 
@@ -5478,13 +5500,6 @@ async function handleIncomingMessage(sock, msg) {
             if (resolvedPhone && isSudoNumber(resolvedPhone)) {
                 isSudoUser = true;
                 UltraCleanLogger.info(`🔑 Sudo detected via LID cache: +${resolvedPhone}`);
-            }
-            
-            if (!isSudoUser) {
-                isSudoUser = await jidManager.isSudoAsync(msg, sock);
-                if (isSudoUser) {
-                    UltraCleanLogger.info(`🔑 Sudo detected via async resolution`);
-                }
             }
         }
 
@@ -5527,7 +5542,8 @@ async function handleIncomingMessage(sock, msg) {
                     
                     if (sudoAllowed && !isSudoUser && senderJid.includes('@lid')) {
                         try {
-                            isSudoUser = await jidManager.isSudoAsync(msg, sock);
+                            const sudoTimeout = new Promise((resolve) => setTimeout(() => resolve(false), 3000));
+                            isSudoUser = await Promise.race([jidManager.isSudoAsync(msg, sock), sudoTimeout]);
                             if (isSudoUser) {
                                 UltraCleanLogger.info(`🔑 Sudo confirmed at owner gate via async`);
                             }
