@@ -2798,7 +2798,8 @@ case 3: {
     infoSection = `*No additional information is enabled.*\n*Use .togglemenuinfo to customize*\n\n`;
   }
 
-  const commandsText = `┌──⌈ \`GROUP MANAGEMENT\` ⌋
+  const categorySections = [
+`┌──⌈ \`GROUP MANAGEMENT\` ⌋
 │ add
 │ promote
 │ promoteall
@@ -2822,9 +2823,8 @@ case 3: {
 │ goodbye
 │ leave
 │ creategroup
-└───────────────
-
-┌──⌈ \`AUTO MODERATION\` ⌋
+└───────────────`,
+`┌──⌈ \`AUTO MODERATION\` ⌋
 │ antisticker
 │ antiimage
 │ antivideo
@@ -2835,9 +2835,8 @@ case 3: {
 │ antidemote
 │ antipromote
 │ antiviewonce
-└───────────────
-
-┌──⌈ \`GROUP INFO & TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`GROUP INFO & TOOLS\` ⌋
 │ groupinfo
 │ grouplink
 │ tagadmin
@@ -2855,18 +2854,16 @@ case 3: {
 │ listinactive
 │ approveall
 │ rejectall
-└───────────────
-
-┌──⌈ \`MENU SETTINGS\` ⌋
+└───────────────`,
+`┌──⌈ \`MENU SETTINGS\` ⌋
 │ menu
 │ menu2
 │ menustyle
 │ togglemenuinfo
 │ setmenuimage
 │ restoremenuimage
-└───────────────
-
-┌──⌈ \`OWNER CONTROLS\` ⌋
+└───────────────`,
+`┌──⌈ \`OWNER CONTROLS\` ⌋
 │ setbotname
 │ resetbotname
 │ setowner
@@ -2891,9 +2888,8 @@ case 3: {
 │ antiedit
 │ chatbot
 │ shutdown
-└───────────────
-
-┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
+└───────────────`,
+`┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
 │ restart
 │ workingreload
 │ reloadenv
@@ -2906,9 +2902,8 @@ case 3: {
 │ latestupdates
 │ panel
 │ debugchat
-└───────────────
-
-┌──⌈ \`SUDO\` ⌋
+└───────────────`,
+`┌──⌈ \`SUDO\` ⌋
 │ addsudo
 │ delsudo
 │ listsudo
@@ -2919,9 +2914,8 @@ case 3: {
 │ mysudo
 │ sudodebug
 │ linksudo
-└───────────────
-
-┌──⌈ \`AUTOMATION\` ⌋
+└───────────────`,
+`┌──⌈ \`AUTOMATION\` ⌋
 │ autoread
 │ autotyping
 │ autorecording
@@ -2931,17 +2925,15 @@ case 3: {
 │ autobio
 │ autorec
 │ reactowner
-└───────────────
-
-┌──⌈ \`PRIVACY CONTROLS\` ⌋
+└───────────────`,
+`┌──⌈ \`PRIVACY CONTROLS\` ⌋
 │ online
 │ privacy
 │ receipt
 │ profilepic
 │ viewer
-└───────────────
-
-┌──⌈ \`GENERAL UTILITIES\` ⌋
+└───────────────`,
+`┌──⌈ \`GENERAL UTILITIES\` ⌋
 │ alive
 │ ping
 │ ping2
@@ -2958,9 +2950,8 @@ case 3: {
 │ getpp
 │ getgpp
 │ prefixinfo
-└───────────────
-
-┌──⌈ \`CONVERSION & MEDIA\` ⌋
+└───────────────`,
+`┌──⌈ \`CONVERSION & MEDIA\` ⌋
 │ shorturl
 │ url
 │ fetch
@@ -2977,16 +2968,14 @@ case 3: {
 │ tts
 │ trebleboost
 │ jarvis
-└───────────────
-
-┌──⌈ \`CONTACT TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`CONTACT TOOLS\` ⌋
 │ vcf
 │ viewvcf
 │ vv
 │ vv2
-└───────────────
-
-┌──⌈ \`MUSIC\` ⌋
+└───────────────`,
+`┌──⌈ \`MUSIC\` ⌋
 │ play
 │ song
 │ video
@@ -2994,9 +2983,8 @@ case 3: {
 │ lyrics
 │ shazam
 │ spotify
-└───────────────
-
-┌──⌈ \`MEDIA DOWNLOADS\` ⌋
+└───────────────`,
+`┌──⌈ \`MEDIA DOWNLOADS\` ⌋
 │ tiktok
 │ instagram
 │ facebook
@@ -3010,9 +2998,8 @@ case 3: {
 │ ytvdoc
 │ videodl
 │ playlist
-└───────────────
-
-┌──⌈ \`AI COMMANDS\` ⌋
+└───────────────`,
+`┌──⌈ \`AI COMMANDS\` ⌋
 │ gpt
 │ chatgpt
 │ copilot
@@ -3030,9 +3017,8 @@ case 3: {
 │ wormgpt
 │ deepseek+
 │ chatbot
-└───────────────
-
-┌──⌈ \`AI GENERATION\` ⌋
+└───────────────`,
+`┌──⌈ \`AI GENERATION\` ⌋
 │ imagine
 │ imagegen
 │ flux
@@ -3044,26 +3030,23 @@ case 3: {
 │ totext
 │ removebg
 │ vision
-└───────────────
-
-┌──⌈ \`AI TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`AI TOOLS\` ⌋
 │ videogen
 │ aiscanner
 │ aimenu
 │ brandlogo
 │ companylogo
 │ logoai
-└───────────────
-
-┌──⌈ \`AI VIDEO EFFECTS\` ⌋
+└───────────────`,
+`┌──⌈ \`AI VIDEO EFFECTS\` ⌋
 │ tigervideo
 │ introvideo
 │ lightningpubg
 │ lovevideo
 │ videogen
-└───────────────
-
-┌──⌈ \`IMAGE TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`IMAGE TOOLS\` ⌋
 │ image
 │ imagegen
 │ imagine
@@ -3072,9 +3055,8 @@ case 3: {
 │ real
 │ remini
 │ vision
-└───────────────
-
-┌──⌈ \`SPORTS\` ⌋
+└───────────────`,
+`┌──⌈ \`SPORTS\` ⌋
 │ football
 │ basketball
 │ cricket
@@ -3086,16 +3068,14 @@ case 3: {
 │ hockey
 │ golf
 │ sportsmenu
-└───────────────
-
-┌──⌈ \`SECURITY & HACKING\` ⌋
+└───────────────`,
+`┌──⌈ \`SECURITY & HACKING\` ⌋
 │ ipinfo
 │ nmap
 │ shodan
 │ nglattack
-└───────────────
-
-┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
+└───────────────`,
+`┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
 │ goldlogo
 │ silverlogo
 │ platinumlogo
@@ -3125,18 +3105,16 @@ case 3: {
 │ glowlogo
 │ gradientlogo
 │ matrixlogo
-└───────────────
-
-┌──⌈ \`GITHUB TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`GITHUB TOOLS\` ⌋
 │ gitclone
 │ gitinfo
 │ repanalyze
 │ zip
 │ update
 │ repo
-└───────────────
-
-┌──⌈ \`ANIME REACTIONS\` ⌋
+└───────────────`,
+`┌──⌈ \`ANIME REACTIONS\` ⌋
 │ animemenu
 │ awoo
 │ bully
@@ -3159,9 +3137,8 @@ case 3: {
 │ waifu
 │ wink
 │ yeet
-└───────────────
-
-┌──⌈ \`GAMES\` ⌋
+└───────────────`,
+`┌──⌈ \`GAMES\` ⌋
 │ coinflip
 │ dare
 │ dice
@@ -3174,9 +3151,8 @@ case 3: {
 │ truth
 │ tictactoe
 │ quote
-└───────────────
-
-┌──⌈ \`FUN & TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`FUN & TOOLS\` ⌋
 │ bf
 │ gf
 │ couple
@@ -3188,28 +3164,25 @@ case 3: {
 │ goodnight
 │ channelstatus
 │ hack
-└───────────────
-
-┌──⌈ \`QUICK COMMANDS\` ⌋
+└───────────────`,
+`┌──⌈ \`QUICK COMMANDS\` ⌋
 │ p
 │ up
-└───────────────
+└───────────────`,
+`🐺 *POWERED BY WOLFTECH* 🐺`
+  ];
 
-🐺 *POWERED BY WOLFTECH* 🐺`;
+  const readMoreSep = Array.from({ length: 550 }, (_, i) => ['\u200E','\u200F','\u200B','\u200C','\u200D','\u2060','\uFEFF'][i % 7]).join('');
+  const commandsText = categorySections.join(`\n${readMoreSep}\n`);
+  finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
 
-  // ========== APPLY "READ MORE" EFFECT ==========
-  // Combine info section (visible) and commands (hidden) with "Read more"
-  finalCaption = createReadMoreEffect(infoSection, commandsText);
-  // ========== END "READ MORE" EFFECT ==========
-
-  // Send text-only menu (removed image sending)
   await sock.sendMessage(jid, { 
     text: finalCaption
   }, { 
     quoted: fkontak 
   });
   
-  console.log(`✅ ${currentBotName} menu sent as text-only with "Read more" effect`);
+  console.log(`✅ ${currentBotName} menu sent as text-only with per-category "Read more" effect`);
   break;
 }
 
@@ -7795,7 +7768,8 @@ case 7: {
     infoSection = `*No additional information is enabled.*\n*Use .togglemenuinfo to customize*\n\n`;
   }
 
-  const commandsText = `┌──⌈ \`GROUP MANAGEMENT\` ⌋
+  const categorySections = [
+`┌──⌈ \`GROUP MANAGEMENT\` ⌋
 │ add
 │ promote
 │ promoteall
@@ -7819,9 +7793,8 @@ case 7: {
 │ goodbye
 │ leave
 │ creategroup
-└───────────────
-
-┌──⌈ \`AUTO MODERATION\` ⌋
+└───────────────`,
+`┌──⌈ \`AUTO MODERATION\` ⌋
 │ antisticker
 │ antiimage
 │ antivideo
@@ -7832,9 +7805,8 @@ case 7: {
 │ antidemote
 │ antipromote
 │ antiviewonce
-└───────────────
-
-┌──⌈ \`GROUP INFO & TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`GROUP INFO & TOOLS\` ⌋
 │ groupinfo
 │ grouplink
 │ tagadmin
@@ -7852,18 +7824,16 @@ case 7: {
 │ listinactive
 │ approveall
 │ rejectall
-└───────────────
-
-┌──⌈ \`MENU SETTINGS\` ⌋
+└───────────────`,
+`┌──⌈ \`MENU SETTINGS\` ⌋
 │ menu
 │ menu2
 │ menustyle
 │ togglemenuinfo
 │ setmenuimage
 │ restoremenuimage
-└───────────────
-
-┌──⌈ \`OWNER CONTROLS\` ⌋
+└───────────────`,
+`┌──⌈ \`OWNER CONTROLS\` ⌋
 │ setbotname
 │ resetbotname
 │ setowner
@@ -7888,9 +7858,8 @@ case 7: {
 │ antiedit
 │ chatbot
 │ shutdown
-└───────────────
-
-┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
+└───────────────`,
+`┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
 │ restart
 │ workingreload
 │ reloadenv
@@ -7903,9 +7872,8 @@ case 7: {
 │ latestupdates
 │ panel
 │ debugchat
-└───────────────
-
-┌──⌈ \`SUDO\` ⌋
+└───────────────`,
+`┌──⌈ \`SUDO\` ⌋
 │ addsudo
 │ delsudo
 │ listsudo
@@ -7916,9 +7884,8 @@ case 7: {
 │ mysudo
 │ sudodebug
 │ linksudo
-└───────────────
-
-┌──⌈ \`AUTOMATION\` ⌋
+└───────────────`,
+`┌──⌈ \`AUTOMATION\` ⌋
 │ autoread
 │ autotyping
 │ autorecording
@@ -7928,17 +7895,15 @@ case 7: {
 │ autobio
 │ autorec
 │ reactowner
-└───────────────
-
-┌──⌈ \`PRIVACY CONTROLS\` ⌋
+└───────────────`,
+`┌──⌈ \`PRIVACY CONTROLS\` ⌋
 │ online
 │ privacy
 │ receipt
 │ profilepic
 │ viewer
-└───────────────
-
-┌──⌈ \`GENERAL UTILITIES\` ⌋
+└───────────────`,
+`┌──⌈ \`GENERAL UTILITIES\` ⌋
 │ alive
 │ ping
 │ ping2
@@ -7955,9 +7920,8 @@ case 7: {
 │ getpp
 │ getgpp
 │ prefixinfo
-└───────────────
-
-┌──⌈ \`CONVERSION & MEDIA\` ⌋
+└───────────────`,
+`┌──⌈ \`CONVERSION & MEDIA\` ⌋
 │ shorturl
 │ url
 │ fetch
@@ -7974,16 +7938,14 @@ case 7: {
 │ tts
 │ trebleboost
 │ jarvis
-└───────────────
-
-┌──⌈ \`CONTACT TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`CONTACT TOOLS\` ⌋
 │ vcf
 │ viewvcf
 │ vv
 │ vv2
-└───────────────
-
-┌──⌈ \`MUSIC\` ⌋
+└───────────────`,
+`┌──⌈ \`MUSIC\` ⌋
 │ play
 │ song
 │ video
@@ -7991,9 +7953,8 @@ case 7: {
 │ lyrics
 │ shazam
 │ spotify
-└───────────────
-
-┌──⌈ \`MEDIA DOWNLOADS\` ⌋
+└───────────────`,
+`┌──⌈ \`MEDIA DOWNLOADS\` ⌋
 │ tiktok
 │ instagram
 │ facebook
@@ -8007,9 +7968,8 @@ case 7: {
 │ ytvdoc
 │ videodl
 │ playlist
-└───────────────
-
-┌──⌈ \`AI COMMANDS\` ⌋
+└───────────────`,
+`┌──⌈ \`AI COMMANDS\` ⌋
 │ gpt
 │ chatgpt
 │ copilot
@@ -8027,9 +7987,8 @@ case 7: {
 │ wormgpt
 │ deepseek+
 │ chatbot
-└───────────────
-
-┌──⌈ \`AI GENERATION\` ⌋
+└───────────────`,
+`┌──⌈ \`AI GENERATION\` ⌋
 │ imagine
 │ imagegen
 │ flux
@@ -8041,26 +8000,23 @@ case 7: {
 │ totext
 │ removebg
 │ vision
-└───────────────
-
-┌──⌈ \`AI TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`AI TOOLS\` ⌋
 │ videogen
 │ aiscanner
 │ aimenu
 │ brandlogo
 │ companylogo
 │ logoai
-└───────────────
-
-┌──⌈ \`AI VIDEO EFFECTS\` ⌋
+└───────────────`,
+`┌──⌈ \`AI VIDEO EFFECTS\` ⌋
 │ tigervideo
 │ introvideo
 │ lightningpubg
 │ lovevideo
 │ videogen
-└───────────────
-
-┌──⌈ \`IMAGE TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`IMAGE TOOLS\` ⌋
 │ image
 │ imagegen
 │ imagine
@@ -8069,9 +8025,8 @@ case 7: {
 │ real
 │ remini
 │ vision
-└───────────────
-
-┌──⌈ \`SPORTS\` ⌋
+└───────────────`,
+`┌──⌈ \`SPORTS\` ⌋
 │ football
 │ basketball
 │ cricket
@@ -8083,16 +8038,14 @@ case 7: {
 │ hockey
 │ golf
 │ sportsmenu
-└───────────────
-
-┌──⌈ \`SECURITY & HACKING\` ⌋
+└───────────────`,
+`┌──⌈ \`SECURITY & HACKING\` ⌋
 │ ipinfo
 │ nmap
 │ shodan
 │ nglattack
-└───────────────
-
-┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
+└───────────────`,
+`┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
 │ goldlogo
 │ silverlogo
 │ platinumlogo
@@ -8122,18 +8075,16 @@ case 7: {
 │ glowlogo
 │ gradientlogo
 │ matrixlogo
-└───────────────
-
-┌──⌈ \`GITHUB TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`GITHUB TOOLS\` ⌋
 │ gitclone
 │ gitinfo
 │ repanalyze
 │ zip
 │ update
 │ repo
-└───────────────
-
-┌──⌈ \`ANIME REACTIONS\` ⌋
+└───────────────`,
+`┌──⌈ \`ANIME REACTIONS\` ⌋
 │ animemenu
 │ awoo
 │ bully
@@ -8156,9 +8107,8 @@ case 7: {
 │ waifu
 │ wink
 │ yeet
-└───────────────
-
-┌──⌈ \`GAMES\` ⌋
+└───────────────`,
+`┌──⌈ \`GAMES\` ⌋
 │ coinflip
 │ dare
 │ dice
@@ -8171,9 +8121,8 @@ case 7: {
 │ truth
 │ tictactoe
 │ quote
-└───────────────
-
-┌──⌈ \`FUN & TOOLS\` ⌋
+└───────────────`,
+`┌──⌈ \`FUN & TOOLS\` ⌋
 │ bf
 │ gf
 │ couple
@@ -8185,19 +8134,17 @@ case 7: {
 │ goodnight
 │ channelstatus
 │ hack
-└───────────────
-
-┌──⌈ \`QUICK COMMANDS\` ⌋
+└───────────────`,
+`┌──⌈ \`QUICK COMMANDS\` ⌋
 │ p
 │ up
-└───────────────
+└───────────────`,
+`🐺 *POWERED BY WOLFTECH* 🐺`
+  ];
 
-🐺 *POWERED BY WOLFTECH* 🐺`;
-
-  // ========== APPLY "READ MORE" EFFECT ==========
-  // Combine info section (visible) and commands (hidden) with "Read more"
-  finalCaption = createReadMoreEffect(infoSection, commandsText);
-  // ========== END "READ MORE" EFFECT ==========
+  const readMoreSep = Array.from({ length: 550 }, (_, i) => ['\u200E','\u200F','\u200B','\u200C','\u200D','\u2060','\uFEFF'][i % 7]).join('');
+  const commandsText = categorySections.join(`\n${readMoreSep}\n`);
+  finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
 
   const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
   const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
