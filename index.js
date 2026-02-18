@@ -4056,7 +4056,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
             
-            UltraCleanLogger.info(`🔗 Connection update: ${connection || 'unknown'}`);
+            if (connection) UltraCleanLogger.info(`🔗 Connection update: ${connection}`);
             
             if (connection === 'open') {
                 isConnected = true;
@@ -4450,8 +4450,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
             if (type !== 'notify') return;
             
             const msg = messages[0];
-
-            displayIncomingMessage(msg, sock);
 
             if (!msg.message) {
                 if (store && msg.key?.remoteJid && msg.key?.id) {
@@ -5168,182 +5166,6 @@ _🐺 The Moon Watches — ..._
 }
 
 // ====== MESSAGE HANDLER ======
-function getMessageTypeLabel(messageObj) {
-    const content = normalizeMessageContent(messageObj);
-    if (!content) return 'empty';
-    if (content.conversation || content.extendedTextMessage) return 'text';
-    if (content.imageMessage) return 'image';
-    if (content.videoMessage) return 'video';
-    if (content.audioMessage) return content.audioMessage.ptt ? 'voice' : 'audio';
-    if (content.stickerMessage) return 'sticker';
-    if (content.documentMessage) return 'document';
-    if (content.contactMessage || content.contactsArrayMessage) return 'contact';
-    if (content.locationMessage || content.liveLocationMessage) return 'location';
-    if (content.reactionMessage) return 'reaction';
-    if (content.pollCreationMessage || content.pollCreationMessageV3) return 'poll';
-    if (content.viewOnceMessage || content.viewOnceMessageV2) return 'view-once';
-    if (content.protocolMessage) return 'protocol';
-    return 'other';
-}
-
-async function resolveRealNumberForDisplay(senderJid, chatId, sock) {
-    if (!senderJid) return 'unknown';
-    const raw = senderJid.split('@')[0].split(':')[0];
-    const full = senderJid.split('@')[0];
-
-    if (!senderJid.includes('@lid')) {
-        const num = raw.replace(/[^0-9]/g, '');
-        if (num.length >= 7 && num.length <= 15) return `+${num}`;
-        return `+${raw}`;
-    }
-
-    const cached = lidPhoneCache.get(raw) || lidPhoneCache.get(full) || getPhoneFromLid(raw) || getPhoneFromLid(full);
-    if (cached) return `+${cached}`;
-
-    if (sock?.signalRepository?.lidMapping?.getPNForLID) {
-        try {
-            const formats = [senderJid, `${raw}:0@lid`, `${raw}@lid`];
-            for (const fmt of formats) {
-                try {
-                    const pn = sock.signalRepository.lidMapping.getPNForLID(fmt);
-                    if (pn) {
-                        const num = String(pn).split('@')[0].replace(/[^0-9]/g, '');
-                        if (num.length >= 7 && num.length <= 15 && num !== raw) {
-                            cacheLidPhone(raw, num);
-                            return `+${num}`;
-                        }
-                    }
-                } catch {}
-            }
-        } catch {}
-    }
-
-    if (chatId && chatId.endsWith('@g.us')) {
-        const groupCached = groupMetadataCache.get(chatId);
-        if (groupCached && groupCached.data && groupCached.data.participants) {
-            for (const p of groupCached.data.participants) {
-                const info = extractParticipantInfo(p, sock);
-                if (info.lidNum === raw && info.phoneNum) {
-                    cacheLidPhone(raw, info.phoneNum);
-                    return `+${info.phoneNum}`;
-                }
-            }
-        }
-
-        try {
-            const resolved = await resolveSenderFromGroup(senderJid, chatId, sock);
-            if (resolved) return `+${resolved}`;
-        } catch {}
-    }
-
-    if (sock?.store?.contacts) {
-        try {
-            const contact = sock.store.contacts[senderJid] || sock.store.contacts[`${raw}@lid`];
-            if (contact?.notify || contact?.name) {
-                const phoneFromContact = contact.id?.split('@')[0]?.replace(/[^0-9]/g, '');
-                if (phoneFromContact && phoneFromContact.length >= 7 && phoneFromContact !== raw) {
-                    cacheLidPhone(raw, phoneFromContact);
-                    return `+${phoneFromContact}`;
-                }
-            }
-        } catch {}
-    }
-
-    return `LID:${raw.substring(0, 8)}...`;
-}
-
-function getInstantSenderNumber(senderJid) {
-    if (!senderJid) return 'unknown';
-    const raw = senderJid.split('@')[0].split(':')[0];
-    const full = senderJid.split('@')[0];
-
-    if (!senderJid.includes('@lid')) {
-        const num = raw.replace(/[^0-9]/g, '');
-        if (num.length >= 7 && num.length <= 15) return `+${num}`;
-        return `+${raw}`;
-    }
-
-    const cached = lidPhoneCache.get(raw) || lidPhoneCache.get(full) || getPhoneFromLid(raw) || getPhoneFromLid(full);
-    if (cached) return `+${cached}`;
-
-    return `LID:${raw.substring(0, 8)}...`;
-}
-
-function displayIncomingMessage(msg, sock) {
-    try {
-        if (!msg || !msg.key) return;
-        
-        const chatId = msg.key.remoteJid;
-        if (!chatId || chatId === 'status@broadcast') return;
-        
-        const isFromMe = msg.key.fromMe;
-        const senderJid = isFromMe ? (sock.user?.id || chatId) : (msg.key.participant || chatId);
-        const isGroup = chatId.endsWith('@g.us');
-        
-        const senderNum = isFromMe ? getDisplayNumber(sock.user?.id || '') : getInstantSenderNumber(senderJid);
-        const pushName = isFromMe ? '👑 Owner' : (msg.pushName || 'Unknown');
-        
-        const msgType = getMessageTypeLabel(msg.message);
-        const content = normalizeMessageContent(msg.message);
-        let preview = '';
-        if (content) {
-            const rawText = content.conversation ||
-                           content.extendedTextMessage?.text ||
-                           content.imageMessage?.caption ||
-                           content.videoMessage?.caption || '';
-            if (rawText) {
-                preview = rawText.length > 60 ? rawText.substring(0, 57) + '...' : rawText;
-                preview = preview.replace(/\n/g, ' ');
-            }
-        }
-        
-        const typeIcons = {
-            'text': '💬', 'image': '🖼️', 'video': '🎥', 'voice': '🎤',
-            'audio': '🎵', 'sticker': '🏷️', 'document': '📄', 'contact': '👤',
-            'location': '📍', 'reaction': '😀', 'poll': '📊', 'view-once': '👁️',
-            'protocol': '⚙️', 'other': '📦', 'empty': '📭'
-        };
-        const typeIcon = typeIcons[msgType] || '📦';
-        
-        const time = new Date().toLocaleTimeString();
-        const c = isFromMe ? chalk.yellow : chalk.green;
-        const cb = isFromMe ? chalk.yellowBright : chalk.greenBright;
-        const cBold = isFromMe ? chalk.yellow.bold : chalk.green.bold;
-        const originTag = isGroup ? cb('GROUP') : cb('DM');
-        
-        let groupName = '';
-        if (isGroup) {
-            const cached = groupMetadataCache.get(chatId);
-            if (cached && cached.data && cached.data.subject) {
-                groupName = cached.data.subject;
-                if (groupName.length > 20) groupName = groupName.substring(0, 17) + '...';
-            } else {
-                groupName = chatId.split('@')[0].substring(0, 15);
-            }
-        }
-        
-        const line1 = `${typeIcon} ${cBold(pushName)} (${cb(senderNum)})`;
-        const line2 = isGroup 
-            ? `   ${originTag} ${c('in')} ${cb(groupName)}`
-            : `   ${originTag}`;
-        const line3 = preview 
-            ? `   ${c(msgType.toUpperCase())}: ${cb(preview)}`
-            : `   ${c(msgType.toUpperCase())}`;
-        
-        const border = c('┌──────────────────────────────────────────────');
-        const borderMid = c('│');
-        const borderEnd = c('└──────────────────────────────────────────────');
-        
-        originalConsoleMethods.log(
-            `\n${border}\n` +
-            `${borderMid} ${c(time)} ${line1}\n` +
-            `${borderMid} ${line2}\n` +
-            `${borderMid} ${line3}\n` +
-            `${borderEnd}`
-        );
-    } catch {
-    }
-}
 
 function extractTextFromMessage(messageObj) {
     const content = normalizeMessageContent(messageObj);
