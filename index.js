@@ -5306,6 +5306,81 @@ async function handleIncomingMessage(sock, msg) {
             }
         } catch {}
 
+        try {
+            const rawMsg = msg.message || {};
+            const msgContent2 = normalizeMessageContent(rawMsg) || rawMsg;
+            const reactionMsg = msgContent2.reactionMessage;
+            
+            if (reactionMsg && reactionMsg.key && reactionMsg.text) {
+                const reactedKey = reactionMsg.key;
+                const reactedMsgId = reactedKey.id;
+                const reactedChatId = reactedKey.remoteJid || chatId;
+                
+                const cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
+                
+                if (cachedMsg) {
+                    const cachedContent = normalizeMessageContent(cachedMsg.message) || cachedMsg.message;
+                    
+                    if (cachedContent) {
+                        let innerMsg = cachedContent;
+                        if (cachedContent.viewOnceMessageV2?.message) innerMsg = cachedContent.viewOnceMessageV2.message;
+                        else if (cachedContent.viewOnceMessageV2Extension?.message) innerMsg = cachedContent.viewOnceMessageV2Extension.message;
+                        else if (cachedContent.viewOnceMessage?.message) innerMsg = cachedContent.viewOnceMessage.message;
+                        else if (cachedContent.ephemeralMessage?.message?.viewOnceMessage?.message) innerMsg = cachedContent.ephemeralMessage.message.viewOnceMessage.message;
+                        else if (cachedContent.ephemeralMessage?.message?.viewOnceMessageV2?.message) innerMsg = cachedContent.ephemeralMessage.message.viewOnceMessageV2.message;
+                        
+                        const isViewOnce = innerMsg?.imageMessage?.viewOnce || 
+                                           innerMsg?.videoMessage?.viewOnce || 
+                                           innerMsg !== cachedContent;
+                        
+                        if (isViewOnce) {
+                            const config = loadAntiViewOnceConfig();
+                            const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
+                            
+                            if (ownerJid) {
+                                const viewOnce = detectViewOnceMedia(cachedContent);
+                                
+                                if (viewOnce) {
+                                    const { type, media } = viewOnce;
+                                    const cleanMedia = { ...media };
+                                    delete cleanMedia.viewOnce;
+                                    
+                                    const dlMsg = { 
+                                        key: { remoteJid: reactedChatId, id: reactedMsgId, participant: reactedKey.participant, fromMe: reactedKey.fromMe }, 
+                                        message: { [`${type}Message`]: cleanMedia } 
+                                    };
+                                    
+                                    const silentLogger = { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) };
+                                    
+                                    try {
+                                        const buffer = await Promise.race([
+                                            downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
+                                            new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
+                                        ]);
+                                        
+                                        if (buffer && buffer.length > 0) {
+                                            const normalizedOwner = jidNormalizedUser(ownerJid);
+                                            const reactorShort = (msg.key.participant || chatId).split('@')[0].split(':')[0];
+                                            const senderShort = (reactedKey.participant || reactedChatId).split('@')[0].split(':')[0];
+                                            
+                                            const mediaPayload = {};
+                                            mediaPayload[type] = buffer;
+                                            mediaPayload.caption = `Retrieved by \`WOLFBOT\`\n${reactionMsg.text} reacted by ${reactorShort}`;
+                                            
+                                            await sock.sendMessage(normalizedOwner, mediaPayload);
+                                            UltraCleanLogger.info(`🔐 View-once auto-captured via reaction ${reactionMsg.text} from ${reactorShort} on ${senderShort}'s message`);
+                                        }
+                                    } catch (dlErr) {
+                                        UltraCleanLogger.warning(`🔐 View-once reaction capture failed: ${dlErr.message}`);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch {}
+
         const textMsg = extractTextFromMessage(msg.message);
         
         if (!textMsg) return;
