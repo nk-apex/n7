@@ -302,22 +302,34 @@ function getDisplayNumber(senderJid) {
 
 const groupMetadataCache = new Map();
 globalThis.groupMetadataCache = groupMetadataCache;
-const GROUP_CACHE_TTL = 5 * 60 * 1000;
+const GROUP_CACHE_TTL = 30 * 60 * 1000;
 const groupDiagDone = new Set();
+const _pendingGroupFetches = new Map();
 
 async function getCachedGroupMetadata(chatId, sock) {
     const cached = groupMetadataCache.get(chatId);
     if (cached && Date.now() - cached.ts < GROUP_CACHE_TTL) {
         return cached.data;
     }
-    try {
-        const metadata = await sock.groupMetadata(chatId);
-        groupMetadataCache.set(chatId, { data: metadata, ts: Date.now() });
-        return metadata;
-    } catch (err) {
-        UltraCleanLogger.info(`⚠️ groupMetadata failed for ${chatId.split('@')[0].substring(0, 10)}: ${err.message}`);
-        return null;
-    }
+    const pending = _pendingGroupFetches.get(chatId);
+    if (pending) return pending;
+    const fetchPromise = (async () => {
+        try {
+            const metadata = await Promise.race([
+                sock.groupMetadata(chatId),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+            ]);
+            groupMetadataCache.set(chatId, { data: metadata, ts: Date.now() });
+            return metadata;
+        } catch (err) {
+            if (cached) return cached.data;
+            return null;
+        } finally {
+            _pendingGroupFetches.delete(chatId);
+        }
+    })();
+    _pendingGroupFetches.set(chatId, fetchPromise);
+    return fetchPromise;
 }
 
 async function buildLidMapFromGroup(chatId, sock) {
@@ -350,6 +362,11 @@ async function buildLidMapFromGroup(chatId, sock) {
     return mapped;
 }
 
+const _lidResolveAttempts = new Map();
+const LID_RESOLVE_COOLDOWN = 5 * 60 * 1000;
+let _activeGroupFetches = 0;
+const MAX_CONCURRENT_GROUP_FETCHES = 2;
+
 async function resolveSenderFromGroup(senderJid, chatId, sock) {
     if (!senderJid || !chatId || !sock) return null;
     const senderLidNum = senderJid.split('@')[0].split(':')[0];
@@ -358,7 +375,25 @@ async function resolveSenderFromGroup(senderJid, chatId, sock) {
     let resolved = lidPhoneCache.get(senderLidNum) || lidPhoneCache.get(senderFull) || getPhoneFromLid(senderLidNum) || getPhoneFromLid(senderFull);
     if (resolved) return resolved;
 
-    await buildLidMapFromGroup(chatId, sock);
+    const attemptKey = `${senderLidNum}:${chatId}`;
+    const lastAttempt = _lidResolveAttempts.get(attemptKey);
+    if (lastAttempt && Date.now() - lastAttempt < LID_RESOLVE_COOLDOWN) return null;
+    _lidResolveAttempts.set(attemptKey, Date.now());
+
+    if (_lidResolveAttempts.size > 500) {
+        const cutoff = Date.now() - LID_RESOLVE_COOLDOWN;
+        for (const [k, ts] of _lidResolveAttempts) {
+            if (ts < cutoff) _lidResolveAttempts.delete(k);
+        }
+    }
+
+    if (_activeGroupFetches >= MAX_CONCURRENT_GROUP_FETCHES) return null;
+    _activeGroupFetches++;
+    try {
+        await buildLidMapFromGroup(chatId, sock);
+    } finally {
+        _activeGroupFetches--;
+    }
 
     resolved = lidPhoneCache.get(senderLidNum) || lidPhoneCache.get(senderFull) || getPhoneFromLid(senderLidNum) || getPhoneFromLid(senderFull);
     if (resolved) {
@@ -433,7 +468,10 @@ async function autoScanGroupsForSudo(sock) {
         }
 
         UltraCleanLogger.info(`🔑 Scanning groups to link ${sudoers.length} sudo user(s)...`);
-        const groups = await sock.groupFetchAllParticipating();
+        const groups = await Promise.race([
+            sock.groupFetchAllParticipating(),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('scan_timeout')), 15000))
+        ]);
         if (!groups) return;
         let linked = 0;
         let totalParticipants = 0;
@@ -2707,33 +2745,23 @@ class ProfessionalDefibrillator {
     
     freeMemory() {
         try {
-            if (lidPhoneCache && lidPhoneCache.size > 2000) {
-                const entries = [...lidPhoneCache.entries()];
-                lidPhoneCache.clear();
-                entries.slice(-1000).forEach(([k, v]) => lidPhoneCache.set(k, v));
-                UltraCleanLogger.info(`LID cache trimmed to 1000 entries`);
-            }
-            if (phoneLidCache && phoneLidCache.size > 2000) {
-                const entries = [...phoneLidCache.entries()];
-                phoneLidCache.clear();
-                entries.slice(-1000).forEach(([k, v]) => phoneLidCache.set(k, v));
-            }
-            if (groupMetadataCache && groupMetadataCache.size > 50) {
-                const entries = [...groupMetadataCache.entries()];
-                groupMetadataCache.clear();
-                entries.slice(-20).forEach(([k, v]) => groupMetadataCache.set(k, v));
-                UltraCleanLogger.info(`Group metadata cache trimmed`);
-            }
-            if (global.contactNames && global.contactNames.size > 2000) {
-                const entries = [...global.contactNames.entries()];
-                global.contactNames.clear();
-                entries.slice(-1000).forEach(([k, v]) => global.contactNames.set(k, v));
-            }
+            const trimMap = (map, maxSize, keepCount, label) => {
+                if (!map || map.size <= maxSize) return;
+                const excess = map.size - keepCount;
+                let removed = 0;
+                for (const key of map.keys()) {
+                    if (removed >= excess) break;
+                    map.delete(key);
+                    removed++;
+                }
+                if (label) UltraCleanLogger.info(`${label} trimmed to ${map.size} entries`);
+            };
+            trimMap(lidPhoneCache, 2000, 1000, 'LID cache');
+            trimMap(phoneLidCache, 2000, 1000, null);
+            trimMap(groupMetadataCache, 50, 20, 'Group metadata cache');
+            trimMap(global.contactNames, 2000, 1000, null);
             if (store && store.messages && store.messages.size > 50) {
-                const entries = [...store.messages.entries()];
-                store.messages.clear();
-                entries.slice(-30).forEach(([k, v]) => store.messages.set(k, v));
-                UltraCleanLogger.info(`Message store trimmed`);
+                trimMap(store.messages, 50, 30, 'Message store');
             }
             if (global.gc) {
                 global.gc();
@@ -5401,34 +5429,46 @@ async function handleViewOnceDetection(sock, msg) {
         delete cleanMedia.viewOnce;
 
         let buffer;
+        const DL_TIMEOUT = 15000;
         try {
             const dlMsg = {
                 key: msg.key,
                 message: { [`${type}Message`]: cleanMedia }
             };
-            buffer = await downloadMediaMessage(
-                dlMsg,
-                'buffer',
-                {},
-                {
-                    logger: { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) },
-                    reuploadRequest: sock.updateMediaMessage
-                }
-            );
+            buffer = await Promise.race([
+                downloadMediaMessage(
+                    dlMsg,
+                    'buffer',
+                    {},
+                    {
+                        logger: { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) },
+                        reuploadRequest: sock.updateMediaMessage
+                    }
+                ),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), DL_TIMEOUT))
+            ]);
         } catch (dlErr1) {
             try {
-                const stream = await downloadContentFromMessage(cleanMedia, type);
+                const stream = await Promise.race([
+                    downloadContentFromMessage(cleanMedia, type),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), DL_TIMEOUT))
+                ]);
                 const chunks = [];
                 for await (const chunk of stream) {
                     chunks.push(chunk);
+                    if (chunks.length > 500) break;
                 }
                 buffer = Buffer.concat(chunks);
             } catch (dlErr2) {
                 try {
-                    const stream2 = await downloadContentFromMessage(media, type);
+                    const stream2 = await Promise.race([
+                        downloadContentFromMessage(media, type),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), DL_TIMEOUT))
+                    ]);
                     const chunks2 = [];
                     for await (const chunk of stream2) {
                         chunks2.push(chunk);
+                        if (chunks2.length > 500) break;
                     }
                     buffer = Buffer.concat(chunks2);
                 } catch (dlErr3) {
