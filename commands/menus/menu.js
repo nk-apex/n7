@@ -1790,6 +1790,22 @@ case 1: {
 │
 ╰─⊷
 
+╭─⊷ *🏆 SPORTS*
+│
+│  • football
+│  • basketball
+│  • cricket
+│  • f1
+│  • nfl
+│  • mma
+│  • tennis
+│  • baseball
+│  • hockey
+│  • golf
+│  • sportsmenu
+│
+╰─⊷
+
 ╭─⊷ *🛡️ SECURITY & HACKING*
 │
 │  • ipinfo
@@ -2191,6 +2207,19 @@ case 2: {
 > • anime — anime images
 > • art — art images
 > • real — realistic images
+
+> 🏆 *SPORTS* — live scores & standings
+> • football — soccer scores & standings
+> • basketball — NBA scores & standings
+> • cricket — live cricket scores
+> • f1 — F1 results & standings
+> • nfl — NFL scores & standings
+> • mma — UFC results & schedule
+> • tennis — live tennis scores
+> • baseball — MLB scores & standings
+> • hockey — NHL scores & standings
+> • golf — PGA leaderboard & schedule
+> • sportsmenu — all sports commands
 
 > 🛡️ *SECURITY & NETWORK* — network & scans
 > • ipinfo — IP information
@@ -2980,6 +3009,22 @@ case 3: {
 │ anime                   
 │ art                     
 │ real                    
+└───────────────
+
+┌───────────────
+│ 🏆 SPORTS 🏆
+├───────────────
+│ football                
+│ basketball              
+│ cricket                 
+│ f1                      
+│ nfl                     
+│ mma                     
+│ tennis                  
+│ baseball                
+│ hockey                  
+│ golf                    
+│ sportsmenu              
 └───────────────
 
 ┌───────────────
@@ -3786,6 +3831,22 @@ case 4: {
 │  • anime
 │  • art
 │  • real
+│
+╰─⊷
+
+╭─⊷ *🏆 SPORTS*
+│
+│  • football
+│  • basketball
+│  • cricket
+│  • f1
+│  • nfl
+│  • mma
+│  • tennis
+│  • baseball
+│  • hockey
+│  • golf
+│  • sportsmenu
 │
 ╰─⊷
 
@@ -5516,6 +5577,22 @@ case 5: {
 │
 ╰─⊷
 
+╭─⊷ *🏆 SPORTS*
+│
+│  • football
+│  • basketball
+│  • cricket
+│  • f1
+│  • nfl
+│  • mma
+│  • tennis
+│  • baseball
+│  • hockey
+│  • golf
+│  • sportsmenu
+│
+╰─⊷
+
 ╭─⊷ *🛡️ SECURITY & HACKING*
 │
 ├─⊷ *🌐 NETWORK & INFO*
@@ -6295,6 +6372,22 @@ case 6: {
 > │ • anime                   
 > │ • art                     
 > │ • real                    
+> └───────────────
+
+> ┌───────────────
+> │ 🏆 *SPORTS* 🏆
+> ├───────────────
+> │ • football                
+> │ • basketball              
+> │ • cricket                 
+> │ • f1                      
+> │ • nfl                     
+> │ • mma                     
+> │ • tennis                  
+> │ • baseball                
+> │ • hockey                  
+> │ • golf                    
+> │ • sportsmenu              
 > └───────────────
 
 > ┌───────────────
@@ -7859,6 +7952,22 @@ case 7: {
 │ anime                   
 │ art                     
 │ real                    
+└───────────────
+
+┌───────────────
+│ 🏆 SPORTS 🏆
+├───────────────
+│ football                
+│ basketball              
+│ cricket                 
+│ f1                      
+│ nfl                     
+│ mma                     
+│ tennis                  
+│ baseball                
+│ hockey                  
+│ golf                    
+│ sportsmenu              
 └───────────────
 
 ┌───────────────
