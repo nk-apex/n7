@@ -19,11 +19,11 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import supabase from '../../lib/supabase.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configuration file path
 const CONFIG_FILE = './data/autoReactConfig.json';
 
 // Track reacted statuses to prevent duplicates
@@ -67,6 +67,17 @@ function initConfig() {
 }
 
 initConfig();
+
+(async () => {
+    try {
+        if (supabase.isAvailable()) {
+            const dbData = await supabase.getConfig('autoreact_config');
+            if (dbData && dbData.enabled !== undefined) {
+                fs.writeFileSync(CONFIG_FILE, JSON.stringify(dbData, null, 2));
+            }
+        }
+    } catch {}
+})();
 
 // Auto React Manager
 class AutoReactManager {
@@ -119,11 +130,11 @@ class AutoReactManager {
     
     saveConfig() {
         try {
-            // Convert Set to array for saving
             this.config.reactedStatuses = Array.from(this.reactedStatuses);
             this.config.lastReactionTime = this.lastReactionTime;
             
             fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2));
+            supabase.setConfig('autoreact_config', this.config).catch(() => {});
         } catch (error) {
             console.error('Error saving auto react config:', error);
         }

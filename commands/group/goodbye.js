@@ -1,5 +1,18 @@
 import fs from 'fs';
 import axios from 'axios';
+import supabase from '../../lib/supabase.js';
+
+(async () => {
+    try {
+        if (!fs.existsSync('./data/goodbye_data.json') && supabase.isAvailable()) {
+            const dbData = await supabase.getConfig('goodbye_data');
+            if (dbData && dbData.groups) {
+                if (!fs.existsSync('./data')) fs.mkdirSync('./data', { recursive: true });
+                fs.writeFileSync('./data/goodbye_data.json', JSON.stringify(dbData, null, 2));
+            }
+        }
+    } catch {}
+})();
 
 export default {
     name: 'goodbye',
@@ -269,6 +282,7 @@ function saveGoodbyeData(data) {
         
         data.updated = new Date().toISOString();
         fs.writeFileSync('./data/goodbye_data.json', JSON.stringify(data, null, 2));
+        supabase.setConfig('goodbye_data', data).catch(() => {});
         return true;
     } catch (error) {
         console.error('Error saving goodbye data:', error);

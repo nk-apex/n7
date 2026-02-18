@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
+import supabase from '../../lib/supabase.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,9 +63,29 @@ async function loadStatusData() {
     try {
         await ensureStatusDirs();
 
+        let settingsLoaded = false;
         if (await fs.access(SETTINGS_FILE).then(() => true).catch(() => false)) {
             const settingsData = JSON.parse(await fs.readFile(SETTINGS_FILE, 'utf8'));
             statusAntideleteState.settings = { ...statusAntideleteState.settings, ...settingsData };
+            settingsLoaded = true;
+        }
+
+        if (!settingsLoaded && supabase.isAvailable()) {
+            try {
+                const dbSettings = await supabase.getConfig('antidelete_status_settings', null);
+                if (dbSettings) {
+                    statusAntideleteState.settings = { ...statusAntideleteState.settings, ...dbSettings };
+                }
+                const dbStats = await supabase.getConfig('antidelete_status_stats', null);
+                if (dbStats) {
+                    statusAntideleteState.stats = { ...statusAntideleteState.stats, ...dbStats };
+                }
+                const dbMode = await supabase.getConfig('antidelete_status_mode', null);
+                if (dbMode) {
+                    if (dbMode.enabled !== undefined) statusAntideleteState.enabled = dbMode.enabled;
+                    if (dbMode.mode !== undefined) statusAntideleteState.mode = dbMode.mode;
+                }
+            } catch {}
         }
 
         if (await fs.access(STATUS_CACHE_FILE).then(() => true).catch(() => false)) {
@@ -135,6 +156,10 @@ async function saveStatusData() {
 
         await fs.writeFile(STATUS_CACHE_FILE, JSON.stringify(data, null, 2));
         await fs.writeFile(SETTINGS_FILE, JSON.stringify(statusAntideleteState.settings, null, 2));
+
+        supabase.setConfig('antidelete_status_settings', statusAntideleteState.settings).catch(() => {});
+        supabase.setConfig('antidelete_status_stats', statusAntideleteState.stats).catch(() => {});
+        supabase.setConfig('antidelete_status_mode', { enabled: statusAntideleteState.enabled, mode: statusAntideleteState.mode }).catch(() => {});
 
     } catch (error) {
         console.error('❌ Status Antidelete: Error saving JSON data:', error.message);

@@ -1,4 +1,5 @@
 import fs from 'fs';
+import supabase from '../../lib/supabase.js';
 
 const CONFIG_FILE = './data/autotyping/config.json';
 
@@ -32,8 +33,24 @@ function saveConfig() {
             mode: autoTypingConfig.mode,
             duration: autoTypingConfig.duration
         }, null, 2));
+        supabase.setConfig('autotyping_config', {
+            mode: autoTypingConfig.mode,
+            duration: autoTypingConfig.duration
+        }).catch(() => {});
     } catch {}
 }
+
+(async () => {
+    try {
+        if (!fs.existsSync(CONFIG_FILE) && supabase.isAvailable()) {
+            const dbData = await supabase.getConfig('autotyping_config');
+            if (dbData && dbData.mode) {
+                if (!fs.existsSync('./data/autotyping')) fs.mkdirSync('./data/autotyping', { recursive: true });
+                fs.writeFileSync(CONFIG_FILE, JSON.stringify(dbData, null, 2));
+            }
+        }
+    } catch {}
+})();
 
 loadConfig();
 

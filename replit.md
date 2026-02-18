@@ -15,11 +15,20 @@ Always ensure that new features are accompanied by appropriate documentation.
 The bot operates on Node.js 20, utilizing ESM modules. Its core logic resides in `index.js`, handling WhatsApp connections and command routing. Commands are organized by category within the `commands/` directory. Configuration is managed via `settings.js` for bot-specific parameters and `app.json` for deployment metadata.
 
 **Key Directories:**
-*   `lib/`: Shared source modules (sudo-store.js, warnings-store.js) - these are source code, NOT data files.
+*   `lib/`: Shared source modules (sudo-store.js, warnings-store.js, supabase.js) - these are source code, NOT data files.
 *   `data/`: Runtime JSON data files only (created automatically at runtime). Excluded from git except for structure.
 *   `commands/`: Command handlers organized by category.
 
 **Deployment Note (Feb 2026):** Source code modules were moved from `data/` to `lib/` to fix Pterodactyl panel deployment. The `.gitignore` excludes only JSON data files, not source code. The `lib/` store modules auto-create `data/` subdirectories on first run.
+
+**Database Integration (Feb 2026):**
+*   **Supabase (PostgreSQL)**: All bot data is dual-written to both local JSON and Supabase for cross-platform portability (Replit, VS Code, Pterodactyl).
+*   **Strategy**: Writes go to JSON (sync, fast) AND Supabase (fire-and-forget, async). Reads use JSON first (instant), Supabase as fallback when JSON missing.
+*   **Fallback**: If Supabase is unavailable, the bot works 100% from local JSON files - nothing breaks.
+*   **Module**: `lib/supabase.js` provides connection management, health checks, CRUD helpers, and config get/set.
+*   **Tables**: 13 tables defined in `supabase_setup.sql` - bot_configs, warnings, warning_limits, sudoers, sudo_config, lid_map, chatbot_conversations, chatbot_config, antidelete_messages, antidelete_statuses, welcome_goodbye, group_features, auto_configs.
+*   **Environment Variables**: `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (secrets).
+*   **Migrated Systems**: warnings-store, sudo-store, chatbot (config + conversations), antidelete (settings/stats), antidelete-status (settings/stats), welcome, goodbye, antidemote, antipromote, autotyping, autoview, autoreact.
 
 **Key Features & Implementations:**
 

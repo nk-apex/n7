@@ -3,11 +3,11 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import supabase from '../../lib/supabase.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configuration file path
 const CONFIG_FILE = './data/autoViewConfig.json';
 
 // Initialize config directory and file
@@ -38,6 +38,17 @@ function initConfig() {
 }
 
 initConfig();
+
+(async () => {
+    try {
+        if (supabase.isAvailable()) {
+            const dbData = await supabase.getConfig('autoview_config');
+            if (dbData && dbData.enabled !== undefined) {
+                fs.writeFileSync(CONFIG_FILE, JSON.stringify(dbData, null, 2));
+            }
+        }
+    } catch {}
+})();
 
 // Auto View Manager
 class AutoViewManager {
@@ -77,6 +88,7 @@ class AutoViewManager {
     saveConfig() {
         try {
             fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2));
+            supabase.setConfig('autoview_config', this.config).catch(() => {});
         } catch (error) {
             console.error('Error saving auto view config:', error);
         }
