@@ -1023,7 +1023,7 @@ const DiskManager = {
     WARNING_MB: 50,
     CRITICAL_MB: 20,
     CHECK_INTERVAL: 10 * 60 * 1000,
-    CLEANUP_INTERVAL: 30 * 60 * 1000,
+    CLEANUP_INTERVAL: 10 * 60 * 1000,
     lastWarning: 0,
     lastCleanup: 0,
     isLow: false,
@@ -1069,7 +1069,7 @@ const DiskManager = {
         const voMedia = this.getDirSize('./data/viewonce_messages') + this.getDirSize('./data/viewonce_private');
         const adMedia = this.getDirSize('./data/antidelete/media');
         const statusMedia = this.getDirSize('./data/antidelete/status/media');
-        const tempFiles = this.getDirSize('./temp');
+        const tempFiles = this.getDirSize('./temp') + this.getDirSize('./commands/temp');
         const backupFiles = this.getDirSize('./session_backup');
         const statusLogs = (() => { try { return fs.existsSync('./data/status_detection_logs.json') ? fs.statSync('./data/status_detection_logs.json').size : 0; } catch { return 0; } })();
         const freeMB = this.getDiskFree();
@@ -1157,13 +1157,32 @@ const DiskManager = {
 
     cleanTempFiles() {
         let removed = 0;
-        try {
-            if (!fs.existsSync('./temp')) return 0;
-            const files = fs.readdirSync('./temp');
-            for (const file of files) {
-                try { fs.unlinkSync(path.join('./temp', file)); removed++; } catch {}
-            }
-        } catch {}
+        const tempDirs = [
+            './temp',
+            './temp/ig',
+            './temp/snapchat',
+            './temp/compressed',
+            './temp/apk',
+            './commands/temp'
+        ];
+        const now = Date.now();
+        const maxAge = 30 * 60 * 1000;
+        for (const dir of tempDirs) {
+            try {
+                if (!fs.existsSync(dir)) continue;
+                const files = fs.readdirSync(dir);
+                for (const file of files) {
+                    try {
+                        const full = path.join(dir, file);
+                        const stat = fs.statSync(full);
+                        if (stat.isFile() && (now - stat.mtimeMs) > maxAge) {
+                            fs.unlinkSync(full);
+                            removed++;
+                        }
+                    } catch {}
+                }
+            } catch {}
+        }
         return removed;
     },
 
