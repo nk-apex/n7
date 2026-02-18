@@ -31,19 +31,11 @@ export default {
         const { remoteJid } = msg.key;
         const currentPrefix = getCurrentPrefix();
         
-        const commands = [
-            `${currentPrefix}ping - Check bot response`,
-            `${currentPrefix}help - Show all commands`,
-            `${currentPrefix}menu - Command menu`,
-            `${currentPrefix}owner - Bot owner info`
-        ];
+        const text = `╭─⌈ 🐺 *BOT PREFIX* ⌋\n` +
+                     `├─⊷ *${currentPrefix}*\n` +
+                     `╰───────────────\n` +
+                     `> *WOLFBOT*`;
         
-        await sock.sendMessage(remoteJid, {
-            text: `🔧 *Bot Prefix Information*\n\n` +
-                  `Current prefix: *${currentPrefix}*\n\n` +
-                  `*Example commands:*\n${commands.join('\n')}\n\n` +
-                  `To change prefix: *${currentPrefix}setprefix <new_prefix>*\n` +
-                  `Example: *${currentPrefix}setprefix ?*`
-        }, { quoted: msg });
+        await sock.sendMessage(remoteJid, { text }, { quoted: msg });
     }
 };
