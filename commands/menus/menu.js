@@ -2747,28 +2747,16 @@ case 3: {
     const uptimeStr = `${h}h ${mnt}m ${s}s`;
     const speed = (performance.now() - start).toFixed(2);
     
-    // FIXED RAM CALCULATION - Proper conversion
-    const usedMemBytes = process.memoryUsage().rss; // in bytes
-    const usedMem = (usedMemBytes / 1024 / 1024).toFixed(1); // Convert to MB
-    
-    // Get total memory in bytes first
-    const totalMemBytes = os.totalmem(); // in bytes
-    const totalMemGB = (totalMemBytes / 1024 / 1024 / 1024).toFixed(1); // Convert to GB
-    
-    // Calculate percentage CORRECTLY
-    const memPercent = Math.min(Math.max((usedMemBytes / totalMemBytes) * 100, 0), 100);
-    const memPercentDisplay = Math.floor(memPercent); // Round down for display
-    
-    // FIXED RAM BAR CALCULATION - Based on actual percentage
-    const filledBars = Math.max(Math.floor(memPercent / 10), 0);
-    const emptyBars = Math.max(10 - filledBars, 0);
-    
-    // Use different bar styles for better visibility
+    const mem = process.memoryUsage();
+    const usedMemMB = mem.heapUsed / 1024 / 1024;
+    const totalMemMB = mem.heapTotal / 1024 / 1024;
+    const usedMem = usedMemMB.toFixed(1);
+    const totalMem = totalMemMB.toFixed(1);
+    const memPercent = Math.round((usedMemMB / totalMemMB) * 100);
+    const memPercentDisplay = memPercent;
+    const filledBars = Math.round((memPercent / 100) * 10);
+    const emptyBars = 10 - filledBars;
     const memBar = "█".repeat(filledBars) + "░".repeat(emptyBars);
-    
-    // Alternative bar style (uncomment if you prefer):
-    // const memBar = "🟩".repeat(filledBars) + "⬜".repeat(emptyBars);
-    // const memBar = "🟢".repeat(filledBars) + "⚪".repeat(emptyBars);
     
     // Calculate command speed in milliseconds
     const commandSpeed = `${speed}ms`;
@@ -2788,7 +2776,7 @@ case 3: {
     if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) {
       infoLines.push(`┃ RAM: ${memBar} ${memPercentDisplay}%`);
     }
-    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`┃ Memory: ${usedMem}MB / ${totalMemGB}GB`);
+    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`┃ Memory: ${usedMem}MB / ${totalMem}MB`);
 
     if (infoLines.length > 0) {
       infoSection = `┌──⌈ \`${currentBotName}\` ⌋\n${infoLines.join('\n')}\n└────────────────\n`;
@@ -7736,19 +7724,20 @@ case 7: {
     const s = Math.floor(uptime % 60);
     const uptimeStr = `${h}h ${mnt}m ${s}s`;
     
-    const usedMemBytes = process.memoryUsage().rss;
-    const usedMem = (usedMemBytes / 1024 / 1024).toFixed(1);
-    const totalMemBytes = os.totalmem();
-    const totalMemGB = (totalMemBytes / 1024 / 1024 / 1024).toFixed(1);
-    const memPercent = Math.min(Math.max((usedMemBytes / totalMemBytes) * 100, 0), 100);
-    const memPercentDisplay = Math.floor(memPercent);
-    const filledBars = Math.max(Math.floor(memPercent / 10), 0);
-    const emptyBars = Math.max(10 - filledBars, 0);
+    const mem = process.memoryUsage();
+    const usedMemMB = mem.heapUsed / 1024 / 1024;
+    const totalMemMB = mem.heapTotal / 1024 / 1024;
+    const usedMem = usedMemMB.toFixed(1);
+    const totalMem = totalMemMB.toFixed(1);
+    const memPercent = Math.round((usedMemMB / totalMemMB) * 100);
+    const memPercentDisplay = memPercent;
+    const filledBars = Math.round((memPercent / 100) * 10);
+    const emptyBars = 10 - filledBars;
     const memBar = "█".repeat(filledBars) + "░".repeat(emptyBars);
     
     const infoLines = [];
     
-    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`┃ User: ▣『◆』《 ${m.pushName || "Anonymous"} 》『◆』▣`);
+    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`┃ User: ▣ ${m.pushName || "Anonymous"}`);
     if ((fieldsStatus && fieldsStatus.owner) || (!fieldsStatus)) infoLines.push(`┃ Owner: ${ownerName}`);
     if ((fieldsStatus && fieldsStatus.mode) || (!fieldsStatus)) infoLines.push(`┃ Mode: ${botMode}`);
     if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`┃ Prefix: [ ${botPrefix} ]`);
@@ -7759,7 +7748,7 @@ case 7: {
     }
     if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`┃ Uptime: ${uptimeStr}`);
     if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) infoLines.push(`┃ RAM: ${memBar} ${memPercentDisplay}%`);
-    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`┃ Memory: ${usedMem}MB / ${totalMemGB}GB`);
+    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`┃ Memory: ${usedMem}MB / ${totalMem}MB`);
 
     if (infoLines.length > 0) {
       infoSection = `┌──⌈ \`${currentBotName}\` ⌋\n${infoLines.join('\n')}\n└────────────────\n\n`;
