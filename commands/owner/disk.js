@@ -570,6 +570,7 @@ export default {
                     response += `├─ Session Signal Files: ${reportBefore.sessionSignalFiles} (${reportBefore.sessionSignalMB}MB)\n`;
                     response += `├─ ViewOnce Media: ${reportBefore.viewonceMediaMB}MB\n`;
                     response += `├─ Antidelete Media: ${reportBefore.antideleteMediaMB}MB\n`;
+                    response += `├─ Status Media: ${reportBefore.statusMediaMB || 0}MB\n`;
                     response += `├─ Temp Files: ${reportBefore.tempFilesMB}MB\n`;
                     response += `├─ Session Backups: ${reportBefore.backupMB}MB\n`;
                     response += `└─ Status Logs: ${reportBefore.statusLogsMB}MB\n\n`;
@@ -578,6 +579,7 @@ export default {
                     response += `├─ Session files: ${results.sessionFiles}\n`;
                     response += `├─ ViewOnce media: ${results.viewonceMedia}\n`;
                     response += `├─ Antidelete media: ${results.antideleteMedia}\n`;
+                    response += `├─ Status media: ${results.statusMedia}\n`;
                     response += `├─ Temp files: ${results.tempFiles}\n`;
                     response += `├─ Backups: ${results.backups}\n`;
                     response += `├─ Status logs: ${results.statusLogs ? 'Truncated' : 'OK'}\n`;

@@ -1016,6 +1016,7 @@ const DiskManager = {
         const sessionFiles = this._countSessionSignalFiles();
         const voMedia = this.getDirSize('./data/viewonce_messages') + this.getDirSize('./data/viewonce_private');
         const adMedia = this.getDirSize('./data/antidelete/media');
+        const statusMedia = this.getDirSize('./data/antidelete/status/media');
         const tempFiles = this.getDirSize('./temp');
         const backupFiles = this.getDirSize('./session_backup');
         const statusLogs = (() => { try { return fs.existsSync('./data/status_detection_logs.json') ? fs.statSync('./data/status_detection_logs.json').size : 0; } catch { return 0; } })();
@@ -1026,6 +1027,7 @@ const DiskManager = {
             sessionSignalMB: Math.round(sessionFiles.bytes / 1024 / 1024 * 10) / 10,
             viewonceMediaMB: Math.round(voMedia / 1024 / 1024 * 10) / 10,
             antideleteMediaMB: Math.round(adMedia / 1024 / 1024 * 10) / 10,
+            statusMediaMB: Math.round(statusMedia / 1024 / 1024 * 10) / 10,
             tempFilesMB: Math.round(tempFiles / 1024 / 1024 * 10) / 10,
             backupMB: Math.round(backupFiles / 1024 / 1024 * 10) / 10,
             statusLogsMB: Math.round(statusLogs / 1024 / 1024 * 10) / 10
@@ -1140,18 +1142,41 @@ const DiskManager = {
         return false;
     },
 
+    cleanStatusMedia(aggressive = false) {
+        let removed = 0;
+        const statusMediaDir = './data/antidelete/status/media';
+        try {
+            if (!fs.existsSync(statusMediaDir)) return 0;
+            const now = Date.now();
+            const maxAge = (aggressive ? 6 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000);
+            const files = fs.readdirSync(statusMediaDir);
+            for (const file of files) {
+                try {
+                    const full = path.join(statusMediaDir, file);
+                    const stat = fs.statSync(full);
+                    if (stat.isFile() && (now - stat.mtimeMs) > maxAge) {
+                        fs.unlinkSync(full);
+                        removed++;
+                    }
+                } catch {}
+            }
+        } catch {}
+        return removed;
+    },
+
     runCleanup(aggressive = false) {
         const results = {
             sessionFiles: this.cleanSessionSignalFiles(aggressive),
             viewonceMedia: this.cleanOldMedia('./data/viewonce_messages', 3, aggressive) + this.cleanOldMedia('./data/viewonce_private', 3, aggressive),
             antideleteMedia: this.cleanOldMedia('./data/antidelete/media', 2, aggressive),
+            statusMedia: this.cleanStatusMedia(aggressive),
             tempFiles: this.cleanTempFiles(),
             backups: aggressive ? this.cleanBackups() : 0,
             statusLogs: this.truncateStatusLogs() ? 1 : 0
         };
         const total = Object.values(results).reduce((a, b) => a + b, 0);
         if (total > 0) {
-            UltraCleanLogger.info(`🧹 Disk cleanup: removed ${total} items (session: ${results.sessionFiles}, viewonce: ${results.viewonceMedia}, antidelete: ${results.antideleteMedia}, temp: ${results.tempFiles}, backups: ${results.backups})`);
+            UltraCleanLogger.info(`🧹 Disk cleanup: removed ${total} items (session: ${results.sessionFiles}, viewonce: ${results.viewonceMedia}, antidelete: ${results.antideleteMedia}, status-media: ${results.statusMedia}, temp: ${results.tempFiles}, backups: ${results.backups})`);
         }
         this.lastCleanup = Date.now();
         return results;
@@ -1178,7 +1203,17 @@ const DiskManager = {
     },
 
     start() {
-        setTimeout(() => this.monitor(), 30000);
+        const freeMB = this.getDiskFree();
+        if (freeMB !== null && freeMB < this.WARNING_MB) {
+            UltraCleanLogger.warning(`⚠️ Low disk on startup: ${freeMB}MB free. Running immediate cleanup...`);
+            this.runCleanup(freeMB < this.CRITICAL_MB);
+            const afterMB = this.getDiskFree();
+            if (afterMB !== null) {
+                UltraCleanLogger.info(`💾 Disk after startup cleanup: ${afterMB}MB free (recovered ${afterMB - freeMB}MB)`);
+            }
+        } else {
+            this.runCleanup(false);
+        }
         setInterval(() => this.monitor(), this.CHECK_INTERVAL);
         setInterval(() => {
             if (!this.isLow) this.runCleanup(false);
