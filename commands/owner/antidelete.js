@@ -538,13 +538,13 @@ export async function antideleteStoreMessage(message) {
             text = msgContent.imageMessage.caption || '';
             hasMedia = true;
             mimetype = msgContent.imageMessage.mimetype || 'image/jpeg';
-            mediaInfo = { message, type: 'image', mimetype };
+            mediaInfo = { message: { key: message.key, message: { imageMessage: msgContent.imageMessage } }, type: 'image', mimetype };
         } else if (msgContent?.videoMessage) {
             type = 'video';
             text = msgContent.videoMessage.caption || '';
             hasMedia = true;
             mimetype = msgContent.videoMessage.mimetype || 'video/mp4';
-            mediaInfo = { message, type: 'video', mimetype };
+            mediaInfo = { message: { key: message.key, message: { videoMessage: msgContent.videoMessage } }, type: 'video', mimetype };
         } else if (msgContent?.audioMessage) {
             type = 'audio';
             hasMedia = true;
@@ -552,18 +552,18 @@ export async function antideleteStoreMessage(message) {
             if (msgContent.audioMessage.ptt) {
                 type = 'voice';
             }
-            mediaInfo = { message, type: 'audio', mimetype };
+            mediaInfo = { message: { key: message.key, message: { audioMessage: msgContent.audioMessage } }, type: 'audio', mimetype };
         } else if (msgContent?.documentMessage) {
             type = 'document';
             text = msgContent.documentMessage.fileName || 'Document';
             hasMedia = true;
             mimetype = msgContent.documentMessage.mimetype || 'application/octet-stream';
-            mediaInfo = { message, type: 'document', mimetype };
+            mediaInfo = { message: { key: message.key, message: { documentMessage: msgContent.documentMessage } }, type: 'document', mimetype };
         } else if (msgContent?.stickerMessage) {
             type = 'sticker';
             hasMedia = true;
             mimetype = msgContent.stickerMessage.mimetype || 'image/webp';
-            mediaInfo = { message, type: 'sticker', mimetype };
+            mediaInfo = { message: { key: message.key, message: { stickerMessage: msgContent.stickerMessage } }, type: 'sticker', mimetype };
         }
         
         if (!text && !hasMedia) return;
@@ -599,9 +599,10 @@ export async function antideleteStoreMessage(message) {
         antideleteState.stats.totalMessages++;
         
         if (antideleteState.messageCache.size > MAX_MESSAGE_CACHE) {
-            const entries = [...antideleteState.messageCache.entries()];
-            const toRemove = entries.slice(0, entries.length - MAX_MESSAGE_CACHE);
-            for (const [key] of toRemove) {
+            const excess = antideleteState.messageCache.size - MAX_MESSAGE_CACHE;
+            const iter = antideleteState.messageCache.keys();
+            for (let i = 0; i < excess; i++) {
+                const key = iter.next().value;
                 antideleteState.messageCache.delete(key);
                 antideleteState.mediaCache.delete(key);
             }

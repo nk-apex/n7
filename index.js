@@ -990,12 +990,23 @@ const DiskManager = {
     lastCleanup: 0,
     isLow: false,
 
+    _cachedDiskFree: null,
+    _lastDiskCheck: 0,
     getDiskFree() {
+        const now = Date.now();
+        if (now - this._lastDiskCheck < 30000 && this._cachedDiskFree !== null) {
+            return this._cachedDiskFree;
+        }
         try {
-            const output = execSync('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', { encoding: 'utf8', timeout: 3000 });
+            const output = execSync('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', { encoding: 'utf8', timeout: 2000 });
             const match = output.match(/(\d+)M?\s*$/m);
-            return match ? parseInt(match[1]) : null;
-        } catch { return null; }
+            this._cachedDiskFree = match ? parseInt(match[1]) : null;
+            this._lastDiskCheck = now;
+            return this._cachedDiskFree;
+        } catch {
+            this._lastDiskCheck = now;
+            return this._cachedDiskFree;
+        }
     },
 
     getDirSize(dirPath) {
@@ -3754,18 +3765,13 @@ class MessageStore {
     addMessage(jid, messageId, message) {
         try {
             const key = `${jid}|${messageId}`;
-            this.messages.set(key, {
-                ...message,
-                timestamp: Date.now()
-            });
+            this.messages.set(key, message);
             
             if (this.messages.size > this.maxMessages) {
                 const oldestKey = this.messages.keys().next().value;
                 this.messages.delete(oldestKey);
             }
-        } catch {
-            // Silent fail
-        }
+        } catch {}
     }
     
     getMessage(jid, messageId) {
@@ -5763,7 +5769,7 @@ async function handleIncomingMessage(sock, msg) {
         }
         
         try {
-            const linkTimeout = new Promise((resolve) => setTimeout(() => resolve(false), 3000));
+            const linkTimeout = new Promise((resolve) => setTimeout(() => resolve(false), 800));
             const linked = await Promise.race([autoLinkSystem.shouldAutoLink(sock, msg), linkTimeout]);
             if (linked) {
                 UltraCleanLogger.info(`✅ Auto-linking completed for ${senderJid.split('@')[0]}, skipping message processing`);
