@@ -1890,36 +1890,41 @@ export default {
       const deepClean = args.includes('deep') || args.includes('nuke');
       const sizeCheck = args.includes('size') || args.includes('check');
       
+      await editStatus('🧹 **Cleaning all media & temp files...**\nSettings & configs will be preserved.');
       try {
-        const dfOut = await run('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', 5000);
+        const dfOut = await run('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', 5000).catch(() => '');
         const freeMatch = dfOut.match(/(\d+)M?\s*$/m);
-        const freeMB = freeMatch ? parseInt(freeMatch[1]) : null;
-        if (freeMB !== null && freeMB < 100) {
-          await editStatus(`⚠️ **Low disk space: ${freeMB}MB free**\nRunning emergency cleanup before update...`);
-          const cleanCmds = [
-            'rm -rf tmp_update_fast tmp_preserve_fast /tmp/*.zip /tmp/*.tar.gz 2>/dev/null',
-            'find ./session -name "sender-key-*" -mmin +60 -delete 2>/dev/null',
-            'find ./session -name "pre-key-*" -mmin +60 -delete 2>/dev/null',
-            'find ./session -name "app-state-sync-*" -mmin +60 -delete 2>/dev/null',
-            'find ./data -name "*.bak" -delete 2>/dev/null',
-            'rm -rf ./data/viewonce_private/* ./data/antidelete/media/* 2>/dev/null',
-            'find . -name "*.log" -not -path "./node_modules/*" -delete 2>/dev/null',
-            'rm -rf session_backup 2>/dev/null',
-            'git gc --prune=now --aggressive 2>/dev/null || true',
-            'npm cache clean --force 2>/dev/null || true'
-          ];
-          for (const cmd of cleanCmds) {
-            await run(cmd, 15000).catch(() => {});
-          }
-          const dfAfter = await run('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', 5000).catch(() => '');
-          const afterMatch = dfAfter.match(/(\d+)M?\s*$/m);
-          const afterMB = afterMatch ? parseInt(afterMatch[1]) : freeMB;
-          const recovered = afterMB - freeMB;
-          await editStatus(`💾 **Cleanup done:** ${afterMB}MB free (recovered ${recovered}MB)\nContinuing update...`);
-          if (afterMB < 30) {
-            await editStatus(`❌ **Not enough disk space for update**\nOnly ${afterMB}MB free after cleanup.\nManually delete large files or increase disk allocation.`);
-            return;
-          }
+        const beforeMB = freeMatch ? parseInt(freeMatch[1]) : null;
+
+        const cleanCmds = [
+          'rm -rf tmp_update_fast tmp_preserve_fast /tmp/*.zip /tmp/*.tar.gz 2>/dev/null',
+          'rm -rf ./data/viewonce_private/* 2>/dev/null',
+          'rm -rf ./data/viewonce_messages/*.jpg ./data/viewonce_messages/*.jpeg ./data/viewonce_messages/*.png ./data/viewonce_messages/*.gif ./data/viewonce_messages/*.mp4 ./data/viewonce_messages/*.mp3 ./data/viewonce_messages/*.ogg ./data/viewonce_messages/*.webp ./data/viewonce_messages/*.opus ./data/viewonce_messages/*.pdf ./data/viewonce_messages/*.doc 2>/dev/null',
+          'rm -rf ./data/antidelete/media/* 2>/dev/null',
+          'rm -rf ./data/antidelete/status/media/* 2>/dev/null',
+          'rm -rf ./data/antiviewonce/*.jpg ./data/antiviewonce/*.jpeg ./data/antiviewonce/*.png ./data/antiviewonce/*.gif ./data/antiviewonce/*.mp4 ./data/antiviewonce/*.mp3 ./data/antiviewonce/*.ogg ./data/antiviewonce/*.webp ./data/antiviewonce/*.opus 2>/dev/null',
+          'find ./session -name "sender-key-*" -delete 2>/dev/null',
+          'find ./session -name "pre-key-*" -delete 2>/dev/null',
+          'find ./session -name "app-state-sync-version-*" -delete 2>/dev/null',
+          'rm -rf session_backup 2>/dev/null',
+          'find ./data -name "*.bak" -delete 2>/dev/null',
+          'find . -maxdepth 2 -name "*.log" -not -path "./node_modules/*" -delete 2>/dev/null',
+          'rm -rf ./temp/* 2>/dev/null',
+          'rm -rf ./logs/* 2>/dev/null',
+          'git gc --prune=now --aggressive 2>/dev/null || true',
+          'npm cache clean --force 2>/dev/null || true'
+        ];
+        for (const cmd of cleanCmds) {
+          await run(cmd, 15000).catch(() => {});
+        }
+        const dfAfter = await run('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', 5000).catch(() => '');
+        const afterMatch = dfAfter.match(/(\d+)M?\s*$/m);
+        const afterMB = afterMatch ? parseInt(afterMatch[1]) : beforeMB;
+        const recovered = (beforeMB !== null && afterMB !== null) ? (afterMB - beforeMB) : 0;
+        await editStatus(`💾 **Media cleanup done!** ${afterMB !== null ? afterMB + 'MB free' : ''}${recovered > 0 ? ' (recovered ' + recovered + 'MB)' : ''}\n✅ Settings, prefix, configs preserved\nContinuing update...`);
+        if (afterMB !== null && afterMB < 30) {
+          await editStatus(`❌ **Not enough disk space for update**\nOnly ${afterMB}MB free after cleanup.\nManually delete large files or increase disk allocation.`);
+          return;
         }
       } catch (diskErr) {
         // Non-critical, continue with update
