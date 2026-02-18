@@ -994,6 +994,7 @@ let store = null;
 let heartbeatInterval = null;
 let lastActivityTime = Date.now();
 let connectionAttempts = 0;
+let connectionStableTimer = null;
 let MAX_RETRY_ATTEMPTS = 10;
 let BOT_MODE = 'public';
 let WHITELIST = new Set();
@@ -1008,6 +1009,8 @@ let hasSentWelcomeMessage = false;
 let initialCommandsLoaded = false;
 let commandsLoaded = false;
 let hasSentConnectionMessage = false;
+let conflictCount = 0;
+let isConflictRecovery = false;
 
 let _lagCheckTs = Date.now();
 setInterval(() => {
@@ -4060,9 +4063,16 @@ async function startBot(loginMode = 'auto', loginData = null) {
             
             if (connection === 'open') {
                 isConnected = true;
-                connectionAttempts = 0;
+                if (connectionStableTimer) clearTimeout(connectionStableTimer);
+                connectionStableTimer = setTimeout(() => {
+                    connectionAttempts = 0;
+                    conflictCount = 0;
+                    isConflictRecovery = false;
+                }, 30000);
                 startHeartbeat(sock);
-                handleSuccessfulConnection(sock, loginMode, loginData).catch(() => {});
+                setTimeout(() => {
+                    if (isConnected && !isConflictRecovery) handleSuccessfulConnection(sock, loginMode, loginData).catch(() => {});
+                }, 2000);
                 isWaitingForPairingCode = false;
                 
                 if (!antiViewOnceSystem) {
@@ -4108,13 +4118,15 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     }
                 }, 5000);
                 
-                if (!hasSentRestartMessage) {
-                    triggerRestartAutoFix(sock).catch(() => {});
-                }
-                
-                if (AUTO_CONNECT_ON_START && !hasSentRestartMessage) {
-                    autoConnectOnStart.trigger(sock).catch(() => {});
-                }
+                setTimeout(() => {
+                    if (!isConnected || isConflictRecovery) return;
+                    if (!hasSentRestartMessage) {
+                        triggerRestartAutoFix(sock).catch(() => {});
+                    }
+                    if (AUTO_CONNECT_ON_START && !hasSentRestartMessage) {
+                        autoConnectOnStart.trigger(sock).catch(() => {});
+                    }
+                }, 3000);
                 
                 setTimeout(async () => {
                     try {
@@ -4191,6 +4203,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 
                 // ====== THE ONLY SUCCESS MESSAGE ======
                 setTimeout(async () => {
+                    if (!isConnected || hasSentConnectionMessage || isConflictRecovery) return;
                     try {
                         const ownerInfo = jidManager.getOwnerInfo();
                         const displayOwnerNumber = ownerInfo?.ownerNumber ? ownerInfo.ownerNumber.split(':')[0] : 'Not set';
@@ -4207,13 +4220,18 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         console.log(chalk.red('❌ Could not send connection message:'), sendError.message);
                         hasSentConnectionMessage = true;
                     }
-                }, 500);
+                }, 5000);
                 
             }
             
             if (connection === 'close') {
                 isConnected = false;
+                if (connectionStableTimer) { clearTimeout(connectionStableTimer); connectionStableTimer = null; }
                 stopHeartbeat();
+                
+                const closeCode = lastDisconnect?.error?.output?.statusCode || 'unknown';
+                const closeMsg = lastDisconnect?.error?.message || '';
+                UltraCleanLogger.info(`🔗 Close reason: ${closeCode} - ${closeMsg}`);
                 
                 memoryMonitor.stop();
                 
@@ -4239,7 +4257,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 
                 await handleConnectionCloseSilently(lastDisconnect, loginMode, loginData);
                 isWaitingForPairingCode = false;
-                hasSentConnectionMessage = false; // Reset on disconnect
             }
             
             if (connection === 'connecting') {
@@ -4824,11 +4841,17 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
         return;
     }
     
-    if (statusCode === 409) {
-        UltraCleanLogger.warning('Device conflict detected. Reconnecting in 5 seconds...');
+    if (statusCode === 409 || statusCode === 440) {
+        conflictCount++;
+        isConflictRecovery = true;
+        const conflictDelay = Math.min(8000 + (conflictCount * 5000), 60000);
+        UltraCleanLogger.warning(`Device conflict detected (${statusCode}). Attempt ${conflictCount}. Reconnecting in ${Math.round(conflictDelay/1000)}s...`);
+        if (conflictCount >= 3) {
+            UltraCleanLogger.warning(`Multiple conflicts - another session may be active elsewhere. Waiting longer...`);
+        }
         setTimeout(async () => {
             await startBot(loginMode, phoneNumber);
-        }, 5000);
+        }, conflictDelay);
         return;
     }
     
@@ -4867,9 +4890,9 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
         return;
     }
     
-    const baseDelay = 1500;
-    const maxDelay = 15000;
-    const delayTime = Math.min(baseDelay * Math.pow(1.3, connectionAttempts - 1), maxDelay);
+    const baseDelay = 3000;
+    const maxDelay = 30000;
+    const delayTime = Math.min(baseDelay * Math.pow(1.5, connectionAttempts - 1), maxDelay);
     
     UltraCleanLogger.info(`🔄 Reconnecting in ${Math.round(delayTime/1000)}s (attempt ${connectionAttempts})...`);
     
@@ -5208,14 +5231,20 @@ async function handleIncomingMessage(sock, msg) {
         
         
         try {
-            const msgContent = msg.message || {};
+            const rawMsg = msg.message || {};
+            const msgContent = normalizeMessageContent(rawMsg) || rawMsg;
             const isSticker = !!msgContent.stickerMessage;
-            const rawText = extractTextFromMessage(msgContent) || '';
+            const rawText = msgContent.conversation || 
+                           msgContent.extendedTextMessage?.text || 
+                           msgContent.imageMessage?.caption || '';
             const trimmed = rawText.trim();
             const isEmojiOnly = trimmed.length > 0 && trimmed.length <= 10 && /^[\p{Emoji_Presentation}\p{Emoji}\u200d\ufe0f\s]+$/u.test(trimmed);
             
-            if ((isSticker || isEmojiOnly) && !msg.key.fromMe) {
-                const replyCtx = msgContent.stickerMessage?.contextInfo || msgContent.extendedTextMessage?.contextInfo;
+            if (isSticker || isEmojiOnly) {
+                const replyCtx = msgContent.stickerMessage?.contextInfo || 
+                                msgContent.extendedTextMessage?.contextInfo ||
+                                msgContent.imageMessage?.contextInfo ||
+                                msgContent.videoMessage?.contextInfo;
                 
                 if (replyCtx?.quotedMessage) {
                     let quotedMsg = replyCtx.quotedMessage;
@@ -5225,6 +5254,7 @@ async function handleIncomingMessage(sock, msg) {
                     else if (quotedMsg.viewOnceMessageV2Extension?.message) innerMsg = quotedMsg.viewOnceMessageV2Extension.message;
                     else if (quotedMsg.viewOnceMessage?.message) innerMsg = quotedMsg.viewOnceMessage.message;
                     else if (quotedMsg.ephemeralMessage?.message?.viewOnceMessage?.message) innerMsg = quotedMsg.ephemeralMessage.message.viewOnceMessage.message;
+                    else if (quotedMsg.ephemeralMessage?.message?.viewOnceMessageV2?.message) innerMsg = quotedMsg.ephemeralMessage.message.viewOnceMessageV2.message;
                     
                     const isQuotedViewOnce = innerMsg?.imageMessage?.viewOnce || 
                                             innerMsg?.videoMessage?.viewOnce || 
@@ -5266,7 +5296,9 @@ async function handleIncomingMessage(sock, msg) {
                                         await sock.sendMessage(normalizedOwner, mediaPayload);
                                         UltraCleanLogger.info(`🔐 View-once auto-captured via ${isSticker ? 'sticker' : 'emoji'} reply from ${replierShort}`);
                                     }
-                                } catch {}
+                                } catch (dlErr) {
+                                    UltraCleanLogger.warning(`🔐 View-once auto-capture failed: ${dlErr.message}`);
+                                }
                             }
                         }
                     }
