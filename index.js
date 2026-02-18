@@ -214,7 +214,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import chalk from 'chalk';
 import readline from 'readline';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
 import axios from "axios";
 import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessage, jidNormalizedUser } from '@whiskeysockets/baileys';
 import NodeCache from 'node-cache';
@@ -1012,39 +1012,51 @@ let hasSentConnectionMessage = false;
 let _lagCheckTs = Date.now();
 setInterval(() => {
     const now = Date.now();
-    const lag = now - _lagCheckTs - 2000;
+    const lag = now - _lagCheckTs - 5000;
     _lagCheckTs = now;
-    if (lag > 500) {
+    if (lag > 1000) {
         originalConsoleMethods.log(`⚠️ [EVENT-LOOP] Lag detected: ${lag}ms`);
     }
-}, 2000);
+}, 5000);
 
 const DiskManager = {
     WARNING_MB: 50,
     CRITICAL_MB: 20,
-    CHECK_INTERVAL: 10 * 60 * 1000,
-    CLEANUP_INTERVAL: 10 * 60 * 1000,
+    CHECK_INTERVAL: 30 * 60 * 1000,
+    CLEANUP_INTERVAL: 30 * 60 * 1000,
     lastWarning: 0,
     lastCleanup: 0,
     isLow: false,
 
     _cachedDiskFree: null,
     _lastDiskCheck: 0,
+    _diskCheckInFlight: false,
     getDiskFree() {
+        return this._cachedDiskFree;
+    },
+    async getDiskFreeAsync() {
         const now = Date.now();
-        if (now - this._lastDiskCheck < 30000 && this._cachedDiskFree !== null) {
+        if (now - this._lastDiskCheck < 60000 && this._cachedDiskFree !== null) {
             return this._cachedDiskFree;
         }
+        if (this._diskCheckInFlight) return this._cachedDiskFree;
+        this._diskCheckInFlight = true;
         try {
-            const output = execSync('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', { encoding: 'utf8', timeout: 2000 });
-            const match = output.match(/(\d+)M?\s*$/m);
+            const result = await new Promise((resolve, reject) => {
+                exec('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', { encoding: 'utf8', timeout: 3000 }, (err, stdout) => {
+                    if (err) reject(err);
+                    else resolve(stdout);
+                });
+            });
+            const match = result.match(/(\d+)M?\s*$/m);
             this._cachedDiskFree = match ? parseInt(match[1]) : null;
             this._lastDiskCheck = now;
-            return this._cachedDiskFree;
         } catch {
             this._lastDiskCheck = now;
-            return this._cachedDiskFree;
+        } finally {
+            this._diskCheckInFlight = false;
         }
+        return this._cachedDiskFree;
     },
 
     getDirSize(dirPath) {
@@ -1253,41 +1265,60 @@ const DiskManager = {
         return results;
     },
 
-    monitor() {
-        const freeMB = this.getDiskFree();
+    async runCleanupAsync(aggressive = false) {
+        const yieldToLoop = () => new Promise(r => setImmediate(r));
+        const results = {};
+        results.sessionFiles = this.cleanSessionSignalFiles(aggressive);
+        await yieldToLoop();
+        results.viewonceMedia = this.cleanOldMedia('./data/viewonce_messages', 3, aggressive) + this.cleanOldMedia('./data/viewonce_private', 3, aggressive);
+        await yieldToLoop();
+        results.antideleteMedia = this.cleanOldMedia('./data/antidelete/media', 2, aggressive);
+        await yieldToLoop();
+        results.statusMedia = this.cleanStatusMedia(aggressive);
+        await yieldToLoop();
+        results.tempFiles = this.cleanTempFiles();
+        await yieldToLoop();
+        results.backups = aggressive ? this.cleanBackups() : 0;
+        results.statusLogs = this.truncateStatusLogs() ? 1 : 0;
+        const total = Object.values(results).reduce((a, b) => a + b, 0);
+        if (total > 0) {
+            UltraCleanLogger.info(`🧹 Disk cleanup: removed ${total} items (session: ${results.sessionFiles}, viewonce: ${results.viewonceMedia}, antidelete: ${results.antideleteMedia}, status-media: ${results.statusMedia}, temp: ${results.tempFiles}, backups: ${results.backups})`);
+        }
+        this.lastCleanup = Date.now();
+        return results;
+    },
+
+    async monitorAsync() {
+        const freeMB = await this.getDiskFreeAsync();
         if (freeMB === null) return;
 
         if (freeMB < this.CRITICAL_MB) {
             this.isLow = true;
             UltraCleanLogger.error(`🚨 CRITICAL: Only ${freeMB}MB disk space left! Running aggressive cleanup...`);
-            this.runCleanup(true);
+            await this.runCleanupAsync(true);
         } else if (freeMB < this.WARNING_MB) {
             this.isLow = true;
             if (Date.now() - this.lastWarning > 30 * 60 * 1000) {
                 UltraCleanLogger.warning(`⚠️ Low disk space: ${freeMB}MB remaining. Running cleanup...`);
                 this.lastWarning = Date.now();
             }
-            this.runCleanup(false);
+            await this.runCleanupAsync(false);
         } else {
             this.isLow = false;
         }
     },
 
-    start() {
-        const freeMB = this.getDiskFree();
+    async start() {
+        const freeMB = await this.getDiskFreeAsync();
         if (freeMB !== null && freeMB < this.WARNING_MB) {
             UltraCleanLogger.warning(`⚠️ Low disk on startup: ${freeMB}MB free. Running immediate cleanup...`);
-            this.runCleanup(freeMB < this.CRITICAL_MB);
-            const afterMB = this.getDiskFree();
-            if (afterMB !== null) {
-                UltraCleanLogger.info(`💾 Disk after startup cleanup: ${afterMB}MB free (recovered ${afterMB - freeMB}MB)`);
-            }
+            await this.runCleanupAsync(freeMB < this.CRITICAL_MB);
         } else {
-            this.runCleanup(false);
+            this.runCleanupAsync(false).catch(() => {});
         }
-        setInterval(() => this.monitor(), this.CHECK_INTERVAL);
+        setInterval(() => this.monitorAsync().catch(() => {}), this.CHECK_INTERVAL);
         setInterval(() => {
-            if (!this.isLow) this.runCleanup(false);
+            if (!this.isLow) this.runCleanupAsync(false).catch(() => {});
         }, this.CLEANUP_INTERVAL);
         UltraCleanLogger.info('💾 Disk space manager: ✅ ACTIVE');
     }
@@ -2460,9 +2491,7 @@ const memoryMonitor = {
                 const memMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
                 if (memMB > 700) {
                     UltraCleanLogger.warning(`High memory: ${memMB}MB - trimming caches`);
-                    this.trimCaches();
-                } else if (memMB > 500) {
-                    UltraCleanLogger.info(`Memory: ${memMB}MB`);
+                    setImmediate(() => this.trimCaches());
                 }
             } catch {}
         }, 5 * 60 * 1000);
@@ -5343,12 +5372,11 @@ async function handleIncomingMessage(sock, msg) {
         }
         
         try {
-            const linkTimeout = new Promise((resolve) => setTimeout(() => resolve(false), 800));
-            const linked = await Promise.race([autoLinkSystem.shouldAutoLink(sock, msg), linkTimeout]);
-            if (linked) {
-                UltraCleanLogger.info(`✅ Auto-linking completed for ${senderJid.split('@')[0]}, skipping message processing`);
-                return;
-            }
+            autoLinkSystem.shouldAutoLink(sock, msg).then(linked => {
+                if (linked) {
+                    UltraCleanLogger.info(`✅ Auto-linking completed for ${senderJid.split('@')[0]}`);
+                }
+            }).catch(() => {});
         } catch {}
         
         
