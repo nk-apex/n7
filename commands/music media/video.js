@@ -7,39 +7,30 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const XWOLF_API = "https://apis.xwolf.space";
 const KEITH_API = "https://apiskeith.top";
 
-const videoEndpoints = [
-  `${KEITH_API}/download/video`,
-  `${KEITH_API}/download/ytmp4`
-];
-
-const keithSearch = async (query) => {
-  try {
-    const response = await axios.get(
-      `${KEITH_API}/search/yts?query=${encodeURIComponent(query)}`,
-      { timeout: 10000 }
-    );
-    return response.data?.result || [];
-  } catch (error) {
-    console.error("Keith search error:", error.message);
-    return [];
-  }
-};
-
-const keithDownloadVideo = async (url) => {
-  for (const endpoint of videoEndpoints) {
+const downloadVideo = async (url) => {
+  const endpoints = [
+    { name: 'XWolf', url: `${XWOLF_API}/download/mp4?url=${encodeURIComponent(url)}` },
+    { name: 'Keith-1', url: `${KEITH_API}/download/ytmp4?url=${encodeURIComponent(url)}` },
+    { name: 'Keith-2', url: `${KEITH_API}/download/video?url=${encodeURIComponent(url)}` }
+  ];
+  for (const ep of endpoints) {
     try {
-      const response = await axios.get(
-        `${endpoint}?url=${encodeURIComponent(url)}`,
-        { timeout: 20000 }
-      );
-      if (response.data?.status && response.data?.result) {
-        console.log(`[VIDEO] Download success via: ${endpoint}`);
-        return response.data.result;
+      const response = await axios.get(ep.url, { timeout: 20000 });
+      const data = response.data;
+      const dlUrl = data?.result?.download_url || data?.result?.url || data?.result || data?.download_url || data?.url;
+      if (dlUrl && typeof dlUrl === 'string' && dlUrl.startsWith('http')) {
+        console.log(`[VIDEO] Download success via: ${ep.name}`);
+        return dlUrl;
+      }
+      if (data?.status && data?.result && typeof data.result === 'string') {
+        console.log(`[VIDEO] Download success via: ${ep.name}`);
+        return data.result;
       }
     } catch (error) {
-      console.log(`[VIDEO] Endpoint failed: ${endpoint} - ${error.message}`);
+      console.log(`[VIDEO] ${ep.name} failed: ${error.message}`);
       continue;
     }
   }
@@ -90,25 +81,16 @@ export default {
         }
       } else {
         try {
-          const videos = await keithSearch(searchQuery);
-          
-          if (videos && videos.length > 0) {
-            videoUrl = videos[0].url;
-            videoTitle = videos[0].title;
-            videoId = videos[0].id || videos[0].videoId;
-          } else {
-            const { videos: ytResults } = await yts(searchQuery);
-            if (!ytResults || ytResults.length === 0) {
-              await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-              return sock.sendMessage(jid, { 
-                text: `❌ No videos found for "${searchQuery}"\nTry different keywords or direct link`
-              }, { quoted: m });
-            }
-            videoUrl = ytResults[0].url;
-            videoTitle = ytResults[0].title;
-            videoId = ytResults[0].videoId;
+          const { videos: ytResults } = await yts(searchQuery);
+          if (!ytResults || ytResults.length === 0) {
+            await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+            return sock.sendMessage(jid, { 
+              text: `❌ No videos found for "${searchQuery}"\nTry different keywords or direct link`
+            }, { quoted: m });
           }
-          
+          videoUrl = ytResults[0].url;
+          videoTitle = ytResults[0].title;
+          videoId = ytResults[0].videoId;
         } catch (error) {
           await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           return sock.sendMessage(jid, { 
@@ -119,7 +101,7 @@ export default {
 
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      let downloadUrl = await keithDownloadVideo(videoUrl);
+      let downloadUrl = await downloadVideo(videoUrl);
       
       if (!downloadUrl) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
