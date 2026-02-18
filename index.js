@@ -4610,6 +4610,68 @@ async function startBot(loginMode = 'auto', loginData = null) {
             antideleteStoreMessage(msg).catch(() => {});
         });
         
+        sock.ev.on('messages.reaction', async (reactions) => {
+            for (const reaction of reactions) {
+                try {
+                    if (!reaction.reaction?.text || !reaction.key) continue;
+                    
+                    const reactedKey = reaction.key;
+                    const reactedMsgId = reactedKey.id;
+                    const reactedChatId = reactedKey.remoteJid;
+                    const reactionEmoji = reaction.reaction.text;
+                    const reactorJid = reaction.reaction.key?.participant || reaction.reaction.key?.remoteJid;
+                    
+                    if (!reactedChatId || !reactedMsgId) continue;
+                    
+                    const cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
+                    if (!cachedMsg || !cachedMsg.message) continue;
+                    
+                    const cachedContent = normalizeMessageContent(cachedMsg.message) || cachedMsg.message;
+                    if (!cachedContent) continue;
+                    
+                    const viewOnce = detectViewOnceMedia(cachedContent);
+                    if (!viewOnce) continue;
+                    
+                    const config = loadAntiViewOnceConfig();
+                    const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
+                    if (!ownerJid) continue;
+                    
+                    const { type, media } = viewOnce;
+                    const cleanMedia = { ...media };
+                    delete cleanMedia.viewOnce;
+                    
+                    const dlMsg = {
+                        key: { remoteJid: reactedChatId, id: reactedMsgId, participant: reactedKey.participant, fromMe: reactedKey.fromMe },
+                        message: { [`${type}Message`]: cleanMedia }
+                    };
+                    
+                    const silentLogger = { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) };
+                    
+                    const buffer = await Promise.race([
+                        downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
+                    ]);
+                    
+                    if (buffer && buffer.length > 0) {
+                        const normalizedOwner = jidNormalizedUser(ownerJid);
+                        const reactorShort = (reactorJid || 'unknown').split('@')[0].split(':')[0];
+                        const senderShort = (reactedKey.participant || reactedChatId).split('@')[0].split(':')[0];
+                        
+                        const mediaPayload = {};
+                        mediaPayload[type] = buffer;
+                        mediaPayload.caption = `Retrieved by \`WOLFBOT\`\n${reactionEmoji} reacted by ${reactorShort} on ${senderShort}'s message`;
+                        
+                        await sock.sendMessage(normalizedOwner, mediaPayload);
+                        UltraCleanLogger.info(`🔐 View-once captured via reaction ${reactionEmoji} from ${reactorShort}`);
+                    }
+                } catch (err) {
+                    if (err.message !== 'dl_timeout') {
+                        UltraCleanLogger.warning(`🔐 View-once reaction capture failed: ${err.message}`);
+                    }
+                }
+            }
+        });
+        
         sock.ev.on('messages.update', (updates) => {
             for (const update of updates) {
                 const updateChatJid = update.key?.remoteJid;
@@ -5422,6 +5484,15 @@ async function handleIncomingMessage(sock, msg) {
                         args = words.slice(1);
                     }
                 }
+            }
+        }
+        
+        if (!commandName) {
+            const prefixBypassNames = ['prefix', 'prefixinfo', 'myprefix', 'botprefix'];
+            const stripped = textMsg.replace(/^[^a-zA-Z0-9]+/, '').toLowerCase().trim().split(/\s+/)[0];
+            if (prefixBypassNames.includes(stripped)) {
+                commandName = 'prefixinfo';
+                args = [];
             }
         }
         
