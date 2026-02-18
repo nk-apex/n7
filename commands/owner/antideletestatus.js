@@ -11,8 +11,8 @@ const STATUS_MEDIA_DIR = path.join(STATUS_STORAGE_DIR, 'media');
 const STATUS_CACHE_FILE = path.join(STATUS_STORAGE_DIR, 'status_cache.json');
 const SETTINGS_FILE = path.join(STATUS_STORAGE_DIR, 'settings.json');
 
-const CACHE_CLEAN_INTERVAL = 24 * 60 * 60 * 1000;
-const MAX_CACHE_AGE = 24 * 60 * 60 * 1000;
+const CACHE_CLEAN_INTERVAL = 6 * 60 * 60 * 1000;
+const MAX_CACHE_AGE = 12 * 60 * 60 * 1000;
 
 let statusAntideleteState = {
     enabled: true,
@@ -33,8 +33,8 @@ let statusAntideleteState = {
     },
     settings: {
         autoCleanEnabled: true,
-        maxAgeHours: 24,
-        maxStorageMB: 500,
+        maxAgeHours: 12,
+        maxStorageMB: 100,
         ownerOnly: true,
         autoCleanRetrieved: true,
         initialized: false
@@ -367,7 +367,7 @@ async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype)
             return null;
         }
 
-        const maxSize = 10 * 1024 * 1024;
+        const maxSize = 5 * 1024 * 1024;
         if (buffer.length > maxSize) {
             return null;
         }
@@ -656,6 +656,7 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
         const mediaCache = statusAntideleteState.mediaCache.get(statusData.id);
 
         if (statusData.hasMedia && mediaCache) {
+            let mediaSent = false;
             try {
                 const buffer = await fs.readFile(mediaCache.filePath);
 
@@ -666,12 +667,14 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
                             caption: detailsText,
                             mimetype: mediaCache.mimetype
                         }));
+                        mediaSent = true;
                     } else if (statusData.type === 'video') {
                         await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, {
                             video: buffer,
                             caption: detailsText,
                             mimetype: mediaCache.mimetype
                         }));
+                        mediaSent = true;
                     } else if (statusData.type === 'audio' || statusData.type === 'voice') {
                         await retrySend(async () => {
                             await statusAntideleteState.sock.sendMessage(ownerJid, {
@@ -681,6 +684,7 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
                             });
                             await statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText });
                         });
+                        mediaSent = true;
                     } else {
                         await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
                     }
@@ -694,6 +698,14 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
                         text: detailsText + `\n\n❌ 𝗠𝗲𝗱𝗶𝗮 𝗰𝗼𝘂𝗹𝗱 𝗻𝗼𝘁 𝗯𝗲 𝗿𝗲𝗰𝗼𝘃𝗲𝗿𝗲𝗱`
                     }));
                 } catch {}
+            }
+
+            if (mediaSent && statusAntideleteState.settings.autoCleanRetrieved) {
+                try {
+                    await fs.unlink(mediaCache.filePath);
+                    statusAntideleteState.mediaCache.delete(statusData.id);
+                    statusAntideleteState.stats.totalStorageMB = Math.max(0, statusAntideleteState.stats.totalStorageMB - (mediaCache.size / 1024 / 1024));
+                } catch (cleanErr) {}
             }
         } else {
             await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
