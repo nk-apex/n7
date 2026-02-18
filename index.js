@@ -4091,6 +4091,11 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     updateStatusAntideleteSock(sock);
                 }
                 
+                try {
+                    const { initAntiLinkListener } = await import('./commands/group/antilink.js');
+                    initAntiLinkListener(sock);
+                } catch {}
+
                 UltraCleanLogger.info('🔑 Sudo system ready (using signal LID mapping)');
 
                 setTimeout(() => {
@@ -5202,6 +5207,73 @@ async function handleIncomingMessage(sock, msg) {
         } catch {}
         
         
+        try {
+            const msgContent = msg.message || {};
+            const isSticker = !!msgContent.stickerMessage;
+            const rawText = extractTextFromMessage(msgContent) || '';
+            const trimmed = rawText.trim();
+            const isEmojiOnly = trimmed.length > 0 && trimmed.length <= 10 && /^[\p{Emoji_Presentation}\p{Emoji}\u200d\ufe0f\s]+$/u.test(trimmed);
+            
+            if ((isSticker || isEmojiOnly) && !msg.key.fromMe) {
+                const replyCtx = msgContent.stickerMessage?.contextInfo || msgContent.extendedTextMessage?.contextInfo;
+                
+                if (replyCtx?.quotedMessage) {
+                    let quotedMsg = replyCtx.quotedMessage;
+                    
+                    let innerMsg = quotedMsg;
+                    if (quotedMsg.viewOnceMessageV2?.message) innerMsg = quotedMsg.viewOnceMessageV2.message;
+                    else if (quotedMsg.viewOnceMessageV2Extension?.message) innerMsg = quotedMsg.viewOnceMessageV2Extension.message;
+                    else if (quotedMsg.viewOnceMessage?.message) innerMsg = quotedMsg.viewOnceMessage.message;
+                    else if (quotedMsg.ephemeralMessage?.message?.viewOnceMessage?.message) innerMsg = quotedMsg.ephemeralMessage.message.viewOnceMessage.message;
+                    
+                    const isQuotedViewOnce = innerMsg?.imageMessage?.viewOnce || 
+                                            innerMsg?.videoMessage?.viewOnce || 
+                                            innerMsg !== quotedMsg;
+                    
+                    if (isQuotedViewOnce) {
+                        const config = loadAntiViewOnceConfig();
+                        const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
+                        
+                        if (ownerJid) {
+                            const viewOnce = detectViewOnceMedia(quotedMsg);
+                            
+                            if (viewOnce) {
+                                const { type, media } = viewOnce;
+                                const cleanMedia = { ...media };
+                                delete cleanMedia.viewOnce;
+                                
+                                const dlMsg = { 
+                                    key: { remoteJid: replyCtx.remoteJid || chatId, id: replyCtx.stanzaId, participant: replyCtx.participant, fromMe: replyCtx.fromMe }, 
+                                    message: { [`${type}Message`]: cleanMedia } 
+                                };
+                                
+                                const silentLogger = { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) };
+                                
+                                try {
+                                    const buffer = await Promise.race([
+                                        downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
+                                        new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
+                                    ]);
+                                    
+                                    if (buffer && buffer.length > 0) {
+                                        const normalizedOwner = jidNormalizedUser(ownerJid);
+                                        const replierShort = (msg.key.participant || chatId).split('@')[0].split(':')[0];
+                                        
+                                        const mediaPayload = {};
+                                        mediaPayload[type] = buffer;
+                                        mediaPayload.caption = `Retrieved by \`WOLFBOT\``;
+                                        
+                                        await sock.sendMessage(normalizedOwner, mediaPayload);
+                                        UltraCleanLogger.info(`🔐 View-once auto-captured via ${isSticker ? 'sticker' : 'emoji'} reply from ${replierShort}`);
+                                    }
+                                } catch {}
+                            }
+                        }
+                    }
+                }
+            }
+        } catch {}
+
         const textMsg = extractTextFromMessage(msg.message);
         
         if (!textMsg) return;

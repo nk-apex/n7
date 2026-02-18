@@ -47,7 +47,9 @@ export default {
 ├─⊷ *goodbye*
 │  └⊷ Toggle goodbye messages
 ├─⊷ *leave*
-│  └⊷ Leave the group
+│  └⊷ Leave the group (owner)
+├─⊷ *join*
+│  └⊷ Join group via link (owner)
 ├─⊷ *creategroup*
 │  └⊷ Create a new group
 │

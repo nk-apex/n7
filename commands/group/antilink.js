@@ -750,11 +750,25 @@ function extractMessageText(message) {
 // Setup listener once globally
 let antiLinkListenerAttached = false;
 
+export function initAntiLinkListener(sock) {
+    if (antiLinkListenerAttached) return;
+    const settings = loadAntiLink();
+    if (settings.some(g => g.enabled)) {
+        setupAntiLinkListener(sock);
+        antiLinkListenerAttached = true;
+    }
+}
+
 export default {
     name: 'antilink',
     description: 'Control link sharing in the group with different actions',
     category: 'group',
     async execute(sock, msg, args, metadata) {
+        if (!antiLinkListenerAttached) {
+            setupAntiLinkListener(sock);
+            antiLinkListenerAttached = true;
+        }
+
         const chatId = msg.key.remoteJid;
         const isGroup = chatId.endsWith('@g.us');
         

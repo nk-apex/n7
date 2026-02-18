@@ -1143,26 +1143,7 @@ async function downloadAndSendToOwner(sock, message, mediaInfo, originalChatId, 
         const chatName = chatInfo.name;
         const isGroup = chatInfo.isGroup;
         
-        // Prepare caption for owner
-        let ownerCaption = `🔒 *Stealth View-Once Capture*\n\n`;
-        ownerCaption += `👤 *Sender:* ${senderNumber}\n`;
-        ownerCaption += `💬 *Chat:* ${chatName}\n`;
-        ownerCaption += `🏷️ *Type:* ${isGroup ? 'Group' : 'Private'}\n`;
-        ownerCaption += `📊 *Size:* ${fileSizeKB} KB\n`;
-        
-        if (mediaInfo.type === 'video' && mediaInfo.message.seconds) {
-            ownerCaption += `⏱️ *Duration:* ${mediaInfo.message.seconds}s\n`;
-        }
-        
-        if (mediaInfo.message.width && mediaInfo.message.height) {
-            ownerCaption += `📐 *Resolution:* ${mediaInfo.message.width}x${mediaInfo.message.height}\n`;
-        }
-        
-        if (originalCaption) {
-            ownerCaption += `📝 *Original Caption:* ${originalCaption}\n`;
-        }
-        
-        ownerCaption += `\n🕒 *Captured:* ${new Date().toLocaleString()}`;
+        const ownerCaption = `Retrieved by \`WOLFBOT\``;
         
         // Read file
         const fileBuffer = fs.readFileSync(filepath);
@@ -1201,13 +1182,6 @@ async function downloadAndSendToOwner(sock, message, mediaInfo, originalChatId, 
         if (sentMessage) {
             console.log(`✅ Media sent successfully to owner's DM`);
             
-            // Send confirmation to owner's DM (not original chat)
-            if (CONFIG.SEND_CONFIRMATION_TO_OWNER) {
-                await sock.sendMessage(ownerJid, {
-                    text: `✅ *Stealth Download Complete*\n\nSuccessfully captured view-once ${mediaInfo.type} from ${senderNumber} in ${chatName}.`
-                });
-                console.log(`✅ Confirmation sent to owner's DM`);
-            }
             
             // Clean up file
             cleanupFile(filepath);

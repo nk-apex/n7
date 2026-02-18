@@ -1,8 +1,9 @@
 export default {
     name: 'leave',
     alias: ['exit', 'bye', 'out'],
-    description: 'Leave the current group',
+    description: 'Leave the current group (owner only)',
     category: 'group',
+    ownerOnly: true,
 
     async execute(sock, msg, args, PREFIX, extra) {
         const chatId = msg.key.remoteJid;
