@@ -128,7 +128,7 @@ const _noisyTokens = [
 ];
 
 const _importantTokens = [
-    'defibrillator','command','┌','│','└','╔','║','╚',
+    'command','┌','│','└','╔','║','╚',
     '✅','❌','👥','👤','📊','🔧','🐺','🚀','⚠️',
     '📱','🗑️','📤','👑','🎯','🛡️','🎵','🎬','📘',
     '📷','💾','🔒','🔍','💬'
@@ -2430,320 +2430,28 @@ class AutoLinkSystem {
 
 const autoLinkSystem = new AutoLinkSystem();
 
-// ====== PROFESSIONAL DEFIBRILLATOR SYSTEM ======
-class ProfessionalDefibrillator {
-    constructor() {
-        this.heartbeatInterval = null;
-        this.ownerReportInterval = null;
-        this.healthCheckInterval = null;
-        
-        this.lastTerminalHeartbeat = 0;
-        this.lastOwnerReport = 0;
-        this.lastCommandReceived = Date.now();
-        this.lastMessageProcessed = Date.now();
-        
-        this.heartbeatCount = 0;
-        this.restartCount = 0;
-        this.maxRestartsPerHour = 2;
-        this.restartHistory = [];
-        
-        this.isMonitoring = false;
-        this.ownerJid = null;
-        
-        this.responseTimeout = 120000;
-        this.terminalHeartbeatInterval = 300000;
-        this.ownerReportIntervalMs = 600000;
-        this.healthCheckIntervalMs = 300000;
-        
-        this.commandStats = {
-            total: 0,
-            lastMinute: 0,
-            lastHour: 0,
-            failed: 0
-        };
-        
-        UltraCleanLogger.success('Professional Defibrillator initialized');
-    }
-    
-    startMonitoring(sock) {
-        if (this.isMonitoring) return;
-        
-        this.isMonitoring = true;
-        this.ownerJid = sock?.user?.id || OWNER_JID;
-        
-        UltraCleanLogger.info('Defibrillator monitoring started');
-        
-        this.heartbeatInterval = setInterval(() => {
-            this.sendTerminalHeartbeat(sock);
-        }, this.terminalHeartbeatInterval);
-        
-        this.ownerReportInterval = setInterval(() => {
-            this.sendOwnerHeartbeatReport(sock);
-        }, this.ownerReportIntervalMs);
-        
-        this.healthCheckInterval = setInterval(() => {
-            this.performHealthCheck(sock);
-        }, this.healthCheckIntervalMs);
-        
-        this.setupCommandTracking();
-        
-        setTimeout(() => {
-            this.sendStartupReport(sock);
-        }, 5000);
-    }
-    
-    stopMonitoring() {
-        if (this.heartbeatInterval) {
-            clearInterval(this.heartbeatInterval);
-            this.heartbeatInterval = null;
-        }
-        
-        if (this.ownerReportInterval) {
-            clearInterval(this.ownerReportInterval);
-            this.ownerReportInterval = null;
-        }
-        
-        if (this.healthCheckInterval) {
-            clearInterval(this.healthCheckInterval);
-            this.healthCheckInterval = null;
-        }
-        
-        this.isMonitoring = false;
-        UltraCleanLogger.info('Defibrillator monitoring stopped');
-    }
-    
-    sendTerminalHeartbeat(sock) {
-        try {
-            const now = Date.now();
-            const timeSinceLastCommand = now - this.lastCommandReceived;
-            const timeSinceLastMessage = now - this.lastMessageProcessed;
-            
-            const uptime = process.uptime();
-            const hours = Math.floor(uptime / 3600);
-            const minutes = Math.floor((uptime % 3600) / 60);
-            const seconds = Math.floor(uptime % 60);
-            
-            const memoryUsage = process.memoryUsage();
-            const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
-            const heapMB = Math.round(memoryUsage.heapUsed / 1024 / 1024);
-            
-            const isConnected = sock && sock.user && sock.user.id;
-            const connectionStatus = isConnected ? '🟢 CONNECTED' : '🔴 DISCONNECTED';
-            
-            const currentPrefix = getCurrentPrefix();
-            const platform = detectPlatform();
-            
-            const cpm = this.calculateCPM();
-            const heartbeatDisplay = this.getHeartbeatVisual(this.heartbeatCount);
-            
-            const memberStats = memberDetector ? memberDetector.getStats() : null;
-            
-            const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
-            
-            console.log(chalk.redBright(`
-╔═══════════════════════════════════════════╗
-║          🩺 DEFIBRILLATOR HEARTBEAT       ║
-╠═══════════════════════════════════════════╣
-║  ${heartbeatDisplay}                                                
-║  ⏰ Uptime: ${hours}h ${minutes}m ${seconds}s                        
-║  💾 Memory: ${memoryMB}MB | Heap: ${heapMB}MB                         
-║  🔗 Status: ${connectionStatus}                                      
-║  📊 Commands: ${this.commandStats.total} (${cpm}/min)                
-║  👥 Members: ${memberStats ? `${memberStats.totalEvents} events` : 'Not loaded'}
-║  🔐 ViewOnce: ${antiviewonceStats ? `${antiviewonceStats.total} captured` : 'Not loaded'}
-║  ⏱️ Last Cmd: ${this.formatTimeAgo(timeSinceLastCommand)}            
-║  📨 Last Msg: ${this.formatTimeAgo(timeSinceLastMessage)}            
-║  💬 Prefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"  
-║  🏗️ Platform: ${platform}                                            
-║  🚀 Restarts: ${this.restartCount}                                   
-╚════════════════════════════════════════════╝
-`));
-            
-            this.heartbeatCount++;
-            this.lastTerminalHeartbeat = now;
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Heartbeat error: ${error.message}`);
-        }
-    }
-    
-    async sendOwnerHeartbeatReport(sock) {
-        try {
-            if (!sock || !this.ownerJid) return;
-            
-            const now = Date.now();
-            if (now - this.lastOwnerReport < 50000) return;
-            
-            const uptime = process.uptime();
-            const hours = Math.floor(uptime / 3600);
-            const minutes = Math.floor((uptime % 3600) / 60);
-            
-            const memoryUsage = process.memoryUsage();
-            const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
-            
-            const currentPrefix = getCurrentPrefix();
-            const platform = detectPlatform();
-            const isConnected = sock && sock.user && sock.user.id;
-            
-            const cpm = this.calculateCPM();
-            const availability = this.calculateAvailability();
-            
-            const memberStats = memberDetector ? memberDetector.getStats() : null;
-            
-            const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
-            
-            let statusEmoji = "🟢";
-            let statusText = "Excellent";
-            
-            if (memoryMB > 500) {
-                statusEmoji = "🟡";
-                statusText = "Good";
-            }
-            
-            if (memoryMB > 700) {
-                statusEmoji = "🔴";
-                statusText = "Warning";
-            }
-            
-            const reportMessage = `📊 *${BOT_NAME} HEARTBEAT REPORT*\n\n` +
-                                `⏰ *Uptime:* ${hours}h ${minutes}m\n` +
-                                `💾 *Memory:* ${memoryMB}MB ${statusEmoji}\n` +
-                                `📊 *Commands:* ${this.commandStats.total}\n` +
-                                `👥 *Members Detected:* ${memberStats ? memberStats.totalEvents : 0}\n` +
-                                `🔐 *ViewOnce Captured:* ${antiviewonceStats ? antiviewonceStats.total : 0}\n` +
-                                `⚡ *CPM:* ${cpm}/min\n` +
-                                `📈 *Availability:* ${availability}%\n` +
-                                `💬 *Prefix:* "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\n` +
-                                `🔗 *Status:* ${isConnected ? 'Connected ✅' : 'Disconnected ❌'}\n` +
-                                `🏗️ *Platform:* ${platform}\n` +
-                                `🩺 *Health:* ${statusText}\n\n` +
-                                `_Last updated: ${new Date().toLocaleTimeString()}_`;
-            
-            const sendPromise = sock.sendMessage(this.ownerJid, { text: reportMessage });
-            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
-            await Promise.race([sendPromise, timeoutPromise]);
-            
-            this.lastOwnerReport = now;
-            UltraCleanLogger.info('Owner heartbeat report sent');
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Owner report error: ${error.message}`);
-        }
-    }
-    
-    async sendStartupReport(sock) {
-        try {
-            if (!sock || !this.ownerJid) return;
-            
-            const currentPrefix = getCurrentPrefix();
-            const platform = detectPlatform();
-            const version = VERSION;
-            const memoryMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
-            
-            const startupMessage = `╭─⌈ 🚀 *${BOT_NAME} v${version} STARTED* ⌋\n` +
-                                 `├─⊷ *Platform:* ${platform}\n` +
-                                 `├─⊷ *Prefix:* ${isPrefixless ? 'none' : currentPrefix}\n` +
-                                 `├─⊷ *Mode:* ${BOT_MODE}\n` +
-                                 `├─⊷ *Memory:* ${memoryMB}MB\n` +
-                                 `├─⊷ *Monitoring:* ✅ Active\n` +
-                                 `╰───`;
-            
-            const sendPromise = sock.sendMessage(this.ownerJid, { text: startupMessage });
-            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
-            await Promise.race([sendPromise, timeoutPromise]);
-            UltraCleanLogger.success('Startup report sent to owner');
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Startup report error: ${error.message}`);
-        }
-    }
-    
-    async performHealthCheck(sock) {
-        try {
-            if (!sock || !this.isMonitoring) return;
-            
-            const now = Date.now();
-            const timeSinceLastActivity = now - this.lastMessageProcessed;
-            
-            if (timeSinceLastActivity > this.responseTimeout) {
-                UltraCleanLogger.warning(`No activity for ${Math.round(timeSinceLastActivity/1000)}s`);
-                
-                const isResponsive = await this.testBotResponsiveness(sock);
-                
-                if (!isResponsive) {
-                    UltraCleanLogger.error('Bot is unresponsive!');
-                    await this.handleUnresponsiveBot(sock);
-                    return;
-                }
-            }
-            
-            const memoryUsage = process.memoryUsage();
-            const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
-            
-            if (memoryMB > 700) {
-                UltraCleanLogger.critical(`High memory usage: ${memoryMB}MB`);
-                await this.handleHighMemory(sock, memoryMB);
-            } else if (memoryMB > 500) {
-                UltraCleanLogger.warning(`Moderate memory usage: ${memoryMB}MB`);
-            }
-            
-            if (this.commandStats.total > 10) {
-                const failureRate = (this.commandStats.failed / this.commandStats.total) * 100;
-                if (failureRate > 30) {
-                    UltraCleanLogger.warning(`High command failure rate: ${failureRate.toFixed(1)}%`);
-                }
-            }
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Health check error: ${error.message}`);
-        }
-    }
-    
-    async testBotResponsiveness(sock) {
-        return new Promise((resolve) => {
+// ====== LIGHTWEIGHT MEMORY MONITOR ======
+// Replaces the old Defibrillator with just the useful memory cleanup part
+const memoryMonitor = {
+    _interval: null,
+    start() {
+        if (this._interval) return;
+        this._interval = setInterval(() => {
             try {
-                if (sock.user?.id) {
-                    resolve(true);
-                } else {
-                    resolve(false);
+                const memMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
+                if (memMB > 700) {
+                    UltraCleanLogger.warning(`High memory: ${memMB}MB - trimming caches`);
+                    this.trimCaches();
+                } else if (memMB > 500) {
+                    UltraCleanLogger.info(`Memory: ${memMB}MB`);
                 }
-            } catch {
-                resolve(false);
-            }
-        });
-    }
-    
-    async handleUnresponsiveBot(sock) {
-        UltraCleanLogger.critical('Initiating emergency procedures...');
-        
-        await this.sendEmergencyAlert(sock, 'Bot is unresponsive');
-        
-        if (this.canRestart()) {
-            UltraCleanLogger.warning('Auto-restarting bot due to unresponsiveness...');
-            await this.restartBot(sock);
-        } else {
-            UltraCleanLogger.error('Restart limit reached. Manual intervention required.');
-        }
-    }
-    
-    async handleHighMemory(sock, memoryMB) {
-        UltraCleanLogger.warning(`Handling high memory (${memoryMB}MB)...`);
-        
-        this.freeMemory();
-        
-        const afterFree = Math.round(process.memoryUsage().rss / 1024 / 1024);
-        UltraCleanLogger.info(`Memory after cleanup: ${afterFree}MB (freed ${memoryMB - afterFree}MB)`);
-        
-        if (afterFree > 900 && this.canRestart()) {
-            await this.sendMemoryWarning(sock, afterFree);
-            UltraCleanLogger.critical('Critical memory usage after cleanup, restarting...');
-            await this.restartBot(sock, 'High memory usage');
-        } else if (afterFree > 700) {
-            await this.sendMemoryWarning(sock, afterFree);
-        }
-    }
-    
-    freeMemory() {
+            } catch {}
+        }, 5 * 60 * 1000);
+    },
+    stop() {
+        if (this._interval) { clearInterval(this._interval); this._interval = null; }
+    },
+    trimCaches() {
         try {
             const trimMap = (map, maxSize, keepCount, label) => {
                 if (!map || map.size <= maxSize) return;
@@ -2763,201 +2471,10 @@ class ProfessionalDefibrillator {
             if (store && store.messages && store.messages.size > 50) {
                 trimMap(store.messages, 50, 30, 'Message store');
             }
-            if (global.gc) {
-                global.gc();
-                UltraCleanLogger.info('Garbage collection forced');
-            }
-        } catch (error) {
-            UltraCleanLogger.error(`Memory free error: ${error.message}`);
-        }
+            if (global.gc) { global.gc(); }
+        } catch {}
     }
-    
-    async restartBot(sock, reason = 'Unresponsive') {
-        try {
-            if (!this.canRestart()) {
-                UltraCleanLogger.error('Restart limit reached. Cannot restart.');
-                return false;
-            }
-            
-            this.restartCount++;
-            this.restartHistory.push(Date.now());
-            
-            UltraCleanLogger.critical(`Restarting bot (${this.restartCount}): ${reason}`);
-            
-            await this.sendRestartNotification(sock, reason);
-            
-            this.stopMonitoring();
-            
-            setTimeout(() => {
-                UltraCleanLogger.info('Initiating bot restart...');
-                process.exit(1);
-            }, 3000);
-            
-            return true;
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Restart error: ${error.message}`);
-            return false;
-        }
-    }
-    
-    canRestart() {
-        const now = Date.now();
-        const oneHourAgo = now - (60 * 60 * 1000);
-        
-        const recentRestarts = this.restartHistory.filter(time => time > oneHourAgo);
-        return recentRestarts.length < this.maxRestartsPerHour;
-    }
-    
-    async sendEmergencyAlert(sock, reason) {
-        try {
-            if (!sock || !this.ownerJid) return;
-            
-            const alertMessage = `🚨 *EMERGENCY ALERT - ${BOT_NAME}*\n\n` +
-                               `❌ *Issue Detected:* ${reason}\n\n` +
-                               `📊 *Current Status:*\n` +
-                               `├─ Uptime: ${Math.round(process.uptime() / 60)}m\n` +
-                               `├─ Memory: ${Math.round(process.memoryUsage().rss / 1024 / 1024)}MB\n` +
-                               `├─ Last Activity: ${this.formatTimeAgo(Date.now() - this.lastMessageProcessed)}\n` +
-                               `├─ Commands: ${this.commandStats.total}\n` +
-                               `├─ Member Detections: ${memberDetector ? memberDetector.getStats().totalEvents : 0}\n` +
-                               `└─ ViewOnce Captures: ${antiViewOnceSystem ? antiViewOnceSystem.getStats().total : 0}\n\n` +
-                               `🩺 *Defibrillator Action:*\n` +
-                               `• Health check failed\n` +
-                               `• Auto-restart initiated\n` +
-                               `• Monitoring active\n\n` +
-                               `⏳ *Next check in 15 seconds...*`;
-            
-            const t = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
-            await Promise.race([sock.sendMessage(this.ownerJid, { text: alertMessage }), t]);
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Emergency alert error: ${error.message}`);
-        }
-    }
-    
-    async sendMemoryWarning(sock, memoryMB) {
-        try {
-            if (!sock || !this.ownerJid) return;
-            
-            const warningMessage = `⚠️ *MEMORY WARNING - ${BOT_NAME}*\n\n` +
-                                 `📊 *Current Usage:* ${memoryMB}MB\n\n` +
-                                 `🎯 *Thresholds:*\n` +
-                                 `├─ Normal: < 600MB\n` +
-                                 `├─ Warning: 500-700MB\n` +
-                                 `└─ Critical: > 700MB\n\n` +
-                                 `🛠️ *Actions Taken:*\n` +
-                                 `• Garbage collection forced\n` +
-                                 `• Cache cleared\n` +
-                                 `• Monitoring increased\n\n` +
-                                 `🩺 *Defibrillator Status:* ACTIVE`;
-            
-            const t = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
-            await Promise.race([sock.sendMessage(this.ownerJid, { text: warningMessage }), t]);
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Memory warning error: ${error.message}`);
-        }
-    }
-    
-    async sendRestartNotification(sock, reason) {
-        try {
-            if (!sock || !this.ownerJid) return;
-            
-            const restartMessage = `🔄 *AUTO-RESTART INITIATED - ${BOT_NAME}*\n\n` +
-                                 `📋 *Reason:* ${reason}\n\n` +
-                                 `📊 *Stats before restart:*\n` +
-                                 `├─ Uptime: ${Math.round(process.uptime() / 60)}m\n` +
-                                 `├─ Total Commands: ${this.commandStats.total}\n` +
-                                 `├─ Memory: ${Math.round(process.memoryUsage().rss / 1024 / 1024)}MB\n` +
-                                 `├─ Member Detections: ${memberDetector ? memberDetector.getStats().totalEvents : 0}\n` +
-                                 `├─ ViewOnce Captures: ${antiViewOnceSystem ? antiViewOnceSystem.getStats().total : 0}\n` +
-                                 `└─ Restart count: ${this.restartCount}\n\n` +
-                                 `⏳ *Bot will restart in 3 seconds...*\n` +
-                                 `✅ *All features will be restored automatically*`;
-            
-            const t = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
-            await Promise.race([sock.sendMessage(this.ownerJid, { text: restartMessage }), t]);
-            
-        } catch (error) {
-            UltraCleanLogger.error(`Restart notification error: ${error.message}`);
-        }
-    }
-    
-    setupCommandTracking() {
-        const originalLogCommand = UltraCleanLogger.command;
-        
-        UltraCleanLogger.command = (...args) => {
-            this.commandStats.total++;
-            this.lastCommandReceived = Date.now();
-            
-            const message = args.join(' ');
-            if (message.includes('failed') || message.includes('error') || message.includes('❌')) {
-                this.commandStats.failed++;
-            }
-            
-            originalLogCommand.apply(UltraCleanLogger, args);
-        };
-        
-        const originalLogEvent = UltraCleanLogger.event;
-        
-        UltraCleanLogger.event = (...args) => {
-            this.lastMessageProcessed = Date.now();
-            originalLogEvent.apply(UltraCleanLogger, args);
-        };
-    }
-    
-    calculateCPM() {
-        const now = Date.now();
-        const oneMinuteAgo = now - 60000;
-        
-        return Math.round(this.commandStats.total / Math.max(1, process.uptime() / 60));
-    }
-    
-    calculateAvailability() {
-        const uptime = process.uptime();
-        const totalRuntime = uptime + (this.restartCount * 5);
-        
-        if (totalRuntime === 0) return 100;
-        
-        const availability = (uptime / totalRuntime) * 100;
-        return Math.min(100, Math.round(availability));
-    }
-    
-    formatTimeAgo(ms) {
-        if (ms < 1000) return 'Just now';
-        if (ms < 60000) return `${Math.round(ms / 1000)}s ago`;
-        if (ms < 3600000) return `${Math.round(ms / 60000)}m ago`;
-        return `${Math.round(ms / 3600000)}h ago`;
-    }
-    
-    getHeartbeatVisual(count) {
-        const patterns = ['💗', '💓', '💖', '💘', '💝'];
-        const pattern = patterns[count % patterns.length];
-        const beats = ['─', '─', '─', '─'];
-        
-        const beatIndex = count % beats.length;
-        beats[beatIndex] = pattern;
-        
-        return `Heartbeat: ${beats.join('')}`;
-    }
-    
-    getStats() {
-        return {
-            isMonitoring: this.isMonitoring,
-            heartbeatCount: this.heartbeatCount,
-            restartCount: this.restartCount,
-            totalCommands: this.commandStats.total,
-            failedCommands: this.commandStats.failed,
-            lastCommand: this.formatTimeAgo(Date.now() - this.lastCommandReceived),
-            lastMessage: this.formatTimeAgo(Date.now() - this.lastMessageProcessed),
-            memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
-            uptime: Math.round(process.uptime())
-        };
-    }
-}
-
-const defibrillator = new ProfessionalDefibrillator();
+};
 
 // ====== ANTI-VIEWONCE SYSTEM ======
 class AntiViewOnceSystem {
@@ -4616,7 +4133,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }, 8000);
                 
                 setTimeout(() => {
-                    defibrillator.startMonitoring(sock);
+                    memoryMonitor.start();
                 }, 3000);
                 
                 // ====== THE ONLY SUCCESS MESSAGE ======
@@ -4645,9 +4162,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 isConnected = false;
                 stopHeartbeat();
                 
-                if (defibrillator) {
-                    defibrillator.stopMonitoring();
-                }
+                memoryMonitor.stop();
                 
                 if (statusDetector) {
                     statusDetector.saveStatusLogs();
@@ -4981,7 +4496,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
             }
 
             lastActivityTime = Date.now();
-            defibrillator.lastMessageProcessed = Date.now();
             
             // OPTIMIZATION: Process commands immediately in parallel
             handleIncomingMessage(sock, msg).catch(() => {});
@@ -5853,7 +5367,7 @@ async function handleIncomingMessage(sock, msg) {
                 
                 if (!commandName) {
                     const defaultCommands = ['ping', 'help', 'uptime', 'statusstats', 
-                                           'ultimatefix', 'prefixinfo', 'defib', 'defibrestart',
+                                           'ultimatefix', 'prefixinfo',
                                            'antiviewonce', 'av'];
                     if (defaultCommands.includes(firstWord)) {
                         commandName = firstWord;
@@ -5974,7 +5488,6 @@ async function handleIncomingMessage(sock, msg) {
                     updatePrefix: updatePrefixImmediately,
                     getCurrentPrefix: getCurrentPrefix,
                     rateLimiter: rateLimiter,
-                    defibrillator: defibrillator,
                     memberDetector: memberDetector,
                     antiViewOnceSystem: antiViewOnceSystem,
                     isPrefixless: isPrefixless,
@@ -6159,10 +5672,6 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                 helpText += `*STATUS DETECTOR*\n`;
                 helpText += `${prefixDisplay}statusstats - Show status detection stats\n\n`;
                 
-                helpText += `*DEFIBRILLATOR*\n`;
-                helpText += `${prefixDisplay}defib - Show defibrillator status\n`;
-                helpText += `${prefixDisplay}defibrestart - Force restart bot (owner)\n\n`;
-                
                 for (const [category, cmds] of commandCategories.entries()) {
                     helpText += `*${category.toUpperCase()}*\n`;
                     helpText += `${cmds.slice(0, 6).join(', ')}`;
@@ -6332,53 +5841,6 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                 await sock.sendMessage(chatId, { text: infoText }, { quoted: msg });
                 break;
                 
-            case 'defib':
-            case 'defibrillator':
-            case 'heartbeat':
-                if (!jidManager.isOwner(msg)) {
-                    await sock.sendMessage(chatId, {
-                        text: '❌ *Owner Only Command*'
-                    }, { quoted: msg });
-                    return;
-                }
-                
-                const stats = defibrillator.getStats();
-                const memoryUsage = process.memoryUsage();
-                const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
-                
-                const memberStats = memberDetector ? memberDetector.getStats() : null;
-                
-                const antiviewonceStats = antiViewOnceSystem ? antiViewOnceSystem.getStats() : null;
-                
-                let defibText = `🩺 *${BOT_NAME} DEFIBRILLATOR STATUS*\n\n`;
-                defibText += `📊 *Monitoring:* ${stats.isMonitoring ? '✅ ACTIVE' : '❌ INACTIVE'}\n`;
-                defibText += `💓 *Heartbeats:* ${stats.heartbeatCount}\n`;
-                defibText += `🔁 *Restarts:* ${stats.restartCount}\n`;
-                defibText += `📨 *Commands:* ${stats.totalCommands}\n`;
-                defibText += `❌ *Failed:* ${stats.failedCommands}\n`;
-                defibText += `💾 *Memory:* ${memoryMB}MB\n`;
-                defibText += `👥 *Member Events:* ${memberStats ? memberStats.totalEvents : 0}\n`;
-                defibText += `🔐 *ViewOnce Captures:* ${antiviewonceStats ? antiviewonceStats.total : 0}\n`;
-                defibText += `⏰ *Last Command:* ${stats.lastCommand}\n`;
-                defibText += `📨 *Last Message:* ${stats.lastMessage}\n`;
-                defibText += `🕒 *Uptime:* ${stats.uptime}s\n\n`;
-                
-                defibText += `⚡ *Features:*\n`;
-                defibText += `├─ Terminal Heartbeat: Every 10s\n`;
-                defibText += `├─ Owner Reports: Every 1m\n`;
-                defibText += `├─ Auto Health Checks: Every 15s\n`;
-                defibText += `├─ Memory Monitoring: Active\n`;
-                defibText += `├─ Member Detection: ${memberDetector ? '✅ ACTIVE' : '❌ INACTIVE'}\n`;
-                defibText += `├─ Anti-ViewOnce: ${antiViewOnceSystem ? '✅ ACTIVE' : '❌ INACTIVE'}\n`;
-                defibText += `├─ Auto-restart: Enabled\n`;
-                defibText += `└─ Command Tracking: Active\n\n`;
-                
-                defibText += `🎯 *Status:* ${defibrillator.isMonitoring ? '🟢 HEALTHY' : '🔴 INACTIVE'}`;
-                
-                await sock.sendMessage(chatId, { text: defibText }, { quoted: msg });
-                break;
-                
-            case 'defibrestart':
             case 'forcerestart':
                 if (!jidManager.isOwner(msg)) {
                     await sock.sendMessage(chatId, {
@@ -6392,7 +5854,7 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                 }, { quoted: msg });
                 
                 setTimeout(() => {
-                    defibrillator.restartBot(sock, 'Manual restart by owner');
+                    process.exit(1);
                 }, 5000);
                 break;
         }
@@ -6667,10 +6129,7 @@ const isHeroku = process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.
 process.on('SIGINT', () => {
     console.log(chalk.yellow('\n👋 Shutting down gracefully...'));
     stopHeartbeat();
-    
-    if (defibrillator) {
-        defibrillator.stopMonitoring();
-    }
+    memoryMonitor.stop();
     
     if (SOCKET_INSTANCE) SOCKET_INSTANCE.ws.close();
     process.exit(0);
