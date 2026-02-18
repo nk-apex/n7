@@ -1890,6 +1890,41 @@ export default {
       const deepClean = args.includes('deep') || args.includes('nuke');
       const sizeCheck = args.includes('size') || args.includes('check');
       
+      try {
+        const dfOut = await run('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', 5000);
+        const freeMatch = dfOut.match(/(\d+)M?\s*$/m);
+        const freeMB = freeMatch ? parseInt(freeMatch[1]) : null;
+        if (freeMB !== null && freeMB < 100) {
+          await editStatus(`⚠️ **Low disk space: ${freeMB}MB free**\nRunning emergency cleanup before update...`);
+          const cleanCmds = [
+            'rm -rf tmp_update_fast tmp_preserve_fast /tmp/*.zip /tmp/*.tar.gz 2>/dev/null',
+            'find ./session -name "sender-key-*" -mmin +60 -delete 2>/dev/null',
+            'find ./session -name "pre-key-*" -mmin +60 -delete 2>/dev/null',
+            'find ./session -name "app-state-sync-*" -mmin +60 -delete 2>/dev/null',
+            'find ./data -name "*.bak" -delete 2>/dev/null',
+            'rm -rf ./data/viewonce_private/* ./data/antidelete/media/* 2>/dev/null',
+            'find . -name "*.log" -not -path "./node_modules/*" -delete 2>/dev/null',
+            'rm -rf session_backup 2>/dev/null',
+            'git gc --prune=now --aggressive 2>/dev/null || true',
+            'npm cache clean --force 2>/dev/null || true'
+          ];
+          for (const cmd of cleanCmds) {
+            await run(cmd, 15000).catch(() => {});
+          }
+          const dfAfter = await run('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', 5000).catch(() => '');
+          const afterMatch = dfAfter.match(/(\d+)M?\s*$/m);
+          const afterMB = afterMatch ? parseInt(afterMatch[1]) : freeMB;
+          const recovered = afterMB - freeMB;
+          await editStatus(`💾 **Cleanup done:** ${afterMB}MB free (recovered ${recovered}MB)\nContinuing update...`);
+          if (afterMB < 30) {
+            await editStatus(`❌ **Not enough disk space for update**\nOnly ${afterMB}MB free after cleanup.\nManually delete large files or increase disk allocation.`);
+            return;
+          }
+        }
+      } catch (diskErr) {
+        // Non-critical, continue with update
+      }
+      
       // If just checking size
       if (sizeCheck) {
         try {

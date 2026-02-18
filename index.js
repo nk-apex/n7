@@ -1244,6 +1244,7 @@ function safeWriteFile(filePath, data) {
     } catch (err) {
         if (err.code === 'ENOSPC') {
             UltraCleanLogger.error(`💾 Disk full! Cannot write ${filePath}. Running emergency cleanup...`);
+            DiskManager._lastDiskCheck = 0;
             DiskManager.runCleanup(true);
             try {
                 fs.writeFileSync(filePath, content);
