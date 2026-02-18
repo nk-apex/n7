@@ -1,8 +1,10 @@
 import axios from "axios";
 import yts from "yt-search";
 
-const WOLF_API = "https://apis.xwolf.space/download/mp3";
-const WOLF_STREAM = "https://apis.xwolf.space/download/stream/mp3";
+const WOLF_API = "https://wolfmusicapi-al6b.onrender.com/download/yta2";
+const WOLF_STREAM = "https://wolfmusicapi-al6b.onrender.com/download/stream/mp3";
+const WOLF_API_2 = "https://wolfmusicapi-al6b.onrender.com/download/yta3";
+const WOLF_API_3 = "https://wolfmusicapi-al6b.onrender.com/download/ytmp3";
 const KEITH_API = "https://apiskeith.top";
 
 const keithFallbackEndpoints = [
@@ -183,6 +185,22 @@ export default {
         }
       } catch (wolfErr) {
         console.log(`🎵 [SONG] WOLF API failed: ${wolfErr.message}`);
+      }
+
+      if (!audioBuffer) {
+        for (const altApi of [WOLF_API_2, WOLF_API_3]) {
+          try {
+            console.log(`🎵 [SONG] Trying alt Wolf API: ${altApi}`);
+            const altRes = await axios.get(`${altApi}?url=${encodeURIComponent(videoUrl)}`, { timeout: 20000 });
+            if (altRes.data?.success && altRes.data?.downloadUrl) {
+              audioBuffer = await downloadAndValidate(altRes.data.downloadUrl);
+              sourceUsed = 'Wolf Alt';
+              break;
+            }
+          } catch (err) {
+            console.log(`🎵 [SONG] Alt failed: ${err.message}`);
+          }
+        }
       }
 
       if (!audioBuffer) {

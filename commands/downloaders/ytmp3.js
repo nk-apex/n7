@@ -1,42 +1,59 @@
 import axios from "axios";
 import yts from "yt-search";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+const WOLF_API = "https://wolfmusicapi-al6b.onrender.com/download/ytmp3";
+const WOLF_STREAM = "https://wolfmusicapi-al6b.onrender.com/download/stream/mp3";
+const WOLF_API_2 = "https://wolfmusicapi-al6b.onrender.com/download/yta2";
+const WOLF_API_3 = "https://wolfmusicapi-al6b.onrender.com/download/yta3";
 const KEITH_API = "https://apiskeith.top";
 
-const audioEndpoints = [
+const keithFallbackEndpoints = [
   `${KEITH_API}/download/ytmp3`,
   `${KEITH_API}/download/audio`,
   `${KEITH_API}/download/dlmp3`,
-  `${KEITH_API}/download/mp3`,
-  `${KEITH_API}/download/yta`,
-  `${KEITH_API}/download/yta2`,
-  `${KEITH_API}/download/yta3`
+  `${KEITH_API}/download/mp3`
 ];
 
-const keithDownloadAudio = async (url) => {
-  for (const endpoint of audioEndpoints) {
+async function getKeithDownloadUrl(videoUrl) {
+  for (const endpoint of keithFallbackEndpoints) {
     try {
       const response = await axios.get(
-        `${endpoint}?url=${encodeURIComponent(url)}`,
+        `${endpoint}?url=${encodeURIComponent(videoUrl)}`,
         { timeout: 15000 }
       );
       if (response.data?.status && response.data?.result) {
-        console.log(`[YTMP3] Download success via: ${endpoint}`);
         return response.data.result;
       }
-    } catch (error) {
-      console.log(`[YTMP3] Endpoint failed: ${endpoint} - ${error.message}`);
+    } catch {
       continue;
     }
   }
   return null;
-};
+}
+
+async function downloadAndValidate(downloadUrl) {
+  const response = await axios({
+    url: downloadUrl,
+    method: 'GET',
+    responseType: 'arraybuffer',
+    timeout: 60000,
+    maxRedirects: 5,
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    },
+    validateStatus: (status) => status >= 200 && status < 400
+  });
+
+  const buffer = Buffer.from(response.data);
+  if (buffer.length < 1000) throw new Error('File too small, likely not audio');
+
+  const headerStr = buffer.slice(0, 50).toString('utf8').toLowerCase();
+  if (headerStr.includes('<!doctype') || headerStr.includes('<html') || headerStr.includes('bad gateway')) {
+    throw new Error('Received HTML instead of audio');
+  }
+
+  return buffer;
+}
 
 export default {
   name: "ytmp3",
@@ -58,165 +75,146 @@ export default {
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      let videoUrl = '';
-      let videoTitle = '';
-      let videoId = '';
-      
-      if (searchQuery.match(/(youtube\.com|youtu\.be)/i)) {
-        videoUrl = searchQuery;
-        videoId = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i)?.[1] || '';
-        
-        if (videoId) {
-          try {
-            const { videos } = await yts({ videoId });
-            if (videos && videos.length > 0) {
-              videoTitle = videos[0].title;
-            }
-          } catch (e) {}
-        }
-        if (!videoTitle) videoTitle = "YouTube Audio";
-      } else {
+      let apiData = null;
+      try {
+        const response = await axios.get(`${WOLF_API}?url=${encodeURIComponent(searchQuery)}`, { timeout: 25000 });
+        if (response.data?.success) apiData = response.data;
+      } catch (err) {
+        console.log(`🎵 [YTMP3] Wolf API failed: ${err.message}`);
+      }
+
+      let videoTitle = apiData?.title || apiData?.searchResult?.title || '';
+      let videoId = apiData?.videoId || '';
+      let youtubeUrl = apiData?.youtubeUrl || '';
+      let duration = apiData?.searchResult?.duration || '';
+
+      if (!videoTitle && !searchQuery.startsWith('http')) {
         try {
-          const searchRes = await axios.get(
-            `${KEITH_API}/search/yts?query=${encodeURIComponent(searchQuery)}`,
-            { timeout: 10000 }
-          );
-          const videos = searchRes.data?.result || [];
-          
-          if (videos.length > 0) {
-            videoUrl = videos[0].url;
-            videoTitle = videos[0].title;
-            videoId = videos[0].id || videos[0].videoId;
-          } else {
-            const { videos: ytResults } = await yts(searchQuery);
-            if (!ytResults || ytResults.length === 0) {
-              await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-              await sock.sendMessage(jid, { 
-                text: `❌ No songs found for "${searchQuery}"`
-              }, { quoted: m });
-              return;
-            }
-            videoUrl = ytResults[0].url;
+          const { videos: ytResults } = await yts(searchQuery);
+          if (ytResults && ytResults.length > 0) {
             videoTitle = ytResults[0].title;
             videoId = ytResults[0].videoId;
+            youtubeUrl = ytResults[0].url;
+            duration = ytResults[0].timestamp || '';
           }
-        } catch (searchError) {
-          console.error("❌ [YTMP3] Search error:", searchError);
-          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-          await sock.sendMessage(jid, { 
-            text: `❌ Search failed. Try direct YouTube link.`
-          }, { quoted: m });
-          return;
+        } catch (e) {}
+      }
+
+      if (!videoTitle) videoTitle = "YouTube Audio";
+
+      console.log(`🎵 [YTMP3] Found: ${videoTitle}`);
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
+
+      let audioBuffer = null;
+      let sourceUsed = '';
+
+      const downloadSources = [];
+
+      if (apiData?.downloadUrl && apiData.downloadUrl !== 'In Processing...' && apiData.downloadUrl.startsWith('http')) {
+        downloadSources.push({ url: apiData.downloadUrl, label: 'Wolf Direct' });
+      }
+
+      if (apiData?.streamUrl) {
+        const streamUrl = apiData.streamUrl.replace('http://', 'https://');
+        downloadSources.push({ url: streamUrl, label: 'Wolf Stream' });
+      }
+
+      downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(searchQuery)}`, label: 'Wolf Stream Q' });
+
+      for (const source of downloadSources) {
+        try {
+          console.log(`🎵 [YTMP3] Trying: ${source.label}`);
+          audioBuffer = await downloadAndValidate(source.url);
+          sourceUsed = source.label;
+          break;
+        } catch (err) {
+          console.log(`🎵 [YTMP3] ${source.label} failed: ${err.message}`);
+          continue;
         }
       }
 
-      console.log(`🎵 [YTMP3] Found: ${videoTitle} - ${videoUrl}`);
+      if (!audioBuffer) {
+        for (const altApi of [WOLF_API_2, WOLF_API_3]) {
+          try {
+            console.log(`🎵 [YTMP3] Trying alt Wolf API`);
+            const altRes = await axios.get(`${altApi}?url=${encodeURIComponent(searchQuery)}`, { timeout: 20000 });
+            if (altRes.data?.success && altRes.data?.downloadUrl) {
+              audioBuffer = await downloadAndValidate(altRes.data.downloadUrl);
+              sourceUsed = 'Wolf Alt';
+              break;
+            }
+          } catch (err) {
+            console.log(`🎵 [YTMP3] Alt failed: ${err.message}`);
+          }
+        }
+      }
 
-      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
+      if (!audioBuffer && youtubeUrl) {
+        console.log(`🎵 [YTMP3] Wolf failed, trying Keith fallback...`);
+        const keithUrl = await getKeithDownloadUrl(youtubeUrl);
+        if (keithUrl) {
+          try {
+            audioBuffer = await downloadAndValidate(keithUrl);
+            sourceUsed = 'Keith Fallback';
+          } catch (err) {
+            console.log(`🎵 [YTMP3] Keith failed: ${err.message}`);
+          }
+        }
+      }
 
-      let downloadUrl = await keithDownloadAudio(videoUrl);
-
-      if (!downloadUrl) {
+      if (!audioBuffer) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ MP3 download failed. Try again later or use .song command.`
+          text: `❌ MP3 download failed. Try again later or use ${prefix}song command.`
         }, { quoted: m });
         return;
       }
 
-      const tempDir = path.join(__dirname, "../temp");
-      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-      
-      const tempFile = path.join(tempDir, `ytmp3_${Date.now()}.mp3`);
-      
-      try {
-        const response = await axios({
-          url: downloadUrl,
-          method: 'GET',
-          responseType: 'stream',
-          timeout: 60000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
+      const fileSizeMB = (audioBuffer.length / (1024 * 1024)).toFixed(1);
 
-        if (response.status !== 200) {
-          throw new Error(`Download failed with status: ${response.status}`);
-        }
-
-        const writer = fs.createWriteStream(tempFile);
-        response.data.pipe(writer);
-        
-        await new Promise((resolve, reject) => {
-          writer.on('finish', resolve);
-          writer.on('error', reject);
-        });
-
-        const stats = fs.statSync(tempFile);
-        const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(1);
-
-        if (stats.size === 0) throw new Error("Downloaded file is empty");
-
-        if (parseFloat(fileSizeMB) > 50) {
-          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-          await sock.sendMessage(jid, { 
-            text: `❌ MP3 too large: ${fileSizeMB}MB\nMax size: 50MB`
-          }, { quoted: m });
-          fs.unlinkSync(tempFile);
-          return;
-        }
-
-        const audioBuffer = fs.readFileSync(tempFile);
-
-        let thumbnailBuffer = null;
-        if (videoId) {
-          try {
-            const thumbResponse = await axios.get(
-              `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-              { responseType: 'arraybuffer', timeout: 10000 }
-            );
-            if (thumbResponse.status === 200 && thumbResponse.data.length > 1000) {
-              thumbnailBuffer = Buffer.from(thumbResponse.data);
-            }
-          } catch (e) {}
-        }
-
-        const cleanTitle = videoTitle.replace(/[^\w\s.-]/gi, '').substring(0, 50);
-
-        await sock.sendMessage(jid, {
-          audio: audioBuffer,
-          mimetype: 'audio/mpeg',
-          ptt: false,
-          fileName: `${cleanTitle}.mp3`,
-          contextInfo: {
-            externalAdReply: {
-              title: videoTitle.substring(0, 60),
-              body: `🎵 YouTube MP3 • ${fileSizeMB}MB | Powered by Keith API`,
-              mediaType: 2,
-              thumbnail: thumbnailBuffer,
-              sourceUrl: videoUrl,
-              mediaUrl: videoUrl,
-              renderLargerThumbnail: true
-            }
-          }
-        }, { quoted: m });
-
-        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
-
-        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-
-        console.log(`✅ [YTMP3] Success: ${videoTitle} (${fileSizeMB}MB)`);
-
-      } catch (downloadError) {
-        console.error("❌ [YTMP3] Download error:", downloadError);
+      if (parseFloat(fileSizeMB) > 50) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to download MP3: ${downloadError.message}`
+          text: `❌ MP3 too large: ${fileSizeMB}MB\nMax size: 50MB`
         }, { quoted: m });
-        if (fs.existsSync(tempFile)) {
-          try { fs.unlinkSync(tempFile); } catch {}
-        }
+        return;
       }
+
+      let thumbnailBuffer = null;
+      if (videoId) {
+        try {
+          const thumbResponse = await axios.get(
+            `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+            { responseType: 'arraybuffer', timeout: 10000 }
+          );
+          if (thumbResponse.status === 200 && thumbResponse.data.length > 1000) {
+            thumbnailBuffer = Buffer.from(thumbResponse.data);
+          }
+        } catch (e) {}
+      }
+
+      const cleanTitle = videoTitle.replace(/[^\w\s.-]/gi, '').substring(0, 50);
+
+      await sock.sendMessage(jid, {
+        audio: audioBuffer,
+        mimetype: 'audio/mpeg',
+        ptt: false,
+        fileName: `${cleanTitle}.mp3`,
+        contextInfo: {
+          externalAdReply: {
+            title: videoTitle.substring(0, 60),
+            body: `🎵 ${duration ? duration + ' • ' : ''}${fileSizeMB}MB | WOLF API`,
+            mediaType: 2,
+            thumbnail: thumbnailBuffer,
+            sourceUrl: youtubeUrl || searchQuery,
+            mediaUrl: youtubeUrl || searchQuery,
+            renderLargerThumbnail: true
+          }
+        }
+      }, { quoted: m });
+
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+      console.log(`✅ [YTMP3] Success: ${videoTitle} (${fileSizeMB}MB) [${sourceUsed}]`);
 
     } catch (error) {
       console.error("❌ [YTMP3] Fatal error:", error);

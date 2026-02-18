@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const WOLF_API = 'https://apis.xwolf.space/download/mp4';
-const WOLF_STREAM = 'https://apis.xwolf.space/download/stream/mp4';
+const WOLF_API = 'https://wolfmusicapi-al6b.onrender.com/download/mp4';
+const WOLF_STREAM = 'https://wolfmusicapi-al6b.onrender.com/download/stream/mp4';
 const KEITH_API = 'https://apiskeith.top';
 
 const keithFallbackEndpoints = [
@@ -77,36 +77,37 @@ export default {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       const apiUrl = `${WOLF_API}?url=${encodeURIComponent(searchQuery)}`;
-      const response = await axios.get(apiUrl, { timeout: 20000 });
+      let data = null;
 
-      if (!response.data?.success) {
-        throw new Error('WOLF API returned no results');
+      try {
+        const response = await axios.get(apiUrl, { timeout: 20000 });
+        if (response.data) data = response.data;
+      } catch (err) {
+        console.log(`🎬 [MP4] Wolf API request failed: ${err.message}`);
       }
 
-      const data = response.data;
-      const title = data.title || data.searchResult?.title || 'Unknown Video';
-      const duration = data.searchResult?.duration || '';
-      const videoId = data.videoId || '';
-      const youtubeUrl = data.youtubeUrl || searchQuery;
-      const fileSize = data.fileSize || '';
-      const streamUrl = data.streamUrl ? data.streamUrl.replace('http://', 'https://') : null;
-      const downloadUrl = data.downloadUrl;
+      const title = data?.title || data?.searchResult?.title || 'Unknown Video';
+      const duration = data?.searchResult?.duration || '';
+      const videoId = data?.videoId || '';
+      const youtubeUrl = data?.youtubeUrl || searchQuery;
+      const fileSize = data?.fileSize || '';
+      const streamUrl = data?.streamUrl ? data.streamUrl.replace('http://', 'https://') : null;
+      const downloadUrl = data?.downloadUrl;
 
       console.log(`🎬 [MP4] Found: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       const downloadSources = [];
 
+      if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
+        downloadSources.push({ url: downloadUrl, label: 'WOLF Direct' });
+      }
+
       if (streamUrl) {
         downloadSources.push({ url: streamUrl, label: 'WOLF Stream' });
       }
 
-      downloadSources.push({ url: `${WOLF_STREAM}?q=${encodeURIComponent(searchQuery)}`, label: 'WOLF Stream Q' });
       downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(youtubeUrl)}`, label: 'WOLF Stream URL' });
-
-      if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
-        downloadSources.push({ url: downloadUrl, label: 'WOLF Direct' });
-      }
 
       let videoBuffer = null;
       let sourceUsed = '';
@@ -127,8 +128,12 @@ export default {
         console.log(`🎬 [MP4] All WOLF sources failed, trying Keith fallback`);
         const keithUrl = await getKeithDownloadUrl(youtubeUrl);
         if (keithUrl) {
-          videoBuffer = await downloadAndValidate(keithUrl);
-          sourceUsed = 'Keith Fallback';
+          try {
+            videoBuffer = await downloadAndValidate(keithUrl);
+            sourceUsed = 'Keith Fallback';
+          } catch (err) {
+            console.log(`🎬 [MP4] Keith failed: ${err.message}`);
+          }
         }
       }
 

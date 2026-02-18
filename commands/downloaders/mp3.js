@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-const WOLF_API = 'https://apis.xwolf.space/download/mp3';
-const WOLF_STREAM = 'https://apis.xwolf.space/download/stream/mp3';
+const WOLF_API = 'https://wolfmusicapi-al6b.onrender.com/download/yta2';
+const WOLF_STREAM = 'https://wolfmusicapi-al6b.onrender.com/download/stream/mp3';
+const WOLF_API_2 = 'https://wolfmusicapi-al6b.onrender.com/download/yta3';
+const WOLF_API_3 = 'https://wolfmusicapi-al6b.onrender.com/download/ytmp3';
 const KEITH_API = 'https://apiskeith.top';
 
 const keithFallbackEndpoints = [
@@ -81,32 +83,34 @@ export default {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       const apiUrl = `${WOLF_API}?url=${encodeURIComponent(searchQuery)}`;
-      const response = await axios.get(apiUrl, { timeout: 20000 });
+      let data = null;
 
-      if (!response.data?.success) {
-        throw new Error('WOLF API returned no results');
+      try {
+        const response = await axios.get(apiUrl, { timeout: 20000 });
+        if (response.data) data = response.data;
+      } catch (err) {
+        console.log(`🎵 [MP3] Wolf API request failed: ${err.message}`);
       }
 
-      const data = response.data;
-      const title = data.title || data.searchResult?.title || 'Unknown Track';
-      const duration = data.searchResult?.duration || '';
-      const videoId = data.videoId || '';
-      const youtubeUrl = data.youtubeUrl || searchQuery;
-      const fileSize = data.fileSize || '';
-      const streamUrl = data.streamUrl ? data.streamUrl.replace('http://', 'https://') : null;
-      const downloadUrl = data.downloadUrl;
+      const title = data?.title || data?.searchResult?.title || 'Unknown Track';
+      const duration = data?.searchResult?.duration || '';
+      const videoId = data?.videoId || '';
+      const youtubeUrl = data?.youtubeUrl || searchQuery;
+      const fileSize = data?.fileSize || '';
+      const streamUrl = data?.streamUrl ? data.streamUrl.replace('http://', 'https://') : null;
+      const downloadUrl = data?.downloadUrl;
 
       console.log(`🎵 [MP3] Found: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       const downloadSources = [];
 
-      if (streamUrl) {
-        downloadSources.push({ url: streamUrl, label: 'WOLF Stream' });
-      }
-
       if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
         downloadSources.push({ url: downloadUrl, label: 'WOLF Direct' });
+      }
+
+      if (streamUrl) {
+        downloadSources.push({ url: streamUrl, label: 'WOLF Stream' });
       }
 
       downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(youtubeUrl)}`, label: 'WOLF Stream URL' });
@@ -123,6 +127,22 @@ export default {
         } catch (err) {
           console.log(`🎵 [MP3] ${source.label} failed: ${err.message}`);
           continue;
+        }
+      }
+
+      if (!audioBuffer) {
+        for (const altApi of [WOLF_API_2, WOLF_API_3]) {
+          try {
+            console.log(`🎵 [MP3] Trying alt Wolf API: ${altApi}`);
+            const altRes = await axios.get(`${altApi}?url=${encodeURIComponent(searchQuery)}`, { timeout: 20000 });
+            if (altRes.data?.success && altRes.data?.downloadUrl) {
+              audioBuffer = await downloadAndValidate(altRes.data.downloadUrl);
+              sourceUsed = 'Wolf Alt';
+              break;
+            }
+          } catch (err) {
+            console.log(`🎵 [MP3] Alt failed: ${err.message}`);
+          }
         }
       }
 
