@@ -214,6 +214,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import chalk from 'chalk';
 import readline from 'readline';
+import { execSync } from 'child_process';
 import axios from "axios";
 import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessage, jidNormalizedUser } from '@whiskeysockets/baileys';
 import NodeCache from 'node-cache';
@@ -977,6 +978,255 @@ setInterval(() => {
     }
 }, 2000);
 
+const DiskManager = {
+    WARNING_MB: 50,
+    CRITICAL_MB: 20,
+    CHECK_INTERVAL: 10 * 60 * 1000,
+    CLEANUP_INTERVAL: 30 * 60 * 1000,
+    lastWarning: 0,
+    lastCleanup: 0,
+    isLow: false,
+
+    getDiskFree() {
+        try {
+            const output = execSync('df -BM --output=avail . 2>/dev/null || df -m . 2>/dev/null', { encoding: 'utf8', timeout: 3000 });
+            const match = output.match(/(\d+)M?\s*$/m);
+            return match ? parseInt(match[1]) : null;
+        } catch { return null; }
+    },
+
+    getDirSize(dirPath) {
+        let total = 0;
+        try {
+            if (!fs.existsSync(dirPath)) return 0;
+            const entries = fs.readdirSync(dirPath);
+            for (const entry of entries) {
+                try {
+                    const full = path.join(dirPath, entry);
+                    const stat = fs.statSync(full);
+                    if (stat.isFile()) total += stat.size;
+                    else if (stat.isDirectory()) total += this.getDirSize(full);
+                } catch {}
+            }
+        } catch {}
+        return total;
+    },
+
+    getCleanupReport() {
+        const sessionFiles = this._countSessionSignalFiles();
+        const voMedia = this.getDirSize('./data/viewonce_messages') + this.getDirSize('./data/viewonce_private');
+        const adMedia = this.getDirSize('./data/antidelete/media');
+        const tempFiles = this.getDirSize('./temp');
+        const backupFiles = this.getDirSize('./session_backup');
+        const statusLogs = (() => { try { return fs.existsSync('./data/status_detection_logs.json') ? fs.statSync('./data/status_detection_logs.json').size : 0; } catch { return 0; } })();
+        const freeMB = this.getDiskFree();
+        return {
+            freeMB,
+            sessionSignalFiles: sessionFiles.count,
+            sessionSignalMB: Math.round(sessionFiles.bytes / 1024 / 1024 * 10) / 10,
+            viewonceMediaMB: Math.round(voMedia / 1024 / 1024 * 10) / 10,
+            antideleteMediaMB: Math.round(adMedia / 1024 / 1024 * 10) / 10,
+            tempFilesMB: Math.round(tempFiles / 1024 / 1024 * 10) / 10,
+            backupMB: Math.round(backupFiles / 1024 / 1024 * 10) / 10,
+            statusLogsMB: Math.round(statusLogs / 1024 / 1024 * 10) / 10
+        };
+    },
+
+    _countSessionSignalFiles() {
+        let count = 0, bytes = 0;
+        try {
+            if (!fs.existsSync(SESSION_DIR)) return { count: 0, bytes: 0 };
+            const files = fs.readdirSync(SESSION_DIR);
+            for (const file of files) {
+                if (file.startsWith('sender-key-') || file.startsWith('pre-key-') || file.startsWith('app-state-sync-version-')) {
+                    count++;
+                    try { bytes += fs.statSync(path.join(SESSION_DIR, file)).size; } catch {}
+                }
+            }
+        } catch {}
+        return { count, bytes };
+    },
+
+    cleanSessionSignalFiles(aggressive = false) {
+        let removed = 0;
+        try {
+            if (!fs.existsSync(SESSION_DIR)) return 0;
+            const files = fs.readdirSync(SESSION_DIR);
+            const senderKeys = files.filter(f => f.startsWith('sender-key-'));
+            const preKeys = files.filter(f => f.startsWith('pre-key-'));
+            const appSync = files.filter(f => f.startsWith('app-state-sync-version-'));
+
+            const limit = aggressive ? 100 : 500;
+            if (senderKeys.length > limit) {
+                const toRemove = senderKeys.slice(0, senderKeys.length - limit);
+                for (const f of toRemove) {
+                    try { fs.unlinkSync(path.join(SESSION_DIR, f)); removed++; } catch {}
+                }
+            }
+            if (preKeys.length > limit) {
+                const toRemove = preKeys.slice(0, preKeys.length - limit);
+                for (const f of toRemove) {
+                    try { fs.unlinkSync(path.join(SESSION_DIR, f)); removed++; } catch {}
+                }
+            }
+            if (appSync.length > 50) {
+                const toRemove = appSync.slice(0, appSync.length - 50);
+                for (const f of toRemove) {
+                    try { fs.unlinkSync(path.join(SESSION_DIR, f)); removed++; } catch {}
+                }
+            }
+        } catch {}
+        return removed;
+    },
+
+    cleanOldMedia(dirPath, maxAgeDays = 3, aggressive = false) {
+        let removed = 0;
+        try {
+            if (!fs.existsSync(dirPath)) return 0;
+            const now = Date.now();
+            const maxAge = (aggressive ? 1 : maxAgeDays) * 24 * 60 * 60 * 1000;
+            const files = fs.readdirSync(dirPath);
+            for (const file of files) {
+                if (file.endsWith('.json')) continue;
+                try {
+                    const full = path.join(dirPath, file);
+                    const stat = fs.statSync(full);
+                    if (stat.isFile() && (now - stat.mtimeMs) > maxAge) {
+                        fs.unlinkSync(full);
+                        removed++;
+                    }
+                } catch {}
+            }
+        } catch {}
+        return removed;
+    },
+
+    cleanTempFiles() {
+        let removed = 0;
+        try {
+            if (!fs.existsSync('./temp')) return 0;
+            const files = fs.readdirSync('./temp');
+            for (const file of files) {
+                try { fs.unlinkSync(path.join('./temp', file)); removed++; } catch {}
+            }
+        } catch {}
+        return removed;
+    },
+
+    cleanBackups() {
+        let removed = 0;
+        try {
+            if (!fs.existsSync('./session_backup')) return 0;
+            const files = fs.readdirSync('./session_backup');
+            for (const file of files) {
+                try { fs.unlinkSync(path.join('./session_backup', file)); removed++; } catch {}
+            }
+            try { fs.rmdirSync('./session_backup'); } catch {}
+        } catch {}
+        return removed;
+    },
+
+    truncateStatusLogs() {
+        try {
+            const logFile = './data/status_detection_logs.json';
+            if (!fs.existsSync(logFile)) return false;
+            const data = JSON.parse(fs.readFileSync(logFile, 'utf8'));
+            if (data.logs && data.logs.length > 50) {
+                data.logs = data.logs.slice(-50);
+                fs.writeFileSync(logFile, JSON.stringify(data));
+                return true;
+            }
+        } catch {}
+        return false;
+    },
+
+    runCleanup(aggressive = false) {
+        const results = {
+            sessionFiles: this.cleanSessionSignalFiles(aggressive),
+            viewonceMedia: this.cleanOldMedia('./data/viewonce_messages', 3, aggressive) + this.cleanOldMedia('./data/viewonce_private', 3, aggressive),
+            antideleteMedia: this.cleanOldMedia('./data/antidelete/media', 2, aggressive),
+            tempFiles: this.cleanTempFiles(),
+            backups: aggressive ? this.cleanBackups() : 0,
+            statusLogs: this.truncateStatusLogs() ? 1 : 0
+        };
+        const total = Object.values(results).reduce((a, b) => a + b, 0);
+        if (total > 0) {
+            UltraCleanLogger.info(`🧹 Disk cleanup: removed ${total} items (session: ${results.sessionFiles}, viewonce: ${results.viewonceMedia}, antidelete: ${results.antideleteMedia}, temp: ${results.tempFiles}, backups: ${results.backups})`);
+        }
+        this.lastCleanup = Date.now();
+        return results;
+    },
+
+    monitor() {
+        const freeMB = this.getDiskFree();
+        if (freeMB === null) return;
+
+        if (freeMB < this.CRITICAL_MB) {
+            this.isLow = true;
+            UltraCleanLogger.error(`🚨 CRITICAL: Only ${freeMB}MB disk space left! Running aggressive cleanup...`);
+            this.runCleanup(true);
+        } else if (freeMB < this.WARNING_MB) {
+            this.isLow = true;
+            if (Date.now() - this.lastWarning > 30 * 60 * 1000) {
+                UltraCleanLogger.warning(`⚠️ Low disk space: ${freeMB}MB remaining. Running cleanup...`);
+                this.lastWarning = Date.now();
+            }
+            this.runCleanup(false);
+        } else {
+            this.isLow = false;
+        }
+    },
+
+    start() {
+        setTimeout(() => this.monitor(), 30000);
+        setInterval(() => this.monitor(), this.CHECK_INTERVAL);
+        setInterval(() => {
+            if (!this.isLow) this.runCleanup(false);
+        }, this.CLEANUP_INTERVAL);
+        UltraCleanLogger.info('💾 Disk space manager: ✅ ACTIVE');
+    }
+};
+
+function safeWriteFile(filePath, data) {
+    const content = (typeof data === 'string' || Buffer.isBuffer(data)) ? data : JSON.stringify(data, null, 2);
+    try {
+        fs.writeFileSync(filePath, content);
+        return true;
+    } catch (err) {
+        if (err.code === 'ENOSPC') {
+            UltraCleanLogger.error(`💾 Disk full! Cannot write ${filePath}. Running emergency cleanup...`);
+            DiskManager.runCleanup(true);
+            try {
+                fs.writeFileSync(filePath, content);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+        throw err;
+    }
+}
+
+async function safeWriteFileAsync(filePath, data) {
+    const fsPromises = fs.promises;
+    try {
+        await fsPromises.writeFile(filePath, typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+        return true;
+    } catch (err) {
+        if (err.code === 'ENOSPC') {
+            UltraCleanLogger.error(`💾 Disk full! Cannot write ${filePath}. Running emergency cleanup...`);
+            DiskManager.runCleanup(true);
+            try {
+                await fsPromises.writeFile(filePath, typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+                return true;
+            } catch {
+                return false;
+            }
+        }
+        throw err;
+    }
+}
+
 // Utility functions
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -1324,7 +1574,7 @@ class NewMemberDetector {
                 fs.mkdirSync('./data', { recursive: true });
             }
             
-            fs.writeFileSync('./data/member_detection.json', JSON.stringify(data, null, 2));
+            safeWriteFile('./data/member_detection.json', data);
         } catch (error) {
             UltraCleanLogger.warning(`Could not save member detection data: ${error.message}`);
         }
@@ -1508,7 +1758,7 @@ class NewMemberDetector {
             }
             
             data.updated = new Date().toISOString();
-            fs.writeFileSync(WELCOME_DATA_FILE, JSON.stringify(data, null, 2));
+            safeWriteFile(WELCOME_DATA_FILE, data);
             return true;
         } catch (error) {
             UltraCleanLogger.warning(`Error saving welcome data: ${error.message}`);
@@ -2696,7 +2946,7 @@ class AntiViewOnceSystem {
             if (!fs.existsSync(ANTIVIEWONCE_DATA_DIR)) {
                 fs.mkdirSync(ANTIVIEWONCE_DATA_DIR, { recursive: true });
             }
-            fs.writeFileSync(ANTIVIEWONCE_CONFIG_FILE, JSON.stringify(config, null, 2));
+            safeWriteFile(ANTIVIEWONCE_CONFIG_FILE, config);
             UltraCleanLogger.info('💾 Anti-viewonce config saved');
         } catch (error) {
             UltraCleanLogger.error(`Config save error: ${error.message}`);
@@ -2723,7 +2973,7 @@ class AntiViewOnceSystem {
                 total: this.detectedMessages.length,
                 mode: this.config.mode
             };
-            fs.writeFileSync(ANTIVIEWONCE_HISTORY_FILE, JSON.stringify(data, null, 2));
+            safeWriteFile(ANTIVIEWONCE_HISTORY_FILE, data);
         } catch (error) {
             UltraCleanLogger.warning(`History save warning: ${error.message}`);
         }
@@ -2783,7 +3033,10 @@ class AntiViewOnceSystem {
             const savePath = isPrivate ? ANTIVIEWONCE_PRIVATE_DIR : ANTIVIEWONCE_SAVE_DIR;
             const filepath = join(savePath, filename);
             
-            fs.writeFileSync(filepath, buffer);
+            if (!safeWriteFile(filepath, buffer)) {
+                UltraCleanLogger.error(`💾 Cannot save media - disk full`);
+                return null;
+            }
             
             const sizeKB = Math.round(buffer.length / 1024);
             UltraCleanLogger.success(`💾 Saved: ${filename} (${sizeKB}KB) to ${isPrivate ? 'private' : 'public'} folder`);
@@ -3207,7 +3460,7 @@ class StatusDetector {
                 updatedAt: new Date().toISOString(),
                 count: this.statusLogs.length
             };
-            fs.writeFileSync('./data/status_detection_logs.json', JSON.stringify(data, null, 2));
+            safeWriteFile('./data/status_detection_logs.json', data);
         } catch (error) {
             // Silent fail
         }
@@ -4386,7 +4639,13 @@ async function startBot(loginMode = 'auto', loginData = null) {
             if (credsTimer) clearTimeout(credsTimer);
             credsTimer = setTimeout(() => {
                 credsPending = false;
-                saveCreds().catch(() => {});
+                saveCreds().catch((err) => {
+                    if (err?.code === 'ENOSPC') {
+                        UltraCleanLogger.error('💾 Disk full during saveCreds! Running emergency cleanup...');
+                        DiskManager.runCleanup(true);
+                        saveCreds().catch(() => {});
+                    }
+                });
             }, 500);
         };
         const flushCreds = () => {
@@ -5579,16 +5838,27 @@ async function handleIncomingMessage(sock, msg) {
                     defibrillator: defibrillator,
                     memberDetector: memberDetector,
                     antiViewOnceSystem: antiViewOnceSystem,
-                    isPrefixless: isPrefixless
+                    isPrefixless: isPrefixless,
+                    DiskManager: DiskManager
                 });
             } catch (error) {
-                UltraCleanLogger.error(`Command ${commandName} failed: ${error.message}`);
+                if (error?.code === 'ENOSPC') {
+                    UltraCleanLogger.error(`💾 Disk full during command ${commandName}! Running emergency cleanup...`);
+                    DiskManager.runCleanup(true);
+                } else {
+                    UltraCleanLogger.error(`Command ${commandName} failed: ${error.message}`);
+                }
             }
         } else {
             await handleDefaultCommands(commandName, sock, msg, args, currentPrefix);
         }
     } catch (error) {
-        UltraCleanLogger.error(`Message handler error: ${error.message}`);
+        if (error?.code === 'ENOSPC') {
+            UltraCleanLogger.error(`💾 Disk full in message handler! Running emergency cleanup...`);
+            DiskManager.runCleanup(true);
+        } else {
+            UltraCleanLogger.error(`Message handler error: ${error.message}`);
+        }
     }
 }
 
@@ -6155,6 +6425,7 @@ const isHeroku = process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.
         UltraCleanLogger.info(`🔐 Anti-ViewOnce: ✅ ENABLED (Private/Auto modes)`);
         UltraCleanLogger.info(`👥 Welcome/Goodbye System: ✅ AVAILABLE (Off by default, enable per-group)`);
         UltraCleanLogger.info(`🎯 Background processes: ✅ ENABLED`);
+        DiskManager.start();
         
         // ====== AUTO-RECONNECT LOGIC ======
         // 1. First try SESSION_ID from .env (works on any platform)

@@ -543,92 +543,60 @@ export default {
                 
             case 'clean':
             case 'cleanup':
-                const cleanType = args[1]?.toLowerCase() || 'session';
-                
-                if (cleanType === 'session') {
-                    try {
-                        const sessionDir = './session';
-                        if (!existsSync(sessionDir)) {
-                            return sock.sendMessage(chatId, {
-                                text: `✅ *Session Cleanup*\n\nNo session directory found. Nothing to clean.`
-                            }, { quoted: msg });
-                        }
-                        
-                        // Get size before cleanup
-                        const sizeBefore = await getDirectorySize(sessionDir);
-                        
-                        // Count files
-                        const files = readdirSync(sessionDir);
-                        const fileCount = files.length;
-                        
-                        // Actually clean (you can implement cleanup logic here)
-                        // For now, just show info
-                        
-                        let response = `🧹 *SESSION CLEANUP*\n\n`;
-                        response += `📁 Directory: ${sessionDir}\n`;
-                        response += `📊 Size: ${formatBytes(sizeBefore)}\n`;
-                        response += `📄 Files: ${fileCount}\n\n`;
-                        
-                        if (fileCount > 0) {
-                            response += `⚠️ *WARNING:* Cleaning sessions will log you out!\n\n`;
-                            response += `To clean, use: \`${PREFIX}clean\`\n`;
-                            response += `Or manually delete: rm -rf ./session\n`;
-                        } else {
-                            response += `✅ Already clean!\n`;
-                        }
-                        
-                        await sock.sendMessage(chatId, {
-                            text: response
-                        }, { quoted: msg });
-                        
-                    } catch (error) {
-                        await sock.sendMessage(chatId, {
-                            text: `❌ *Cleanup Error*\n\nError: ${error.message}`
+                try {
+                    const dm = extra?.DiskManager;
+                    if (!dm) {
+                        return sock.sendMessage(chatId, {
+                            text: `❌ *Disk Manager not available*\n\nPlease restart the bot.`
                         }, { quoted: msg });
                     }
-                } else if (cleanType === 'logs') {
-                    try {
-                        const logsDir = './logs';
-                        if (!existsSync(logsDir)) {
-                            return sock.sendMessage(chatId, {
-                                text: `✅ *Logs Cleanup*\n\nNo logs directory found. Nothing to clean.`
-                            }, { quoted: msg });
-                        }
-                        
-                        const sizeBefore = await getDirectorySize(logsDir);
-                        const files = readdirSync(logsDir);
-                        
-                        let response = `🧹 *LOGS CLEANUP*\n\n`;
-                        response += `📁 Directory: ${logsDir}\n`;
-                        response += `📊 Size: ${formatBytes(sizeBefore)}\n`;
-                        response += `📄 Log files: ${files.length}\n\n`;
-                        
-                        if (files.length > 0) {
-                            response += `Log files:\n`;
-                            files.slice(0, 10).forEach(file => {
-                                response += `├─ ${file}\n`;
-                            });
-                            if (files.length > 10) {
-                                response += `└─ ... and ${files.length - 10} more\n`;
-                            }
-                            
-                            response += `\nTo delete: rm -rf ./logs/*.log\n`;
-                        } else {
-                            response += `✅ Already clean!\n`;
-                        }
-                        
-                        await sock.sendMessage(chatId, {
-                            text: response
-                        }, { quoted: msg });
-                        
-                    } catch (error) {
-                        await sock.sendMessage(chatId, {
-                            text: `❌ *Logs Cleanup Error*\n\nError: ${error.message}`
-                        }, { quoted: msg });
-                    }
-                } else {
+
+                    const aggressive = args[1]?.toLowerCase() === 'deep' || args[1]?.toLowerCase() === 'aggressive';
+                    const reportBefore = dm.getCleanupReport();
+
                     await sock.sendMessage(chatId, {
-                        text: `❌ *Invalid cleanup type*\n\nAvailable: session, logs\n\nExample: \`${PREFIX}disk clean session\``
+                        text: `🧹 *Running ${aggressive ? 'DEEP' : 'standard'} cleanup...*\n\nPlease wait...`
+                    }, { quoted: msg });
+
+                    const results = dm.runCleanup(aggressive);
+                    const reportAfter = dm.getCleanupReport();
+                    const total = Object.values(results).reduce((a, b) => a + b, 0);
+
+                    let response = `🧹 *DISK CLEANUP COMPLETE*\n\n`;
+                    response += `📊 *Before → After:*\n`;
+                    if (reportBefore.freeMB !== null) {
+                        response += `├─ Free Space: ${reportBefore.freeMB}MB → ${reportAfter.freeMB}MB\n`;
+                    }
+                    response += `├─ Session Signal Files: ${reportBefore.sessionSignalFiles} (${reportBefore.sessionSignalMB}MB)\n`;
+                    response += `├─ ViewOnce Media: ${reportBefore.viewonceMediaMB}MB\n`;
+                    response += `├─ Antidelete Media: ${reportBefore.antideleteMediaMB}MB\n`;
+                    response += `├─ Temp Files: ${reportBefore.tempFilesMB}MB\n`;
+                    response += `├─ Session Backups: ${reportBefore.backupMB}MB\n`;
+                    response += `└─ Status Logs: ${reportBefore.statusLogsMB}MB\n\n`;
+
+                    response += `🗑️ *Removed:*\n`;
+                    response += `├─ Session files: ${results.sessionFiles}\n`;
+                    response += `├─ ViewOnce media: ${results.viewonceMedia}\n`;
+                    response += `├─ Antidelete media: ${results.antideleteMedia}\n`;
+                    response += `├─ Temp files: ${results.tempFiles}\n`;
+                    response += `├─ Backups: ${results.backups}\n`;
+                    response += `├─ Status logs: ${results.statusLogs ? 'Truncated' : 'OK'}\n`;
+                    response += `└─ *Total: ${total} items removed*\n\n`;
+
+                    if (reportAfter.freeMB !== null && reportAfter.freeMB < 50) {
+                        response += `⚠️ Disk space still low (${reportAfter.freeMB}MB). Consider removing unused files manually.\n\n`;
+                    }
+
+                    response += `💡 *Usage:*\n`;
+                    response += `├─ \`${PREFIX}disk clean\` - Standard cleanup\n`;
+                    response += `└─ \`${PREFIX}disk clean deep\` - Aggressive cleanup (removes more)\n`;
+
+                    await sock.sendMessage(chatId, {
+                        text: response
+                    }, { quoted: msg });
+                } catch (error) {
+                    await sock.sendMessage(chatId, {
+                        text: `❌ *Cleanup Error*\n\nError: ${error.message}`
                     }, { quoted: msg });
                 }
                 break;
@@ -681,15 +649,16 @@ export default {
                 helpText += `├─ \`${PREFIX}disk bot\` - Bot storage details\n`;
                 helpText += `├─ \`${PREFIX}disk system\` - System information\n`;
                 helpText += `├─ \`${PREFIX}disk partitions\` - Disk partitions\n`;
-                helpText += `├─ \`${PREFIX}disk clean [type]\` - Storage cleanup\n`;
+                helpText += `├─ \`${PREFIX}disk clean\` - Auto cleanup (session, media, temp)\n`;
+                helpText += `├─ \`${PREFIX}disk clean deep\` - Aggressive cleanup\n`;
                 helpText += `├─ \`${PREFIX}disk monitor\` - Real-time monitoring\n`;
                 helpText += `└─ \`${PREFIX}disk help\` - This help message\n\n`;
                 
                 helpText += `⚡ *Examples:*\n`;
                 helpText += `├─ \`${PREFIX}disk bot\`\n`;
                 helpText += `├─ \`${PREFIX}disk system\`\n`;
-                helpText += `├─ \`${PREFIX}disk clean session\`\n`;
-                helpText += `└─ \`${PREFIX}disk clean logs\`\n\n`;
+                helpText += `├─ \`${PREFIX}disk clean\`\n`;
+                helpText += `└─ \`${PREFIX}disk clean deep\`\n\n`;
                 
                 helpText += `📊 *Features:*\n`;
                 helpText += `├─ Accurate disk usage\n`;
