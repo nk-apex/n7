@@ -2798,311 +2798,347 @@ case 3: {
     infoSection = `*No additional information is enabled.*\n*Use .togglemenuinfo to customize*\n\n`;
   }
 
-  const commandsText = `┌────────────────
-│ 🏠 GROUP MANAGEMENT 🏠 
-├────────────────
-│ 🛡️ ADMIN & MODERATION 🛡️ 
-├────────────────
-│ add                     
-│ promote                 
-│ demote                  
-│ kick                    
-│ kickall                 
-│ ban                     
-│ unban                   
-│ banlist                 
-│ clearbanlist            
-│ warn                    
-│ resetwarn               
-│ setwarn                 
-│ mute                    
-│ unmute                  
-│ gctime                  
-│ antileave               
-│ antilink                
-│ welcome                 
-├────────────────
-│ 🚫 AUTO-MODERATION 🚫   
-├────────────────
-│ antisticker             
-│ antiviewonce  
-│ antilink  
+  const commandsText = `┌──⌈ \`GROUP MANAGEMENT\` ⌋
+│ add
+│ promote
+│ promoteall
+│ demote
+│ demoteall
+│ kick
+│ kickall
+│ ban
+│ unban
+│ clearbanlist
+│ warn
+│ resetwarn
+│ setwarn
+│ warnings
+│ mute
+│ unmute
+│ gctime
+│ antileave
+│ antilink
+│ welcome
+│ goodbye
+│ leave
+│ creategroup
+└───────────────
+
+┌──⌈ \`AUTO MODERATION\` ⌋
+│ antisticker
 │ antiimage
 │ antivideo
 │ antiaudio
 │ antimention
-│ antistatusmention  
+│ antistatusmention
 │ antigrouplink
-├────────────────
-│ 📊 GROUP INFO & TOOLS 📊 
-├────────────────
-│ groupinfo               
-│ tagadmin                
-│ tagall                  
-│ hidetag                 
-│ link                    
-│ invite                  
-│ revoke                 
-│ setdesc                 
-│ fangtrace               
-│ getgpp 
-│ togstatus                 
-└────────────────
+│ antidemote
+│ antipromote
+│ antiviewonce
+└───────────────
 
-┌────────────────
-│ 🎨 MENU COMMANDS 🎨
-├────────────────
+┌──⌈ \`GROUP INFO & TOOLS\` ⌋
+│ groupinfo
+│ grouplink
+│ tagadmin
+│ tagall
+│ hidetag
+│ link
+│ invite
+│ revoke
+│ setdesc
+│ fangtrace
+│ getgpp
+│ togstatus
+│ getparticipants
+│ listonline
+│ listinactive
+│ approveall
+│ rejectall
+└───────────────
+
+┌──⌈ \`MENU SETTINGS\` ⌋
+│ menu
+│ menu2
+│ menustyle
 │ togglemenuinfo
 │ setmenuimage
-│ resetmenuinfo
-│ menustyle
-└────────────────
+│ restoremenuimage
+└───────────────
 
-┌────────────────
-│ 👑 OWNER CONTROLS 👑    
-├────────────────
-│ ⚡ CORE MANAGEMENT ⚡    
-├────────────────
-│ setbotname              
-│ setowner                
-│ setprefix               
-│ iamowner                
-│ about                   
-│ block                   
-│ unblock                 
-│ blockdetect             
-│ silent                  
-│ anticall                
-│ mode                    
-│ online                  
-│ setpp                   
-│ repo                    
-│ antidelete              
-│ antideletestatus                  
-├────────────────
-│ 🔄 SYSTEM & MAINTENANCE 🛠️ 
-├────────────────
-│ restart                 
-│ workingreload           
-│ reloadenv               
-│ getsettings             
-│ setsetting              
-│ test                    
-│ disk                    
-│ hostip                  
-│ findcommands            
-└────────────────
+┌──⌈ \`OWNER CONTROLS\` ⌋
+│ setbotname
+│ resetbotname
+│ setowner
+│ resetowner
+│ setprefix
+│ prefix
+│ iamowner
+│ about
+│ owner
+│ block
+│ unblock
+│ blockdetect
+│ silent
+│ anticall
+│ mode
+│ setpp
+│ setfooter
+│ repo
+│ pair
+│ antidelete
+│ antideletestatus
+│ antiedit
+│ chatbot
+│ shutdown
+└───────────────
 
-┌────────────────
-│ ⚙️ AUTOMATION ⚙️
-├────────────────
-│ autoread                
-│ autotyping              
-│ autorecording           
-│ autoreact               
-│ autoreactstatus         
-│ autobio                 
-│ autorec                 
-└────────────────
-┌────────────────
-│ ✨ GENERAL UTILITIES ✨
-├────────────────
-│ 🔍 INFO & SEARCH 🔎
-├────────────────
+┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
+│ restart
+│ workingreload
+│ reloadenv
+│ getsettings
+│ setsetting
+│ test
+│ disk
+│ hostip
+│ findcommands
+│ latestupdates
+│ panel
+│ debugchat
+└───────────────
+
+┌──⌈ \`SUDO\` ⌋
+│ addsudo
+│ delsudo
+│ listsudo
+│ checksudo
+│ clearsudo
+│ sudomode
+│ sudoinfo
+│ mysudo
+│ sudodebug
+│ linksudo
+└───────────────
+
+┌──⌈ \`AUTOMATION\` ⌋
+│ autoread
+│ autotyping
+│ autorecording
+│ autoreact
+│ autoreactstatus
+│ autoviewstatus
+│ autobio
+│ autorec
+│ reactowner
+└───────────────
+
+┌──⌈ \`PRIVACY CONTROLS\` ⌋
+│ online
+│ privacy
+│ receipt
+│ profilepic
+│ viewer
+└───────────────
+
+┌──⌈ \`GENERAL UTILITIES\` ⌋
 │ alive
 │ ping
 │ ping2
 │ time
-│ connection
+│ uptime
 │ define
 │ news
 │ covid
+│ weather
+│ wiki
+│ translate
 │ iplookup
 │ getip
 │ getpp
 │ getgpp
 │ prefixinfo
-├───────────────
-│ 🔗 CONVERSION & MEDIA 📁
-├───────────────
+└───────────────
+
+┌──⌈ \`CONVERSION & MEDIA\` ⌋
 │ shorturl
+│ url
+│ fetch
 │ qrencode
 │ take
 │ imgbb
-│ tiktok
 │ save
+│ screenshot
+│ inspect
 │ toimage
 │ tosticker
 │ toaudio
+│ tovoice
 │ tts
-├───────────────
-│ 📝 PERSONAL TOOLS 📅
-├───────────────
-│ pair
-│ resetwarn
-│ setwarn
-└────────────────
+│ trebleboost
+│ jarvis
+└───────────────
 
+┌──⌈ \`CONTACT TOOLS\` ⌋
+│ vcf
+│ viewvcf
+│ vv
+│ vv2
+└───────────────
 
-├────────────────
-│ 🎵 MUSIC  🎶
-├────────────────
-│ play                    
-│ song                    
-│ lyrics                  
-│ spotify                             
-└────────────────
-┌────────────────
-│ 🤖 MEDIA & AI COMMANDS 🧠 
-├────────────────
-│ ⬇️ MEDIA DOWNLOADS 📥     
-├────────────────
-│ youtube                 
-│ tiktok                 
-│ instagram               
-│ facebook                
-│ snapchat                
-│ apk   
+┌──⌈ \`MUSIC\` ⌋
+│ play
+│ song
+│ video
+│ videodoc
+│ lyrics
+│ shazam
+│ spotify
+└───────────────
+
+┌──⌈ \`MEDIA DOWNLOADS\` ⌋
+│ tiktok
+│ instagram
+│ facebook
+│ snapchat
+│ apk
 │ yts
 │ ytplay
 │ ytmp3
 │ ytv
 │ ytmp4
-│ ytplaydoc
-│ song
-│ play
-│ spotify
-│ video
-│ image                  
-├────────────────
-│ 🎨 AI GENERATION 💡    
-├────────────────
-│ gpt                     
-│ gemini                  
-│ deepseek                
-│ deepseek+               
-│ analyze                 
-│ suno                    
-│ wolfbot
+│ ytvdoc
+│ videodl
+│ playlist
+└───────────────
+
+┌──⌈ \`AI COMMANDS\` ⌋
+│ gpt
+│ chatgpt
+│ copilot
+│ bing
 │ bard
 │ claudeai
-│ venice
 │ grok
-│ wormgpt
-│ speechwriter
 │ blackbox
 │ mistral
-│ metai                        
-├────────────────
-│ 🎨 AI TOOLS💡    
-├────────────────
-│ videogen   
-│ aiscanner
+│ metai
+│ perplexity
+│ qwenai
+│ ilama
+│ venice
+│ wormgpt
+│ deepseek+
+│ chatbot
+└───────────────
+
+┌──⌈ \`AI GENERATION\` ⌋
+│ imagine
+│ imagegen
+│ flux
+│ analyze
+│ suno
+│ speechwriter
 │ humanizer
-│ summarize     
-└───────────────
-┌───────────────
-│ 🖼️ IMAGE TOOLS 🖼️
-├───────────────
-│ image                   
-│ imagegenerate           
-│ anime                   
-│ art                     
-│ real                    
+│ summarize
+│ totext
+│ removebg
+│ vision
 └───────────────
 
-┌───────────────
-│ 🏆 SPORTS 🏆
-├───────────────
-│ football                
-│ basketball              
-│ cricket                 
-│ f1                      
-│ nfl                     
-│ mma                     
-│ tennis                  
-│ baseball                
-│ hockey                  
-│ golf                    
-│ sportsmenu              
+┌──⌈ \`AI TOOLS\` ⌋
+│ videogen
+│ aiscanner
+│ aimenu
+│ brandlogo
+│ companylogo
+│ logoai
 └───────────────
 
-┌───────────────
-│ 🛡️ SECURITY & HACKING 🔒 
-├───────────────
-│ 🌐 NETWORK & INFO 📡   
-├───────────────
-│ ipinfo                  
-│ shodan                  
-│ iplookup                
-│ getip                   
+┌──⌈ \`AI VIDEO EFFECTS\` ⌋
+│ tigervideo
+│ introvideo
+│ lightningpubg
+│ lovevideo
+│ videogen
 └───────────────
 
-┌────────────────
-│ 🎨 LOGO DESIGN STUDIO 🎨
-├────────────────
-│ 🌟 PREMIUM METALS 🌟    
-├────────────────
-│ goldlogo                
-│ silverlogo              
-│ platinumlogo            
-│ chromelogo              
-│ diamondlogo             
-│ bronzelogo              
-│ steelogo                
-│ copperlogo              
-│ titaniumlogo            
-├────────────────
-│ 🔥 ELEMENTAL EFFECTS 🔥  
-├────────────────
-│ firelogo                
-│ icelogo                 
-│ iceglowlogo             
-│ lightninglogo           
-│ aqualogo                
-│ rainbowlogo             
-│ sunlogo                 
-│ moonlogo                
-├────────────────
-│ 🎭 MYTHICAL & MAGICAL 🧙  
-├────────────────
-│ dragonlogo              
-│ phoenixlogo             
-│ wizardlogo              
-│ crystallogo             
-│ darkmagiclogo           
-├────────────────
-│ 🌌 DARK & GOTHIC 🌑     
-├────────────────
-│ shadowlogo              
-│ smokelogo               
-│ bloodlogo               
-├────────────────
-│ 💫 GLOW & NEON EFFECTS 🌈  
-├────────────────
-│ neonlogo                
-│ glowlogo                
-├────────────────
-│ 🤖 TECH & FUTURISTIC 🚀  
-├────────────────
-│ matrixlogo              
-└────────────────
-┌────────────────
-│ 🐙 GITHUB COMMANDS 🐙
-├────────────────
+┌──⌈ \`IMAGE TOOLS\` ⌋
+│ image
+│ imagegen
+│ imagine
+│ anime
+│ art
+│ real
+│ remini
+│ vision
+└───────────────
+
+┌──⌈ \`SPORTS\` ⌋
+│ football
+│ basketball
+│ cricket
+│ f1
+│ nfl
+│ mma
+│ tennis
+│ baseball
+│ hockey
+│ golf
+│ sportsmenu
+└───────────────
+
+┌──⌈ \`SECURITY & HACKING\` ⌋
+│ ipinfo
+│ nmap
+│ shodan
+│ nglattack
+└───────────────
+
+┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
+│ goldlogo
+│ silverlogo
+│ platinumlogo
+│ chromelogo
+│ diamondlogo
+│ bronzelogo
+│ steellogo
+│ copperlogo
+│ titaniumlogo
+│ firelogo
+│ icelogo
+│ iceglowlogo
+│ lightninglogo
+│ aqualogo
+│ rainbowlogo
+│ sunlogo
+│ moonlogo
+│ dragonlogo
+│ phoenixlogo
+│ wizardlogo
+│ crystallogo
+│ darkmagiclogo
+│ shadowlogo
+│ smokelogo
+│ bloodlogo
+│ neonlogo
+│ glowlogo
+│ gradientlogo
+│ matrixlogo
+└───────────────
+
+┌──⌈ \`GITHUB TOOLS\` ⌋
 │ gitclone
 │ gitinfo
+│ repanalyze
+│ zip
+│ update
 │ repo
-│ commits
-│ stars
-│ watchers
-│ release
-└────────────────
-┌────────────────
-│ 🌸 ANIME COMMANDS 🌸
-├────────────────
+└───────────────
+
+┌──⌈ \`ANIME REACTIONS\` ⌋
+│ animemenu
 │ awoo
-│ bj
 │ bully
 │ cringe
 │ cry
@@ -3110,6 +3146,7 @@ case 3: {
 │ dance
 │ glomp
 │ highfive
+│ hug
 │ kill
 │ kiss
 │ lick
@@ -3122,13 +3159,43 @@ case 3: {
 │ waifu
 │ wink
 │ yeet
-└────────────────
+└───────────────
 
+┌──⌈ \`GAMES\` ⌋
+│ coinflip
+│ dare
+│ dice
+│ emojimix
+│ joke
+│ quiz
+│ rps
+│ snake
+│ tetris
+│ truth
+│ tictactoe
+│ quote
+└───────────────
 
+┌──⌈ \`FUN & TOOLS\` ⌋
+│ bf
+│ gf
+│ couple
+│ gay
+│ getjid
+│ movie
+│ trailer
+│ goodmorning
+│ goodnight
+│ channelstatus
+│ hack
+└───────────────
 
-🐺POWERED BY WOLFTECH🐺
+┌──⌈ \`QUICK COMMANDS\` ⌋
+│ p
+│ up
+└───────────────
 
-`;
+🐺 *POWERED BY WOLFTECH* 🐺`;
 
   // ========== APPLY "READ MORE" EFFECT ==========
   // Combine info section (visible) and commands (hidden) with "Read more"
@@ -7696,28 +7763,15 @@ case 7: {
     const s = Math.floor(uptime % 60);
     const uptimeStr = `${h}h ${mnt}m ${s}s`;
     
-    const getRAMUsage = () => {
-      try {
-        const mem = process.memoryUsage();
-        const used = mem.heapUsed / 1024 / 1024;
-        const total = mem.heapTotal / 1024 / 1024;
-        const percent = Math.round((used / total) * 100);
-        const barLength = 10;
-        const filledBars = Math.round((percent / 100) * barLength);
-        const emptyBars = barLength - filledBars;
-        const memBar = '█'.repeat(filledBars) + '░'.repeat(emptyBars);
-        return {
-          bar: memBar,
-          percent: percent,
-          usedMB: Math.round(used * 100) / 100,
-          totalMB: Math.round(total * 100) / 100
-        };
-      } catch (error) {
-        return { bar: '░░░░░░░░░░', percent: 0, usedMB: 0, totalMB: 0 };
-      }
-    };
-    
-    const ramUsage = getRAMUsage();
+    const usedMemBytes = process.memoryUsage().rss;
+    const usedMem = (usedMemBytes / 1024 / 1024).toFixed(1);
+    const totalMemBytes = os.totalmem();
+    const totalMemGB = (totalMemBytes / 1024 / 1024 / 1024).toFixed(1);
+    const memPercent = Math.min(Math.max((usedMemBytes / totalMemBytes) * 100, 0), 100);
+    const memPercentDisplay = Math.floor(memPercent);
+    const filledBars = Math.max(Math.floor(memPercent / 10), 0);
+    const emptyBars = Math.max(10 - filledBars, 0);
+    const memBar = "█".repeat(filledBars) + "░".repeat(emptyBars);
     
     const infoLines = [];
     
@@ -7731,8 +7785,8 @@ case 7: {
       infoLines.push(`┃ Status: ${deploymentPlatform.status}`);
     }
     if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`┃ Uptime: ${uptimeStr}`);
-    if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) infoLines.push(`┃ RAM: ${ramUsage.bar} ${ramUsage.percent}%`);
-    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`┃ Memory: ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB`);
+    if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) infoLines.push(`┃ RAM: ${memBar} ${memPercentDisplay}%`);
+    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`┃ Memory: ${usedMem}MB / ${totalMemGB}GB`);
 
     if (infoLines.length > 0) {
       infoSection = `┌──⌈ \`${currentBotName}\` ⌋\n${infoLines.join('\n')}\n└────────────────\n\n`;
@@ -7741,311 +7795,347 @@ case 7: {
     infoSection = `*No additional information is enabled.*\n*Use .togglemenuinfo to customize*\n\n`;
   }
 
-  const commandsText = `┌────────────────
-│ 🏠 GROUP MANAGEMENT 🏠 
-├────────────────
-│ 🛡️ ADMIN & MODERATION 🛡️ 
-├────────────────
-│ add                     
-│ promote                 
-│ demote                  
-│ kick                    
-│ kickall                 
-│ ban                     
-│ unban                   
-│ banlist                 
-│ clearbanlist            
-│ warn                    
-│ resetwarn               
-│ setwarn                 
-│ mute                    
-│ unmute                  
-│ gctime                  
-│ antileave               
-│ antilink                
-│ welcome                 
-├────────────────
-│ 🚫 AUTO-MODERATION 🚫   
-├────────────────
-│ antisticker             
-│ antiviewonce  
-│ antilink  
+  const commandsText = `┌──⌈ \`GROUP MANAGEMENT\` ⌋
+│ add
+│ promote
+│ promoteall
+│ demote
+│ demoteall
+│ kick
+│ kickall
+│ ban
+│ unban
+│ clearbanlist
+│ warn
+│ resetwarn
+│ setwarn
+│ warnings
+│ mute
+│ unmute
+│ gctime
+│ antileave
+│ antilink
+│ welcome
+│ goodbye
+│ leave
+│ creategroup
+└───────────────
+
+┌──⌈ \`AUTO MODERATION\` ⌋
+│ antisticker
 │ antiimage
 │ antivideo
 │ antiaudio
 │ antimention
-│ antistatusmention  
+│ antistatusmention
 │ antigrouplink
-├────────────────
-│ 📊 GROUP INFO & TOOLS 📊 
-├────────────────
-│ groupinfo               
-│ tagadmin                
-│ tagall                  
-│ hidetag                 
-│ link                    
-│ invite                  
-│ revoke                 
-│ setdesc                 
-│ fangtrace               
-│ getgpp 
-│ togstatus                 
-└────────────────
+│ antidemote
+│ antipromote
+│ antiviewonce
+└───────────────
 
-┌────────────────
-│ 🎨 MENU COMMANDS 🎨
-├────────────────
+┌──⌈ \`GROUP INFO & TOOLS\` ⌋
+│ groupinfo
+│ grouplink
+│ tagadmin
+│ tagall
+│ hidetag
+│ link
+│ invite
+│ revoke
+│ setdesc
+│ fangtrace
+│ getgpp
+│ togstatus
+│ getparticipants
+│ listonline
+│ listinactive
+│ approveall
+│ rejectall
+└───────────────
+
+┌──⌈ \`MENU SETTINGS\` ⌋
+│ menu
+│ menu2
+│ menustyle
 │ togglemenuinfo
 │ setmenuimage
-│ resetmenuinfo
-│ menustyle
-└────────────────
+│ restoremenuimage
+└───────────────
 
-┌────────────────
-│ 👑 OWNER CONTROLS 👑    
-├────────────────
-│ ⚡ CORE MANAGEMENT ⚡    
-├────────────────
-│ setbotname              
-│ setowner                
-│ setprefix               
-│ iamowner                
-│ about                   
-│ block                   
-│ unblock                 
-│ blockdetect             
-│ silent                  
-│ anticall                
-│ mode                    
-│ online                  
-│ setpp                   
-│ repo                    
-│ antidelete              
-│ antideletestatus                  
-├────────────────
-│ 🔄 SYSTEM & MAINTENANCE 🛠️ 
-├────────────────
-│ restart                 
-│ workingreload           
-│ reloadenv               
-│ getsettings             
-│ setsetting              
-│ test                    
-│ disk                    
-│ hostip                  
-│ findcommands            
-└────────────────
+┌──⌈ \`OWNER CONTROLS\` ⌋
+│ setbotname
+│ resetbotname
+│ setowner
+│ resetowner
+│ setprefix
+│ prefix
+│ iamowner
+│ about
+│ owner
+│ block
+│ unblock
+│ blockdetect
+│ silent
+│ anticall
+│ mode
+│ setpp
+│ setfooter
+│ repo
+│ pair
+│ antidelete
+│ antideletestatus
+│ antiedit
+│ chatbot
+│ shutdown
+└───────────────
 
-┌────────────────
-│ ⚙️ AUTOMATION ⚙️
-├────────────────
-│ autoread                
-│ autotyping              
-│ autorecording           
-│ autoreact               
-│ autoreactstatus         
-│ autobio                 
-│ autorec                 
-└────────────────
-┌────────────────
-│ ✨ GENERAL UTILITIES ✨
-├────────────────
-│ 🔍 INFO & SEARCH 🔎
-├────────────────
+┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
+│ restart
+│ workingreload
+│ reloadenv
+│ getsettings
+│ setsetting
+│ test
+│ disk
+│ hostip
+│ findcommands
+│ latestupdates
+│ panel
+│ debugchat
+└───────────────
+
+┌──⌈ \`SUDO\` ⌋
+│ addsudo
+│ delsudo
+│ listsudo
+│ checksudo
+│ clearsudo
+│ sudomode
+│ sudoinfo
+│ mysudo
+│ sudodebug
+│ linksudo
+└───────────────
+
+┌──⌈ \`AUTOMATION\` ⌋
+│ autoread
+│ autotyping
+│ autorecording
+│ autoreact
+│ autoreactstatus
+│ autoviewstatus
+│ autobio
+│ autorec
+│ reactowner
+└───────────────
+
+┌──⌈ \`PRIVACY CONTROLS\` ⌋
+│ online
+│ privacy
+│ receipt
+│ profilepic
+│ viewer
+└───────────────
+
+┌──⌈ \`GENERAL UTILITIES\` ⌋
 │ alive
 │ ping
 │ ping2
 │ time
-│ connection
+│ uptime
 │ define
 │ news
 │ covid
+│ weather
+│ wiki
+│ translate
 │ iplookup
 │ getip
 │ getpp
 │ getgpp
 │ prefixinfo
-├───────────────
-│ 🔗 CONVERSION & MEDIA 📁
-├───────────────
+└───────────────
+
+┌──⌈ \`CONVERSION & MEDIA\` ⌋
 │ shorturl
+│ url
+│ fetch
 │ qrencode
 │ take
 │ imgbb
-│ tiktok
 │ save
+│ screenshot
+│ inspect
 │ toimage
 │ tosticker
 │ toaudio
+│ tovoice
 │ tts
-├───────────────
-│ 📝 PERSONAL TOOLS 📅
-├───────────────
-│ pair
-│ resetwarn
-│ setwarn
-└────────────────
+│ trebleboost
+│ jarvis
+└───────────────
 
+┌──⌈ \`CONTACT TOOLS\` ⌋
+│ vcf
+│ viewvcf
+│ vv
+│ vv2
+└───────────────
 
-├────────────────
-│ 🎵 MUSIC  🎶
-├────────────────
-│ play                    
-│ song                    
-│ lyrics                  
-│ spotify                             
-└────────────────
-┌────────────────
-│ 🤖 MEDIA & AI COMMANDS 🧠 
-├────────────────
-│ ⬇️ MEDIA DOWNLOADS 📥     
-├────────────────
-│ youtube                 
-│ tiktok                 
-│ instagram               
-│ facebook                
-│ snapchat                
-│ apk   
+┌──⌈ \`MUSIC\` ⌋
+│ play
+│ song
+│ video
+│ videodoc
+│ lyrics
+│ shazam
+│ spotify
+└───────────────
+
+┌──⌈ \`MEDIA DOWNLOADS\` ⌋
+│ tiktok
+│ instagram
+│ facebook
+│ snapchat
+│ apk
 │ yts
 │ ytplay
 │ ytmp3
 │ ytv
 │ ytmp4
-│ ytplaydoc
-│ song
-│ play
-│ spotify
-│ video
-│ image                  
-├────────────────
-│ 🎨 AI GENERATION 💡    
-├────────────────
-│ gpt                     
-│ gemini                  
-│ deepseek                
-│ deepseek+               
-│ analyze                 
-│ suno                    
-│ wolfbot
+│ ytvdoc
+│ videodl
+│ playlist
+└───────────────
+
+┌──⌈ \`AI COMMANDS\` ⌋
+│ gpt
+│ chatgpt
+│ copilot
+│ bing
 │ bard
 │ claudeai
-│ venice
 │ grok
-│ wormgpt
-│ speechwriter
 │ blackbox
 │ mistral
-│ metai                        
-├────────────────
-│ 🎨 AI TOOLS💡    
-├────────────────
-│ videogen   
-│ aiscanner
+│ metai
+│ perplexity
+│ qwenai
+│ ilama
+│ venice
+│ wormgpt
+│ deepseek+
+│ chatbot
+└───────────────
+
+┌──⌈ \`AI GENERATION\` ⌋
+│ imagine
+│ imagegen
+│ flux
+│ analyze
+│ suno
+│ speechwriter
 │ humanizer
-│ summarize     
-└───────────────
-┌───────────────
-│ 🖼️ IMAGE TOOLS 🖼️
-├───────────────
-│ image                   
-│ imagegenerate           
-│ anime                   
-│ art                     
-│ real                    
+│ summarize
+│ totext
+│ removebg
+│ vision
 └───────────────
 
-┌───────────────
-│ 🏆 SPORTS 🏆
-├───────────────
-│ football                
-│ basketball              
-│ cricket                 
-│ f1                      
-│ nfl                     
-│ mma                     
-│ tennis                  
-│ baseball                
-│ hockey                  
-│ golf                    
-│ sportsmenu              
+┌──⌈ \`AI TOOLS\` ⌋
+│ videogen
+│ aiscanner
+│ aimenu
+│ brandlogo
+│ companylogo
+│ logoai
 └───────────────
 
-┌───────────────
-│ 🛡️ SECURITY & HACKING 🔒 
-├───────────────
-│ 🌐 NETWORK & INFO 📡   
-├───────────────
-│ ipinfo                  
-│ shodan                  
-│ iplookup                
-│ getip                   
+┌──⌈ \`AI VIDEO EFFECTS\` ⌋
+│ tigervideo
+│ introvideo
+│ lightningpubg
+│ lovevideo
+│ videogen
 └───────────────
 
-┌────────────────
-│ 🎨 LOGO DESIGN STUDIO 🎨
-├────────────────
-│ 🌟 PREMIUM METALS 🌟    
-├────────────────
-│ goldlogo                
-│ silverlogo              
-│ platinumlogo            
-│ chromelogo              
-│ diamondlogo             
-│ bronzelogo              
-│ steelogo                
-│ copperlogo              
-│ titaniumlogo            
-├────────────────
-│ 🔥 ELEMENTAL EFFECTS 🔥  
-├────────────────
-│ firelogo                
-│ icelogo                 
-│ iceglowlogo             
-│ lightninglogo           
-│ aqualogo                
-│ rainbowlogo             
-│ sunlogo                 
-│ moonlogo                
-├────────────────
-│ 🎭 MYTHICAL & MAGICAL 🧙  
-├────────────────
-│ dragonlogo              
-│ phoenixlogo             
-│ wizardlogo              
-│ crystallogo             
-│ darkmagiclogo           
-├────────────────
-│ 🌌 DARK & GOTHIC 🌑     
-├────────────────
-│ shadowlogo              
-│ smokelogo               
-│ bloodlogo               
-├────────────────
-│ 💫 GLOW & NEON EFFECTS 🌈  
-├────────────────
-│ neonlogo                
-│ glowlogo                
-├────────────────
-│ 🤖 TECH & FUTURISTIC 🚀  
-├────────────────
-│ matrixlogo              
-└────────────────
-┌────────────────
-│ 🐙 GITHUB COMMANDS 🐙
-├────────────────
+┌──⌈ \`IMAGE TOOLS\` ⌋
+│ image
+│ imagegen
+│ imagine
+│ anime
+│ art
+│ real
+│ remini
+│ vision
+└───────────────
+
+┌──⌈ \`SPORTS\` ⌋
+│ football
+│ basketball
+│ cricket
+│ f1
+│ nfl
+│ mma
+│ tennis
+│ baseball
+│ hockey
+│ golf
+│ sportsmenu
+└───────────────
+
+┌──⌈ \`SECURITY & HACKING\` ⌋
+│ ipinfo
+│ nmap
+│ shodan
+│ nglattack
+└───────────────
+
+┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
+│ goldlogo
+│ silverlogo
+│ platinumlogo
+│ chromelogo
+│ diamondlogo
+│ bronzelogo
+│ steellogo
+│ copperlogo
+│ titaniumlogo
+│ firelogo
+│ icelogo
+│ iceglowlogo
+│ lightninglogo
+│ aqualogo
+│ rainbowlogo
+│ sunlogo
+│ moonlogo
+│ dragonlogo
+│ phoenixlogo
+│ wizardlogo
+│ crystallogo
+│ darkmagiclogo
+│ shadowlogo
+│ smokelogo
+│ bloodlogo
+│ neonlogo
+│ glowlogo
+│ gradientlogo
+│ matrixlogo
+└───────────────
+
+┌──⌈ \`GITHUB TOOLS\` ⌋
 │ gitclone
 │ gitinfo
+│ repanalyze
+│ zip
+│ update
 │ repo
-│ commits
-│ stars
-│ watchers
-│ release
-└────────────────
-┌────────────────
-│ 🌸 ANIME COMMANDS 🌸
-├────────────────
+└───────────────
+
+┌──⌈ \`ANIME REACTIONS\` ⌋
+│ animemenu
 │ awoo
-│ bj
 │ bully
 │ cringe
 │ cry
@@ -8053,6 +8143,7 @@ case 7: {
 │ dance
 │ glomp
 │ highfive
+│ hug
 │ kill
 │ kiss
 │ lick
@@ -8065,13 +8156,43 @@ case 7: {
 │ waifu
 │ wink
 │ yeet
-└────────────────
+└───────────────
 
+┌──⌈ \`GAMES\` ⌋
+│ coinflip
+│ dare
+│ dice
+│ emojimix
+│ joke
+│ quiz
+│ rps
+│ snake
+│ tetris
+│ truth
+│ tictactoe
+│ quote
+└───────────────
 
+┌──⌈ \`FUN & TOOLS\` ⌋
+│ bf
+│ gf
+│ couple
+│ gay
+│ getjid
+│ movie
+│ trailer
+│ goodmorning
+│ goodnight
+│ channelstatus
+│ hack
+└───────────────
 
-🐺POWERED BY WOLFTECH🐺
+┌──⌈ \`QUICK COMMANDS\` ⌋
+│ p
+│ up
+└───────────────
 
-`;
+🐺 *POWERED BY WOLFTECH* 🐺`;
 
   // ========== APPLY "READ MORE" EFFECT ==========
   // Combine info section (visible) and commands (hidden) with "Read more"
