@@ -2746,39 +2746,23 @@ case 3: {
     
     const infoLines = [];
     
-    // Add bot name as the first line in the info section
-    infoLines.push(`*┃ Bot: ${currentBotName}*`);
-    
-    // ========== FIX: Check each field individually ==========
-    if ((fieldsStatus && fieldsStatus.time) || (!fieldsStatus)) infoLines.push(`*┃ Date: ${currentDate}*`);
-    if ((fieldsStatus && fieldsStatus.time) || (!fieldsStatus)) infoLines.push(`*┃ Time: ${currentTime}*`);
-    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`*┃ User: ${m.pushName || "Anonymous"}*`);
-    if ((fieldsStatus && fieldsStatus.owner) || (!fieldsStatus)) infoLines.push(`*┃ Owner: ${ownerName}*`);
-    if ((fieldsStatus && fieldsStatus.mode) || (!fieldsStatus)) infoLines.push(`*┃ Mode: ${botMode}*`);
-    if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`*┃ Prefix: [ ${botPrefix} ]*`);
-    if ((fieldsStatus && fieldsStatus.version) || (!fieldsStatus)) infoLines.push(`*┃ Version: ${botVersion}*`);
+    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`┃ User: ▣『◆』《 ${m.pushName || "Anonymous"} 》『◆』▣`);
+    if ((fieldsStatus && fieldsStatus.owner) || (!fieldsStatus)) infoLines.push(`┃ Owner: ${ownerName}`);
+    if ((fieldsStatus && fieldsStatus.mode) || (!fieldsStatus)) infoLines.push(`┃ Mode: ${botMode}`);
+    if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`┃ Prefix: [ ${botPrefix} ]`);
+    if ((fieldsStatus && fieldsStatus.version) || (!fieldsStatus)) infoLines.push(`┃ Version: ${botVersion}`);
     if ((fieldsStatus && fieldsStatus.host) || (!fieldsStatus)) {
-      infoLines.push(`*┃ Panel: ${deploymentPlatform.name}*`);
-      infoLines.push(`*┃ Status: ${deploymentPlatform.status}*`);
+      infoLines.push(`┃ Panel: ${deploymentPlatform.name}`);
+      infoLines.push(`┃ Status: ${deploymentPlatform.status}`);
     }
-    if ((fieldsStatus && fieldsStatus.speed) || (!fieldsStatus)) {
-      infoLines.push(`*┃ Speed: ${commandSpeed}*`);
-    }
-    if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`*┃ Uptime: ${uptimeStr}*`);
-    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`*┃ Usage: ${usedMem} MB of ${totalMemGB} GB*`);
+    if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`┃ Uptime: ${uptimeStr}`);
     if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) {
-      // Display RAM with dynamic bar
-      let ramColor = "🟢"; // Green for low usage
-      if (memPercentDisplay > 70) ramColor = "🟡"; // Yellow for medium
-      if (memPercentDisplay > 85) ramColor = "🔴"; // Red for high
-      
-      infoLines.push(`*┃ RAM: ${memBar} ${memPercentDisplay}%*`);
-      // Alternative with color indicator:
-      // infoLines.push(`*┃ RAM: ${ramColor} ${memBar} ${memPercentDisplay}%*`);
+      infoLines.push(`┃ RAM: ${memBar} ${memPercentDisplay}%`);
     }
+    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`┃ Memory: ${usedMem}MB / ${totalMemGB}GB`);
 
     if (infoLines.length > 0) {
-      infoSection = `┌────────────────\n${infoLines.join('\n')}\n└────────────────\n`;
+      infoSection = `┌──⌈ \`${currentBotName}\` ⌋\n${infoLines.join('\n')}\n└────────────────\n`;
     }
   } else {
     // If no info fields are enabled, still show basic header
@@ -7601,51 +7585,34 @@ case 7: {
   
 
 
-  // Add bot name header before the info section
-  let infoSection = `
-│ *${currentBotName}* 🐺
-\n`;
+  let infoSection = "";
   
-  // Add info section only if any field is enabled
   const fieldsStatus = getAllFieldsStatus(style);
   
-  // ========== FIX: Add safety check for fieldsStatus ==========
   let hasInfoFields = false;
   if (fieldsStatus && typeof fieldsStatus === 'object') {
     hasInfoFields = Object.values(fieldsStatus).some(val => val);
   } else {
-    // If getAllFieldsStatus doesn't exist or returns invalid, show all info
     hasInfoFields = true;
   }
   
   if (hasInfoFields) {
-    const start = performance.now();
     const uptime = process.uptime();
     const h = Math.floor(uptime / 3600);
     const mnt = Math.floor((uptime % 3600) / 60);
     const s = Math.floor(uptime % 60);
     const uptimeStr = `${h}h ${mnt}m ${s}s`;
     
-    // REAL RAM USAGE CALCULATION WITH VISUAL BAR
     const getRAMUsage = () => {
       try {
         const mem = process.memoryUsage();
-        const used = mem.heapUsed / 1024 / 1024; // MB
-        const total = mem.heapTotal / 1024 / 1024; // MB
+        const used = mem.heapUsed / 1024 / 1024;
+        const total = mem.heapTotal / 1024 / 1024;
         const percent = Math.round((used / total) * 100);
-        
-        // Create visual progress bar (10 segments total)
         const barLength = 10;
         const filledBars = Math.round((percent / 100) * barLength);
         const emptyBars = barLength - filledBars;
-        
-        // Use block characters for the bar
-        const barStyle = '█';
-        const emptyStyle = '░';
-        
-        // Create the visual bar
-        const memBar = barStyle.repeat(filledBars) + emptyStyle.repeat(emptyBars);
-        
+        const memBar = '█'.repeat(filledBars) + '░'.repeat(emptyBars);
         return {
           bar: memBar,
           percent: percent,
@@ -7653,42 +7620,32 @@ case 7: {
           totalMB: Math.round(total * 100) / 100
         };
       } catch (error) {
-        // Fallback if something goes wrong
-        return {
-          bar: '░░░░░░░░░░',
-          percent: 0,
-          usedMB: 0,
-          totalMB: 0
-        };
+        return { bar: '░░░░░░░░░░', percent: 0, usedMB: 0, totalMB: 0 };
       }
     };
     
-    // Get RAM usage
     const ramUsage = getRAMUsage();
     
     const infoLines = [];
     
-    // ========== FIX: Check each field individually ==========
-    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`*┃ User: ${m.pushName || "Anonymous"}*`);
-    if ((fieldsStatus && fieldsStatus.owner) || (!fieldsStatus)) infoLines.push(`*┃ Owner: ${ownerName}*`);
-    if ((fieldsStatus && fieldsStatus.mode) || (!fieldsStatus)) infoLines.push(`*┃ Mode: ${botMode}*`);
-    if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`*┃ Prefix: [ ${botPrefix} ]*`);
-    if ((fieldsStatus && fieldsStatus.version) || (!fieldsStatus)) infoLines.push(`*┃ Version: ${botVersion}*`);
+    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`┃ User: ▣『◆』《 ${m.pushName || "Anonymous"} 》『◆』▣`);
+    if ((fieldsStatus && fieldsStatus.owner) || (!fieldsStatus)) infoLines.push(`┃ Owner: ${ownerName}`);
+    if ((fieldsStatus && fieldsStatus.mode) || (!fieldsStatus)) infoLines.push(`┃ Mode: ${botMode}`);
+    if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`┃ Prefix: [ ${botPrefix} ]`);
+    if ((fieldsStatus && fieldsStatus.version) || (!fieldsStatus)) infoLines.push(`┃ Version: ${botVersion}`);
     if ((fieldsStatus && fieldsStatus.host) || (!fieldsStatus)) {
-      infoLines.push(`*┃ Panel: ${deploymentPlatform.name}*`);
-      infoLines.push(`*┃ Status: ${deploymentPlatform.status}*`);
+      infoLines.push(`┃ Panel: ${deploymentPlatform.name}`);
+      infoLines.push(`┃ Status: ${deploymentPlatform.status}`);
     }
-    if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`*┃ Uptime: ${uptimeStr}*`);
-    if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) infoLines.push(`*┃ RAM: ${ramUsage.bar} ${ramUsage.percent}%*`);
-    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`*┃ Memory: ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB*`);
+    if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`┃ Uptime: ${uptimeStr}`);
+    if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) infoLines.push(`┃ RAM: ${ramUsage.bar} ${ramUsage.percent}%`);
+    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`┃ Memory: ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB`);
 
     if (infoLines.length > 0) {
-      const infoCaption = `┌────────────────\n${infoLines.join('\n')}\n└────────────────\n\n`;
-      infoSection += infoCaption;
+      infoSection = `┌──⌈ \`${currentBotName}\` ⌋\n${infoLines.join('\n')}\n└────────────────\n\n`;
     }
   } else {
-    // If no info fields are enabled, still show basic header
-    infoSection += `*No additional information is enabled.*\n*Use .togglemenuinfo to customize*\n\n`;
+    infoSection = `*No additional information is enabled.*\n*Use .togglemenuinfo to customize*\n\n`;
   }
 
   const commandsText = `┌────────────────

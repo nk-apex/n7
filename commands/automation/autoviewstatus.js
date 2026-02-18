@@ -189,13 +189,19 @@ class AutoViewManager {
                 return false;
             }
             
-            // Mark status as read
-            await sock.readMessages([statusKey]);
+            try {
+                await sock.readMessages([statusKey]);
+            } catch {
+                try {
+                    const participant = statusKey.participant || sender;
+                    await sock.sendReceipt(statusKey.remoteJid, participant, [statusKey.id], 'read');
+                } catch {
+                    return false;
+                }
+            }
             
-            // Update view time
             this.lastViewTime = Date.now();
             
-            // Add to logs
             this.addLog(cleanSender, 'viewed');
             
             return true;
