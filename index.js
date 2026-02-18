@@ -6152,13 +6152,29 @@ const isHeroku = process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.
         const sessionIdFromEnv = process.env.SESSION_ID;
         const hasEnvSession = sessionIdFromEnv && sessionIdFromEnv.trim() !== '';
         
+        const sessionDirExists = fs.existsSync(SESSION_DIR);
+        const credsPath = path.join(SESSION_DIR, 'creds.json');
+        const credsExist = fs.existsSync(credsPath);
+
+        if (sessionDirExists && credsExist) {
+            try {
+                const existingCreds = JSON.parse(fs.readFileSync(credsPath, 'utf8'));
+                if (existingCreds && (existingCreds.noiseKey || existingCreds.signedIdentityKey)) {
+                    UltraCleanLogger.success('🔐 Found existing evolved session, using it (not overwriting with SESSION_ID)...');
+                    await startBot('auto', null);
+                    return;
+                }
+            } catch (readErr) {
+                UltraCleanLogger.warning(`⚠️ Existing creds.json unreadable: ${readErr.message}`);
+            }
+        }
+
         if (hasEnvSession) {
-            UltraCleanLogger.info('🔐 Found SESSION_ID in environment, processing...');
+            UltraCleanLogger.info('🔐 No valid existing session, applying SESSION_ID...');
             try {
                 const parsedSession = parseWolfBotSession(sessionIdFromEnv);
                 if (parsedSession) {
                     ensureSessionDir();
-                    const credsPath = path.join(SESSION_DIR, 'creds.json');
                     fs.writeFileSync(credsPath, JSON.stringify(parsedSession, null, 2));
                     UltraCleanLogger.success('✅ Session ID applied to creds.json, auto-connecting...');
                     await startBot('auto', null);
@@ -6169,15 +6185,12 @@ const isHeroku = process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.
             }
         }
         
-        // 2. Try existing session directory with creds.json
-        const sessionDirExists = fs.existsSync(SESSION_DIR);
-        const credsExist = fs.existsSync(path.join(SESSION_DIR, 'creds.json'));
-        
+        // 3. Fallback: try existing session that might have creds but no noise/signal keys
         if (sessionDirExists && credsExist) {
             UltraCleanLogger.success('🔐 Found existing session, attempting auto-reconnect...');
             
             try {
-                const sessionData = JSON.parse(fs.readFileSync(path.join(SESSION_DIR, 'creds.json'), 'utf8'));
+                const sessionData = JSON.parse(fs.readFileSync(credsPath, 'utf8'));
                 
                 if (sessionData && (sessionData.noiseKey || sessionData.signedIdentityKey || sessionData.creds)) {
                     UltraCleanLogger.success('✅ Session file valid, auto-connecting...');
