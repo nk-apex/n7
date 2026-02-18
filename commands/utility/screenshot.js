@@ -12,7 +12,7 @@ export default {
     
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 📸 *WEBSITE SCREENSHOT* ⌋\n│\n├─⊷ *${PREFIX}screenshot <URL>*\n│  └⊷ Take a screenshot of any website\n│\n├─⊷ *${PREFIX}screenshot google.com*\n│  └⊷ Also works without https://\n│\n├─⊷ *Aliases:* ss, webshot, capture\n│\n╰───`
+        text: `╭─⌈ 📸 *WEBSITE SCREENSHOT* ⌋\n│\n├─⊷ *${PREFIX}screenshot <URL>*\n│  └⊷ Take a screenshot of any website\n│\n├─⊷ *${PREFIX}ss google.com*\n│  └⊷ Also works without https://\n│\n╰───────────────\n> *WOLFBOT*`
       }, { quoted: m });
     }
 
@@ -34,14 +34,22 @@ export default {
     try { domain = new URL(url).hostname.replace('www.', ''); } catch { domain = url; }
 
     try {
-      const statusMsg = await sock.sendMessage(jid, {
-        text: `📸 *Capturing ${domain}...*\n⏳ Please wait...`
-      }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
       let screenshotBuffer = null;
       let serviceUsed = '';
 
       const services = [
+        {
+          name: 'Screenshot Machine',
+          getUrl: () => `https://image.thum.io/get/width/1280/crop/800/noanimate/${url}`,
+          type: 'image'
+        },
+        {
+          name: 'Screenshotlayer',
+          getUrl: () => `https://api.screenshotlayer.com/api/capture?access_key=free&url=${encodeURIComponent(url)}&viewport=1280x800&format=PNG`,
+          type: 'image'
+        },
         {
           name: 'Google PageSpeed',
           getUrl: () => `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&category=performance&strategy=desktop&screenshot=true`,
@@ -51,16 +59,6 @@ export default {
           name: 'Microlink',
           getUrl: () => `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`,
           type: 'redirect'
-        },
-        {
-          name: 'Screenshot Machine',
-          getUrl: () => `https://image.thum.io/get/width/1280/crop/800/noanimate/${url}`,
-          type: 'image'
-        },
-        {
-          name: 'Pikwy',
-          getUrl: () => `https://api.pikwy.com/web/screenshot?url=${encodeURIComponent(url)}&width=1280&height=800&format=png`,
-          type: 'image'
         }
       ];
 
@@ -70,7 +68,7 @@ export default {
           console.log(`📸 Trying: ${svc.name}`);
 
           if (svc.type === 'json') {
-            const resp = await axios.get(svc.getUrl(), { timeout: 20000 });
+            const resp = await axios.get(svc.getUrl(), { timeout: 25000 });
             const screenshot = resp.data?.lighthouseResult?.audits?.['final-screenshot']?.details?.data;
             if (screenshot && screenshot.startsWith('data:image')) {
               const base64Data = screenshot.split(',')[1];
@@ -100,7 +98,7 @@ export default {
           if (svc.type === 'image') {
             const resp = await axios.get(svc.getUrl(), {
               responseType: 'arraybuffer',
-              timeout: 20000,
+              timeout: 25000,
               headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'image/*' }
             });
             const ct = resp.headers['content-type'] || '';
@@ -116,6 +114,7 @@ export default {
       }
 
       if (!screenshotBuffer) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         return sock.sendMessage(jid, {
           text: `❌ *Screenshot Failed*\n\nAll services unavailable for: ${domain}\n\n💡 Try simpler sites like google.com`
         }, { quoted: m });
@@ -125,16 +124,18 @@ export default {
 
       await sock.sendMessage(jid, {
         image: screenshotBuffer,
-        caption: `📸 *Screenshot of ${domain}*\n🔗 ${url}\n💾 ${fileSize}KB | ${serviceUsed}`,
+        caption: `📸 *${domain}*\n🔗 ${url}\n💾 ${fileSize}KB\n\n> *WOLFBOT*`,
         mimetype: 'image/png'
       }, { quoted: m });
 
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       console.log(`✅ Screenshot sent: ${domain} (${fileSize}KB via ${serviceUsed})`);
 
     } catch (error) {
       console.error('❌ Screenshot error:', error.message);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `❌ *Screenshot Failed*\n\nError: ${error.message}\n\n💡 Try: \`${PREFIX}screenshot google.com\``
+        text: `❌ *Screenshot Failed*\n\nError: ${error.message}\n\n💡 Try: \`${PREFIX}ss google.com\``
       }, { quoted: m });
     }
   }

@@ -32,7 +32,7 @@ export default {
         const currentPrefix = getCurrentPrefix();
         
         const text = `╭─⌈ 🐺 *BOT PREFIX* ⌋\n` +
-                     `├─⊷ *${currentPrefix}*\n` +
+                     `├─⊷ Your prefix: *${currentPrefix}*\n` +
                      `╰───────────────\n` +
                      `> *WOLFBOT*`;
         

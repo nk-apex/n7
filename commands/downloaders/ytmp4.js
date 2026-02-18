@@ -7,26 +7,30 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const XWOLF_API = "https://apis.xwolf.space";
 const KEITH_API = "https://apiskeith.top";
 
-const videoEndpoints = [
-  `${KEITH_API}/download/ytmp4`,
-  `${KEITH_API}/download/video`
-];
-
-const keithDownloadVideo = async (url) => {
-  for (const endpoint of videoEndpoints) {
+const downloadVideo = async (url) => {
+  const endpoints = [
+    { name: 'XWolf', url: `${XWOLF_API}/download/mp4?url=${encodeURIComponent(url)}` },
+    { name: 'Keith-1', url: `${KEITH_API}/download/ytmp4?url=${encodeURIComponent(url)}` },
+    { name: 'Keith-2', url: `${KEITH_API}/download/video?url=${encodeURIComponent(url)}` }
+  ];
+  for (const ep of endpoints) {
     try {
-      const response = await axios.get(
-        `${endpoint}?url=${encodeURIComponent(url)}`,
-        { timeout: 20000 }
-      );
-      if (response.data?.status && response.data?.result) {
-        console.log(`[YTMP4] Download success via: ${endpoint}`);
-        return response.data.result;
+      const response = await axios.get(ep.url, { timeout: 20000 });
+      const data = response.data;
+      const dlUrl = data?.result?.download_url || data?.result?.url || data?.result || data?.download_url || data?.url;
+      if (dlUrl && typeof dlUrl === 'string' && dlUrl.startsWith('http')) {
+        console.log(`[YTMP4] Download success via: ${ep.name}`);
+        return dlUrl;
+      }
+      if (data?.status && data?.result && typeof data.result === 'string') {
+        console.log(`[YTMP4] Download success via: ${ep.name}`);
+        return data.result;
       }
     } catch (error) {
-      console.log(`[YTMP4] Endpoint failed: ${endpoint} - ${error.message}`);
+      console.log(`[YTMP4] ${ep.name} failed: ${error.message}`);
       continue;
     }
   }
@@ -109,7 +113,7 @@ export default {
 
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      let downloadUrl = await keithDownloadVideo(videoUrl);
+      let downloadUrl = await downloadVideo(videoUrl);
 
       if (!downloadUrl) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });

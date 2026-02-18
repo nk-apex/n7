@@ -1806,12 +1806,35 @@ case 1: {
 │
 ╰─⊷
 
-╭─⊷ *🛡️ SECURITY & HACKING*
+╭─⊷ *🛡️ ETHICAL HACKING*
 │
-│  • ipinfo
-│  • nmap
-│  • shodan
-│  • nglflood
+├─⊷ *RECON & OSINT*
+│  • whois • dnslookup • subdomain
+│  • reverseip • geoip • portscan
+│  • headers • traceroute • asnlookup • shodan
+│
+├─⊷ *NETWORK ANALYSIS*
+│  • pinghost • latency • sslcheck
+│  • tlsinfo • openports • firewallcheck
+│  • maclookup • bandwidthtest
+│
+├─⊷ *WEB SECURITY*
+│  • securityheaders • wafdetect • robotscheck
+│  • sitemap • cmsdetect • techstack
+│  • cookiescan • redirectcheck
+│
+├─⊷ *VULNERABILITY CHECKS*
+│  • xsscheck • sqlicheck • csrfcheck
+│  • clickjackcheck • directoryscan
+│  • exposedfiles • misconfigcheck • cvecheck
+│
+├─⊷ *PASSWORD & HASH TOOLS*
+│  • hashidentify • hashcheck • bcryptcheck
+│  • passwordstrength • leakcheck
+│
+├─⊷ *FORENSICS & ANALYSIS*
+│  • metadata • filehash • malwarecheck
+│  • urlscan • phishcheck
 │
 ╰─⊷
 
@@ -3057,11 +3080,64 @@ case 3: {
 │ golf
 │ sportsmenu
 └───────────────`,
-`┌──⌈ \`SECURITY & HACKING\` ⌋
-│ ipinfo
-│ nmap
+`┌──⌈ \`ETHICAL HACKING\` ⌋
+│
+├─⌈ \`RECON & OSINT\` ⌋
+│ whois
+│ dnslookup
+│ subdomain
+│ reverseip
+│ geoip
+│ portscan
+│ headers
+│ traceroute
+│ asnlookup
 │ shodan
-│ nglattack
+│
+├─⌈ \`NETWORK ANALYSIS\` ⌋
+│ pinghost
+│ latency
+│ sslcheck
+│ tlsinfo
+│ openports
+│ firewallcheck
+│ maclookup
+│ bandwidthtest
+│
+├─⌈ \`WEB SECURITY\` ⌋
+│ securityheaders
+│ wafdetect
+│ robotscheck
+│ sitemap
+│ cmsdetect
+│ techstack
+│ cookiescan
+│ redirectcheck
+│
+├─⌈ \`VULNERABILITY CHECKS\` ⌋
+│ xsscheck
+│ sqlicheck
+│ csrfcheck
+│ clickjackcheck
+│ directoryscan
+│ exposedfiles
+│ misconfigcheck
+│ cvecheck
+│
+├─⌈ \`PASSWORD & HASH TOOLS\` ⌋
+│ hashidentify
+│ hashcheck
+│ bcryptcheck
+│ passwordstrength
+│ leakcheck
+│
+├─⌈ \`FORENSICS & ANALYSIS\` ⌋
+│ metadata
+│ filehash
+│ malwarecheck
+│ urlscan
+│ phishcheck
+│
 └───────────────`,
 `┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
 │ goldlogo
@@ -3878,13 +3954,35 @@ case 4: {
 │
 ╰─⊷
 
-╭─⊷ *🛡️ SECURITY & HACKING*
+╭─⊷ *🛡️ ETHICAL HACKING*
 │
-├─⊷ *🌐 NETWORK & INFO*
-│  • ipinfo
-│  • shodan
-│  • iplookup
-│  • getip
+├─⊷ *RECON & OSINT*
+│  • whois • dnslookup • subdomain
+│  • reverseip • geoip • portscan
+│  • headers • traceroute • asnlookup • shodan
+│
+├─⊷ *NETWORK ANALYSIS*
+│  • pinghost • latency • sslcheck
+│  • tlsinfo • openports • firewallcheck
+│  • maclookup • bandwidthtest
+│
+├─⊷ *WEB SECURITY*
+│  • securityheaders • wafdetect • robotscheck
+│  • sitemap • cmsdetect • techstack
+│  • cookiescan • redirectcheck
+│
+├─⊷ *VULNERABILITY CHECKS*
+│  • xsscheck • sqlicheck • csrfcheck
+│  • clickjackcheck • directoryscan
+│  • exposedfiles • misconfigcheck • cvecheck
+│
+├─⊷ *PASSWORD & HASH TOOLS*
+│  • hashidentify • hashcheck • bcryptcheck
+│  • passwordstrength • leakcheck
+│
+├─⊷ *FORENSICS & ANALYSIS*
+│  • metadata • filehash • malwarecheck
+│  • urlscan • phishcheck
 │
 ╰─⊷
 
@@ -5621,13 +5719,35 @@ case 5: {
 │
 ╰─⊷
 
-╭─⊷ *🛡️ SECURITY & HACKING*
+╭─⊷ *🛡️ ETHICAL HACKING*
 │
-├─⊷ *🌐 NETWORK & INFO*
-│  • ipinfo
-│  • shodan
-│  • iplookup
-│  • getip
+├─⊷ *RECON & OSINT*
+│  • whois • dnslookup • subdomain
+│  • reverseip • geoip • portscan
+│  • headers • traceroute • asnlookup • shodan
+│
+├─⊷ *NETWORK ANALYSIS*
+│  • pinghost • latency • sslcheck
+│  • tlsinfo • openports • firewallcheck
+│  • maclookup • bandwidthtest
+│
+├─⊷ *WEB SECURITY*
+│  • securityheaders • wafdetect • robotscheck
+│  • sitemap • cmsdetect • techstack
+│  • cookiescan • redirectcheck
+│
+├─⊷ *VULNERABILITY CHECKS*
+│  • xsscheck • sqlicheck • csrfcheck
+│  • clickjackcheck • directoryscan
+│  • exposedfiles • misconfigcheck • cvecheck
+│
+├─⊷ *PASSWORD & HASH TOOLS*
+│  • hashidentify • hashcheck • bcryptcheck
+│  • passwordstrength • leakcheck
+│
+├─⊷ *FORENSICS & ANALYSIS*
+│  • metadata • filehash • malwarecheck
+│  • urlscan • phishcheck
 │
 ╰─⊷
 
@@ -8028,11 +8148,64 @@ case 7: {
 │ golf
 │ sportsmenu
 └───────────────`,
-`┌──⌈ \`SECURITY & HACKING\` ⌋
-│ ipinfo
-│ nmap
+`┌──⌈ \`ETHICAL HACKING\` ⌋
+│
+├─⌈ \`RECON & OSINT\` ⌋
+│ whois
+│ dnslookup
+│ subdomain
+│ reverseip
+│ geoip
+│ portscan
+│ headers
+│ traceroute
+│ asnlookup
 │ shodan
-│ nglattack
+│
+├─⌈ \`NETWORK ANALYSIS\` ⌋
+│ pinghost
+│ latency
+│ sslcheck
+│ tlsinfo
+│ openports
+│ firewallcheck
+│ maclookup
+│ bandwidthtest
+│
+├─⌈ \`WEB SECURITY\` ⌋
+│ securityheaders
+│ wafdetect
+│ robotscheck
+│ sitemap
+│ cmsdetect
+│ techstack
+│ cookiescan
+│ redirectcheck
+│
+├─⌈ \`VULNERABILITY CHECKS\` ⌋
+│ xsscheck
+│ sqlicheck
+│ csrfcheck
+│ clickjackcheck
+│ directoryscan
+│ exposedfiles
+│ misconfigcheck
+│ cvecheck
+│
+├─⌈ \`PASSWORD & HASH TOOLS\` ⌋
+│ hashidentify
+│ hashcheck
+│ bcryptcheck
+│ passwordstrength
+│ leakcheck
+│
+├─⌈ \`FORENSICS & ANALYSIS\` ⌋
+│ metadata
+│ filehash
+│ malwarecheck
+│ urlscan
+│ phishcheck
+│
 └───────────────`,
 `┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
 │ goldlogo
