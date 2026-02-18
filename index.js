@@ -219,6 +219,9 @@ import axios from "axios";
 import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessage, jidNormalizedUser } from '@whiskeysockets/baileys';
 import NodeCache from 'node-cache';
 import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList } from './lib/sudo-store.js';
+import supabaseDb from './lib/supabase.js';
+import { migrateSudoToSupabase } from './lib/sudo-store.js';
+import { migrateWarningsToSupabase } from './lib/warnings-store.js';
 
 const msgRetryCounterCache = new NodeCache({ stdTTL: 600 });
 
@@ -4257,6 +4260,60 @@ function updateTerminalHeader() {
 prefixCache = loadPrefixFromFiles();
 isPrefixless = prefixCache === '' ? true : false;
 updateTerminalHeader();
+
+// ====== SUPABASE DATABASE INIT ======
+async function initSupabase() {
+    try {
+        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            UltraCleanLogger.info('💾 Supabase: No credentials found, using local JSON storage');
+            return false;
+        }
+        UltraCleanLogger.info('💾 Supabase: Connecting to database...');
+        const ready = await supabaseDb.initTables();
+        if (ready && supabaseDb.isAvailable()) {
+            UltraCleanLogger.success('💾 Supabase: Database connected & tables ready');
+            await runDataMigrations();
+            return true;
+        } else {
+            UltraCleanLogger.info('💾 Supabase: Tables not ready yet. Run supabase_setup.sql in your Supabase SQL Editor, then restart the bot.');
+            return false;
+        }
+    } catch (err) {
+        UltraCleanLogger.error(`💾 Supabase: Init error - ${err.message}`);
+        return false;
+    }
+}
+
+async function runDataMigrations() {
+    try {
+        UltraCleanLogger.info('💾 Supabase: Running data migrations...');
+        await migrateSudoToSupabase();
+        await migrateWarningsToSupabase();
+
+        const configFiles = [
+            { file: './bot_mode.json', key: 'bot_mode' },
+            { file: './bot_settings.json', key: 'bot_settings' },
+            { file: './prefix_config.json', key: 'prefix_config' },
+            { file: './owner.json', key: 'owner' },
+            { file: './whitelist.json', key: 'whitelist' },
+            { file: './blocked_users.json', key: 'blocked_users' },
+            { file: './data/welcome_data.json', key: 'welcome_data' },
+            { file: './data/autoViewConfig.json', key: 'autoview_config' },
+            { file: './data/autoReactConfig.json', key: 'autoreact_config' },
+            { file: './data/member_detection.json', key: 'member_detection' }
+        ];
+
+        for (const { file, key } of configFiles) {
+            await supabaseDb.migrateJSONToConfig(file, key);
+        }
+
+        UltraCleanLogger.success('💾 Supabase: Data migration complete');
+    } catch (err) {
+        UltraCleanLogger.error(`💾 Supabase: Migration error - ${err.message}`);
+    }
+}
+
+initSupabase().catch(() => {});
 
 // ====== MAIN BOT FUNCTION ======
 async function startBot(loginMode = 'auto', loginData = null) {
