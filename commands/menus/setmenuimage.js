@@ -48,23 +48,30 @@ export default {
       return sock.sendMessage(jid, { text: errorMsg }, { quoted: m });
     }
 
-    const contextInfo = m.message?.extendedTextMessage?.contextInfo || m.message?.imageMessage?.contextInfo;
+    const contextInfo = m.message?.extendedTextMessage?.contextInfo || m.message?.imageMessage?.contextInfo || m.message?.videoMessage?.contextInfo;
     const quotedMsg = contextInfo?.quotedMessage;
     let quotedImage = quotedMsg?.imageMessage || quotedMsg?.viewOnceMessage?.message?.imageMessage || quotedMsg?.viewOnceMessageV2?.message?.imageMessage;
+    let quotedVideo = quotedMsg?.videoMessage;
     const directImage = m.message?.imageMessage;
+    const directVideo = m.message?.videoMessage;
+
+    const isQuotedGif = quotedVideo && quotedVideo.gifPlayback === true;
+    const isDirectGif = directVideo && directVideo.gifPlayback === true;
 
     const mentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     const quotedParticipant = contextInfo?.participant;
     const replyTarget = mentioned || quotedParticipant;
 
     const hasReplyImage = !!quotedImage;
+    const hasReplyGif = !!isQuotedGif;
     const hasDirectImage = !!directImage;
+    const hasDirectGif = !!isDirectGif;
     const hasUrl = args.length > 0 && args[0].startsWith('http');
-    const hasReplyPerson = !!replyTarget && !hasReplyImage;
+    const hasReplyPerson = !!replyTarget && !hasReplyImage && !hasReplyGif;
 
-    if (!hasReplyImage && !hasDirectImage && !hasUrl && !hasReplyPerson) {
+    if (!hasReplyImage && !hasDirectImage && !hasUrl && !hasReplyPerson && !hasReplyGif && !hasDirectGif) {
       await sock.sendMessage(jid, {
-        text: `🖼️ *Set Menu Image*\n\nUsage:\n• Reply to an image: \`${PREFIX}smi\`\n• Reply to a person: \`${PREFIX}smi\` (uses their profile pic)\n• Mention someone: \`${PREFIX}smi @user\`\n• Send with image: attach image with caption \`${PREFIX}smi\`\n• Use URL: \`${PREFIX}smi <image_url>\`\n\n⚠️ Only JPG/PNG/WebP formats (max 10MB)`
+        text: `🖼️ *Set Menu Image*\n\nUsage:\n• Reply to an image: \`${PREFIX}smi\`\n• Reply to a GIF: \`${PREFIX}smi\` (animated menu!)\n• Reply to a person: \`${PREFIX}smi\` (uses their profile pic)\n• Mention someone: \`${PREFIX}smi @user\`\n• Send with image: attach image with caption \`${PREFIX}smi\`\n• Use URL: \`${PREFIX}smi <image_url>\`\n\n⚠️ Supports JPG/PNG/WebP/GIF (max 10MB)`
       }, { quoted: m });
       return;
     }
@@ -76,7 +83,29 @@ export default {
       let contentType = 'image/jpeg';
       let sourceLabel = '';
 
-      if (hasDirectImage) {
+      let isGifSource = false;
+
+      if (hasDirectGif) {
+        sourceLabel = 'attached GIF';
+        isGifSource = true;
+        console.log(`🎞️ Owner ${cleaned.cleanNumber} setting menu GIF from ${sourceLabel}`);
+        const stream = await downloadContentFromMessage(directVideo, 'video');
+        const chunks = [];
+        for await (const chunk of stream) { chunks.push(chunk); }
+        imageBuffer = Buffer.concat(chunks);
+        contentType = 'video/mp4';
+
+      } else if (hasReplyGif) {
+        sourceLabel = 'replied GIF';
+        isGifSource = true;
+        console.log(`🎞️ Owner ${cleaned.cleanNumber} setting menu GIF from ${sourceLabel}`);
+        const stream = await downloadContentFromMessage(quotedVideo, 'video');
+        const chunks = [];
+        for await (const chunk of stream) { chunks.push(chunk); }
+        imageBuffer = Buffer.concat(chunks);
+        contentType = 'video/mp4';
+
+      } else if (hasDirectImage) {
         sourceLabel = 'attached image';
         console.log(`🖼️ Owner ${cleaned.cleanNumber} setting menu image from ${sourceLabel}`);
         const stream = await downloadContentFromMessage(directImage, 'image');
@@ -200,28 +229,43 @@ export default {
         return;
       }
 
-      console.log(`✅ Image downloaded: ${fileSizeMB}MB, type: ${contentType}`);
+      console.log(`✅ Media downloaded: ${fileSizeMB}MB, type: ${contentType}`);
 
       const mediaDir = path.join(__dirname, "media");
-      const wolfbotPath = path.join(mediaDir, "wolfbot.jpg");
+      const wolfbotImgPath = path.join(mediaDir, "wolfbot.jpg");
+      const wolfbotGifPath = path.join(mediaDir, "wolfbot.mp4");
       const backupDir = path.join(mediaDir, "backups");
 
       if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
       if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
 
-      if (fs.existsSync(wolfbotPath)) {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-        const backupPath = path.join(backupDir, `wolfbot-backup-${timestamp}.jpg`);
-        try {
-          fs.copyFileSync(wolfbotPath, backupPath);
-          console.log(`💾 Backup created: ${backupPath}`);
-        } catch (backupError) {
-          console.log("⚠️ Could not create backup");
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+
+      if (isGifSource) {
+        if (fs.existsSync(wolfbotGifPath)) {
+          try {
+            fs.copyFileSync(wolfbotGifPath, path.join(backupDir, `wolfbot-backup-${timestamp}.mp4`));
+          } catch {}
         }
+        if (fs.existsSync(wolfbotImgPath)) {
+          try { fs.unlinkSync(wolfbotImgPath); } catch {}
+        }
+        fs.writeFileSync(wolfbotGifPath, imageBuffer);
+        console.log(`✅ Menu GIF saved: ${wolfbotGifPath}`);
+      } else {
+        if (fs.existsSync(wolfbotImgPath)) {
+          try {
+            fs.copyFileSync(wolfbotImgPath, path.join(backupDir, `wolfbot-backup-${timestamp}.jpg`));
+          } catch {}
+        }
+        if (fs.existsSync(wolfbotGifPath)) {
+          try { fs.unlinkSync(wolfbotGifPath); } catch {}
+        }
+        fs.writeFileSync(wolfbotImgPath, imageBuffer);
+        console.log(`✅ Menu image saved: ${wolfbotImgPath}`);
       }
 
-      fs.writeFileSync(wolfbotPath, imageBuffer);
-      console.log(`✅ Menu image saved: ${wolfbotPath}`);
+      const wolfbotPath = isGifSource ? wolfbotGifPath : wolfbotImgPath;
 
       const stats = fs.statSync(wolfbotPath);
       if (stats.size === 0) throw new Error("Saved file is empty");

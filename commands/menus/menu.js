@@ -1965,26 +1965,35 @@ case 1: {
   finalCaption = createReadMoreEffect(fadedInfoSection, commandsText);
   // ========== END "READ MORE" EFFECT ==========
 
-  // Load and send the image
+  // Load and send the image or GIF
+  const gifPath1 = path.join(__dirname, "media", "wolfbot.mp4");
+  const gifPath2 = path.join(__dirname, "../media/wolfbot.mp4");
   const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
   const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
-  const imagePath = fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null;
+  const gifMenuPath = fs.existsSync(gifPath1) ? gifPath1 : fs.existsSync(gifPath2) ? gifPath2 : null;
+  const imagePath = gifMenuPath || (fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null);
   
   if (!imagePath) {
-    await sock.sendMessage(jid, { text: "⚠️ Image 'wolfbot.jpg' not found!" }, { quoted: fkontak });
+    await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: fkontak });
     return;
   }
   
   const buffer = fs.readFileSync(imagePath);
 
-  // Send the menu with image and fake contact
-  await sock.sendMessage(jid, { 
-    image: buffer, 
-    caption: finalCaption, 
-    mimetype: "image/jpeg"
-  }, { 
-    quoted: fkontak 
-  });
+  if (gifMenuPath) {
+    await sock.sendMessage(jid, { 
+      video: buffer, 
+      gifPlayback: true,
+      caption: finalCaption, 
+      mimetype: "video/mp4"
+    }, { quoted: fkontak });
+  } else {
+    await sock.sendMessage(jid, { 
+      image: buffer, 
+      caption: finalCaption, 
+      mimetype: "image/jpeg"
+    }, { quoted: fkontak });
+  }
   
   console.log(`✅ ${currentBotName} menu sent with faded effect, box style, and "Read more" effect`);
   break;
@@ -6557,20 +6566,32 @@ case 6: {
   finalCaption = createReadMoreEffect(infoSection, commandsText);
   // ========== END "READ MORE" EFFECT ==========
 
+  const gifPath1s6 = path.join(__dirname, "media", "wolfbot.mp4");
+  const gifPath2s6 = path.join(__dirname, "../media/wolfbot.mp4");
   const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
   const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
-  const imagePath = fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null;
+  const gifMenuPaths6 = fs.existsSync(gifPath1s6) ? gifPath1s6 : fs.existsSync(gifPath2s6) ? gifPath2s6 : null;
+  const imagePath = gifMenuPaths6 || (fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null);
   if (!imagePath) {
-    await sock.sendMessage(jid, { text: "⚠️ Image 'wolfbot.jpg' not found!" }, { quoted: m });
+    await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: m });
     return;
   }
   const buffer = fs.readFileSync(imagePath);
 
-  await sock.sendMessage(jid, { 
-    image: buffer, 
-    caption: finalCaption, 
-    mimetype: "image/jpeg"
-  }, { quoted: m });
+  if (gifMenuPaths6) {
+    await sock.sendMessage(jid, { 
+      video: buffer, 
+      gifPlayback: true,
+      caption: finalCaption, 
+      mimetype: "video/mp4"
+    }, { quoted: m });
+  } else {
+    await sock.sendMessage(jid, { 
+      image: buffer, 
+      caption: finalCaption, 
+      mimetype: "image/jpeg"
+    }, { quoted: m });
+  }
   
   console.log(`✅ ${currentBotName} menu sent with image and "Read more" effect`);
   break;
@@ -8308,20 +8329,32 @@ case 7: {
   const commandsText = categorySections.join(`\n${readMoreSep}\n`);
   finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
 
+  const gifPath1s10 = path.join(__dirname, "media", "wolfbot.mp4");
+  const gifPath2s10 = path.join(__dirname, "../media/wolfbot.mp4");
   const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
   const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
-  const imagePath = fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null;
+  const gifMenuPaths10 = fs.existsSync(gifPath1s10) ? gifPath1s10 : fs.existsSync(gifPath2s10) ? gifPath2s10 : null;
+  const imagePath = gifMenuPaths10 || (fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null);
   if (!imagePath) {
-    await sock.sendMessage(jid, { text: "⚠️ Image 'wolfbot.jpg' not found!" }, { quoted: m });
+    await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: m });
     return;
   }
   const buffer = fs.readFileSync(imagePath);
 
-  await sock.sendMessage(jid, { 
-    image: buffer, 
-    caption: finalCaption, 
-    mimetype: "image/jpeg"
-  }, { quoted: m });
+  if (gifMenuPaths10) {
+    await sock.sendMessage(jid, { 
+      video: buffer, 
+      gifPlayback: true,
+      caption: finalCaption, 
+      mimetype: "video/mp4"
+    }, { quoted: m });
+  } else {
+    await sock.sendMessage(jid, { 
+      image: buffer, 
+      caption: finalCaption, 
+      mimetype: "image/jpeg"
+    }, { quoted: m });
+  }
   
   console.log(`✅ ${currentBotName} menu sent with "Read more" effect`);
   break;
