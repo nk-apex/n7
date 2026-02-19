@@ -89,7 +89,7 @@ export default {
 
       await sock.sendMessage(jid, {
         video: videoBuffer,
-        caption: `╭⌈ 🎬 *STICKER TO VIDEO* ⌋\n├⊷ 📦 *Size:* ${fileSizeKB}KB\n├⊷ 🎞️ *Format:* MP4\n╰⊷ _Converted by WOLFBOT_`,
+        caption: `╭⌈ 🎬 *STICKER TO VIDEO* ⌋\n├⊷ 📦 *Size:* ${fileSizeKB}KB\n╰⊷ 🎞️ *Format:* MP4\n> _Converted by WOLFBOT_`,
         mimetype: 'video/mp4'
       }, { quoted: m });
 

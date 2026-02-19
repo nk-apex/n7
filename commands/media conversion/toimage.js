@@ -59,7 +59,7 @@ export default {
       
       await sock.sendMessage(jid, {
         image: imageBuffer,
-        caption: `🖼️ *Sticker Converted*\n📦 *Size:* ${fileSizeKB}KB\n✨ *Format:* PNG`
+        caption: `╭⌈ 🖼️ *STICKER TO IMAGE* ⌋\n├⊷ 📦 *Size:* ${fileSizeKB}KB\n╰⊷ 🎨 *Format:* PNG\n> _Converted by WOLFBOT_`
       }, { quoted: m });
       
       console.log(`✅ [TOIMAGE] Image sent successfully`);
