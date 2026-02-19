@@ -399,32 +399,42 @@ async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype)
         }
 
         const timestamp = Date.now();
-        const extension = getStatusExtensionFromMime(mimetype);
-        const filename = `status_${messageType}_${timestamp}${extension}`;
-        const filePath = path.join(STATUS_MEDIA_DIR, filename);
-
-        await fs.writeFile(filePath, buffer);
-
+        
         let supabasePath = null;
         if (supabase.isAvailable()) {
             supabasePath = await supabase.uploadMedia(msgId, buffer, mimetype, 'statuses');
         }
-
-        statusAntideleteState.mediaCache.set(msgId, {
-            filePath: filePath,
-            type: messageType,
-            mimetype: mimetype,
-            size: buffer.length,
-            isStatus: true,
-            savedAt: timestamp,
-            supabasePath: supabasePath
-        });
-
+        
+        if (!supabasePath) {
+            const extension = getStatusExtensionFromMime(mimetype);
+            const filename = `status_${messageType}_${timestamp}${extension}`;
+            const filePath = path.join(STATUS_MEDIA_DIR, filename);
+            await fs.writeFile(filePath, buffer);
+            
+            statusAntideleteState.mediaCache.set(msgId, {
+                filePath: filePath,
+                type: messageType,
+                mimetype: mimetype,
+                size: buffer.length,
+                isStatus: true,
+                savedAt: timestamp,
+                supabasePath: null
+            });
+        } else {
+            statusAntideleteState.mediaCache.set(msgId, {
+                filePath: null,
+                type: messageType,
+                mimetype: mimetype,
+                size: buffer.length,
+                isStatus: true,
+                savedAt: timestamp,
+                supabasePath: supabasePath
+            });
+        }
+        
         statusAntideleteState.stats.mediaCaptured++;
-
-        await calculateStorageSize();
-
-        return filePath;
+        
+        return supabasePath || 'local';
 
     } catch (error) {
         console.error('❌ Status Antidelete: Media download error:', error.message);
@@ -697,12 +707,13 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
             let mediaSent = false;
             try {
                 let buffer = null;
-                try {
-                    buffer = await fs.readFile(mediaCache.filePath);
-                } catch {}
-
-                if ((!buffer || buffer.length === 0) && mediaCache.supabasePath && supabase.isAvailable()) {
+                
+                if (mediaCache.supabasePath && supabase.isAvailable()) {
                     buffer = await supabase.downloadMedia(mediaCache.supabasePath);
+                }
+                
+                if (!buffer && mediaCache.filePath) {
+                    try { buffer = await fs.readFile(mediaCache.filePath); } catch {}
                 }
 
                 if (buffer && buffer.length > 0) {
@@ -745,17 +756,14 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
                 } catch {}
             }
 
-            if (mediaSent && statusAntideleteState.settings.autoCleanRetrieved) {
-                try {
-                    await fs.unlink(mediaCache.filePath);
-                    statusAntideleteState.mediaCache.delete(statusData.id);
-                    statusAntideleteState.stats.totalStorageMB = Math.max(0, statusAntideleteState.stats.totalStorageMB - (mediaCache.size / 1024 / 1024));
-                } catch (cleanErr) {}
-            }
-            if (mediaSent && mediaCache.supabasePath && supabase.isAvailable()) {
-                supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
-            }
             if (mediaSent) {
+                if (mediaCache.supabasePath && supabase.isAvailable()) {
+                    supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
+                }
+                if (mediaCache.filePath) {
+                    try { await fs.unlink(mediaCache.filePath); } catch {}
+                }
+                statusAntideleteState.mediaCache.delete(statusData.id);
                 supabase.deleteAntideleteStatus(statusData.id).catch(() => {});
             }
         } else {

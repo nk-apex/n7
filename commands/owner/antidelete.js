@@ -476,31 +476,40 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
         }
         
         const timestamp = Date.now();
-        const extension = getExtensionFromMime(mimetype);
-        const filename = `${messageType}_${timestamp}${extension}`;
-        const filePath = path.join(MEDIA_DIR, filename);
-        
-        await fs.writeFile(filePath, buffer);
         
         let supabasePath = null;
         if (supabase.isAvailable()) {
             supabasePath = await supabase.uploadMedia(msgId, buffer, mimetype, 'messages');
         }
         
-        antideleteState.mediaCache.set(msgId, {
-            filePath: filePath,
-            type: messageType,
-            mimetype: mimetype,
-            size: buffer.length,
-            savedAt: timestamp,
-            supabasePath: supabasePath
-        });
+        if (!supabasePath) {
+            const extension = getExtensionFromMime(mimetype);
+            const filename = `${messageType}_${timestamp}${extension}`;
+            const filePath = path.join(MEDIA_DIR, filename);
+            await fs.writeFile(filePath, buffer);
+            
+            antideleteState.mediaCache.set(msgId, {
+                filePath: filePath,
+                type: messageType,
+                mimetype: mimetype,
+                size: buffer.length,
+                savedAt: timestamp,
+                supabasePath: null
+            });
+        } else {
+            antideleteState.mediaCache.set(msgId, {
+                filePath: null,
+                type: messageType,
+                mimetype: mimetype,
+                size: buffer.length,
+                savedAt: timestamp,
+                supabasePath: supabasePath
+            });
+        }
         
         antideleteState.stats.mediaCaptured++;
         
-        await calculateStorageSize();
-        
-        return filePath;
+        return supabasePath || 'local';
         
     } catch (error) {
         console.error('❌ Antidelete: Media download error:', error.message);
@@ -805,12 +814,13 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
         if (messageData.hasMedia && mediaCache) {
             try {
                 let buffer = null;
-                try {
-                    buffer = await fs.readFile(mediaCache.filePath);
-                } catch {}
                 
-                if ((!buffer || buffer.length === 0) && mediaCache.supabasePath && supabase.isAvailable()) {
+                if (mediaCache.supabasePath && supabase.isAvailable()) {
                     buffer = await supabase.downloadMedia(mediaCache.supabasePath);
+                }
+                
+                if (!buffer && mediaCache.filePath) {
+                    try { buffer = await fs.readFile(mediaCache.filePath); } catch {}
                 }
                 
                 if (buffer && buffer.length > 0) {
@@ -863,6 +873,9 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
                     if (mediaCache.supabasePath && supabase.isAvailable()) {
                         supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
                     }
+                    if (mediaCache.filePath) {
+                        try { await fs.unlink(mediaCache.filePath); } catch {}
+                    }
                     supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
                 } else {
                     await retrySend(() => antideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
@@ -911,12 +924,13 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
         if (messageData.hasMedia && mediaCache) {
             try {
                 let buffer = null;
-                try {
-                    buffer = await fs.readFile(mediaCache.filePath);
-                } catch {}
                 
-                if ((!buffer || buffer.length === 0) && mediaCache.supabasePath && supabase.isAvailable()) {
+                if (mediaCache.supabasePath && supabase.isAvailable()) {
                     buffer = await supabase.downloadMedia(mediaCache.supabasePath);
+                }
+                
+                if (!buffer && mediaCache.filePath) {
+                    try { buffer = await fs.readFile(mediaCache.filePath); } catch {}
                 }
                 
                 if (buffer && buffer.length > 0) {
@@ -971,6 +985,9 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
                     
                     if (mediaCache.supabasePath && supabase.isAvailable()) {
                         supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
+                    }
+                    if (mediaCache.filePath) {
+                        try { await fs.unlink(mediaCache.filePath); } catch {}
                     }
                     supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
                 } else {
