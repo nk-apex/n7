@@ -343,12 +343,12 @@ function generateRetrievalCaption(senderJid, retrieverJid, chatId, groupName) {
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
     });
 
-    let caption = `╭─⌈ 🔐 *VIEW-ONCE RETRIEVED* ⌋\n`;
-    caption += `├─⊷ 📤 *Sent by:* ${senderNumber}\n`;
-    caption += `├─⊷ 📥 *Retrieved by:* ${retrieverDisplay}\n`;
-    caption += `├─⊷ 🕐 *Time:* ${timeStr}\n`;
-    caption += `├─⊷ 💬 *${isGroup ? 'Group' : 'Chat'}:* ${chatName}\n`;
-    caption += `╰─⊷ _Retrieved by WOLFBOT_`;
+    let caption = `╭⌈ 🔐 *VIEW-ONCE RETRIEVED* ⌋\n`;
+    caption += `├⊷ 📤 *Sent by:* ${senderNumber}\n`;
+    caption += `├⊷ 📥 *Retrieved by:* ${retrieverDisplay}\n`;
+    caption += `├⊷ 🕐 *Time:* ${timeStr}\n`;
+    caption += `╰⊷ 💬 *${isGroup ? 'Group' : 'Chat'}:* ${chatName}\n`;
+    caption += `> Retrieved by WOLFBOT`;
     return caption;
 }
 
@@ -3380,7 +3380,9 @@ function cleanSession(preserveExisting = false) {
 class MessageStore {
     constructor() {
         this.messages = new Map();
-        this.maxMessages = 200;
+        this.maxMessages = 1000;
+        this.sentMessages = new Map();
+        this.maxSentMessages = 500;
     }
     
     addMessage(jid, messageId, message) {
@@ -3395,10 +3397,26 @@ class MessageStore {
         } catch {}
     }
     
+    addSentMessage(jid, messageId, messageContent) {
+        try {
+            const key = `${jid}|${messageId}`;
+            this.sentMessages.set(key, messageContent);
+            
+            if (this.sentMessages.size > this.maxSentMessages) {
+                const oldestKey = this.sentMessages.keys().next().value;
+                this.sentMessages.delete(oldestKey);
+            }
+        } catch {}
+    }
+    
     getMessage(jid, messageId) {
         try {
             const key = `${jid}|${messageId}`;
-            return this.messages.get(key) || null;
+            const msg = this.messages.get(key);
+            if (msg) return msg;
+            const sent = this.sentMessages.get(key);
+            if (sent) return { message: sent };
+            return null;
         } catch {
             return null;
         }
@@ -4075,6 +4093,17 @@ async function startBot(loginMode = 'auto', loginData = null) {
             syncFullHistory: false,
         });
         
+        const originalSendMessage = sock.sendMessage.bind(sock);
+        sock.sendMessage = async (jid, content, options, ...rest) => {
+            const result = await originalSendMessage(jid, content, options, ...rest);
+            try {
+                if (result?.key?.id && store) {
+                    store.addSentMessage(jid, result.key.id, content);
+                }
+            } catch {}
+            return result;
+        };
+        
         SOCKET_INSTANCE = sock;
         currentSock = sock;
         connectionAttempts = 0;
@@ -4493,9 +4522,13 @@ async function startBot(loginMode = 'auto', loginData = null) {
         });
 
         sock.ev.on('messages.upsert', async ({ messages, type }) => {
-            if (type !== 'notify') return;
-            
             const msg = messages[0];
+            
+            if (store && msg?.key?.remoteJid && msg?.key?.id && msg?.message) {
+                store.addMessage(msg.key.remoteJid, msg.key.id, msg);
+            }
+            
+            if (type !== 'notify') return;
 
             if (!msg.message) {
                 if (store && msg.key?.remoteJid && msg.key?.id) {
