@@ -7,15 +7,11 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const WOLF_API = "https://wolfmusicapi-al6b.onrender.com/download/yta2";
-const WOLF_STREAM = "https://wolfmusicapi-al6b.onrender.com/download/stream/mp3";
-const WOLF_API_2 = "https://wolfmusicapi-al6b.onrender.com/download/yta3";
-const WOLF_API_3 = "https://wolfmusicapi-al6b.onrender.com/download/ytmp3";
 const KEITH_API = "https://apiskeith.top";
+const KEITH_PRIMARY = `${KEITH_API}/download/audio`;
 
 const keithFallbackEndpoints = [
   `${KEITH_API}/download/ytmp3`,
-  `${KEITH_API}/download/audio`,
   `${KEITH_API}/download/dlmp3`,
   `${KEITH_API}/download/mp3`,
   `${KEITH_API}/download/yta`,
@@ -23,7 +19,22 @@ const keithFallbackEndpoints = [
   `${KEITH_API}/download/yta3`
 ];
 
+const WOLF_API = "https://wolfmusicapi-al6b.onrender.com/download/yta2";
+const WOLF_STREAM = "https://wolfmusicapi-al6b.onrender.com/download/stream/mp3";
+const WOLF_API_2 = "https://wolfmusicapi-al6b.onrender.com/download/yta3";
+const WOLF_API_3 = "https://wolfmusicapi-al6b.onrender.com/download/ytmp3";
+
 async function getKeithDownloadUrl(videoUrl) {
+  try {
+    const response = await axios.get(
+      `${KEITH_PRIMARY}?url=${encodeURIComponent(videoUrl)}`,
+      { timeout: 20000 }
+    );
+    if (response.data?.status && response.data?.result) {
+      return { url: response.data.result, source: 'Keith Audio' };
+    }
+  } catch {}
+
   for (const endpoint of keithFallbackEndpoints) {
     try {
       const response = await axios.get(
@@ -31,7 +42,7 @@ async function getKeithDownloadUrl(videoUrl) {
         { timeout: 15000 }
       );
       if (response.data?.status && response.data?.result) {
-        return response.data.result;
+        return { url: response.data.result, source: 'Keith Fallback' };
       }
     } catch {
       continue;
@@ -71,7 +82,7 @@ export default {
   name: "play",
   aliases: ["ytmp3doc", "audiodoc", "ytplay"],
   category: "Downloader",
-  description: "Download YouTube audio via WOLF API",
+  description: "Download YouTube audio",
   
   async execute(sock, m, args, prefix) {
     const jid = m.key.remoteJid;
@@ -217,36 +228,50 @@ export default {
       let audioBuffer = null;
       let sourceUsed = '';
 
-      try {
-        console.log(`🎵 [PLAY] Trying WOLF API...`);
-        const wolfRes = await axios.get(`${WOLF_API}?url=${encodeURIComponent(videoUrl)}`, { timeout: 20000 });
+      console.log(`🎵 [PLAY] Trying Keith API (primary)...`);
+      const keithResult = await getKeithDownloadUrl(videoUrl);
+      if (keithResult) {
+        try {
+          audioBuffer = await downloadAndValidate(keithResult.url);
+          sourceUsed = keithResult.source;
+          console.log(`🎵 [PLAY] Keith success: ${keithResult.source}`);
+        } catch (err) {
+          console.log(`🎵 [PLAY] Keith download failed: ${err.message}`);
+        }
+      }
 
-        if (wolfRes.data?.success) {
-          const data = wolfRes.data;
-          const streamUrl = data.streamUrl ? data.streamUrl.replace('http://', 'https://') : null;
-          const downloadUrl = data.downloadUrl;
+      if (!audioBuffer) {
+        try {
+          console.log(`🎵 [PLAY] Keith failed, trying WOLF API fallback...`);
+          const wolfRes = await axios.get(`${WOLF_API}?url=${encodeURIComponent(videoUrl)}`, { timeout: 20000 });
 
-          const wolfSources = [];
-          if (streamUrl) wolfSources.push({ url: streamUrl, label: 'WOLF Stream' });
-          if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
-            wolfSources.push({ url: downloadUrl, label: 'WOLF Direct' });
-          }
-          wolfSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(videoUrl)}`, label: 'WOLF Stream URL' });
+          if (wolfRes.data?.success) {
+            const data = wolfRes.data;
+            const streamUrl = data.streamUrl ? data.streamUrl.replace('http://', 'https://') : null;
+            const downloadUrl = data.downloadUrl;
 
-          for (const source of wolfSources) {
-            try {
-              console.log(`🎵 [PLAY] Trying: ${source.label}`);
-              audioBuffer = await downloadAndValidate(source.url);
-              sourceUsed = source.label;
-              break;
-            } catch (err) {
-              console.log(`🎵 [PLAY] ${source.label} failed: ${err.message}`);
-              continue;
+            const wolfSources = [];
+            if (streamUrl) wolfSources.push({ url: streamUrl, label: 'WOLF Stream' });
+            if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
+              wolfSources.push({ url: downloadUrl, label: 'WOLF Direct' });
+            }
+            wolfSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(videoUrl)}`, label: 'WOLF Stream URL' });
+
+            for (const source of wolfSources) {
+              try {
+                console.log(`🎵 [PLAY] Trying: ${source.label}`);
+                audioBuffer = await downloadAndValidate(source.url);
+                sourceUsed = source.label;
+                break;
+              } catch (err) {
+                console.log(`🎵 [PLAY] ${source.label} failed: ${err.message}`);
+                continue;
+              }
             }
           }
+        } catch (wolfErr) {
+          console.log(`🎵 [PLAY] WOLF API failed: ${wolfErr.message}`);
         }
-      } catch (wolfErr) {
-        console.log(`🎵 [PLAY] WOLF API failed: ${wolfErr.message}`);
       }
 
       if (!audioBuffer) {
@@ -261,19 +286,6 @@ export default {
             }
           } catch (err) {
             console.log(`🎵 [PLAY] Alt failed: ${err.message}`);
-          }
-        }
-      }
-
-      if (!audioBuffer) {
-        console.log(`🎵 [PLAY] WOLF failed, trying Keith fallback...`);
-        const keithUrl = await getKeithDownloadUrl(videoUrl);
-        if (keithUrl) {
-          try {
-            audioBuffer = await downloadAndValidate(keithUrl);
-            sourceUsed = 'Keith Fallback';
-          } catch (err) {
-            console.log(`🎵 [PLAY] Keith fallback failed: ${err.message}`);
           }
         }
       }
@@ -324,7 +336,7 @@ export default {
       const contextInfo = {
         externalAdReply: {
           title: videoTitle.substring(0, 60),
-          body: `🎵 ${author}${duration ? ` | ⏱️ ${duration}` : ''} | ${fileSizeMB}MB | WOLF API`,
+          body: `🎵 ${author}${duration ? ` | ⏱️ ${duration}` : ''} | ${fileSizeMB}MB`,
           mediaType: 2,
           sourceUrl: videoUrl,
           thumbnail: thumbnailBuffer,

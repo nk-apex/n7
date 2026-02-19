@@ -1,20 +1,34 @@
 import axios from "axios";
 import yts from "yt-search";
 
+const KEITH_API = "https://apiskeith.top";
+const KEITH_PRIMARY = `${KEITH_API}/download/audio`;
+
+const keithFallbackEndpoints = [
+  `${KEITH_API}/download/ytmp3`,
+  `${KEITH_API}/download/dlmp3`,
+  `${KEITH_API}/download/mp3`,
+  `${KEITH_API}/download/yta`,
+  `${KEITH_API}/download/yta2`,
+  `${KEITH_API}/download/yta3`
+];
+
 const WOLF_API = "https://wolfmusicapi-al6b.onrender.com/download/ytmp3";
 const WOLF_STREAM = "https://wolfmusicapi-al6b.onrender.com/download/stream/mp3";
 const WOLF_API_2 = "https://wolfmusicapi-al6b.onrender.com/download/yta2";
 const WOLF_API_3 = "https://wolfmusicapi-al6b.onrender.com/download/yta3";
-const KEITH_API = "https://apiskeith.top";
-
-const keithFallbackEndpoints = [
-  `${KEITH_API}/download/ytmp3`,
-  `${KEITH_API}/download/audio`,
-  `${KEITH_API}/download/dlmp3`,
-  `${KEITH_API}/download/mp3`
-];
 
 async function getKeithDownloadUrl(videoUrl) {
+  try {
+    const response = await axios.get(
+      `${KEITH_PRIMARY}?url=${encodeURIComponent(videoUrl)}`,
+      { timeout: 20000 }
+    );
+    if (response.data?.status && response.data?.result) {
+      return { url: response.data.result, source: 'Keith Audio' };
+    }
+  } catch {}
+
   for (const endpoint of keithFallbackEndpoints) {
     try {
       const response = await axios.get(
@@ -22,7 +36,7 @@ async function getKeithDownloadUrl(videoUrl) {
         { timeout: 15000 }
       );
       if (response.data?.status && response.data?.result) {
-        return response.data.result;
+        return { url: response.data.result, source: 'Keith Fallback' };
       }
     } catch {
       continue;
@@ -77,20 +91,22 @@ export default {
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      let apiData = null;
-      try {
-        const response = await axios.get(`${WOLF_API}?url=${encodeURIComponent(searchQuery)}`, { timeout: 25000 });
-        if (response.data?.success) apiData = response.data;
-      } catch (err) {
-        console.log(`🎵 [YTMP3] Wolf API failed: ${err.message}`);
-      }
+      let videoTitle = '';
+      let videoId = '';
+      let youtubeUrl = '';
+      let duration = '';
 
-      let videoTitle = apiData?.title || apiData?.searchResult?.title || '';
-      let videoId = apiData?.videoId || '';
-      let youtubeUrl = apiData?.youtubeUrl || '';
-      let duration = apiData?.searchResult?.duration || '';
-
-      if (!videoTitle && !searchQuery.startsWith('http')) {
+      if (searchQuery.match(/(youtube\.com|youtu\.be)/i)) {
+        youtubeUrl = searchQuery;
+        videoId = youtubeUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i)?.[1] || '';
+        try {
+          const { videos } = await yts({ videoId });
+          if (videos && videos.length > 0) {
+            videoTitle = videos[0].title;
+            duration = videos[0].timestamp || '';
+          }
+        } catch {}
+      } else {
         try {
           const { videos: ytResults } = await yts(searchQuery);
           if (ytResults && ytResults.length > 0) {
@@ -110,28 +126,49 @@ export default {
       let audioBuffer = null;
       let sourceUsed = '';
 
-      const downloadSources = [];
+      const downloadTarget = youtubeUrl || searchQuery;
 
-      if (apiData?.downloadUrl && apiData.downloadUrl !== 'In Processing...' && apiData.downloadUrl.startsWith('http')) {
-        downloadSources.push({ url: apiData.downloadUrl, label: 'Wolf Direct' });
-      }
-
-      if (apiData?.streamUrl) {
-        const streamUrl = apiData.streamUrl.replace('http://', 'https://');
-        downloadSources.push({ url: streamUrl, label: 'Wolf Stream' });
-      }
-
-      downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(searchQuery)}`, label: 'Wolf Stream Q' });
-
-      for (const source of downloadSources) {
+      console.log(`🎵 [YTMP3] Trying Keith API (primary)...`);
+      const keithResult = await getKeithDownloadUrl(downloadTarget);
+      if (keithResult) {
         try {
-          console.log(`🎵 [YTMP3] Trying: ${source.label}`);
-          audioBuffer = await downloadAndValidate(source.url);
-          sourceUsed = source.label;
-          break;
+          audioBuffer = await downloadAndValidate(keithResult.url);
+          sourceUsed = keithResult.source;
+          console.log(`🎵 [YTMP3] Keith success: ${keithResult.source}`);
         } catch (err) {
-          console.log(`🎵 [YTMP3] ${source.label} failed: ${err.message}`);
-          continue;
+          console.log(`🎵 [YTMP3] Keith download failed: ${err.message}`);
+        }
+      }
+
+      if (!audioBuffer) {
+        try {
+          console.log(`🎵 [YTMP3] Keith failed, trying WOLF API fallback...`);
+          const wolfRes = await axios.get(`${WOLF_API}?url=${encodeURIComponent(downloadTarget)}`, { timeout: 25000 });
+          if (wolfRes.data?.success) {
+            const apiData = wolfRes.data;
+
+            const downloadSources = [];
+            if (apiData.downloadUrl && apiData.downloadUrl !== 'In Processing...' && apiData.downloadUrl.startsWith('http')) {
+              downloadSources.push({ url: apiData.downloadUrl, label: 'Wolf Direct' });
+            }
+            if (apiData.streamUrl) {
+              downloadSources.push({ url: apiData.streamUrl.replace('http://', 'https://'), label: 'Wolf Stream' });
+            }
+            downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(downloadTarget)}`, label: 'Wolf Stream Q' });
+
+            for (const source of downloadSources) {
+              try {
+                console.log(`🎵 [YTMP3] Trying: ${source.label}`);
+                audioBuffer = await downloadAndValidate(source.url);
+                sourceUsed = source.label;
+                break;
+              } catch (err) {
+                console.log(`🎵 [YTMP3] ${source.label} failed: ${err.message}`);
+              }
+            }
+          }
+        } catch (err) {
+          console.log(`🎵 [YTMP3] Wolf API failed: ${err.message}`);
         }
       }
 
@@ -139,7 +176,7 @@ export default {
         for (const altApi of [WOLF_API_2, WOLF_API_3]) {
           try {
             console.log(`🎵 [YTMP3] Trying alt Wolf API`);
-            const altRes = await axios.get(`${altApi}?url=${encodeURIComponent(searchQuery)}`, { timeout: 20000 });
+            const altRes = await axios.get(`${altApi}?url=${encodeURIComponent(downloadTarget)}`, { timeout: 20000 });
             if (altRes.data?.success && altRes.data?.downloadUrl) {
               audioBuffer = await downloadAndValidate(altRes.data.downloadUrl);
               sourceUsed = 'Wolf Alt';
@@ -147,19 +184,6 @@ export default {
             }
           } catch (err) {
             console.log(`🎵 [YTMP3] Alt failed: ${err.message}`);
-          }
-        }
-      }
-
-      if (!audioBuffer && youtubeUrl) {
-        console.log(`🎵 [YTMP3] Wolf failed, trying Keith fallback...`);
-        const keithUrl = await getKeithDownloadUrl(youtubeUrl);
-        if (keithUrl) {
-          try {
-            audioBuffer = await downloadAndValidate(keithUrl);
-            sourceUsed = 'Keith Fallback';
-          } catch (err) {
-            console.log(`🎵 [YTMP3] Keith failed: ${err.message}`);
           }
         }
       }
@@ -205,7 +229,7 @@ export default {
         contextInfo: {
           externalAdReply: {
             title: videoTitle.substring(0, 60),
-            body: `🎵 ${duration ? duration + ' • ' : ''}${fileSizeMB}MB | WOLF API`,
+            body: `🎵 ${duration ? duration + ' • ' : ''}${fileSizeMB}MB`,
             mediaType: 2,
             thumbnail: thumbnailBuffer,
             sourceUrl: youtubeUrl || searchQuery,
