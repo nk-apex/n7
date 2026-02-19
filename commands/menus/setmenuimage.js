@@ -226,20 +226,7 @@ export default {
       const stats = fs.statSync(wolfbotPath);
       if (stats.size === 0) throw new Error("Saved file is empty");
 
-      const previewBuffer = fs.readFileSync(wolfbotPath);
-
-      let successCaption = `✅ *Menu Image Updated!*\n\n`;
-      successCaption += `📸 Size: ${fileSizeMB}MB\n`;
-      successCaption += `📁 Format: ${contentType ? contentType.split('/')[1]?.toUpperCase() || 'JPG' : 'JPG'}\n`;
-      successCaption += `📥 Source: ${sourceLabel}\n`;
-      successCaption += `\nUse \`${PREFIX}menu\` to see the new menu!`;
-
       await sock.sendMessage(jid, { react: { text: "✅", key: m.key } });
-
-      await sock.sendMessage(jid, {
-        image: previewBuffer,
-        caption: successCaption
-      }, { quoted: m });
 
       console.log(`✅ Menu image updated successfully by owner ${cleaned.cleanNumber}`);
 
