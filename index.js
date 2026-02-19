@@ -1379,24 +1379,6 @@ const DiskManager = {
     }
 };
 
-const SUPABASE_CLEANUP_INTERVAL = 48 * 60 * 60 * 1000;
-setInterval(async () => {
-    try {
-        if (supabaseDb.isAvailable()) {
-            const results = await supabaseDb.clearAllAntideleteData();
-            const totalCleared = results.tables + results.files;
-            if (totalCleared > 0) {
-                UltraCleanLogger.info(`🗑️ [AUTO-CLEANUP] Supabase 48h cleanup: ${results.tables} DB records, ${results.files} media files cleared`);
-            }
-            if (results.errors.length > 0) {
-                UltraCleanLogger.error(`⚠️ [AUTO-CLEANUP] Supabase cleanup errors: ${results.errors.join(', ')}`);
-            }
-        }
-    } catch (err) {
-        UltraCleanLogger.error(`⚠️ [AUTO-CLEANUP] Supabase cleanup failed: ${err.message}`);
-    }
-}, SUPABASE_CLEANUP_INTERVAL);
-UltraCleanLogger.info('🗑️ Supabase auto-cleanup: ✅ ACTIVE (every 48h)');
 
 function safeWriteFile(filePath, data) {
     const content = (typeof data === 'string' || Buffer.isBuffer(data)) ? data : JSON.stringify(data, null, 2);

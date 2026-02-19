@@ -3,7 +3,7 @@ import fsSync from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
-import supabase from '../../lib/supabase.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -79,20 +79,12 @@ async function calculateStorageSize() {
     try {
         let totalBytes = 0;
         
-        const files = await fs.readdir(MEDIA_DIR);
-        for (const file of files) {
-            const filePath = path.join(MEDIA_DIR, file);
-            const stats = await fs.stat(filePath);
-            totalBytes += stats.size;
+        for (const [, media] of antideleteState.mediaCache.entries()) {
+            totalBytes += media.size || 0;
         }
         
         if (await fs.access(CACHE_FILE).then(() => true).catch(() => false)) {
             const stats = await fs.stat(CACHE_FILE);
-            totalBytes += stats.size;
-        }
-        
-        if (await fs.access(SETTINGS_FILE).then(() => true).catch(() => false)) {
-            const stats = await fs.stat(SETTINGS_FILE);
             totalBytes += stats.size;
         }
         
@@ -112,24 +104,6 @@ async function loadData() {
             const settingsData = JSON.parse(await fs.readFile(SETTINGS_FILE, 'utf8'));
             antideleteState.settings = { ...antideleteState.settings, ...settingsData };
             settingsFromJson = true;
-        }
-        
-        if (!settingsFromJson && supabase.isAvailable()) {
-            try {
-                const sbSettings = await supabase.getConfig('antidelete_settings', null);
-                if (sbSettings) {
-                    antideleteState.settings = { ...antideleteState.settings, ...sbSettings };
-                }
-                const sbStats = await supabase.getConfig('antidelete_stats', null);
-                if (sbStats) {
-                    antideleteState.stats = { ...antideleteState.stats, ...sbStats };
-                }
-                const sbMode = await supabase.getConfig('antidelete_mode', null);
-                if (sbMode) {
-                    if (typeof sbMode.enabled === 'boolean') antideleteState.enabled = sbMode.enabled;
-                    if (sbMode.mode === 'private' || sbMode.mode === 'public') antideleteState.mode = sbMode.mode;
-                }
-            } catch {}
         }
         
         if (await fs.access(CACHE_FILE).then(() => true).catch(() => false)) {
@@ -154,7 +128,7 @@ async function loadData() {
                 antideleteState.mediaCache.clear();
                 data.mediaCache.forEach(([key, value]) => {
                     antideleteState.mediaCache.set(key, {
-                        filePath: value.filePath,
+                        base64: value.base64 || null,
                         type: value.type,
                         mimetype: value.mimetype,
                         size: value.size,
@@ -199,12 +173,11 @@ async function saveData() {
         const mediaCacheArr = [];
         for (const [key, value] of antideleteState.mediaCache.entries()) {
             mediaCacheArr.push([key, {
-                filePath: value.filePath,
+                base64: value.base64 || null,
                 type: value.type,
                 mimetype: value.mimetype,
                 size: value.size,
-                savedAt: value.savedAt,
-                supabasePath: value.supabasePath || null
+                savedAt: value.savedAt
             }]);
         }
         
@@ -221,10 +194,6 @@ async function saveData() {
         const jsonStr = JSON.stringify(data);
         await fs.writeFile(CACHE_FILE, jsonStr);
         await fs.writeFile(SETTINGS_FILE, JSON.stringify(antideleteState.settings));
-        
-        supabase.setConfig('antidelete_settings', antideleteState.settings).catch(() => {});
-        supabase.setConfig('antidelete_stats', antideleteState.stats).catch(() => {});
-        supabase.setConfig('antidelete_mode', { enabled: antideleteState.enabled, mode: antideleteState.mode }).catch(() => {});
         
     } catch (error) {
         console.error('❌ Antidelete: Error saving JSON data:', error.message);
@@ -322,39 +291,18 @@ async function autoCleanCache() {
             }
         }
         
-        const files = await fs.readdir(MEDIA_DIR);
-        for (const file of files) {
-            const filePath = path.join(MEDIA_DIR, file);
-            const stats = await fs.stat(filePath);
-            
-            const fileAge = now - stats.mtimeMs;
-            if (fileAge > maxAge) {
-                try {
-                    await fs.unlink(filePath);
-                    
-                    for (const [key, media] of antideleteState.mediaCache.entries()) {
-                        if (media.filePath === filePath) {
-                            antideleteState.mediaCache.delete(key);
-                            break;
-                        }
-                    }
-                    
-                    cleanedMedia++;
-                } catch (error) {
-                    console.error(`❌ Could not delete ${file}:`, error.message);
-                }
+        for (const [key, media] of antideleteState.mediaCache.entries()) {
+            if (now - media.savedAt > maxAge) {
+                antideleteState.mediaCache.delete(key);
+                cleanedMedia++;
             }
         }
         
         await calculateStorageSize();
-        if (antideleteState.stats.totalStorageMB > antideleteState.settings.maxStorageMB) {
-            await forceCleanup();
-        }
         
         if (cleanedCount > 0 || cleanedMedia > 0) {
             antideleteState.stats.cacheCleans++;
             await saveData();
-        } else {
         }
         
     } catch (error) {
@@ -364,41 +312,20 @@ async function autoCleanCache() {
 
 async function forceCleanup() {
     try {
+        const mediaEntries = Array.from(antideleteState.mediaCache.entries());
+        mediaEntries.sort((a, b) => a[1].savedAt - b[1].savedAt);
         
-        const files = await fs.readdir(MEDIA_DIR);
-        const fileStats = await Promise.all(
-            files.map(async (file) => {
-                const filePath = path.join(MEDIA_DIR, file);
-                const stats = await fs.stat(filePath);
-                return { file, filePath, mtimeMs: stats.mtimeMs, size: stats.size };
-            })
-        );
-        
-        fileStats.sort((a, b) => a.mtimeMs - b.mtimeMs);
-        
-        let deletedSize = 0;
+        let freedSize = 0;
         const targetSize = antideleteState.settings.maxStorageMB * 1024 * 1024 * 0.8;
+        let deletedCount = 0;
         
-        for (const fileStat of fileStats) {
-            if (antideleteState.stats.totalStorageMB * 1024 * 1024 <= targetSize) {
+        for (const [key, media] of mediaEntries) {
+            if (antideleteState.stats.totalStorageMB * 1024 * 1024 - freedSize <= targetSize) {
                 break;
             }
-            
-            try {
-                await fs.unlink(fileStat.filePath);
-                deletedSize += fileStat.size;
-                
-                for (const [key, media] of antideleteState.mediaCache.entries()) {
-                    if (media.filePath === fileStat.filePath) {
-                        antideleteState.mediaCache.delete(key);
-                        break;
-                    }
-                }
-                
-                console.log(`🗑️ Force deleted: ${fileStat.file}`);
-            } catch (error) {
-                console.error(`❌ Could not delete ${fileStat.file}:`, error.message);
-            }
+            antideleteState.mediaCache.delete(key);
+            freedSize += media.size || 0;
+            deletedCount++;
         }
         
         const cacheEntries = Array.from(antideleteState.messageCache.entries());
@@ -411,7 +338,7 @@ async function forceCleanup() {
         await calculateStorageSize();
         await saveData();
         
-        console.log(`✅ Force cleanup completed. Freed ${Math.round(deletedSize / 1024 / 1024)}MB`);
+        console.log(`✅ Force cleanup completed. Removed ${deletedCount} media entries, freed ~${Math.round(freedSize / 1024 / 1024)}MB`);
         
     } catch (error) {
         console.error('❌ Antidelete: Force cleanup error:', error.message);
@@ -476,46 +403,22 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
         }
         
         const timestamp = Date.now();
-        
-        let supabasePath = null;
-        if (supabase.isAvailable()) {
-            supabasePath = await supabase.uploadMedia(msgId, buffer, mimetype, 'messages');
-        }
-        
         const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+        const base64Data = buffer.toString('base64');
         
-        if (!supabasePath) {
-            const extension = getExtensionFromMime(mimetype);
-            const filename = `${messageType}_${timestamp}${extension}`;
-            const filePath = path.join(MEDIA_DIR, filename);
-            await fs.writeFile(filePath, buffer);
-            
-            console.log(`⚠️ [ANTIDELETE] Media stored LOCALLY (Supabase unavailable) | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
-            
-            antideleteState.mediaCache.set(msgId, {
-                filePath: filePath,
-                type: messageType,
-                mimetype: mimetype,
-                size: buffer.length,
-                savedAt: timestamp,
-                supabasePath: null
-            });
-        } else {
-            console.log(`☁️ [ANTIDELETE] Media stored in SUPABASE ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
-            
-            antideleteState.mediaCache.set(msgId, {
-                filePath: null,
-                type: messageType,
-                mimetype: mimetype,
-                size: buffer.length,
-                savedAt: timestamp,
-                supabasePath: supabasePath
-            });
-        }
+        antideleteState.mediaCache.set(msgId, {
+            base64: base64Data,
+            type: messageType,
+            mimetype: mimetype,
+            size: buffer.length,
+            savedAt: timestamp
+        });
+        
+        console.log(`💾 [ANTIDELETE] Media stored in JSON ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
         
         antideleteState.stats.mediaCaptured++;
         
-        return supabasePath || 'local';
+        return 'json';
         
     } catch (error) {
         console.error('❌ Antidelete: Media download error:', error.message);
@@ -620,10 +523,6 @@ export async function antideleteStoreMessage(message) {
         antideleteState.messageCache.set(msgId, messageData);
         antideleteState.stats.totalMessages++;
         
-        if (supabase.isAvailable()) {
-            supabase.storeAntideleteMessage(msgId, messageData).catch(() => {});
-        }
-        
         if (antideleteState.messageCache.size > MAX_MESSAGE_CACHE) {
             const excess = antideleteState.messageCache.size - MAX_MESSAGE_CACHE;
             const iter = antideleteState.messageCache.keys();
@@ -706,9 +605,6 @@ export async function antideleteHandleUpdate(update) {
         
         
         let cachedMessage = antideleteState.messageCache.get(msgId);
-        if (!cachedMessage && supabase.isAvailable()) {
-            cachedMessage = await supabase.getAntideleteMessage(msgId);
-        }
         if (!cachedMessage) {
             return;
         }
@@ -829,21 +725,16 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
         if (messageData.hasMedia && mediaCache) {
             try {
                 let buffer = null;
-                let retrievedFrom = 'none';
                 
-                if (mediaCache.supabasePath && supabase.isAvailable()) {
-                    buffer = await supabase.downloadMedia(mediaCache.supabasePath);
-                    if (buffer) retrievedFrom = 'supabase';
-                }
-                
-                if (!buffer && mediaCache.filePath) {
+                if (mediaCache.base64) {
+                    buffer = Buffer.from(mediaCache.base64, 'base64');
+                } else if (mediaCache.filePath) {
                     try { buffer = await fs.readFile(mediaCache.filePath); } catch {}
-                    if (buffer) retrievedFrom = 'local';
                 }
                 
                 if (buffer && buffer.length > 0) {
                     const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
-                    console.log(`📥 [ANTIDELETE-DM] Media recovered from ${retrievedFrom.toUpperCase()} | Type: ${messageData.type} | Size: ${sizeMB}MB | ID: ${messageData.id.slice(0, 12)}...`);
+                    console.log(`📥 [ANTIDELETE-DM] Media recovered from JSON | Type: ${messageData.type} | Size: ${sizeMB}MB | ID: ${messageData.id.slice(0, 12)}...`);
                     if (messageData.type === 'sticker') {
                         await retrySend(async () => {
                             const stickerMsg = await antideleteState.sock.sendMessage(ownerJid, {
@@ -890,14 +781,8 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
                         }));
                     }
                     
-                    if (mediaCache.supabasePath && supabase.isAvailable()) {
-                        supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
-                    }
-                        console.log(`🗑️ [ANTIDELETE-DM] Cleaned up from Supabase after send | ID: ${messageData.id.slice(0, 12)}...`);
-                    if (mediaCache.filePath) {
-                        try { await fs.unlink(mediaCache.filePath); } catch {}
-                    }
-                    supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
+                    antideleteState.mediaCache.delete(messageData.id);
+                    console.log(`🗑️ [ANTIDELETE-DM] Cleaned up JSON media after send | ID: ${messageData.id.slice(0, 12)}...`);
                 } else {
                     await retrySend(() => antideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
                 }
@@ -911,7 +796,6 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
             }
         } else {
             await retrySend(() => antideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
-            supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
         }
         
         return true;
@@ -945,21 +829,16 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
         if (messageData.hasMedia && mediaCache) {
             try {
                 let buffer = null;
-                let retrievedFrom = 'none';
                 
-                if (mediaCache.supabasePath && supabase.isAvailable()) {
-                    buffer = await supabase.downloadMedia(mediaCache.supabasePath);
-                    if (buffer) retrievedFrom = 'supabase';
-                }
-                
-                if (!buffer && mediaCache.filePath) {
+                if (mediaCache.base64) {
+                    buffer = Buffer.from(mediaCache.base64, 'base64');
+                } else if (mediaCache.filePath) {
                     try { buffer = await fs.readFile(mediaCache.filePath); } catch {}
-                    if (buffer) retrievedFrom = 'local';
                 }
                 
                 if (buffer && buffer.length > 0) {
                     const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
-                    console.log(`📥 [ANTIDELETE-CHAT] Media recovered from ${retrievedFrom.toUpperCase()} | Type: ${messageData.type} | Size: ${sizeMB}MB | ID: ${messageData.id.slice(0, 12)}...`);
+                    console.log(`📥 [ANTIDELETE-CHAT] Media recovered from JSON | Type: ${messageData.type} | Size: ${sizeMB}MB | ID: ${messageData.id.slice(0, 12)}...`);
                     
                     if (messageData.type === 'sticker') {
                         await retrySend(async () => {
@@ -1010,14 +889,8 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
                         }));
                     }
                     
-                    if (mediaCache.supabasePath && supabase.isAvailable()) {
-                        supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
-                        console.log(`🗑️ [ANTIDELETE-CHAT] Cleaned up from Supabase after send | ID: ${messageData.id.slice(0, 12)}...`);
-                    }
-                    if (mediaCache.filePath) {
-                        try { await fs.unlink(mediaCache.filePath); } catch {}
-                    }
-                    supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
+                    antideleteState.mediaCache.delete(messageData.id);
+                    console.log(`🗑️ [ANTIDELETE-CHAT] Cleaned up JSON media after send | ID: ${messageData.id.slice(0, 12)}...`);
                 } else {
                     console.log(`⚠️ [ANTIDELETE-CHAT] Media not recoverable | ID: ${messageData.id.slice(0, 12)}...`);
                     await retrySend(() => antideleteState.sock.sendMessage(chatJid, { text: detailsText }));
@@ -1032,7 +905,6 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
             }
         } else {
             await retrySend(() => antideleteState.sock.sendMessage(chatJid, { text: detailsText }));
-            supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
         }
         
         return true;
@@ -1068,7 +940,7 @@ export async function initAntidelete(sock) {
                         mode: antideleteState.mode,
                         messageCache: Array.from(antideleteState.messageCache.entries()),
                         mediaCache: Array.from(antideleteState.mediaCache.entries()).map(([key, value]) => {
-                            return [key, { filePath: value.filePath, type: value.type, mimetype: value.mimetype, size: value.size, savedAt: value.savedAt, supabasePath: value.supabasePath || null }];
+                            return [key, { base64: value.base64 || null, type: value.type, mimetype: value.mimetype, size: value.size, savedAt: value.savedAt }];
                         }),
                         groupCache: Array.from(antideleteState.groupCache.entries()),
                         stats: antideleteState.stats,

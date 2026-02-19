@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
-import supabase from '../../lib/supabase.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,24 +70,6 @@ async function loadStatusData() {
             settingsLoaded = true;
         }
 
-        if (!settingsLoaded && supabase.isAvailable()) {
-            try {
-                const dbSettings = await supabase.getConfig('antidelete_status_settings', null);
-                if (dbSettings) {
-                    statusAntideleteState.settings = { ...statusAntideleteState.settings, ...dbSettings };
-                }
-                const dbStats = await supabase.getConfig('antidelete_status_stats', null);
-                if (dbStats) {
-                    statusAntideleteState.stats = { ...statusAntideleteState.stats, ...dbStats };
-                }
-                const dbMode = await supabase.getConfig('antidelete_status_mode', null);
-                if (dbMode) {
-                    if (dbMode.enabled !== undefined) statusAntideleteState.enabled = dbMode.enabled;
-                    if (dbMode.mode !== undefined) statusAntideleteState.mode = dbMode.mode;
-                }
-            } catch {}
-        }
-
         if (await fs.access(STATUS_CACHE_FILE).then(() => true).catch(() => false)) {
             const data = JSON.parse(await fs.readFile(STATUS_CACHE_FILE, 'utf8'));
 
@@ -109,7 +91,7 @@ async function loadStatusData() {
                 statusAntideleteState.mediaCache.clear();
                 data.mediaCache.forEach(([key, value]) => {
                     statusAntideleteState.mediaCache.set(key, {
-                        filePath: value.filePath,
+                        base64: value.base64 || null,
                         type: value.type,
                         mimetype: value.mimetype,
                         size: value.size,
@@ -142,13 +124,12 @@ async function saveStatusData() {
             deletedStatusCache: Array.from(statusAntideleteState.deletedStatusCache.entries()),
             mediaCache: Array.from(statusAntideleteState.mediaCache.entries()).map(([key, value]) => {
                 return [key, {
-                    filePath: value.filePath,
+                    base64: value.base64 || null,
                     type: value.type,
                     mimetype: value.mimetype,
                     size: value.size,
                     isStatus: value.isStatus,
-                    savedAt: value.savedAt,
-                    supabasePath: value.supabasePath || null
+                    savedAt: value.savedAt
                 }];
             }),
             stats: statusAntideleteState.stats,
@@ -157,10 +138,6 @@ async function saveStatusData() {
 
         await fs.writeFile(STATUS_CACHE_FILE, JSON.stringify(data, null, 2));
         await fs.writeFile(SETTINGS_FILE, JSON.stringify(statusAntideleteState.settings, null, 2));
-
-        supabase.setConfig('antidelete_status_settings', statusAntideleteState.settings).catch(() => {});
-        supabase.setConfig('antidelete_status_stats', statusAntideleteState.stats).catch(() => {});
-        supabase.setConfig('antidelete_status_mode', { enabled: statusAntideleteState.enabled, mode: statusAntideleteState.mode }).catch(() => {});
 
     } catch (error) {
         console.error('❌ Status Antidelete: Error saving JSON data:', error.message);
@@ -171,20 +148,12 @@ async function calculateStorageSize() {
     try {
         let totalBytes = 0;
 
-        const files = await fs.readdir(STATUS_MEDIA_DIR);
-        for (const file of files) {
-            const filePath = path.join(STATUS_MEDIA_DIR, file);
-            const stats = await fs.stat(filePath);
-            totalBytes += stats.size;
+        for (const [, media] of statusAntideleteState.mediaCache.entries()) {
+            totalBytes += media.size || 0;
         }
 
         if (await fs.access(STATUS_CACHE_FILE).then(() => true).catch(() => false)) {
             const stats = await fs.stat(STATUS_CACHE_FILE);
-            totalBytes += stats.size;
-        }
-
-        if (await fs.access(SETTINGS_FILE).then(() => true).catch(() => false)) {
-            const stats = await fs.stat(SETTINGS_FILE);
             totalBytes += stats.size;
         }
 
@@ -236,34 +205,14 @@ async function autoCleanCache() {
             }
         }
 
-        const files = await fs.readdir(STATUS_MEDIA_DIR);
-        for (const file of files) {
-            const filePath = path.join(STATUS_MEDIA_DIR, file);
-            const stats = await fs.stat(filePath);
-
-            const fileAge = now - stats.mtimeMs;
-            if (fileAge > maxAge) {
-                try {
-                    await fs.unlink(filePath);
-
-                    for (const [key, media] of statusAntideleteState.mediaCache.entries()) {
-                        if (media.filePath === filePath) {
-                            statusAntideleteState.mediaCache.delete(key);
-                            break;
-                        }
-                    }
-
-                    cleanedMedia++;
-                } catch (error) {
-                    console.error(`❌ Could not delete ${file}:`, error.message);
-                }
+        for (const [key, media] of statusAntideleteState.mediaCache.entries()) {
+            if (now - media.savedAt > maxAge) {
+                statusAntideleteState.mediaCache.delete(key);
+                cleanedMedia++;
             }
         }
 
         await calculateStorageSize();
-        if (statusAntideleteState.stats.totalStorageMB > statusAntideleteState.settings.maxStorageMB) {
-            await forceCleanup();
-        }
 
         if (cleanedCount > 0 || cleanedMedia > 0) {
             statusAntideleteState.stats.cacheCleans++;
@@ -277,38 +226,20 @@ async function autoCleanCache() {
 
 async function forceCleanup() {
     try {
-        const files = await fs.readdir(STATUS_MEDIA_DIR);
-        const fileStats = await Promise.all(
-            files.map(async (file) => {
-                const filePath = path.join(STATUS_MEDIA_DIR, file);
-                const stats = await fs.stat(filePath);
-                return { file, filePath, mtimeMs: stats.mtimeMs, size: stats.size };
-            })
-        );
+        const mediaEntries = Array.from(statusAntideleteState.mediaCache.entries());
+        mediaEntries.sort((a, b) => a[1].savedAt - b[1].savedAt);
 
-        fileStats.sort((a, b) => a.mtimeMs - b.mtimeMs);
-
-        let deletedSize = 0;
+        let freedSize = 0;
         const targetSize = statusAntideleteState.settings.maxStorageMB * 1024 * 1024 * 0.8;
+        let deletedCount = 0;
 
-        for (const fileStat of fileStats) {
-            if (statusAntideleteState.stats.totalStorageMB * 1024 * 1024 <= targetSize) {
+        for (const [key, media] of mediaEntries) {
+            if (statusAntideleteState.stats.totalStorageMB * 1024 * 1024 - freedSize <= targetSize) {
                 break;
             }
-
-            try {
-                await fs.unlink(fileStat.filePath);
-                deletedSize += fileStat.size;
-
-                for (const [key, media] of statusAntideleteState.mediaCache.entries()) {
-                    if (media.filePath === fileStat.filePath) {
-                        statusAntideleteState.mediaCache.delete(key);
-                        break;
-                    }
-                }
-            } catch (error) {
-                console.error(`❌ Could not delete ${fileStat.file}:`, error.message);
-            }
+            statusAntideleteState.mediaCache.delete(key);
+            freedSize += media.size || 0;
+            deletedCount++;
         }
 
         const cacheEntries = Array.from(statusAntideleteState.statusCache.entries());
@@ -320,6 +251,8 @@ async function forceCleanup() {
 
         await calculateStorageSize();
         await saveStatusData();
+
+        console.log(`✅ Status force cleanup completed. Removed ${deletedCount} media entries, freed ~${Math.round(freedSize / 1024 / 1024)}MB`);
 
     } catch (error) {
         console.error('❌ Status Antidelete: Force cleanup error:', error.message);
@@ -399,48 +332,23 @@ async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype)
         }
 
         const timestamp = Date.now();
-        
-        let supabasePath = null;
-        if (supabase.isAvailable()) {
-            supabasePath = await supabase.uploadMedia(msgId, buffer, mimetype, 'statuses');
-        }
-        
         const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+        const base64Data = buffer.toString('base64');
         
-        if (!supabasePath) {
-            const extension = getStatusExtensionFromMime(mimetype);
-            const filename = `status_${messageType}_${timestamp}${extension}`;
-            const filePath = path.join(STATUS_MEDIA_DIR, filename);
-            await fs.writeFile(filePath, buffer);
-            
-            console.log(`⚠️ [STATUS ANTIDELETE] Media stored LOCALLY (Supabase unavailable) | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
-            
-            statusAntideleteState.mediaCache.set(msgId, {
-                filePath: filePath,
-                type: messageType,
-                mimetype: mimetype,
-                size: buffer.length,
-                isStatus: true,
-                savedAt: timestamp,
-                supabasePath: null
-            });
-        } else {
-            console.log(`☁️ [STATUS ANTIDELETE] Media stored in SUPABASE ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
-            
-            statusAntideleteState.mediaCache.set(msgId, {
-                filePath: null,
-                type: messageType,
-                mimetype: mimetype,
-                size: buffer.length,
-                isStatus: true,
-                savedAt: timestamp,
-                supabasePath: supabasePath
-            });
-        }
+        statusAntideleteState.mediaCache.set(msgId, {
+            base64: base64Data,
+            type: messageType,
+            mimetype: mimetype,
+            size: buffer.length,
+            isStatus: true,
+            savedAt: timestamp
+        });
+        
+        console.log(`💾 [STATUS ANTIDELETE] Media stored in JSON ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
         
         statusAntideleteState.stats.mediaCaptured++;
         
-        return supabasePath || 'local';
+        return 'json';
 
     } catch (error) {
         console.error('❌ Status Antidelete: Media download error:', error.message);
@@ -559,10 +467,6 @@ export async function statusAntideleteStoreMessage(message) {
         statusAntideleteState.statusCache.set(msgId, statusData);
         statusAntideleteState.stats.totalStatuses++;
 
-        if (supabase.isAvailable()) {
-            supabase.storeAntideleteStatus(msgId, statusData).catch(() => {});
-        }
-
         if (statusInfo.hasMedia && statusInfo.mediaInfo) {
             const delay = Math.random() * 2000 + 1000;
             setTimeout(async () => {
@@ -632,9 +536,6 @@ export async function statusAntideleteHandleUpdate(update) {
 
 
         let cachedStatus = statusAntideleteState.statusCache.get(msgId);
-        if (!cachedStatus && supabase.isAvailable()) {
-            cachedStatus = await supabase.getAntideleteStatus(msgId);
-        }
         if (!cachedStatus) {
             return;
         }
@@ -721,21 +622,16 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
             let mediaSent = false;
             try {
                 let buffer = null;
-                let retrievedFrom = 'none';
                 
-                if (mediaCache.supabasePath && supabase.isAvailable()) {
-                    buffer = await supabase.downloadMedia(mediaCache.supabasePath);
-                    if (buffer) retrievedFrom = 'supabase';
-                }
-                
-                if (!buffer && mediaCache.filePath) {
+                if (mediaCache.base64) {
+                    buffer = Buffer.from(mediaCache.base64, 'base64');
+                } else if (mediaCache.filePath) {
                     try { buffer = await fs.readFile(mediaCache.filePath); } catch {}
-                    if (buffer) retrievedFrom = 'local';
                 }
 
                 if (buffer && buffer.length > 0) {
                     const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
-                    console.log(`📥 [STATUS ANTIDELETE] Media recovered from ${retrievedFrom.toUpperCase()} | Type: ${statusData.type} | Size: ${sizeMB}MB | ID: ${statusData.id.slice(0, 12)}...`);
+                    console.log(`📥 [STATUS ANTIDELETE] Media recovered from JSON | Type: ${statusData.type} | Size: ${sizeMB}MB | ID: ${statusData.id.slice(0, 12)}...`);
                     if (statusData.type === 'image') {
                         await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, {
                             image: buffer,
@@ -776,19 +672,11 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
             }
 
             if (mediaSent) {
-                if (mediaCache.supabasePath && supabase.isAvailable()) {
-                    supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
-                    console.log(`🗑️ [STATUS ANTIDELETE] Cleaned up from Supabase after send | ID: ${statusData.id.slice(0, 12)}...`);
-                }
-                if (mediaCache.filePath) {
-                    try { await fs.unlink(mediaCache.filePath); } catch {}
-                }
                 statusAntideleteState.mediaCache.delete(statusData.id);
-                supabase.deleteAntideleteStatus(statusData.id).catch(() => {});
+                console.log(`🗑️ [STATUS ANTIDELETE] Cleaned up JSON media after send | ID: ${statusData.id.slice(0, 12)}...`);
             }
         } else {
             await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
-            supabase.deleteAntideleteStatus(statusData.id).catch(() => {});
         }
 
         return true;

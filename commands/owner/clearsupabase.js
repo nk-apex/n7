@@ -1,45 +1,91 @@
-import supabase from '../../lib/supabase.js';
-
 export default {
     name: 'clearsupabase',
-    alias: ['clearsupa', 'clearcloud', 'wipesupa', 'wipesupabase'],
+    alias: ['clearsupa', 'clearcloud', 'wipesupa', 'wipesupabase', 'clearmedia', 'wipemedia'],
     category: 'owner',
-    description: 'Clear all antidelete data from Supabase (database records + stored media files)',
+    description: 'Clear all cached antidelete media data from JSON storage',
     ownerOnly: true,
 
     async execute(sock, msg, args, PREFIX, extra) {
         const chatId = msg.key.remoteJid;
 
-        if (!supabase.isAvailable()) {
+        await sock.sendMessage(chatId, {
+            text: `⏳ Clearing all cached antidelete media from JSON storage...`
+        }, { quoted: msg });
+
+        const startTime = Date.now();
+        let clearedMessages = 0;
+        let clearedMedia = 0;
+        let clearedStatusMedia = 0;
+
+        try {
+            const fs = await import('fs/promises');
+            const path = await import('path');
+
+            const adCacheFile = './data/antidelete/antidelete.json';
+            if (await fs.access(adCacheFile).then(() => true).catch(() => false)) {
+                const data = JSON.parse(await fs.readFile(adCacheFile, 'utf8'));
+                if (data.mediaCache) {
+                    clearedMedia = Array.isArray(data.mediaCache) ? data.mediaCache.length : 0;
+                    data.mediaCache = [];
+                }
+                if (data.messageCache) {
+                    clearedMessages = Array.isArray(data.messageCache) ? data.messageCache.length : 0;
+                    data.messageCache = [];
+                }
+                await fs.writeFile(adCacheFile, JSON.stringify(data));
+            }
+
+            const statusCacheFile = './data/antidelete/status/status_cache.json';
+            if (await fs.access(statusCacheFile).then(() => true).catch(() => false)) {
+                const data = JSON.parse(await fs.readFile(statusCacheFile, 'utf8'));
+                if (data.mediaCache) {
+                    clearedStatusMedia = Array.isArray(data.mediaCache) ? data.mediaCache.length : 0;
+                    data.mediaCache = [];
+                }
+                if (data.statusCache) {
+                    data.statusCache = [];
+                }
+                if (data.deletedStatusCache) {
+                    data.deletedStatusCache = [];
+                }
+                await fs.writeFile(statusCacheFile, JSON.stringify(data, null, 2));
+            }
+
+            const mediaDir = './data/antidelete/media';
+            try {
+                const files = await fs.readdir(mediaDir);
+                for (const file of files) {
+                    await fs.unlink(path.join(mediaDir, file)).catch(() => {});
+                }
+            } catch {}
+
+            const statusMediaDir = './data/antidelete/status/media';
+            try {
+                const files = await fs.readdir(statusMediaDir);
+                for (const file of files) {
+                    await fs.unlink(path.join(statusMediaDir, file)).catch(() => {});
+                }
+            } catch {}
+
+        } catch (err) {
             await sock.sendMessage(chatId, {
-                text: `❌ Supabase is not connected. Cannot clear data.`
+                text: `❌ Error clearing data: ${err.message}`
             }, { quoted: msg });
             return;
         }
 
-        await sock.sendMessage(chatId, {
-            text: `⏳ Clearing all antidelete data from Supabase...\n\n🗃️ Deleting database records...\n📦 Deleting stored media files...`
-        }, { quoted: msg });
-
-        const startTime = Date.now();
-        const results = await supabase.clearAllAntideleteData();
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
-        let statusText = `🗑️ *Supabase Antidelete Cleanup Complete*\n\n`;
+        let statusText = `🗑️ *Antidelete Media Cleanup Complete*\n\n`;
         statusText += `⏱️ Time: ${elapsed}s\n`;
-        statusText += `🗃️ DB Records Cleared: ${results.tables}\n`;
-        statusText += `📦 Media Files Deleted: ${results.files}\n`;
-
-        if (results.errors.length > 0) {
-            statusText += `\n⚠️ *Errors:*\n`;
-            for (const err of results.errors) {
-                statusText += `  • ${err}\n`;
-            }
-        } else {
-            statusText += `\n✅ All antidelete data wiped from Supabase successfully!`;
-        }
+        statusText += `💬 Messages Cleared: ${clearedMessages}\n`;
+        statusText += `🖼️ Media Cleared: ${clearedMedia}\n`;
+        statusText += `📊 Status Media Cleared: ${clearedStatusMedia}\n`;
+        statusText += `🧹 Old local files cleaned\n`;
+        statusText += `\n✅ All antidelete cache wiped successfully!\n`;
+        statusText += `\n_Bot will rebuild cache as new messages arrive._`;
 
         await sock.sendMessage(chatId, { text: statusText }, { quoted: msg });
-        console.log(`🗑️ [CLEARSUPABASE] Cleared ${results.tables} records, ${results.files} files in ${elapsed}s`);
+        console.log(`🗑️ [CLEARMEDIA] Cleared ${clearedMessages} msgs, ${clearedMedia} media, ${clearedStatusMedia} status media in ${elapsed}s`);
     }
 };
