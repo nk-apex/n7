@@ -332,12 +332,44 @@ async function getCachedGroupMetadata(chatId, sock) {
     return fetchPromise;
 }
 
-function generateRetrievalCaption(senderJid, retrieverJid, chatId, groupName) {
-    const senderNumber = getDisplayNumber(senderJid);
-    const isAutoDetect = retrieverJid === 'auto-detect';
-    const retrieverDisplay = isAutoDetect ? 'WOLFBOT (Auto)' : getDisplayNumber(retrieverJid);
+async function resolveDisplayNumber(jid, chatId, sock) {
+    if (!jid) return 'unknown';
+    const raw = jid.split('@')[0].split(':')[0];
+    const full = jid.split('@')[0];
+    
+    if (!jid.includes('@lid')) return `+${raw}`;
+    
+    const cached = lidPhoneCache.get(raw) || lidPhoneCache.get(full) || getPhoneFromLid(raw) || getPhoneFromLid(full);
+    if (cached) return `+${cached}`;
+    
+    const fromSignal = resolvePhoneFromLid(jid);
+    if (fromSignal) return `+${fromSignal}`;
+    
+    if (chatId?.includes('@g.us') && sock) {
+        try {
+            const resolved = await resolveSenderFromGroup(jid, chatId, sock);
+            if (resolved) return `+${resolved}`;
+        } catch {}
+    }
+    
+    return `LID:${raw.substring(0, 8)}...`;
+}
+
+async function generateRetrievalCaption(senderJid, retrieverJid, chatId, groupName, sock) {
     const isGroup = chatId?.includes('@g.us');
-    const chatName = groupName || (isGroup ? chatId.split('@')[0] : 'Private Chat');
+    
+    let resolvedGroupName = groupName;
+    if (isGroup && !resolvedGroupName && sock) {
+        try {
+            const metadata = await getCachedGroupMetadata(chatId, sock);
+            if (metadata?.subject) resolvedGroupName = metadata.subject;
+        } catch {}
+    }
+    
+    const senderNumber = await resolveDisplayNumber(senderJid, chatId, sock);
+    const isAutoDetect = retrieverJid === 'auto-detect';
+    const retrieverDisplay = isAutoDetect ? 'WOLFBOT (Auto)' : await resolveDisplayNumber(retrieverJid, chatId, sock);
+    const chatName = resolvedGroupName || (isGroup ? chatId.split('@')[0] : 'Private Chat');
     const timeStr = new Date().toLocaleString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
@@ -2848,13 +2880,7 @@ class AntiViewOnceSystem {
                 return;
             }
             
-            let groupName = null;
-            if (chatId?.includes('@g.us')) {
-                const gmd = groupMetadataCache.get(chatId);
-                groupName = gmd?.data?.subject || null;
-            }
-            
-            const retrievalCaption = generateRetrievalCaption(sender, 'auto-detect', chatId, groupName);
+            const retrievalCaption = await generateRetrievalCaption(sender, 'auto-detect', chatId, null, this.sock);
             
             const mediaOptions = {
                 caption: retrievalCaption,
@@ -2925,14 +2951,8 @@ class AntiViewOnceSystem {
             const originalSender = contextInfo?.participant || chatId;
             const retrieverJid = msg.key.participant || msg.key.remoteJid;
             
-            let groupName = null;
-            if (chatId?.includes('@g.us')) {
-                const gmd = groupMetadataCache.get(chatId);
-                groupName = gmd?.data?.subject || null;
-            }
-            
             const mediaOptions = {
-                caption: generateRetrievalCaption(originalSender, retrieverJid, chatId, groupName),
+                caption: await generateRetrievalCaption(originalSender, retrieverJid, chatId, null, this.sock),
                 quoted: msg
             };
             
@@ -4714,15 +4734,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         const reactorShort = (reactorJid || 'unknown').split('@')[0].split(':')[0];
                         const senderJid = reactedKey.participant || reactedChatId;
                         
-                        let groupName = null;
-                        if (reactedChatId?.includes('@g.us')) {
-                            const gmd = groupMetadataCache.get(reactedChatId);
-                            groupName = gmd?.data?.subject || null;
-                        }
-                        
                         const mediaPayload = {};
                         mediaPayload[type] = buffer;
-                        mediaPayload.caption = generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, groupName);
+                        mediaPayload.caption = await generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, null, sock);
                         
                         await sock.sendMessage(normalizedOwner, mediaPayload);
                         UltraCleanLogger.info(`🔐 View-once captured via reaction ${reactionEmoji} from ${reactorShort}`);
@@ -5199,13 +5213,7 @@ async function handleViewOnceDetection(sock, msg) {
         const ext = type === 'image' ? 'jpg' : type === 'video' ? 'mp4' : 'mp3';
         const filename = `viewonce_${type}_${senderShort}_${timestamp}.${ext}`;
 
-        let groupName = null;
-        if (chatId?.includes('@g.us')) {
-            const gmd = groupMetadataCache.get(chatId);
-            groupName = gmd?.data?.subject || null;
-        }
-
-        const retrievalCaption = generateRetrievalCaption(sender, 'auto-detect', chatId, groupName);
+        const retrievalCaption = await generateRetrievalCaption(sender, 'auto-detect', chatId, null, sock);
 
         const mediaPayload = {};
         mediaPayload[type] = buffer;
@@ -5406,15 +5414,9 @@ async function handleIncomingMessage(sock, msg) {
                                         const senderJid = replyCtx.participant || replyCtx.remoteJid || chatId;
                                         const replierShort = (replierJid).split('@')[0].split(':')[0];
                                         
-                                        let groupName = null;
-                                        if (chatId?.includes('@g.us')) {
-                                            const gmd = groupMetadataCache.get(chatId);
-                                            groupName = gmd?.data?.subject || null;
-                                        }
-                                        
                                         const mediaPayload = {};
                                         mediaPayload[type] = buffer;
-                                        mediaPayload.caption = generateRetrievalCaption(senderJid, replierJid, chatId, groupName);
+                                        mediaPayload.caption = await generateRetrievalCaption(senderJid, replierJid, chatId, null, sock);
                                         
                                         await sock.sendMessage(normalizedOwner, mediaPayload);
                                         UltraCleanLogger.info(`🔐 View-once auto-captured via ${isSticker ? 'sticker' : 'emoji'} reply from ${replierShort}`);
@@ -5488,15 +5490,9 @@ async function handleIncomingMessage(sock, msg) {
                                             const senderJid2 = reactedKey.participant || reactedChatId;
                                             const senderShort = senderJid2.split('@')[0].split(':')[0];
                                             
-                                            let groupName2 = null;
-                                            if (reactedChatId?.includes('@g.us')) {
-                                                const gmd2 = groupMetadataCache.get(reactedChatId);
-                                                groupName2 = gmd2?.data?.subject || null;
-                                            }
-                                            
                                             const mediaPayload = {};
                                             mediaPayload[type] = buffer;
-                                            mediaPayload.caption = generateRetrievalCaption(senderJid2, reactorJid2, reactedChatId, groupName2);
+                                            mediaPayload.caption = await generateRetrievalCaption(senderJid2, reactorJid2, reactedChatId, null, sock);
                                             
                                             await sock.sendMessage(normalizedOwner, mediaPayload);
                                             UltraCleanLogger.info(`🔐 View-once auto-captured via reaction ${reactionMsg.text} from ${reactorShort} on ${senderShort}'s message`);
