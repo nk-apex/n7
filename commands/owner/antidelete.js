@@ -203,7 +203,8 @@ async function saveData() {
                 type: value.type,
                 mimetype: value.mimetype,
                 size: value.size,
-                savedAt: value.savedAt
+                savedAt: value.savedAt,
+                supabasePath: value.supabasePath || null
             }]);
         }
         
@@ -481,12 +482,18 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
         
         await fs.writeFile(filePath, buffer);
         
+        let supabasePath = null;
+        if (supabase.isAvailable()) {
+            supabasePath = await supabase.uploadMedia(msgId, buffer, mimetype, 'messages');
+        }
+        
         antideleteState.mediaCache.set(msgId, {
             filePath: filePath,
             type: messageType,
             mimetype: mimetype,
             size: buffer.length,
-            savedAt: timestamp
+            savedAt: timestamp,
+            supabasePath: supabasePath
         });
         
         antideleteState.stats.mediaCaptured++;
@@ -598,6 +605,10 @@ export async function antideleteStoreMessage(message) {
         antideleteState.messageCache.set(msgId, messageData);
         antideleteState.stats.totalMessages++;
         
+        if (supabase.isAvailable()) {
+            supabase.storeAntideleteMessage(msgId, messageData).catch(() => {});
+        }
+        
         if (antideleteState.messageCache.size > MAX_MESSAGE_CACHE) {
             const excess = antideleteState.messageCache.size - MAX_MESSAGE_CACHE;
             const iter = antideleteState.messageCache.keys();
@@ -670,7 +681,10 @@ export async function antideleteHandleUpdate(update) {
         }
         
         
-        const cachedMessage = antideleteState.messageCache.get(msgId);
+        let cachedMessage = antideleteState.messageCache.get(msgId);
+        if (!cachedMessage && supabase.isAvailable()) {
+            cachedMessage = await supabase.getAntideleteMessage(msgId);
+        }
         if (!cachedMessage) {
             return;
         }
@@ -790,7 +804,14 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
         
         if (messageData.hasMedia && mediaCache) {
             try {
-                const buffer = await fs.readFile(mediaCache.filePath);
+                let buffer = null;
+                try {
+                    buffer = await fs.readFile(mediaCache.filePath);
+                } catch {}
+                
+                if ((!buffer || buffer.length === 0) && mediaCache.supabasePath && supabase.isAvailable()) {
+                    buffer = await supabase.downloadMedia(mediaCache.supabasePath);
+                }
                 
                 if (buffer && buffer.length > 0) {
                     if (messageData.type === 'sticker') {
@@ -838,6 +859,11 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
                             text: detailsText + `\n\n◉ 𝗠𝗲𝗱𝗶𝗮 𝗧𝘆𝗽𝗲: ${messageData.type}`
                         }));
                     }
+                    
+                    if (mediaCache.supabasePath && supabase.isAvailable()) {
+                        supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
+                    }
+                    supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
                 } else {
                     await retrySend(() => antideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
                 }
@@ -851,6 +877,7 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
             }
         } else {
             await retrySend(() => antideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
+            supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
         }
         
         return true;
@@ -883,7 +910,14 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
         
         if (messageData.hasMedia && mediaCache) {
             try {
-                const buffer = await fs.readFile(mediaCache.filePath);
+                let buffer = null;
+                try {
+                    buffer = await fs.readFile(mediaCache.filePath);
+                } catch {}
+                
+                if ((!buffer || buffer.length === 0) && mediaCache.supabasePath && supabase.isAvailable()) {
+                    buffer = await supabase.downloadMedia(mediaCache.supabasePath);
+                }
                 
                 if (buffer && buffer.length > 0) {
                     if (messageData.type === 'sticker') {
@@ -934,6 +968,11 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
                             text: detailsText + `\n\n◉ 𝗠𝗲𝗱𝗶𝗮 𝗧𝘆𝗽𝗲: ${messageData.type}`
                         }));
                     }
+                    
+                    if (mediaCache.supabasePath && supabase.isAvailable()) {
+                        supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
+                    }
+                    supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
                 } else {
                     await retrySend(() => antideleteState.sock.sendMessage(chatJid, { text: detailsText }));
                 }
@@ -947,6 +986,7 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
             }
         } else {
             await retrySend(() => antideleteState.sock.sendMessage(chatJid, { text: detailsText }));
+            supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
         }
         
         return true;
@@ -982,7 +1022,7 @@ export async function initAntidelete(sock) {
                         mode: antideleteState.mode,
                         messageCache: Array.from(antideleteState.messageCache.entries()),
                         mediaCache: Array.from(antideleteState.mediaCache.entries()).map(([key, value]) => {
-                            return [key, { filePath: value.filePath, type: value.type, mimetype: value.mimetype, size: value.size, savedAt: value.savedAt }];
+                            return [key, { filePath: value.filePath, type: value.type, mimetype: value.mimetype, size: value.size, savedAt: value.savedAt, supabasePath: value.supabasePath || null }];
                         }),
                         groupCache: Array.from(antideleteState.groupCache.entries()),
                         stats: antideleteState.stats,

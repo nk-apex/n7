@@ -27,7 +27,7 @@ The bot runs on Node.js 20, using ESM modules. Its core logic in `index.js` mana
 
 **Key Features & Implementations:**
 
-*   **Antidelete System**: Caches messages to detect and resend deleted content, supporting both private and public modes.
+*   **Antidelete System**: Caches messages to detect and resend deleted content, supporting both private and public modes. Media files are dual-written to local disk and Supabase Storage (bucket: `antidelete-media`). On deletion, retrieves from Supabase if local file is missing, then auto-deletes from Supabase after successful retrieval. Message metadata stored in `antidelete_messages` and `antidelete_statuses` tables.
 *   **W.O.L.F Chatbot**: Integrates multiple AI models (GPT-5, Copilot, Claude, Grok, Blackbox, Google Bard, Perplexity) with automatic fallback. It features conversational memory, context-aware prompting, and interactive media capabilities (image generation, music/video).
 *   **Anti-ViewOnce System**: Detects and reveals ViewOnce messages, with options for private or public display.
 *   **Bot Mode System**: Allows operation in `public`, `groups`, `dms`, or `silent` (owner-only) modes.

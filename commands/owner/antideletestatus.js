@@ -147,7 +147,8 @@ async function saveStatusData() {
                     mimetype: value.mimetype,
                     size: value.size,
                     isStatus: value.isStatus,
-                    savedAt: value.savedAt
+                    savedAt: value.savedAt,
+                    supabasePath: value.supabasePath || null
                 }];
             }),
             stats: statusAntideleteState.stats,
@@ -404,13 +405,19 @@ async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype)
 
         await fs.writeFile(filePath, buffer);
 
+        let supabasePath = null;
+        if (supabase.isAvailable()) {
+            supabasePath = await supabase.uploadMedia(msgId, buffer, mimetype, 'statuses');
+        }
+
         statusAntideleteState.mediaCache.set(msgId, {
             filePath: filePath,
             type: messageType,
             mimetype: mimetype,
             size: buffer.length,
             isStatus: true,
-            savedAt: timestamp
+            savedAt: timestamp,
+            supabasePath: supabasePath
         });
 
         statusAntideleteState.stats.mediaCaptured++;
@@ -536,6 +543,9 @@ export async function statusAntideleteStoreMessage(message) {
         statusAntideleteState.statusCache.set(msgId, statusData);
         statusAntideleteState.stats.totalStatuses++;
 
+        if (supabase.isAvailable()) {
+            supabase.storeAntideleteStatus(msgId, statusData).catch(() => {});
+        }
 
         if (statusInfo.hasMedia && statusInfo.mediaInfo) {
             const delay = Math.random() * 2000 + 1000;
@@ -597,7 +607,10 @@ export async function statusAntideleteHandleUpdate(update) {
         }
 
 
-        const cachedStatus = statusAntideleteState.statusCache.get(msgId);
+        let cachedStatus = statusAntideleteState.statusCache.get(msgId);
+        if (!cachedStatus && supabase.isAvailable()) {
+            cachedStatus = await supabase.getAntideleteStatus(msgId);
+        }
         if (!cachedStatus) {
             return;
         }
@@ -683,7 +696,14 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
         if (statusData.hasMedia && mediaCache) {
             let mediaSent = false;
             try {
-                const buffer = await fs.readFile(mediaCache.filePath);
+                let buffer = null;
+                try {
+                    buffer = await fs.readFile(mediaCache.filePath);
+                } catch {}
+
+                if ((!buffer || buffer.length === 0) && mediaCache.supabasePath && supabase.isAvailable()) {
+                    buffer = await supabase.downloadMedia(mediaCache.supabasePath);
+                }
 
                 if (buffer && buffer.length > 0) {
                     if (statusData.type === 'image') {
@@ -732,8 +752,15 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
                     statusAntideleteState.stats.totalStorageMB = Math.max(0, statusAntideleteState.stats.totalStorageMB - (mediaCache.size / 1024 / 1024));
                 } catch (cleanErr) {}
             }
+            if (mediaSent && mediaCache.supabasePath && supabase.isAvailable()) {
+                supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
+            }
+            if (mediaSent) {
+                supabase.deleteAntideleteStatus(statusData.id).catch(() => {});
+            }
         } else {
             await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, { text: detailsText }));
+            supabase.deleteAntideleteStatus(statusData.id).catch(() => {});
         }
 
         return true;
