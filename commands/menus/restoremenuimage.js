@@ -27,7 +27,7 @@ export default {
       const mediaDir = path.join(__dirname, "media");
       const backupDir = path.join(mediaDir, "backups");
       const wolfbotPath = path.join(mediaDir, "wolfbot.jpg");
-      const wolfbotGifPath = path.join(mediaDir, "wolfbot.mp4");
+      const wolfbotGifPath = path.join(mediaDir, "wolfbot.gif");
       
       // Your default menu image URL
       const defaultImageUrl = "https://i.ibb.co/SDWKT5nx/0b3fef5fc5e9.jpg";
@@ -115,7 +115,7 @@ export default {
         }
 
         const backupFiles = fs.readdirSync(backupDir)
-          .filter(file => file.startsWith('wolfbot-backup-') && (file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.webp') || file.endsWith('.mp4')))
+          .filter(file => file.startsWith('wolfbot-backup-') && (file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.webp') || file.endsWith('.gif')))
           .sort()
           .reverse()
           .slice(0, 10);
@@ -133,7 +133,7 @@ export default {
           const filePath = path.join(backupDir, file);
           const stats = fs.statSync(filePath);
           const size = (stats.size / 1024 / 1024).toFixed(2);
-          const isGif = file.endsWith('.mp4');
+          const isGif = file.endsWith('.gif');
           
           backupList += `${index + 1}. ${isGif ? '🎞️' : '🖼️'} ${file}\n`;
           backupList += `   📏 ${size}MB\n\n`;
@@ -157,7 +157,7 @@ export default {
       }
 
       const backupFiles = fs.readdirSync(backupDir)
-        .filter(file => file.startsWith('wolfbot-backup-') && (file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.webp') || file.endsWith('.mp4')))
+        .filter(file => file.startsWith('wolfbot-backup-') && (file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.webp') || file.endsWith('.gif')))
         .sort()
         .reverse();
 
@@ -182,7 +182,7 @@ export default {
         text: `🔄 Restoring backup...` 
       }, { quoted: m });
 
-      const isGifBackup = backupToRestore.endsWith('.mp4');
+      const isGifBackup = backupToRestore.endsWith('.gif');
 
       if (isGifBackup) {
         try { if (fs.existsSync(wolfbotPath)) fs.unlinkSync(wolfbotPath); } catch {}

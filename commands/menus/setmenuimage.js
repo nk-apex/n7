@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import axios from "axios";
 import { downloadContentFromMessage } from "@whiskeysockets/baileys";
+import { execSync } from "child_process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -233,7 +234,7 @@ export default {
 
       const mediaDir = path.join(__dirname, "media");
       const wolfbotImgPath = path.join(mediaDir, "wolfbot.jpg");
-      const wolfbotGifPath = path.join(mediaDir, "wolfbot.mp4");
+      const wolfbotGifPath = path.join(mediaDir, "wolfbot.gif");
       const backupDir = path.join(mediaDir, "backups");
 
       if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
@@ -244,14 +245,24 @@ export default {
       if (isGifSource) {
         if (fs.existsSync(wolfbotGifPath)) {
           try {
-            fs.copyFileSync(wolfbotGifPath, path.join(backupDir, `wolfbot-backup-${timestamp}.mp4`));
+            fs.copyFileSync(wolfbotGifPath, path.join(backupDir, `wolfbot-backup-${timestamp}.gif`));
           } catch {}
         }
         if (fs.existsSync(wolfbotImgPath)) {
           try { fs.unlinkSync(wolfbotImgPath); } catch {}
         }
-        fs.writeFileSync(wolfbotGifPath, imageBuffer);
-        console.log(`✅ Menu GIF saved: ${wolfbotGifPath}`);
+        const tmpDir = path.join(process.cwd(), 'tmp');
+        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+        const tmpMp4 = path.join(tmpDir, `menuimg_${Date.now()}.mp4`);
+        fs.writeFileSync(tmpMp4, imageBuffer);
+        try {
+          execSync(`ffmpeg -y -i "${tmpMp4}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2,fps=15" -loop 0 "${wolfbotGifPath}" 2>/dev/null`, { timeout: 30000 });
+          console.log(`✅ Menu GIF converted and saved: ${wolfbotGifPath}`);
+        } catch (e) {
+          fs.writeFileSync(wolfbotGifPath, imageBuffer);
+          console.log(`⚠️ ffmpeg conversion failed, saved raw data: ${wolfbotGifPath}`);
+        }
+        try { fs.unlinkSync(tmpMp4); } catch {}
       } else {
         if (fs.existsSync(wolfbotImgPath)) {
           try {

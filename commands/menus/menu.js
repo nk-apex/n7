@@ -1966,8 +1966,8 @@ case 1: {
   // ========== END "READ MORE" EFFECT ==========
 
   // Load and send the image or GIF
-  const gifPath1 = path.join(__dirname, "media", "wolfbot.mp4");
-  const gifPath2 = path.join(__dirname, "../media/wolfbot.mp4");
+  const gifPath1 = path.join(__dirname, "media", "wolfbot.gif");
+  const gifPath2 = path.join(__dirname, "../media/wolfbot.gif");
   const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
   const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
   const gifMenuPath = fs.existsSync(gifPath1) ? gifPath1 : fs.existsSync(gifPath2) ? gifPath2 : null;
@@ -1985,7 +1985,7 @@ case 1: {
       video: buffer, 
       gifPlayback: true,
       caption: finalCaption, 
-      mimetype: "video/mp4"
+      mimetype: "image/gif"
     }, { quoted: fkontak });
   } else {
     await sock.sendMessage(jid, { 
@@ -6566,8 +6566,8 @@ case 6: {
   finalCaption = createReadMoreEffect(infoSection, commandsText);
   // ========== END "READ MORE" EFFECT ==========
 
-  const gifPath1s6 = path.join(__dirname, "media", "wolfbot.mp4");
-  const gifPath2s6 = path.join(__dirname, "../media/wolfbot.mp4");
+  const gifPath1s6 = path.join(__dirname, "media", "wolfbot.gif");
+  const gifPath2s6 = path.join(__dirname, "../media/wolfbot.gif");
   const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
   const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
   const gifMenuPaths6 = fs.existsSync(gifPath1s6) ? gifPath1s6 : fs.existsSync(gifPath2s6) ? gifPath2s6 : null;
@@ -6583,7 +6583,7 @@ case 6: {
       video: buffer, 
       gifPlayback: true,
       caption: finalCaption, 
-      mimetype: "video/mp4"
+      mimetype: "image/gif"
     }, { quoted: m });
   } else {
     await sock.sendMessage(jid, { 
@@ -8329,8 +8329,8 @@ case 7: {
   const commandsText = categorySections.join(`\n${readMoreSep}\n`);
   finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
 
-  const gifPath1s10 = path.join(__dirname, "media", "wolfbot.mp4");
-  const gifPath2s10 = path.join(__dirname, "../media/wolfbot.mp4");
+  const gifPath1s10 = path.join(__dirname, "media", "wolfbot.gif");
+  const gifPath2s10 = path.join(__dirname, "../media/wolfbot.gif");
   const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
   const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
   const gifMenuPaths10 = fs.existsSync(gifPath1s10) ? gifPath1s10 : fs.existsSync(gifPath2s10) ? gifPath2s10 : null;
@@ -8346,7 +8346,7 @@ case 7: {
       video: buffer, 
       gifPlayback: true,
       caption: finalCaption, 
-      mimetype: "video/mp4"
+      mimetype: "image/gif"
     }, { quoted: m });
   } else {
     await sock.sendMessage(jid, { 
