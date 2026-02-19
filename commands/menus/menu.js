@@ -21,6 +21,7 @@ import os from "os";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 import { getCurrentMenuStyle } from "./menustyle.js";
 import { setLastMenu, getAllFieldsStatus } from "../menus/menuToggles.js";
 
@@ -1981,12 +1982,28 @@ case 1: {
   const buffer = fs.readFileSync(imagePath);
 
   if (gifMenuPath) {
-    await sock.sendMessage(jid, { 
-      video: buffer, 
-      gifPlayback: true,
-      caption: finalCaption, 
-      mimetype: "image/gif"
-    }, { quoted: fkontak });
+    const tmpDir = path.join(process.cwd(), 'tmp');
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+    const tmpMp4 = path.join(tmpDir, `menu_gif_${Date.now()}.mp4`);
+    try {
+      execSync(`ffmpeg -y -i "${gifMenuPath}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}" 2>/dev/null`, { timeout: 30000 });
+      const mp4Buffer = fs.readFileSync(tmpMp4);
+      await sock.sendMessage(jid, { 
+        video: mp4Buffer, 
+        gifPlayback: true,
+        caption: finalCaption, 
+        mimetype: "video/mp4"
+      }, { quoted: fkontak });
+      try { fs.unlinkSync(tmpMp4); } catch {}
+    } catch (e) {
+      console.error('❌ GIF to MP4 conversion failed:', e.message);
+      try { fs.unlinkSync(tmpMp4); } catch {}
+      await sock.sendMessage(jid, { 
+        image: buffer, 
+        caption: finalCaption, 
+        mimetype: "image/jpeg"
+      }, { quoted: fkontak });
+    }
   } else {
     await sock.sendMessage(jid, { 
       image: buffer, 
@@ -6579,12 +6596,28 @@ case 6: {
   const buffer = fs.readFileSync(imagePath);
 
   if (gifMenuPaths6) {
-    await sock.sendMessage(jid, { 
-      video: buffer, 
-      gifPlayback: true,
-      caption: finalCaption, 
-      mimetype: "image/gif"
-    }, { quoted: m });
+    const tmpDir = path.join(process.cwd(), 'tmp');
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+    const tmpMp4 = path.join(tmpDir, `menu_gif_${Date.now()}.mp4`);
+    try {
+      execSync(`ffmpeg -y -i "${gifMenuPaths6}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}" 2>/dev/null`, { timeout: 30000 });
+      const mp4Buffer = fs.readFileSync(tmpMp4);
+      await sock.sendMessage(jid, { 
+        video: mp4Buffer, 
+        gifPlayback: true,
+        caption: finalCaption, 
+        mimetype: "video/mp4"
+      }, { quoted: m });
+      try { fs.unlinkSync(tmpMp4); } catch {}
+    } catch (e) {
+      console.error('❌ GIF to MP4 conversion failed:', e.message);
+      try { fs.unlinkSync(tmpMp4); } catch {}
+      await sock.sendMessage(jid, { 
+        image: buffer, 
+        caption: finalCaption, 
+        mimetype: "image/jpeg"
+      }, { quoted: m });
+    }
   } else {
     await sock.sendMessage(jid, { 
       image: buffer, 
@@ -8342,12 +8375,28 @@ case 7: {
   const buffer = fs.readFileSync(imagePath);
 
   if (gifMenuPaths10) {
-    await sock.sendMessage(jid, { 
-      video: buffer, 
-      gifPlayback: true,
-      caption: finalCaption, 
-      mimetype: "image/gif"
-    }, { quoted: m });
+    const tmpDir = path.join(process.cwd(), 'tmp');
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+    const tmpMp4 = path.join(tmpDir, `menu_gif_${Date.now()}.mp4`);
+    try {
+      execSync(`ffmpeg -y -i "${gifMenuPaths10}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}" 2>/dev/null`, { timeout: 30000 });
+      const mp4Buffer = fs.readFileSync(tmpMp4);
+      await sock.sendMessage(jid, { 
+        video: mp4Buffer, 
+        gifPlayback: true,
+        caption: finalCaption, 
+        mimetype: "video/mp4"
+      }, { quoted: m });
+      try { fs.unlinkSync(tmpMp4); } catch {}
+    } catch (e) {
+      console.error('❌ GIF to MP4 conversion failed:', e.message);
+      try { fs.unlinkSync(tmpMp4); } catch {}
+      await sock.sendMessage(jid, { 
+        image: buffer, 
+        caption: finalCaption, 
+        mimetype: "image/jpeg"
+      }, { quoted: m });
+    }
   } else {
     await sock.sendMessage(jid, { 
       image: buffer, 
