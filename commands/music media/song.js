@@ -70,17 +70,14 @@ export default {
   async execute(sock, m, args, prefix) {
     const jid = m.key.remoteJid;
     const quoted = m.quoted;
+    const quotedText = quoted?.text?.trim() || (m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation)?.trim() || '';
     
-    if (args.length === 0) {
+    let searchQuery = args.length > 0 ? args.join(" ") : quotedText;
+    
+    if (!searchQuery) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎵 *SONG DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}song <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}song <YouTube URL>*\n│  └⊷ Download from link\n╰───`
+        text: `╭─⌈ 🎵 *SONG DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}song <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}song <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
       }, { quoted: m });
-    }
-    
-    let searchQuery = args.join(" ");
-    
-    if (quoted && quoted.text) {
-      searchQuery = quoted.text;
     }
 
     console.log(`🎵 [SONG] Query: "${searchQuery}"`);

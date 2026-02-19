@@ -76,6 +76,7 @@ export default {
   async execute(sock, m, args, prefix) {
     const jid = m.key.remoteJid;
     const quoted = m.quoted;
+    const quotedText = quoted?.text?.trim() || (m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation)?.trim() || '';
     let searchQuery = "";
     
     const flags = {
@@ -89,11 +90,11 @@ export default {
     
     if (queryArgs.length > 0) {
       searchQuery = queryArgs.join(" ");
-    } else if (quoted && quoted.text) {
-      searchQuery = quoted.text;
+    } else if (quotedText) {
+      searchQuery = quotedText;
     } else if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎵 *PLAY COMMAND* ⌋\n│\n├─⊷ *${prefix}play <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}play <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *${prefix}play list <query>*\n│  └⊷ Search and list results\n╰───`
+        text: `╭─⌈ 🎵 *PLAY COMMAND* ⌋\n│\n├─⊷ *${prefix}play <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}play <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *${prefix}play list <query>*\n│  └⊷ Search and list results\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
       }, { quoted: m });
     }
 

@@ -35,16 +35,18 @@ export default {
   category: "Downloader",
   async execute(sock, m, args, prefix) {
     const jid = m.key.remoteJid;
+    const quoted = m.quoted;
+    const quotedText = quoted?.text?.trim() || (m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation)?.trim() || '';
 
     try {
-      if (args.length === 0) {
+      const searchQuery = args.length > 0 ? args.join(" ") : quotedText;
+      
+      if (!searchQuery) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🎬 *YTMP4 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}ytmp4 <video name>*\n│  └⊷ Download video\n├─⊷ *${prefix}ytmp4 <YouTube URL>*\n│  └⊷ Download from link\n╰───`
+          text: `╭─⌈ 🎬 *YTMP4 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}ytmp4 <video name>*\n│  └⊷ Download video\n├─⊷ *${prefix}ytmp4 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
         }, { quoted: m });
         return;
       }
-
-      const searchQuery = args.join(" ");
       console.log(`🎬 [YTMP4] Request: ${searchQuery}`);
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });

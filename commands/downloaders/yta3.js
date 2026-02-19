@@ -67,15 +67,17 @@ export default {
 
   async execute(sock, m, args, prefix) {
     const jid = m.key.remoteJid;
+    const quoted = m.quoted;
+    const quotedText = quoted?.text?.trim() || (m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation)?.trim() || '';
 
     try {
-      if (args.length === 0) {
+      const searchQuery = args.length > 0 ? args.join(' ') : quotedText;
+      
+      if (!searchQuery) {
         return sock.sendMessage(jid, {
-          text: `╭─⌈ 🎵 *YTA3 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}yta3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}yta3 <YouTube URL>*\n│  └⊷ Download from link\n╰───`
+          text: `╭─⌈ 🎵 *YTA3 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}yta3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}yta3 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
         }, { quoted: m });
       }
-
-      const searchQuery = args.join(' ');
       console.log(`🎵 [YTA3] Request: ${searchQuery}`);
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });

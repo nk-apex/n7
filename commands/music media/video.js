@@ -35,17 +35,19 @@ export default {
   description: "Download YouTube videos",
   async execute(sock, m, args, prefix) {
     const jid = m.key.remoteJid;
+    const quoted = m.quoted;
+    const quotedText = quoted?.text?.trim() || (m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation)?.trim() || '';
 
     try {
-      if (args.length === 0) {
+      const searchQuery = args.length > 0 ? args.join(" ") : quotedText;
+      
+      if (!searchQuery) {
         return sock.sendMessage(jid, {
-          text: `╭─⌈ 🎬 *VIDEO DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}video <name/URL>*\n│  └⊷ Download video from YouTube\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}video funny cats\n│  └⊷ ${prefix}video https://youtube.com/...\n│\n╰───`
+          text: `╭─⌈ 🎬 *VIDEO DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}video <name/URL>*\n│  └⊷ Download video from YouTube\n│\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}video funny cats\n│  └⊷ ${prefix}video https://youtube.com/...\n│\n╰───`
         }, { quoted: m });
       }
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
-
-      const searchQuery = args.join(" ");
 
       const apiUrl = `${WOLF_API}?url=${encodeURIComponent(searchQuery)}`;
       let apiData = null;
