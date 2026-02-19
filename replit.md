@@ -12,7 +12,7 @@ Do not make changes to files within the `node_modules` directory.
 Always ensure that new features are accompanied by appropriate documentation.
 
 ## System Architecture
-The bot runs on Node.js 20, using ESM modules. Its core logic in `index.js` manages WhatsApp connections and command routing. Commands are categorized in `commands/`, while configuration is handled by `settings.js` and `app.json`.
+The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. Its core logic in `index.js` manages WhatsApp connections and command routing. Commands are categorized in `commands/`, while configuration is handled by `settings.js` and `app.json`.
 
 **Key Directories:**
 *   `lib/`: Contains shared source modules.
