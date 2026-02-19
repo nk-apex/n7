@@ -26,7 +26,7 @@ export default {
 
       if (!stickerMessage) {
         await sock.sendMessage(jid, {
-          text: `╭─⌈ ✏️ *STICKER TEXT* ⌋\n│\n├─ Reply to a sticker with your text\n│\n├─ *Usage:*\n│  ?st Hello World\n│  ?st Top text | Bottom text\n│\n├─ *Aliases:* st, stext, editsticker\n│\n├─ *Tips:*\n│  • Use | to split top and bottom text\n│  • Works on static & animated stickers\n│\n╰───`
+          text: `╭─⌈ ✏️ *STICKER TEXT* ⌋\n│\n├─ Reply to a sticker with your text\n│\n├─ *Usage:*\n│  ?st Hello World\n│\n├─ *Aliases:* st, stext, editsticker\n│\n├─ *Tips:*\n│  • Text is centered on the sticker\n│  • Works on static & animated stickers\n│\n╰───`
         }, { quoted: m });
         return;
       }
@@ -62,16 +62,6 @@ export default {
 
       fs.writeFileSync(inputPath, stickerBuffer);
 
-      let topText = '';
-      let bottomText = '';
-      if (text.includes('|')) {
-        const parts = text.split('|').map(s => s.trim());
-        topText = parts[0] || '';
-        bottomText = parts[1] || '';
-      } else {
-        bottomText = text;
-      }
-
       const escapeFFmpeg = (str) => {
         return str
           .replace(/\\/g, '\\\\\\\\')
@@ -89,24 +79,13 @@ export default {
         }
       } catch {}
 
-      const fontSize = 28;
-      const borderW = 2;
+      const fontSize = 32;
+      const borderW = 3;
       const textColor = 'white';
       const borderColor = 'black';
 
-      let filterParts = [];
-
-      if (topText) {
-        const escaped = escapeFFmpeg(topText);
-        filterParts.push(`drawtext=${fontOpt}text='${escaped}':fontsize=${fontSize}:fontcolor=${textColor}:borderw=${borderW}:bordercolor=${borderColor}:x=(w-text_w)/2:y=10`);
-      }
-
-      if (bottomText) {
-        const escaped = escapeFFmpeg(bottomText);
-        filterParts.push(`drawtext=${fontOpt}text='${escaped}':fontsize=${fontSize}:fontcolor=${textColor}:borderw=${borderW}:bordercolor=${borderColor}:x=(w-text_w)/2:y=h-text_h-10`);
-      }
-
-      const filterStr = filterParts.join(',');
+      const escaped = escapeFFmpeg(text);
+      const filterStr = `drawtext=${fontOpt}text='${escaped}':fontsize=${fontSize}:fontcolor=${textColor}:borderw=${borderW}:bordercolor=${borderColor}:x=(w-text_w)/2:y=(h-text_h)/2`;
 
       try {
         if (isAnimated) {
