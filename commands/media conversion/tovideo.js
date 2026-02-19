@@ -1,5 +1,6 @@
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 import { execFile } from 'child_process';
+import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
@@ -46,7 +47,7 @@ export default {
     if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
     const timestamp = Date.now();
-    const inputPath = path.join(tempDir, `sticker_${timestamp}.webp`);
+    const gifPath = path.join(tempDir, `sticker_${timestamp}.gif`);
     const outputPath = path.join(tempDir, `video_${timestamp}.mp4`);
 
     try {
@@ -60,10 +61,14 @@ export default {
         throw new Error('Downloaded sticker is too small or empty');
       }
 
-      fs.writeFileSync(inputPath, buffer);
+      const gifBuffer = await sharp(buffer, { animated: true })
+        .gif()
+        .toBuffer();
+
+      fs.writeFileSync(gifPath, gifBuffer);
 
       await execFileAsync('ffmpeg', [
-        '-i', inputPath,
+        '-i', gifPath,
         '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
         '-c:v', 'libx264',
         '-pix_fmt', 'yuv420p',
@@ -76,7 +81,7 @@ export default {
       ], { timeout: 30000 });
 
       if (!fs.existsSync(outputPath)) {
-        throw new Error('FFmpeg conversion produced no output');
+        throw new Error('Video conversion produced no output');
       }
 
       const videoBuffer = fs.readFileSync(outputPath);
@@ -106,7 +111,7 @@ export default {
         react: { text: '❌', key: m.key }
       });
     } finally {
-      try { if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath); } catch {}
+      try { if (fs.existsSync(gifPath)) fs.unlinkSync(gifPath); } catch {}
       try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
     }
   }
