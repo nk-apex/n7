@@ -482,11 +482,15 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
             supabasePath = await supabase.uploadMedia(msgId, buffer, mimetype, 'messages');
         }
         
+        const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+        
         if (!supabasePath) {
             const extension = getExtensionFromMime(mimetype);
             const filename = `${messageType}_${timestamp}${extension}`;
             const filePath = path.join(MEDIA_DIR, filename);
             await fs.writeFile(filePath, buffer);
+            
+            console.log(`⚠️ [ANTIDELETE] Media stored LOCALLY (Supabase unavailable) | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
             
             antideleteState.mediaCache.set(msgId, {
                 filePath: filePath,
@@ -497,6 +501,8 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
                 supabasePath: null
             });
         } else {
+            console.log(`☁️ [ANTIDELETE] Media stored in SUPABASE ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
+            
             antideleteState.mediaCache.set(msgId, {
                 filePath: null,
                 type: messageType,
@@ -814,16 +820,21 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
         if (messageData.hasMedia && mediaCache) {
             try {
                 let buffer = null;
+                let retrievedFrom = 'none';
                 
                 if (mediaCache.supabasePath && supabase.isAvailable()) {
                     buffer = await supabase.downloadMedia(mediaCache.supabasePath);
+                    if (buffer) retrievedFrom = 'supabase';
                 }
                 
                 if (!buffer && mediaCache.filePath) {
                     try { buffer = await fs.readFile(mediaCache.filePath); } catch {}
+                    if (buffer) retrievedFrom = 'local';
                 }
                 
                 if (buffer && buffer.length > 0) {
+                    const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+                    console.log(`📥 [ANTIDELETE-DM] Media recovered from ${retrievedFrom.toUpperCase()} | Type: ${messageData.type} | Size: ${sizeMB}MB | ID: ${messageData.id.slice(0, 12)}...`);
                     if (messageData.type === 'sticker') {
                         await retrySend(async () => {
                             const stickerMsg = await antideleteState.sock.sendMessage(ownerJid, {
@@ -873,6 +884,7 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
                     if (mediaCache.supabasePath && supabase.isAvailable()) {
                         supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
                     }
+                        console.log(`🗑️ [ANTIDELETE-DM] Cleaned up from Supabase after send | ID: ${messageData.id.slice(0, 12)}...`);
                     if (mediaCache.filePath) {
                         try { await fs.unlink(mediaCache.filePath); } catch {}
                     }
@@ -924,16 +936,22 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
         if (messageData.hasMedia && mediaCache) {
             try {
                 let buffer = null;
+                let retrievedFrom = 'none';
                 
                 if (mediaCache.supabasePath && supabase.isAvailable()) {
                     buffer = await supabase.downloadMedia(mediaCache.supabasePath);
+                    if (buffer) retrievedFrom = 'supabase';
                 }
                 
                 if (!buffer && mediaCache.filePath) {
                     try { buffer = await fs.readFile(mediaCache.filePath); } catch {}
+                    if (buffer) retrievedFrom = 'local';
                 }
                 
                 if (buffer && buffer.length > 0) {
+                    const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+                    console.log(`📥 [ANTIDELETE-CHAT] Media recovered from ${retrievedFrom.toUpperCase()} | Type: ${messageData.type} | Size: ${sizeMB}MB | ID: ${messageData.id.slice(0, 12)}...`);
+                    
                     if (messageData.type === 'sticker') {
                         await retrySend(async () => {
                             const stickerMsg = await antideleteState.sock.sendMessage(chatJid, {
@@ -985,12 +1003,14 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
                     
                     if (mediaCache.supabasePath && supabase.isAvailable()) {
                         supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
+                        console.log(`🗑️ [ANTIDELETE-CHAT] Cleaned up from Supabase after send | ID: ${messageData.id.slice(0, 12)}...`);
                     }
                     if (mediaCache.filePath) {
                         try { await fs.unlink(mediaCache.filePath); } catch {}
                     }
                     supabase.deleteAntideleteMessage(messageData.id).catch(() => {});
                 } else {
+                    console.log(`⚠️ [ANTIDELETE-CHAT] Media not recoverable | ID: ${messageData.id.slice(0, 12)}...`);
                     await retrySend(() => antideleteState.sock.sendMessage(chatJid, { text: detailsText }));
                 }
             } catch (mediaError) {

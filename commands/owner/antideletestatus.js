@@ -405,11 +405,15 @@ async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype)
             supabasePath = await supabase.uploadMedia(msgId, buffer, mimetype, 'statuses');
         }
         
+        const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+        
         if (!supabasePath) {
             const extension = getStatusExtensionFromMime(mimetype);
             const filename = `status_${messageType}_${timestamp}${extension}`;
             const filePath = path.join(STATUS_MEDIA_DIR, filename);
             await fs.writeFile(filePath, buffer);
+            
+            console.log(`⚠️ [STATUS ANTIDELETE] Media stored LOCALLY (Supabase unavailable) | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
             
             statusAntideleteState.mediaCache.set(msgId, {
                 filePath: filePath,
@@ -421,6 +425,8 @@ async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype)
                 supabasePath: null
             });
         } else {
+            console.log(`☁️ [STATUS ANTIDELETE] Media stored in SUPABASE ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
+            
             statusAntideleteState.mediaCache.set(msgId, {
                 filePath: null,
                 type: messageType,
@@ -707,16 +713,21 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
             let mediaSent = false;
             try {
                 let buffer = null;
+                let retrievedFrom = 'none';
                 
                 if (mediaCache.supabasePath && supabase.isAvailable()) {
                     buffer = await supabase.downloadMedia(mediaCache.supabasePath);
+                    if (buffer) retrievedFrom = 'supabase';
                 }
                 
                 if (!buffer && mediaCache.filePath) {
                     try { buffer = await fs.readFile(mediaCache.filePath); } catch {}
+                    if (buffer) retrievedFrom = 'local';
                 }
 
                 if (buffer && buffer.length > 0) {
+                    const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+                    console.log(`📥 [STATUS ANTIDELETE] Media recovered from ${retrievedFrom.toUpperCase()} | Type: ${statusData.type} | Size: ${sizeMB}MB | ID: ${statusData.id.slice(0, 12)}...`);
                     if (statusData.type === 'image') {
                         await retrySend(() => statusAntideleteState.sock.sendMessage(ownerJid, {
                             image: buffer,
@@ -759,6 +770,7 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
             if (mediaSent) {
                 if (mediaCache.supabasePath && supabase.isAvailable()) {
                     supabase.deleteMedia(mediaCache.supabasePath).catch(() => {});
+                    console.log(`🗑️ [STATUS ANTIDELETE] Cleaned up from Supabase after send | ID: ${statusData.id.slice(0, 12)}...`);
                 }
                 if (mediaCache.filePath) {
                     try { await fs.unlink(mediaCache.filePath); } catch {}
