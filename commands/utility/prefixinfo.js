@@ -34,7 +34,11 @@ export default {
     category: 'info',
     usage: 'prefixinfo',
 
-    async execute(sock, msg, args) {
+    async execute(sock, msg, args, PREFIX, extra) {
+        if (extra && typeof extra.isOwner === 'function' && !extra.isOwner()) {
+            return;
+        }
+
         const { remoteJid } = msg.key;
         const currentPrefix = getCurrentPrefix();
 

@@ -23,6 +23,10 @@ export default {
     async execute(sock, msg, args, PREFIX, extra) {
         const chatId = msg.key.remoteJid;
 
+        if (extra && typeof extra.isOwner === 'function' && !extra.isOwner()) {
+            return;
+        }
+
         const prefixData = safeReadJSON(path.join(__dirname, '../../data/prefix.json'));
         const settingsData = safeReadJSON(path.join(__dirname, '../../settings.json'));
         const botSettings = safeReadJSON(path.join(__dirname, '../../bot_settings.json'));
