@@ -343,14 +343,12 @@ function generateRetrievalCaption(senderJid, retrieverJid, chatId, groupName) {
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
     });
 
-    let caption = `🔐 *View-Once Retrieved*\n`;
-    caption += `─────────────────\n`;
-    caption += `📤 *Sent by:* ${senderNumber}\n`;
-    caption += `📥 *Retrieved by:* ${retrieverDisplay}\n`;
-    caption += `🕐 *Time:* ${timeStr}\n`;
-    caption += `💬 *${isGroup ? 'Group' : 'Chat'}:* ${chatName}\n`;
-    caption += `─────────────────\n`;
-    caption += `_Retrieved by WOLFBOT_`;
+    let caption = `╭─⌈ 🔐 *VIEW-ONCE RETRIEVED* ⌋\n`;
+    caption += `├─⊷ 📤 *Sent by:* ${senderNumber}\n`;
+    caption += `├─⊷ 📥 *Retrieved by:* ${retrieverDisplay}\n`;
+    caption += `├─⊷ 🕐 *Time:* ${timeStr}\n`;
+    caption += `├─⊷ 💬 *${isGroup ? 'Group' : 'Chat'}:* ${chatName}\n`;
+    caption += `╰─⊷ _Retrieved by WOLFBOT_`;
     return caption;
 }
 
