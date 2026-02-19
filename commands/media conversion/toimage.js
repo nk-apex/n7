@@ -2,52 +2,16 @@ import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 import sharp from 'sharp';
 import fs from 'fs';
 
-function getRealWhatsAppNumber(jid) {
-    if (!jid) return 'Unknown';
-    try {
-        const numberPart = jid.split('@')[0];
-        let cleanNumber = numberPart.replace(/[^\d+]/g, '');
-        if (cleanNumber.length >= 10 && !cleanNumber.startsWith('+')) {
-            if (cleanNumber.length >= 10 && cleanNumber.length <= 15) {
-                return `+${cleanNumber}`;
-            }
-        }
-        if (cleanNumber.startsWith('+') && cleanNumber.length >= 12) {
-            return cleanNumber;
-        }
-        if (cleanNumber && /^\d+$/.test(cleanNumber) && cleanNumber.length >= 10) {
-            return `+${cleanNumber}`;
-        }
-        return numberPart || 'Unknown';
-    } catch {
-        return 'Unknown';
-    }
-}
-
-function getGroupName(chatJid) {
-    if (!chatJid || !chatJid.includes('@g.us')) {
-        return 'Private Chat';
-    }
-    const gmdCache = globalThis.groupMetadataCache;
-    if (gmdCache) {
-        const cached = gmdCache.get(chatJid);
-        if (cached && cached.data && cached.data.subject) {
-            return cached.data.subject;
-        }
-    }
-    return chatJid.split('@')[0];
-}
-
 export default {
   name: 'toimage',
   description: 'Convert sticker to image using sharp',
   category: 'converter',
 
-  async execute(sock, m, args, PREFIX, extra) {
+  async execute(sock, m, args) {
     console.log('🖼️ [TOIMAGE] Command triggered');
     
     const jid = m.key.remoteJid;
-    const prefix = PREFIX || '#';
+    const prefix = '#';
     
     if (!m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.stickerMessage) {
       await sock.sendMessage(jid, { 
@@ -93,43 +57,9 @@ export default {
       const fileSizeKB = (imageBuffer.length / 1024).toFixed(1);
       console.log(`✅ [TOIMAGE] Conversion complete: ${fileSizeKB}KB`);
       
-      const senderJid = quoted.participant || m.message?.extendedTextMessage?.contextInfo?.participant || 'Unknown';
-      const senderNumber = getRealWhatsAppNumber(senderJid);
-
-      const isGroup = jid.includes('@g.us');
-      let retrieverJid;
-      if (isGroup) {
-          retrieverJid = m.key.participant || m.key.remoteJid;
-      } else {
-          retrieverJid = m.key.fromMe ? (sock.user?.id || m.key.remoteJid) : m.key.remoteJid;
-      }
-      const retrieverNumber = getRealWhatsAppNumber(retrieverJid);
-
-      const chatName = isGroup ? getGroupName(jid) : 'Private Chat';
-
-      const now = new Date();
-      const timeStr = now.toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-      });
-
-      let caption = `🖼️ *Sticker Converted*\n`;
-      caption += `📦 *Size:* ${fileSizeKB}KB\n`;
-      caption += `✨ *Format:* PNG\n`;
-      caption += `─────────────────\n`;
-      caption += `📤 *Sent by:* ${senderNumber}\n`;
-      caption += `📥 *Retrieved by:* ${retrieverNumber}\n`;
-      caption += `🕐 *Time:* ${timeStr}\n`;
-      caption += `💬 *${isGroup ? 'Group' : 'Chat'}:* ${chatName}`;
-
       await sock.sendMessage(jid, {
         image: imageBuffer,
-        caption: caption
+        caption: `🖼️ *Sticker Converted*\n📦 *Size:* ${fileSizeKB}KB\n✨ *Format:* PNG`
       }, { quoted: m });
       
       console.log(`✅ [TOIMAGE] Image sent successfully`);

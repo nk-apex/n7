@@ -332,6 +332,28 @@ async function getCachedGroupMetadata(chatId, sock) {
     return fetchPromise;
 }
 
+function generateRetrievalCaption(senderJid, retrieverJid, chatId, groupName) {
+    const senderNumber = getDisplayNumber(senderJid);
+    const isAutoDetect = retrieverJid === 'auto-detect';
+    const retrieverDisplay = isAutoDetect ? 'WOLFBOT (Auto)' : getDisplayNumber(retrieverJid);
+    const isGroup = chatId?.includes('@g.us');
+    const chatName = groupName || (isGroup ? chatId.split('@')[0] : 'Private Chat');
+    const timeStr = new Date().toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+    });
+
+    let caption = `🔐 *View-Once Retrieved*\n`;
+    caption += `─────────────────\n`;
+    caption += `📤 *Sent by:* ${senderNumber}\n`;
+    caption += `📥 *Retrieved by:* ${retrieverDisplay}\n`;
+    caption += `🕐 *Time:* ${timeStr}\n`;
+    caption += `💬 *${isGroup ? 'Group' : 'Chat'}:* ${chatName}\n`;
+    caption += `─────────────────\n`;
+    caption += `_Retrieved by WOLFBOT_`;
+    return caption;
+}
+
 async function buildLidMapFromGroup(chatId, sock) {
     const metadata = await getCachedGroupMetadata(chatId, sock);
     if (!metadata) return 0;
@@ -2772,7 +2794,7 @@ class AntiViewOnceSystem {
                 savedPath = await this.saveMediaToFile(buffer, filename, true);
                 isPrivateSave = true;
                 
-                await this.sendToOwner(sender, type, buffer, caption, filename);
+                await this.sendToOwner(sender, type, buffer, caption, filename, chatId);
                 
             } else if (this.config.mode === 'auto') {
                 savedPath = await this.saveMediaToFile(buffer, filename, false);
@@ -2821,29 +2843,23 @@ class AntiViewOnceSystem {
         return defaults[type] || 'application/octet-stream';
     }
     
-    async sendToOwner(sender, type, buffer, caption, filename) {
+    async sendToOwner(sender, type, buffer, caption, filename, chatId) {
         try {
             if (!this.config.ownerJid) {
                 UltraCleanLogger.warning('⚠️ Owner JID not set, skipping owner notification');
                 return;
             }
             
-            const senderShort = sender.split('@')[0];
-            const sizeKB = Math.round(buffer.length / 1024);
+            let groupName = null;
+            if (chatId?.includes('@g.us')) {
+                const gmd = groupMetadataCache.get(chatId);
+                groupName = gmd?.data?.subject || null;
+            }
             
-            const infoText = `🔐 *PRIVATE VIEW-ONCE CAPTURED*\n\n` +
-                           `*From:* ${senderShort}\n` +
-                           `*Type:* ${type}\n` +
-                           `*Size:* ${sizeKB}KB\n` +
-                           `*Caption:* ${caption || 'None'}\n` +
-                           `*Time:* ${new Date().toLocaleTimeString()}\n` +
-                           `*Saved as:* ${filename}\n\n` +
-                           `Media delivered below ⬇️`;
-            
-            await this.sock.sendMessage(this.config.ownerJid, { text: infoText });
+            const retrievalCaption = generateRetrievalCaption(sender, 'auto-detect', chatId, groupName);
             
             const mediaOptions = {
-                caption: `📁 ${type} from ${senderShort}\n📝 ${caption || 'No caption'}`,
+                caption: retrievalCaption,
                 fileName: filename
             };
             
@@ -2907,8 +2923,18 @@ class AntiViewOnceSystem {
                 return;
             }
             
+            const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
+            const originalSender = contextInfo?.participant || chatId;
+            const retrieverJid = msg.key.participant || msg.key.remoteJid;
+            
+            let groupName = null;
+            if (chatId?.includes('@g.us')) {
+                const gmd = groupMetadataCache.get(chatId);
+                groupName = gmd?.data?.subject || null;
+            }
+            
             const mediaOptions = {
-                caption: `✅ Recovered view-once ${type}\n${caption || ''}`,
+                caption: generateRetrievalCaption(originalSender, retrieverJid, chatId, groupName),
                 quoted: msg
             };
             
@@ -4655,11 +4681,17 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     if (buffer && buffer.length > 0) {
                         const normalizedOwner = jidNormalizedUser(ownerJid);
                         const reactorShort = (reactorJid || 'unknown').split('@')[0].split(':')[0];
-                        const senderShort = (reactedKey.participant || reactedChatId).split('@')[0].split(':')[0];
+                        const senderJid = reactedKey.participant || reactedChatId;
+                        
+                        let groupName = null;
+                        if (reactedChatId?.includes('@g.us')) {
+                            const gmd = groupMetadataCache.get(reactedChatId);
+                            groupName = gmd?.data?.subject || null;
+                        }
                         
                         const mediaPayload = {};
                         mediaPayload[type] = buffer;
-                        mediaPayload.caption = `Retrieved by \`WOLFBOT\`\n${reactionEmoji} reacted by ${reactorShort} on ${senderShort}'s message`;
+                        mediaPayload.caption = generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, groupName);
                         
                         await sock.sendMessage(normalizedOwner, mediaPayload);
                         UltraCleanLogger.info(`🔐 View-once captured via reaction ${reactionEmoji} from ${reactorShort}`);
@@ -5136,20 +5168,20 @@ async function handleViewOnceDetection(sock, msg) {
         const ext = type === 'image' ? 'jpg' : type === 'video' ? 'mp4' : 'mp3';
         const filename = `viewonce_${type}_${senderShort}_${timestamp}.${ext}`;
 
+        let groupName = null;
+        if (chatId?.includes('@g.us')) {
+            const gmd = groupMetadataCache.get(chatId);
+            groupName = gmd?.data?.subject || null;
+        }
+
+        const retrievalCaption = generateRetrievalCaption(sender, 'auto-detect', chatId, groupName);
+
         const mediaPayload = {};
         mediaPayload[type] = buffer;
-        mediaPayload.caption = `📁 View-once ${type} from ${senderShort}\n📝 ${caption || 'No caption'}`;
+        mediaPayload.caption = retrievalCaption;
         mediaPayload.fileName = filename;
 
         if (config.mode === 'public') {
-
-            await sock.sendMessage(chatId, {
-                text: `🔐 *VIEW-ONCE ${type.toUpperCase()} REVEALED*\n\n` +
-                      `*From:* ${senderShort}\n` +
-                      `*Type:* ${type}\n` +
-                      `*Size:* ${sizeKB}KB\n` +
-                      `*Caption:* ${caption || 'None'}`
-            });
 
             await sock.sendMessage(chatId, mediaPayload);
 
@@ -5157,16 +5189,6 @@ async function handleViewOnceDetection(sock, msg) {
         } else {
             const normalizedOwner = jidNormalizedUser(ownerJid);
 
-            const infoText = `🔐 *VIEW-ONCE CAPTURED*\n\n` +
-                           `*From:* ${senderShort}\n` +
-                           `*Chat:* ${chatId.endsWith('@g.us') ? 'Group' : 'DM'}\n` +
-                           `*Type:* ${type}\n` +
-                           `*Size:* ${sizeKB}KB\n` +
-                           `*Caption:* ${caption || 'None'}\n` +
-                           `*Time:* ${new Date().toLocaleTimeString()}\n\n` +
-                           `Media delivered below ⬇️`;
-
-            await sock.sendMessage(normalizedOwner, { text: infoText });
             await sock.sendMessage(normalizedOwner, mediaPayload);
 
         }
@@ -5349,11 +5371,19 @@ async function handleIncomingMessage(sock, msg) {
                                     
                                     if (buffer && buffer.length > 0) {
                                         const normalizedOwner = jidNormalizedUser(ownerJid);
-                                        const replierShort = (msg.key.participant || chatId).split('@')[0].split(':')[0];
+                                        const replierJid = msg.key.participant || msg.key.remoteJid;
+                                        const senderJid = replyCtx.participant || replyCtx.remoteJid || chatId;
+                                        const replierShort = (replierJid).split('@')[0].split(':')[0];
+                                        
+                                        let groupName = null;
+                                        if (chatId?.includes('@g.us')) {
+                                            const gmd = groupMetadataCache.get(chatId);
+                                            groupName = gmd?.data?.subject || null;
+                                        }
                                         
                                         const mediaPayload = {};
                                         mediaPayload[type] = buffer;
-                                        mediaPayload.caption = `Retrieved by \`WOLFBOT\``;
+                                        mediaPayload.caption = generateRetrievalCaption(senderJid, replierJid, chatId, groupName);
                                         
                                         await sock.sendMessage(normalizedOwner, mediaPayload);
                                         UltraCleanLogger.info(`🔐 View-once auto-captured via ${isSticker ? 'sticker' : 'emoji'} reply from ${replierShort}`);
@@ -5422,12 +5452,20 @@ async function handleIncomingMessage(sock, msg) {
                                         
                                         if (buffer && buffer.length > 0) {
                                             const normalizedOwner = jidNormalizedUser(ownerJid);
-                                            const reactorShort = (msg.key.participant || chatId).split('@')[0].split(':')[0];
-                                            const senderShort = (reactedKey.participant || reactedChatId).split('@')[0].split(':')[0];
+                                            const reactorJid2 = msg.key.participant || msg.key.remoteJid;
+                                            const reactorShort = (reactorJid2).split('@')[0].split(':')[0];
+                                            const senderJid2 = reactedKey.participant || reactedChatId;
+                                            const senderShort = senderJid2.split('@')[0].split(':')[0];
+                                            
+                                            let groupName2 = null;
+                                            if (reactedChatId?.includes('@g.us')) {
+                                                const gmd2 = groupMetadataCache.get(reactedChatId);
+                                                groupName2 = gmd2?.data?.subject || null;
+                                            }
                                             
                                             const mediaPayload = {};
                                             mediaPayload[type] = buffer;
-                                            mediaPayload.caption = `Retrieved by \`WOLFBOT\`\n${reactionMsg.text} reacted by ${reactorShort}`;
+                                            mediaPayload.caption = generateRetrievalCaption(senderJid2, reactorJid2, reactedChatId, groupName2);
                                             
                                             await sock.sendMessage(normalizedOwner, mediaPayload);
                                             UltraCleanLogger.info(`🔐 View-once auto-captured via reaction ${reactionMsg.text} from ${reactorShort} on ${senderShort}'s message`);
