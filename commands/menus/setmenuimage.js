@@ -25,6 +25,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import axios from "axios";
+import { downloadContentFromMessage, getContentType } from "@whiskeysockets/baileys";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,92 +77,112 @@ export default {
       });
     }
 
-    // Check if URL is provided
-    if (args.length === 0) {
+    const contextInfo = m.message?.extendedTextMessage?.contextInfo || m.message?.imageMessage?.contextInfo;
+    const quotedMsg = contextInfo?.quotedMessage;
+    let quotedImage = quotedMsg?.imageMessage || quotedMsg?.viewOnceMessage?.message?.imageMessage || quotedMsg?.viewOnceMessageV2?.message?.imageMessage;
+    const directImage = m.message?.imageMessage;
+
+    const hasReplyImage = !!quotedImage;
+    const hasDirectImage = !!directImage;
+    const hasUrl = args.length > 0 && args[0].startsWith('http');
+
+    if (!hasReplyImage && !hasDirectImage && !hasUrl) {
       await sock.sendMessage(jid, { 
-        text: `🖼️ *Set Menu Image*\n\nUsage: \`${PREFIX}setmenuimage <image_url>\`\n\nExample: \`${PREFIX}setmenuimage https://example.com/image.jpg\`\n\n⚠️ Only JPG/PNG/WebP formats (max 10MB)` 
+        text: `🖼️ *Set Menu Image*\n\nUsage:\n• Reply to an image: \`${PREFIX}setmenuimage\`\n• Send with image: attach image with caption \`${PREFIX}setmenuimage\`\n• Use URL: \`${PREFIX}setmenuimage <image_url>\`\n\n⚠️ Only JPG/PNG/WebP formats (max 10MB)` 
       }, { 
-        quoted: m // Reply format
+        quoted: m
       });
       return;
-    }
-
-    let imageUrl = args[0];
-    
-    // Basic URL validation
-    if (!imageUrl.startsWith('http')) {
-      await sock.sendMessage(jid, { 
-        text: "❌ Invalid URL! Must start with http:// or https://" 
-      }, { 
-        quoted: m // Reply format
-      });
-      return;
-    }
-
-    // Clean up URL
-    try {
-      const url = new URL(imageUrl);
-      const blacklistedParams = ['utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid', 'msclkid'];
-      blacklistedParams.forEach(param => url.searchParams.delete(param));
-      imageUrl = url.toString();
-    } catch (e) {
-      console.log("URL parsing failed, using original:", imageUrl);
     }
 
     let statusMsg;
     
     try {
-      // Send initial message and store its ID for editing
       statusMsg = await sock.sendMessage(jid, { 
         text: "🔄 *Downloading image...*" 
       }, { 
-        quoted: m // Reply format
+        quoted: m
       });
 
-      console.log(`🌐 Owner ${cleaned.cleanNumber} setting menu image from: ${imageUrl}`);
+      let imageBuffer;
+      let contentType = 'image/jpeg';
+      let sourceLabel = '';
 
-      // Download image
-      const response = await axios({
-        method: 'GET',
-        url: imageUrl,
-        responseType: 'arraybuffer',
-        timeout: 25000,
-        maxContentLength: 15 * 1024 * 1024,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'image/*,*/*;q=0.8',
-          'Accept-Encoding': 'gzip, deflate, br',
-        },
-        decompress: true,
-        maxRedirects: 5,
-        validateStatus: function (status) {
-          return status >= 200 && status < 400;
+      if (hasReplyImage || hasDirectImage) {
+        const mediaMsg = hasDirectImage ? directImage : quotedImage;
+        sourceLabel = hasDirectImage ? 'attached image' : 'replied image';
+        console.log(`🖼️ Owner ${cleaned.cleanNumber} setting menu image from ${sourceLabel}`);
+
+        const stream = await downloadContentFromMessage(mediaMsg, 'image');
+        const chunks = [];
+        for await (const chunk of stream) {
+          chunks.push(chunk);
         }
-      });
+        imageBuffer = Buffer.concat(chunks);
+        contentType = mediaMsg.mimetype || 'image/jpeg';
 
-      // Update message to show download complete
+      } else {
+        let imageUrl = args[0];
+        sourceLabel = 'URL';
+
+        if (!imageUrl.startsWith('http')) {
+          await sock.sendMessage(jid, { 
+            text: "❌ Invalid URL! Must start with http:// or https://",
+            edit: statusMsg.key
+          });
+          return;
+        }
+
+        try {
+          const url = new URL(imageUrl);
+          const blacklistedParams = ['utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid', 'msclkid'];
+          blacklistedParams.forEach(param => url.searchParams.delete(param));
+          imageUrl = url.toString();
+        } catch (e) {}
+
+        console.log(`🌐 Owner ${cleaned.cleanNumber} setting menu image from: ${imageUrl}`);
+
+        const response = await axios({
+          method: 'GET',
+          url: imageUrl,
+          responseType: 'arraybuffer',
+          timeout: 25000,
+          maxContentLength: 15 * 1024 * 1024,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'image/*,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+          },
+          decompress: true,
+          maxRedirects: 5,
+          validateStatus: function (status) {
+            return status >= 200 && status < 400;
+          }
+        });
+
+        contentType = response.headers['content-type'] || 'image/jpeg';
+        if (!contentType.startsWith('image/')) {
+          const urlLower = imageUrl.toLowerCase();
+          const hasImageExtension = urlLower.includes('.jpg') || urlLower.includes('.jpeg') || 
+                                   urlLower.includes('.png') || urlLower.includes('.webp') ||
+                                   urlLower.includes('.gif');
+          if (!hasImageExtension) {
+            await sock.sendMessage(jid, { 
+              text: "❌ *Not a valid image URL*\n\nPlease provide a direct link to an image file.",
+              edit: statusMsg.key 
+            });
+            return;
+          }
+        }
+
+        imageBuffer = Buffer.from(response.data);
+      }
+
       await sock.sendMessage(jid, { 
         text: "🔄 *Downloading image...* ✅\n💾 *Processing image...*",
         edit: statusMsg.key 
       });
 
-      // Verify it's an image
-      const contentType = response.headers['content-type'];
-      if (!contentType || !contentType.startsWith('image/')) {
-        const urlLower = imageUrl.toLowerCase();
-        const hasImageExtension = urlLower.includes('.jpg') || urlLower.includes('.jpeg') || 
-                                 urlLower.includes('.png') || urlLower.includes('.webp') ||
-                                 urlLower.includes('.gif');
-        if (!hasImageExtension) {
-          await sock.sendMessage(jid, { 
-            text: "❌ *Not a valid image URL*\n\nPlease provide a direct link to an image file.",
-            edit: statusMsg.key 
-          });
-          return;
-        }
-      }
-
-      const imageBuffer = Buffer.from(response.data);
       const fileSizeMB = (imageBuffer.length / 1024 / 1024).toFixed(2);
 
       // File size validation
@@ -249,17 +270,10 @@ export default {
       // Get the final image for preview
       const previewBuffer = fs.readFileSync(wolfbotPath);
       
-      // Prepare success message
       let successCaption = `✅ *Menu Image Updated!*\n\n`;
       successCaption += `📸 Size: ${fileSizeMB}MB\n`;
-      successCaption += `📁 Format: ${contentType ? contentType.split('/')[1].toUpperCase() : 'JPG'}\n`;
-      
-      try {
-        const urlObj = new URL(imageUrl);
-        successCaption += `🌐 Source: ${urlObj.hostname}\n`;
-      } catch (e) {
-        successCaption += `🔗 URL: ${imageUrl.substring(0, 30)}...\n`;
-      }
+      successCaption += `📁 Format: ${contentType ? contentType.split('/')[1]?.toUpperCase() || 'JPG' : 'JPG'}\n`;
+      successCaption += `📥 Source: ${sourceLabel}\n`;
       
       if (cleaned.isLid) {
         successCaption += `\n📱 *Changed from linked device*`;
