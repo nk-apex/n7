@@ -656,6 +656,8 @@ export async function antideleteStoreMessage(message) {
     }
 }
 
+const recentlyProcessedDeletions = new Map();
+
 export async function antideleteHandleUpdate(update) {
     try {
         if (!antideleteState.enabled || !antideleteState.sock) return;
@@ -664,6 +666,13 @@ export async function antideleteHandleUpdate(update) {
         if (!msgKey || !msgKey.id) return;
         
         const msgId = msgKey.id;
+        
+        const now = Date.now();
+        if (recentlyProcessedDeletions.has(msgId)) {
+            return;
+        }
+        recentlyProcessedDeletions.set(msgId, now);
+        setTimeout(() => recentlyProcessedDeletions.delete(msgId), 30000);
         const chatJid = msgKey.remoteJidAlt || msgKey.remoteJid;
         
         if (chatJid?.endsWith('@lid') && !chatJid?.endsWith('@g.us')) {

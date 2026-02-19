@@ -587,6 +587,8 @@ export async function statusAntideleteStoreMessage(message) {
     }
 }
 
+const recentlyProcessedStatusDeletions = new Map();
+
 export async function statusAntideleteHandleUpdate(update) {
     try {
         if (!statusAntideleteState.sock) return;
@@ -595,6 +597,12 @@ export async function statusAntideleteHandleUpdate(update) {
         if (!msgKey || !msgKey.id) return;
 
         const msgId = msgKey.id;
+        
+        if (recentlyProcessedStatusDeletions.has(msgId)) {
+            return;
+        }
+        recentlyProcessedStatusDeletions.set(msgId, Date.now());
+        setTimeout(() => recentlyProcessedStatusDeletions.delete(msgId), 30000);
 
         if (msgKey.remoteJid !== STATUS_PATTERNS.STATUS_JID) return;
 
