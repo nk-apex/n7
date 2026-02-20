@@ -1114,6 +1114,8 @@ let commandsLoaded = false;
 let hasSentConnectionMessage = false;
 let conflictCount = 0;
 let isConflictRecovery = false;
+let connectionOpenTime = 0;
+let _allManagedIntervals = [];
 
 let _lagCheckTs = Date.now();
 setInterval(() => {
@@ -1414,7 +1416,11 @@ const DiskManager = {
         }
     },
 
+    _intervals: [],
+    _started: false,
     async start() {
+        if (this._started) return;
+        this._started = true;
         const freeMB = await this.getDiskFreeAsync();
         if (freeMB !== null && freeMB < this.WARNING_MB) {
             UltraCleanLogger.warning(`⚠️ Low disk on startup: ${freeMB}MB free. Running immediate cleanup...`);
@@ -1422,10 +1428,10 @@ const DiskManager = {
         } else {
             this.runCleanupAsync(false).catch(() => {});
         }
-        setInterval(() => this.monitorAsync().catch(() => {}), this.CHECK_INTERVAL);
-        setInterval(() => {
+        this._intervals.push(setInterval(() => this.monitorAsync().catch(() => {}), this.CHECK_INTERVAL));
+        this._intervals.push(setInterval(() => {
             if (!this.isLow) this.runCleanupAsync(false).catch(() => {});
-        }, this.CLEANUP_INTERVAL);
+        }, this.CLEANUP_INTERVAL));
         UltraCleanLogger.info('💾 Disk space manager: ✅ ACTIVE');
     }
 };
@@ -2596,20 +2602,25 @@ const autoLinkSystem = new AutoLinkSystem();
 // Replaces the old Defibrillator with just the useful memory cleanup part
 const memoryMonitor = {
     _interval: null,
+    _trimInterval: null,
     start() {
         if (this._interval) return;
         this._interval = setInterval(() => {
             try {
                 const memMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
-                if (memMB > 700) {
+                if (memMB > 400) {
                     UltraCleanLogger.warning(`High memory: ${memMB}MB - trimming caches`);
                     setImmediate(() => this.trimCaches());
                 }
             } catch {}
-        }, 5 * 60 * 1000);
+        }, 3 * 60 * 1000);
+        this._trimInterval = setInterval(() => {
+            try { this.trimCaches(); } catch {}
+        }, 10 * 60 * 1000);
     },
     stop() {
         if (this._interval) { clearInterval(this._interval); this._interval = null; }
+        if (this._trimInterval) { clearInterval(this._trimInterval); this._trimInterval = null; }
     },
     trimCaches() {
         try {
@@ -2624,12 +2635,15 @@ const memoryMonitor = {
                 }
                 if (label) UltraCleanLogger.info(`${label} trimmed to ${map.size} entries`);
             };
-            trimMap(lidPhoneCache, 2000, 1000, 'LID cache');
-            trimMap(phoneLidCache, 2000, 1000, null);
+            trimMap(lidPhoneCache, 1000, 500, 'LID cache');
+            trimMap(phoneLidCache, 1000, 500, null);
             trimMap(groupMetadataCache, 50, 20, 'Group metadata cache');
-            trimMap(global.contactNames, 2000, 1000, null);
-            if (store && store.messages && store.messages.size > 50) {
-                trimMap(store.messages, 50, 30, 'Message store');
+            trimMap(global.contactNames, 3000, 1500, null);
+            if (store && store.messages && store.messages.size > 500) {
+                trimMap(store.messages, 500, 300, 'Message store');
+            }
+            if (store && store.sentMessages && store.sentMessages.size > 300) {
+                trimMap(store.sentMessages, 300, 150, null);
             }
             if (global.gc) { global.gc(); }
         } catch {}
@@ -3083,7 +3097,7 @@ class RateLimitProtection {
         this.userCooldowns = new Map();
         this.globalCooldown = Date.now();
         this.stickerSendTimes = new Map();
-        setInterval(() => this.cleanup(), 60000);
+        this._cleanupInterval = setInterval(() => this.cleanup(), 60000);
     }
     
     canSendCommand(chatId, userId, command) {
@@ -4109,8 +4123,11 @@ async function startBot(loginMode = 'auto', loginData = null) {
             } catch (closeErr) {}
             SOCKET_INSTANCE = null;
             currentSock = null;
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 1000));
         }
+
+        hasSentConnectionMessage = false;
+        connectionOpenTime = 0;
 
         UltraCleanLogger.info('🚀 Initializing WhatsApp connection...');
         
@@ -4193,9 +4210,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 keys: makeCacheableSignalKeyStore(state.keys, ultraSilentLogger),
             },
             markOnlineOnConnect: true,
-            generateHighQualityLinkPreview: true,
+            generateHighQualityLinkPreview: false,
             connectTimeoutMs: 60000,
-            keepAliveIntervalMs: 15000,
+            keepAliveIntervalMs: 25000,
             emitOwnEvents: true,
             mobile: false,
             msgRetryCounterCache,
@@ -4255,7 +4272,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
         
         SOCKET_INSTANCE = sock;
         currentSock = sock;
-        connectionAttempts = 0;
         isWaitingForPairingCode = false;
 
         sock.ev.on('connection.update', async (update) => {
@@ -4265,6 +4281,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             
             if (connection === 'open') {
                 isConnected = true;
+                connectionOpenTime = Date.now();
                 if (connectionStableTimer) clearTimeout(connectionStableTimer);
                 connectionStableTimer = setTimeout(() => {
                     connectionAttempts = 0;
@@ -4710,7 +4727,14 @@ async function startBot(loginMode = 'auto', loginData = null) {
         });
 
         sock.ev.on('messages.upsert', async ({ messages, type }) => {
+            if (type !== 'notify') return;
             const msg = messages[0];
+            if (!msg) return;
+            
+            const _upsertTs = msg.messageTimestamp ? (typeof msg.messageTimestamp === 'object' ? msg.messageTimestamp.low || 0 : Number(msg.messageTimestamp)) * 1000 : 0;
+            const _isOldMsg = _upsertTs > 0 && (Date.now() - _upsertTs > 60000 || (connectionOpenTime > 0 && _upsertTs < connectionOpenTime - 5000));
+            
+            if (_isOldMsg) return;
             
             if (store && msg?.key?.remoteJid && msg?.key?.id && msg?.message) {
                 store.addMessage(msg.key.remoteJid, msg.key.id, msg);
@@ -4725,8 +4749,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     }
                 }
             }
-            
-            if (type !== 'notify') return;
 
             if (!msg.message) {
                 if (store && msg.key?.remoteJid && msg.key?.id) {
@@ -4814,6 +4836,15 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 const senderJid = msg.key.participant || msg.key.remoteJid;
                 if (senderJid && !senderJid.includes('status') && !senderJid.includes('broadcast')) {
                     global.contactNames = global.contactNames || new Map();
+                    if (global.contactNames.size > 5000) {
+                        const excess = global.contactNames.size - 3000;
+                        let removed = 0;
+                        for (const k of global.contactNames.keys()) {
+                            if (removed >= excess) break;
+                            global.contactNames.delete(k);
+                            removed++;
+                        }
+                    }
                     global.contactNames.set(senderJid.split(':')[0].split('@')[0], msg.pushName);
                     global.contactNames.set(senderJid.split('@')[0], msg.pushName);
                 }
@@ -4821,16 +4852,12 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
             lastActivityTime = Date.now();
             
-            // OPTIMIZATION: Process commands immediately in parallel
             handleIncomingMessage(sock, msg).catch(() => {});
 
-            // React to owner messages in groups
             handleReactOwner(sock, msg).catch(() => {});
 
-            // React to developer messages with wolf emoji
             handleReactDev(sock, msg).catch(() => {});
 
-            // View-once detection - run immediately (no delay)
             handleViewOnceDetection(sock, msg).catch(err => {
                 originalConsoleMethods.log('❌ [AV] Detection error:', err.message);
             });
@@ -5192,10 +5219,11 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
     if (loggedOut) {
         UltraCleanLogger.warning('Session logged out. Cleaning session and restarting...');
         cleanSession();
+        const logoutDelay = Math.min(10000 * Math.pow(2, Math.min(connectionAttempts, 5)), 300000);
+        UltraCleanLogger.info(`🔄 Restarting in ${Math.round(logoutDelay/1000)}s after logout (attempt ${connectionAttempts})...`);
         setTimeout(async () => {
-            connectionAttempts = 0;
             await main();
-        }, 5000);
+        }, logoutDelay);
         return;
     }
     
@@ -5235,10 +5263,11 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
     if (statusCode === 401 || statusCode === 403) {
         UltraCleanLogger.warning(`Auth error (${statusCode}) detected, cleaning session...`);
         cleanSession();
+        const authDelay = Math.min(10000 * Math.pow(2, Math.min(connectionAttempts, 5)), 300000);
+        UltraCleanLogger.info(`🔄 Restarting in ${Math.round(authDelay/1000)}s after auth error (attempt ${connectionAttempts})...`);
         setTimeout(async () => {
-            connectionAttempts = 0;
             await main();
-        }, 5000);
+        }, authDelay);
         return;
     }
     

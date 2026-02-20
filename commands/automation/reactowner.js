@@ -37,6 +37,9 @@ export async function handleReactOwner(sock, msg) {
 
         if (!msg?.key || !msg.message) return;
 
+        const ts = msg.messageTimestamp ? Number(msg.messageTimestamp) * 1000 : 0;
+        if (ts > 0 && Date.now() - ts > 30000) return;
+
         const remoteJid = msg.key.remoteJid || '';
         if (!remoteJid.endsWith('@g.us')) return;
 

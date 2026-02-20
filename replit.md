@@ -52,6 +52,13 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **Ethical Hacking Suite**: A comprehensive collection of 44 commands across categories like RECON & OSINT, Network Analysis, Web Security, Vulnerability Checks, Password & Hash Tools, and Forensics & Analysis.
 *   **Disk Space Manager**: Monitors disk usage, performs periodic cleanups of temporary files and old media, and implements emergency cleanup on low disk space to prevent ENOSPC errors.
 
+**Performance & Stability Optimizations:**
+*   **Message Age Filtering**: All incoming messages are filtered at the top of the `messages.upsert` handler — messages older than 60 seconds (or older than the connection open time) are silently discarded to prevent processing historical synced messages on reconnection.
+*   **ReactDev/ReactOwner Guards**: Both reaction handlers independently reject messages older than 30 seconds as double protection against reacting to past messages.
+*   **Memory Leak Prevention**: Bounded caches (contactNames: 5000, lidPhoneCache: 1000), aggressive memory trimming at 400MB threshold, and proper interval cleanup on reconnect to prevent timer leaks.
+*   **Authentication Backoff**: Exponential backoff for 401/403 authentication failures prevents reconnection loops. Delay doubles each attempt up to 5-minute maximum.
+*   **Optimized Socket Config**: `generateHighQualityLinkPreview: false`, `keepAliveIntervalMs: 25000`, `MessageStore: 500` for balanced performance.
+
 ## External Dependencies
 *   `@whiskeysockets/baileys`: WhatsApp Web API.
 *   `axios`: HTTP requests.
