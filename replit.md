@@ -20,7 +20,9 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   `commands/`: Holds command handlers by category.
 
 **Database Integration:**
-*   **Replit PostgreSQL (Neon-backed)**: All bot data is stored in PostgreSQL via DATABASE_URL. Replaced Supabase with direct PostgreSQL using the `pg` library (Feb 2026).
+*   **Supabase PostgreSQL (Primary)**: Bot data is stored in Supabase PostgreSQL for multi-user, cross-platform support. Connection auto-built from `SUPABASE_DB_PASSWORD` secret using Session Pooler (`aws-1-eu-west-1.pooler.supabase.com:5432`).
+*   **Connection Priority**: `DATABASE_URL` env var (if set) > auto-built Supabase URL (from `SUPABASE_DB_PASSWORD`) > no database (local JSON fallback).
+*   **Cross-Platform**: Works on Replit, Pterodactyl, and any platform. Only requires `SUPABASE_DB_PASSWORD` to be set as an environment variable/secret.
 *   **Fallback Mechanism**: The bot remains fully functional using local JSON even if PostgreSQL is unavailable.
 *   **Module**: `lib/supabase.js` manages connections, health checks, and CRUD operations (name kept for backward compatibility).
 *   **Tables**: 14 tables are defined, covering bot configurations, warnings, sudoers, chatbot data, antidelete, welcome/goodbye, group features, auto-configurations, and media storage.
