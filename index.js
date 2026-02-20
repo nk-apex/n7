@@ -4144,7 +4144,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             UltraCleanLogger.info('📦 Commands already loaded, skipping...');
         }
         
-        store = new MessageStore();
+        if (!store) store = new MessageStore();
         ensureSessionDir();
         
         if (!statusDetector) {
@@ -4269,7 +4269,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     connectionAttempts = 0;
                     conflictCount = 0;
                     isConflictRecovery = false;
-                }, 30000);
+                }, 300000);
                 startHeartbeat(sock);
                 setTimeout(() => {
                     if (isConnected && !isConflictRecovery) handleSuccessfulConnection(sock, loginMode, loginData).catch(() => {});
@@ -5202,10 +5202,29 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
     if (statusCode === 409 || statusCode === 440) {
         conflictCount++;
         isConflictRecovery = true;
-        const conflictDelay = Math.min(8000 + (conflictCount * 5000), 60000);
+        const conflictDelay = Math.min(8000 + (conflictCount * 5000), 120000);
         UltraCleanLogger.warning(`Device conflict detected (${statusCode}). Attempt ${conflictCount}. Reconnecting in ${Math.round(conflictDelay/1000)}s...`);
-        if (conflictCount >= 3) {
-            UltraCleanLogger.warning(`Multiple conflicts - another session may be active elsewhere. Waiting longer...`);
+        if (conflictCount === 3) {
+            UltraCleanLogger.warning(`Multiple conflicts - clearing stale encryption keys...`);
+            try {
+                const sessionFiles = fs.readdirSync(SESSION_DIR);
+                let cleared = 0;
+                for (const file of sessionFiles) {
+                    if (file.startsWith('sender-key-') || file.startsWith('session-') || 
+                        file.startsWith('pre-key-') || file.startsWith('app-state-sync')) {
+                        fs.unlinkSync(path.join(SESSION_DIR, file));
+                        cleared++;
+                    }
+                }
+                if (cleared > 0) {
+                    UltraCleanLogger.info(`🔑 Cleared ${cleared} stale signal keys to fix encryption`);
+                }
+            } catch (cleanErr) {
+                UltraCleanLogger.warning(`Signal key cleanup error: ${cleanErr.message}`);
+            }
+        }
+        if (conflictCount >= 5) {
+            UltraCleanLogger.warning(`⚠️ Persistent conflict (attempt ${conflictCount}) - another WhatsApp Web/device session may be open. Close other sessions to fix.`);
         }
         setTimeout(async () => {
             await startBot(loginMode, phoneNumber);
