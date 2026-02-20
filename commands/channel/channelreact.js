@@ -115,7 +115,6 @@ class ChannelReactManager {
         }
 
         try {
-            console.log(`[CHANNEL-REACT] Reacting to ${newsletterJid.substring(0, 10)}... serverId=${serverId} emoji=${this.emoji}`);
             await sock.newsletterReactMessage(newsletterJid, serverId, this.emoji);
             alreadyReactedMessages.add(msgKey);
             this.lastReactionTime = Date.now();
@@ -123,10 +122,8 @@ class ChannelReactManager {
             this.config.lastReacted = new Date().toISOString();
             this.config.lastReactionTime = this.lastReactionTime;
             this.saveConfig();
-            console.log(`[CHANNEL-REACT] ✅ Reacted successfully`);
             return true;
         } catch (err) {
-            console.log(`[CHANNEL-REACT] ❌ Reaction failed: ${err?.message || err}`);
             return false;
         }
     }

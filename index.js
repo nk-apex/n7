@@ -4861,7 +4861,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
             }
             
             if (msg.key?.remoteJid?.endsWith('@newsletter')) {
-                originalConsoleMethods.log(`📢 [NEWSLETTER] Message received | jid: ${msg.key.remoteJid?.substring(0, 15)}... | id: ${msg.key.id?.substring(0, 10)}... | server_id: ${msg.key.server_id || 'none'} | fromMe: ${msg.key.fromMe}`);
                 handleChannelReact(sock, msg).catch(() => {});
             }
 
@@ -4892,16 +4891,13 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     if (!cachedMsg) {
                         cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
                     }
-                    originalConsoleMethods.log(`🔐 [VO-REACT] Reaction ${reactionEmoji} on ${reactedMsgId.substring(0, 8)}... | voCache: ${fromVoCache} | storeCached: ${!!cachedMsg} | hasMessage: ${!!(cachedMsg?.message)} | keys: ${cachedMsg?.message ? Object.keys(cachedMsg.message).join(',') : 'none'}`);
                     if (!cachedMsg || !cachedMsg.message) continue;
                     
                     let viewOnce = detectViewOnceMedia(cachedMsg.message);
-                    originalConsoleMethods.log(`🔐 [VO-REACT] detectViewOnceMedia(raw): ${!!viewOnce}`);
                     if (!viewOnce) {
                         const cachedContent = normalizeMessageContent(cachedMsg.message);
                         if (cachedContent) {
                             viewOnce = detectViewOnceMedia(cachedContent);
-                            originalConsoleMethods.log(`🔐 [VO-REACT] detectViewOnceMedia(normalized): ${!!viewOnce} | normalizedKeys: ${Object.keys(cachedContent).join(',')}`);
                         }
                     }
                     if (!viewOnce) continue;
