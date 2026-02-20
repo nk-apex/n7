@@ -26,7 +26,9 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **Fallback Mechanism**: The bot remains fully functional using local JSON even if PostgreSQL is unavailable.
 *   **Module**: `lib/supabase.js` manages connections, health checks, and CRUD operations (name kept for backward compatibility).
 *   **Tables**: 14 tables are defined, covering bot configurations, warnings, sudoers, chatbot data, antidelete, welcome/goodbye, group features, auto-configurations, and media storage.
-*   **Periodic Cleanup**: Auto-cleans antidelete messages, statuses, and media older than 24 hours every 30 minutes to prevent storage bloat.
+*   **Per-Bot Isolation**: All tables use composite primary keys with `bot_id` to ensure complete data isolation between different bot instances. Tables scoped by bot_id: `bot_configs`, `sudoers`, `sudo_config`, `chatbot_config`, `chatbot_conversations`, `auto_configs`, `warnings`, `warning_limits`, `welcome_goodbye`, `group_features`, `antidelete_messages`, `antidelete_statuses`. Only `lid_map` and `media_store` remain global (shared across instances).
+*   **Automatic Migration**: `initTables()` detects tables missing `bot_id` and migrates them independently (ADD COLUMN + DROP/ADD composite PK), ensuring safe upgrades from older schema versions.
+*   **Periodic Cleanup**: Auto-cleans antidelete messages, statuses, and media older than 24 hours every 30 minutes to prevent storage bloat. Cleanup is scoped by bot_id.
 
 **Key Features & Implementations:**
 
