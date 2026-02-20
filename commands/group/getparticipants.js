@@ -46,9 +46,23 @@ function resolveUsername(participant, number, contactsMap) {
     if (participant.short) return participant.short;
     if (participant.pushName) return participant.pushName;
 
-    if (number && contactsMap instanceof Map) {
-        const cached = contactsMap.get(number);
-        if (cached) return cached;
+    if (contactsMap instanceof Map) {
+        const jid = normalizeParticipantJid(participant);
+        if (jid) {
+            const jidKey = jid.split('@')[0];
+            const cached = contactsMap.get(jidKey);
+            if (cached) return cached;
+            const jidKeyClean = jidKey.split(':')[0];
+            if (jidKeyClean !== jidKey) {
+                const cached2 = contactsMap.get(jidKeyClean);
+                if (cached2) return cached2;
+            }
+        }
+
+        if (number) {
+            const cached = contactsMap.get(number);
+            if (cached) return cached;
+        }
     }
 
     return null;
@@ -90,6 +104,10 @@ export default {
             for (const [jid, contact] of Object.entries(contactStore)) {
                 const name = contact?.notify || contact?.name || contact?.vname || contact?.short || contact?.pushName;
                 if (name) {
+                    const jidKey = jid.split('@')[0];
+                    mergedContacts.set(jidKey, name);
+                    const jidKeyClean = jidKey.split(':')[0];
+                    if (jidKeyClean !== jidKey) mergedContacts.set(jidKeyClean, name);
                     const num = extractNumberFromJid(jid);
                     if (num) mergedContacts.set(num, name);
                 }

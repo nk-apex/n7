@@ -4713,6 +4713,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 if (senderJid && !senderJid.includes('status') && !senderJid.includes('broadcast')) {
                     global.contactNames = global.contactNames || new Map();
                     global.contactNames.set(senderJid.split(':')[0].split('@')[0], msg.pushName);
+                    global.contactNames.set(senderJid.split('@')[0], msg.pushName);
                 }
             }
 
