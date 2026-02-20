@@ -57,11 +57,37 @@ function resolveUsername(participant, number, contactsMap) {
                 const cached2 = contactsMap.get(jidKeyClean);
                 if (cached2) return cached2;
             }
+            const fullJid = jid;
+            const fullCached = contactsMap.get(fullJid);
+            if (fullCached) return fullCached;
         }
 
         if (number) {
             const cached = contactsMap.get(number);
             if (cached) return cached;
+        }
+
+        if (participant.lid) {
+            const lidKey = participant.lid.split('@')[0].split(':')[0];
+            const lidCached = contactsMap.get(lidKey);
+            if (lidCached) return lidCached;
+            const lidFull = participant.lid.split('@')[0];
+            if (lidFull !== lidKey) {
+                const lidFullCached = contactsMap.get(lidFull);
+                if (lidFullCached) return lidFullCached;
+            }
+        }
+
+        const jid2 = normalizeParticipantJid(participant);
+        if (jid2 && jid2.includes('@lid')) {
+            const lidFromJid = jid2.split('@')[0].split(':')[0];
+            const lidCached2 = contactsMap.get(lidFromJid);
+            if (lidCached2) return lidCached2;
+            const lidFullJid = jid2.split('@')[0];
+            const lidFullCached2 = contactsMap.get(lidFullJid);
+            if (lidFullCached2) return lidFullCached2;
+            const fullJidCached = contactsMap.get(jid2);
+            if (fullJidCached) return fullJidCached;
         }
     }
 

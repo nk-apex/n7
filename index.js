@@ -3453,6 +3453,32 @@ function cleanSession(preserveExisting = false) {
         return false;
     }
 }
+const viewOnceCache = new Map();
+const VIEW_ONCE_CACHE_MAX = 200;
+
+function cacheViewOnceMessage(chatId, messageId, msg) {
+    try {
+        const key = `${chatId}|${messageId}`;
+        let deepCopy;
+        if (typeof structuredClone === 'function') {
+            try { deepCopy = structuredClone(msg); } catch { deepCopy = JSON.parse(JSON.stringify(msg)); }
+        } else {
+            deepCopy = JSON.parse(JSON.stringify(msg));
+        }
+        viewOnceCache.set(key, deepCopy);
+        if (viewOnceCache.size > VIEW_ONCE_CACHE_MAX) {
+            const oldest = viewOnceCache.keys().next().value;
+            viewOnceCache.delete(oldest);
+        }
+        originalConsoleMethods.log(`🔐 [VO-CACHE] Stored view-once msg ${messageId.substring(0, 8)}... in dedicated cache (total: ${viewOnceCache.size})`);
+    } catch {}
+}
+
+function getViewOnceFromCache(chatId, messageId) {
+    const key = `${chatId}|${messageId}`;
+    return viewOnceCache.get(key) || null;
+}
+
 class MessageStore {
     constructor() {
         this.messages = new Map();
@@ -4523,6 +4549,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
         sock.ev.on('contacts.upsert', (contacts) => {
             try {
+                global.contactNames = global.contactNames || new Map();
                 for (const contact of contacts) {
                     if (contact.id && contact.lid) {
                         const idNum = contact.id.split('@')[0].split(':')[0];
@@ -4532,12 +4559,28 @@ async function startBot(loginMode = 'auto', loginData = null) {
                             cacheLidPhone(lidNum, idNum);
                         }
                     }
+                    const displayName = contact.notify || contact.name || contact.vname || contact.short || contact.pushName || contact.verifiedName;
+                    if (displayName && contact.id) {
+                        const jidKey = contact.id.split('@')[0];
+                        global.contactNames.set(jidKey, displayName);
+                        const cleanKey = jidKey.split(':')[0];
+                        if (cleanKey !== jidKey) global.contactNames.set(cleanKey, displayName);
+                        if (contact.id.includes('@lid')) {
+                            global.contactNames.set(contact.id, displayName);
+                        }
+                        if (contact.lid) {
+                            const lidKey = contact.lid.split('@')[0].split(':')[0];
+                            global.contactNames.set(lidKey, displayName);
+                            global.contactNames.set(contact.lid.split('@')[0], displayName);
+                        }
+                    }
                 }
             } catch {}
         });
 
         sock.ev.on('contacts.update', (updates) => {
             try {
+                global.contactNames = global.contactNames || new Map();
                 for (const contact of updates) {
                     if (contact.id && contact.lid) {
                         const idNum = contact.id.split('@')[0].split(':')[0];
@@ -4545,6 +4588,21 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         const idIsLid = contact.id.includes('@lid');
                         if (!idIsLid && idNum !== lidNum) {
                             cacheLidPhone(lidNum, idNum);
+                        }
+                    }
+                    const displayName = contact.notify || contact.name || contact.vname || contact.short || contact.pushName || contact.verifiedName;
+                    if (displayName && contact.id) {
+                        const jidKey = contact.id.split('@')[0];
+                        global.contactNames.set(jidKey, displayName);
+                        const cleanKey = jidKey.split(':')[0];
+                        if (cleanKey !== jidKey) global.contactNames.set(cleanKey, displayName);
+                        if (contact.id.includes('@lid')) {
+                            global.contactNames.set(contact.id, displayName);
+                        }
+                        if (contact.lid) {
+                            const lidKey = contact.lid.split('@')[0].split(':')[0];
+                            global.contactNames.set(lidKey, displayName);
+                            global.contactNames.set(contact.lid.split('@')[0], displayName);
                         }
                     }
                 }
@@ -4623,9 +4681,15 @@ async function startBot(loginMode = 'auto', loginData = null) {
             
             if (store && msg?.key?.remoteJid && msg?.key?.id && msg?.message) {
                 store.addMessage(msg.key.remoteJid, msg.key.id, msg);
-                const msgKeys = Object.keys(msg.message);
-                if (msgKeys.some(k => k.includes('viewOnce') || k.includes('ViewOnce'))) {
-                    originalConsoleMethods.log(`🔐 [VO-STORE] Cached view-once msg ${msg.key.id.substring(0, 8)}... keys: ${msgKeys.join(',')}`);
+                const voCheck = detectViewOnceMedia(msg.message);
+                if (voCheck) {
+                    cacheViewOnceMessage(msg.key.remoteJid, msg.key.id, msg);
+                } else {
+                    const msgKeys = Object.keys(msg.message);
+                    const hasVoKey = msgKeys.some(k => k.includes('viewOnce') || k.includes('ViewOnce'));
+                    if (hasVoKey) {
+                        cacheViewOnceMessage(msg.key.remoteJid, msg.key.id, msg);
+                    }
                 }
             }
             
@@ -4786,8 +4850,12 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     
                     if (!reactedChatId || !reactedMsgId) continue;
                     
-                    const cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
-                    originalConsoleMethods.log(`🔐 [VO-REACT] Reaction ${reactionEmoji} on ${reactedMsgId.substring(0, 8)}... | cached: ${!!cachedMsg} | hasMessage: ${!!(cachedMsg?.message)} | keys: ${cachedMsg?.message ? Object.keys(cachedMsg.message).join(',') : 'none'}`);
+                    let cachedMsg = getViewOnceFromCache(reactedChatId, reactedMsgId);
+                    const fromVoCache = !!cachedMsg;
+                    if (!cachedMsg) {
+                        cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
+                    }
+                    originalConsoleMethods.log(`🔐 [VO-REACT] Reaction ${reactionEmoji} on ${reactedMsgId.substring(0, 8)}... | voCache: ${fromVoCache} | storeCached: ${!!cachedMsg} | hasMessage: ${!!(cachedMsg?.message)} | keys: ${cachedMsg?.message ? Object.keys(cachedMsg.message).join(',') : 'none'}`);
                     if (!cachedMsg || !cachedMsg.message) continue;
                     
                     let viewOnce = detectViewOnceMedia(cachedMsg.message);
@@ -5538,7 +5606,10 @@ async function handleIncomingMessage(sock, msg) {
                 const reactedMsgId = reactedKey.id;
                 const reactedChatId = reactedKey.remoteJid || chatId;
                 
-                const cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
+                let cachedMsg = getViewOnceFromCache(reactedChatId, reactedMsgId);
+                if (!cachedMsg) {
+                    cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
+                }
                 
                 if (cachedMsg) {
                     let viewOnceReactCheck = detectViewOnceMedia(cachedMsg.message || cachedMsg);
