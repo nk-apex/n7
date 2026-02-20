@@ -1,3 +1,5 @@
+import { normalizeMessageContent } from '@whiskeysockets/baileys';
+
 function formatBytes(bytes) {
     if (!bytes || bytes === 0) return '0 B';
     const k = 1024;
@@ -77,6 +79,7 @@ function extractMediaInfo(msg) {
             if (media.ptt !== undefined) info.voiceNote = media.ptt ? 'Yes' : 'No';
             if (media.pageCount) info.pages = media.pageCount;
             if (media.gifPlayback) info.gif = 'Yes';
+            if (media.caption) info.caption = media.caption;
             return info;
         }
     }
@@ -106,6 +109,46 @@ function extractTextContent(msg) {
     return null;
 }
 
+function findContextInfo(msgContent) {
+    if (!msgContent) return null;
+
+    const voWrappers = ['viewOnceMessage', 'viewOnceMessageV2', 'viewOnceMessageV2Extension'];
+    for (const wrapper of voWrappers) {
+        if (msgContent[wrapper]?.message) {
+            const inner = findContextInfo(msgContent[wrapper].message);
+            if (inner) return inner;
+        }
+    }
+
+    const msgTypes = [
+        'extendedTextMessage', 'imageMessage', 'videoMessage',
+        'stickerMessage', 'audioMessage', 'documentMessage',
+        'ptvMessage', 'contactMessage', 'contactsArrayMessage',
+        'locationMessage', 'liveLocationMessage', 'listMessage',
+        'buttonsMessage', 'templateMessage', 'listResponseMessage',
+        'buttonsResponseMessage', 'templateButtonReplyMessage',
+        'pollCreationMessage', 'pollCreationMessageV2', 'pollCreationMessageV3',
+        'interactiveMessage', 'highlyStructuredMessage',
+        'groupInviteMessage', 'eventMessage', 'orderMessage',
+        'invoiceMessage', 'productMessage'
+    ];
+
+    for (const type of msgTypes) {
+        if (msgContent[type]?.contextInfo) {
+            return msgContent[type].contextInfo;
+        }
+    }
+
+    for (const key of Object.keys(msgContent)) {
+        if (key === 'messageContextInfo') continue;
+        if (msgContent[key] && typeof msgContent[key] === 'object' && msgContent[key].contextInfo) {
+            return msgContent[key].contextInfo;
+        }
+    }
+
+    return null;
+}
+
 export default {
     name: 'quoted',
     alias: ['q', 'quotedmsg', 'quotedinfo', 'qmsg'],
@@ -115,14 +158,10 @@ export default {
     async execute(sock, m, args, prefix, extra) {
         const chatId = m.key.remoteJid;
 
-        const contextInfo = m.message?.extendedTextMessage?.contextInfo ||
-                           m.message?.imageMessage?.contextInfo ||
-                           m.message?.videoMessage?.contextInfo ||
-                           m.message?.stickerMessage?.contextInfo ||
-                           m.message?.audioMessage?.contextInfo ||
-                           m.message?.documentMessage?.contextInfo ||
-                           m.message?.conversation?.contextInfo ||
-                           null;
+        const rawContent = m.message;
+        const normalizedContent = normalizeMessageContent(rawContent) || rawContent;
+
+        const contextInfo = findContextInfo(rawContent) || findContextInfo(normalizedContent);
 
         const quotedMessage = contextInfo?.quotedMessage;
         if (!quotedMessage) {
@@ -131,19 +170,22 @@ export default {
             }, { quoted: m });
         }
 
+        const normalizedQuoted = normalizeMessageContent(quotedMessage) || quotedMessage;
+
         const stanzaId = contextInfo.stanzaId || 'Unknown';
         const participant = contextInfo.participant || 'Unknown';
         const senderName = participant.split('@')[0];
+        const senderClean = senderName.includes(':') ? senderName.split(':')[0] : senderName;
 
-        const msgType = getMessageType(quotedMessage);
-        const textContent = extractTextContent(quotedMessage);
-        const mediaInfo = extractMediaInfo(quotedMessage);
+        const msgType = getMessageType(normalizedQuoted);
+        const textContent = extractTextContent(normalizedQuoted);
+        const mediaInfo = extractMediaInfo(normalizedQuoted);
 
         let mentions = [];
         if (contextInfo.mentionedJid?.length) {
             mentions = contextInfo.mentionedJid;
         }
-        const quotedContext = quotedMessage.extendedTextMessage?.contextInfo;
+        const quotedContext = normalizedQuoted.extendedTextMessage?.contextInfo;
         if (quotedContext?.mentionedJid?.length) {
             mentions = quotedContext.mentionedJid;
         }
@@ -161,24 +203,34 @@ export default {
         }
 
         let isForwarded = false;
-        for (const key of Object.keys(quotedMessage)) {
-            if (quotedMessage[key]?.contextInfo?.isForwarded) {
+        let forwardingScore = 0;
+        for (const key of Object.keys(normalizedQuoted)) {
+            const ci = normalizedQuoted[key]?.contextInfo;
+            if (ci?.isForwarded) {
                 isForwarded = true;
+                forwardingScore = ci.forwardingScore || 0;
                 break;
             }
         }
 
+        let isStarred = contextInfo.isStarred || false;
+
         let text = `╭─⌈ 📋 *QUOTED MESSAGE INFO* ⌋\n│\n`;
-        text += `│ 📌 *Message ID:* ${stanzaId.substring(0, 20)}${stanzaId.length > 20 ? '...' : ''}\n`;
-        text += `│ 👤 *Sender:* @${senderName}\n`;
+        text += `│ 📌 *Message ID:* ${stanzaId}\n`;
+        text += `│ 👤 *Sender:* @${senderClean}\n`;
         text += `│ 📝 *Type:* ${msgType}\n`;
 
         if (isViewOnce) text += `│ 👁️ *View Once:* Yes\n`;
-        if (isForwarded) text += `│ 🔄 *Forwarded:* Yes\n`;
+        if (isForwarded) {
+            text += `│ 🔄 *Forwarded:* Yes`;
+            if (forwardingScore > 0) text += ` (${forwardingScore}x)`;
+            text += `\n`;
+        }
+        if (isStarred) text += `│ ⭐ *Starred:* Yes\n`;
 
         if (textContent) {
-            const displayText = textContent.length > 300 ? textContent.substring(0, 300) + '...' : textContent;
-            text += `│ 💬 *Content:*\n│   ${displayText.split('\n').join('\n│   ')}\n`;
+            const displayText = textContent.length > 500 ? textContent.substring(0, 500) + '...' : textContent;
+            text += `│\n│ 💬 *Content:*\n│ ${displayText.split('\n').join('\n│ ')}\n`;
         }
 
         if (mediaInfo) {
@@ -195,10 +247,11 @@ export default {
             if (mediaInfo.lottie) text += `│   Lottie: ${mediaInfo.lottie}\n`;
             if (mediaInfo.voiceNote) text += `│   Voice Note: ${mediaInfo.voiceNote}\n`;
             if (mediaInfo.gif) text += `│   GIF Playback: Yes\n`;
+            if (mediaInfo.caption) text += `│   Caption: ${mediaInfo.caption.length > 200 ? mediaInfo.caption.substring(0, 200) + '...' : mediaInfo.caption}\n`;
         }
 
         if (mentions.length > 0) {
-            text += `│\n│ 🏷️ *Mentions:* ${mentions.map(j => '@' + j.split('@')[0]).join(', ')}\n`;
+            text += `│\n│ 🏷️ *Mentions:* ${mentions.map(j => '@' + (j.split('@')[0].includes(':') ? j.split(':')[0] : j.split('@')[0])).join(', ')}\n`;
         }
 
         const chatType = chatId.endsWith('@g.us') ? 'Group' : chatId.endsWith('@newsletter') ? 'Channel' : 'Private';

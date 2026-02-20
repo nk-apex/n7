@@ -4846,6 +4846,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             }
             
             if (msg.key?.remoteJid?.endsWith('@newsletter')) {
+                originalConsoleMethods.log(`📢 [NEWSLETTER] Message received | jid: ${msg.key.remoteJid?.substring(0, 15)}... | id: ${msg.key.id?.substring(0, 10)}... | server_id: ${msg.key.server_id || 'none'} | fromMe: ${msg.key.fromMe}`);
                 handleChannelReact(sock, msg).catch(() => {});
             }
 
