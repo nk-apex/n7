@@ -1,20 +1,23 @@
-import fs from 'fs';
+import db from '../../lib/supabase.js';
 
-const PREFERENCES_FILE = './vv_preferences.json';
+let prefsCache = null;
+let cacheLoaded = false;
 
-function loadPreferences() {
+async function loadPreferences() {
+    if (cacheLoaded && prefsCache) return prefsCache;
     try {
-        if (fs.existsSync(PREFERENCES_FILE)) {
-            return JSON.parse(fs.readFileSync(PREFERENCES_FILE, 'utf8'));
-        }
-    } catch {}
-    return [];
+        const data = await db.getConfig('vv_caption_prefs', {});
+        prefsCache = Array.isArray(data) ? data : [];
+        cacheLoaded = true;
+    } catch {
+        if (!prefsCache) prefsCache = [];
+    }
+    return prefsCache;
 }
 
-function savePreferences(prefs) {
-    try {
-        fs.writeFileSync(PREFERENCES_FILE, JSON.stringify(prefs, null, 2));
-    } catch {}
+async function savePreferences(prefs) {
+    prefsCache = prefs;
+    await db.setConfig('vv_caption_prefs', prefs);
 }
 
 export default {
@@ -27,7 +30,7 @@ export default {
         const chatId = msg.key.remoteJid;
 
         if (!args[0]) {
-            const prefs = loadPreferences();
+            const prefs = await loadPreferences();
             const existing = prefs.find(p => p.chatId === chatId);
             const current = existing?.customCaption || 'Retrieved by WOLFBOT';
 
@@ -37,7 +40,7 @@ export default {
         }
 
         const newCaption = args.join(' ');
-        const prefs = loadPreferences();
+        const prefs = await loadPreferences();
         const idx = prefs.findIndex(p => p.chatId === chatId);
 
         let captionValue = newCaption;
@@ -65,7 +68,7 @@ export default {
             });
         }
 
-        savePreferences(prefs);
+        await savePreferences(prefs);
 
         await sock.sendMessage(chatId, {
             text: `✅ *VV Caption Updated*\n\n${displayText}\n\nThis will be shown on all downloaded view-once media.`

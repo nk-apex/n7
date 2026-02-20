@@ -47,22 +47,22 @@ export default {
       }
 
       // Download image temporarily
-      const tmpDir = path.join(process.cwd(), "tmp");
-      if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-      const filePath = path.join(tmpDir, `wolf_getpp_${Date.now()}.jpg`);
+      const filePath = path.join('/tmp', `wolfbot_getpp_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`);
 
-      const response = await axios.get(ppUrl, { responseType: "arraybuffer" });
-      fs.writeFileSync(filePath, Buffer.from(response.data));
+      try {
+        const response = await axios.get(ppUrl, { responseType: "arraybuffer" });
+        fs.writeFileSync(filePath, Buffer.from(response.data));
 
-      // Send profile picture as a reply
-      await sock.sendMessage(chatId, {
-        image: { url: filePath },
-        caption: `🐺 *Target:* @${target.split("@")[0]}\n📸 Profile picture retrieved successfully!`,
-        mentions: [target],
-        contextInfo: { stanzaId: m.key.id, participant: m.key.participant, quotedMessage: m.message },
-      });
-
-      fs.unlinkSync(filePath);
+        // Send profile picture as a reply
+        await sock.sendMessage(chatId, {
+          image: { url: filePath },
+          caption: `🐺 *Target:* @${target.split("@")[0]}\n📸 Profile picture retrieved successfully!`,
+          mentions: [target],
+          contextInfo: { stanzaId: m.key.id, participant: m.key.participant, quotedMessage: m.message },
+        });
+      } finally {
+        try { fs.unlinkSync(filePath); } catch {}
+      }
 
     } catch (error) {
       console.error("🐺 Error in getpp command:", error);

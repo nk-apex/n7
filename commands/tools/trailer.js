@@ -194,11 +194,7 @@ export default {
       // Download trailer
       console.log(`⬇️ Downloading trailer from: ${trailerUrl}`);
       
-      // Create temp directory
-      const tempDir = path.join(__dirname, "../temp");
-      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-      
-      const tempFile = path.join(tempDir, `trailer_${Date.now()}_${Math.random().toString(36).substring(7)}.mp4`);
+      const tempFile = `/tmp/wolfbot_trailer_${Date.now()}_${Math.random().toString(36).slice(2)}.mp4`;
       
       try {
         // Download video using yt-dlp or similar API

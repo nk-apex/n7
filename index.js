@@ -220,7 +220,7 @@ import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessa
 import NodeCache from 'node-cache';
 import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList } from './lib/sudo-store.js';
 import supabaseDb from './lib/supabase.js';
-import { migrateSudoToSupabase } from './lib/sudo-store.js';
+import { migrateSudoToSupabase, initSudo } from './lib/sudo-store.js';
 import { migrateWarningsToSupabase } from './lib/warnings-store.js';
 
 const msgRetryCounterCache = new NodeCache({ stdTTL: 600 });
@@ -626,6 +626,34 @@ const WHITELIST_FILE = './whitelist.json';
 const BLOCKED_USERS_FILE = './blocked_users.json';
 const WELCOME_DATA_FILE = './data/welcome_data.json';
 
+let _cache_owner_data = null;
+let _cache_prefix_config = null;
+let _cache_bot_settings = null;
+let _cache_bot_mode = null;
+let _cache_whitelist = null;
+let _cache_blocked_users = null;
+let _cache_welcome_data = null;
+let _cache_status_logs = null;
+let _cache_member_detection = null;
+let _cache_antiviewonce_config = null;
+let _cache_antiviewonce_history = null;
+let _cache_antiviewonce_captured_count = 0;
+
+async function _loadConfigCache(key, defaultValue) {
+    try {
+        const val = await supabaseDb.getConfig(key, defaultValue);
+        return val;
+    } catch {
+        return defaultValue;
+    }
+}
+
+function _saveConfigCache(key, value) {
+    supabaseDb.setConfig(key, value).catch(err => {
+        UltraCleanLogger.warning(`DB save error for ${key}: ${err.message}`);
+    });
+}
+
 // Auto-connect features
 const AUTO_CONNECT_ON_LINK = true;
 const AUTO_CONNECT_ON_START = true;
@@ -833,7 +861,8 @@ function savePrefixToFile(newPrefix) {
             previousPrefix: prefixCache,
             previousIsPrefixless: isPrefixless
         };
-        fs.writeFileSync(PREFIX_CONFIG_FILE, JSON.stringify(config, null, 2));
+        _cache_prefix_config = config;
+        _saveConfigCache('prefix_config', config);
         
         const settings = {
             prefix: isNone ? '' : newPrefix,
@@ -844,7 +873,8 @@ function savePrefixToFile(newPrefix) {
             previousIsPrefixless: isPrefixless,
             version: VERSION
         };
-        fs.writeFileSync(BOT_SETTINGS_FILE, JSON.stringify(settings, null, 2));
+        _cache_bot_settings = settings;
+        _saveConfigCache('bot_settings', settings);
         
         UltraCleanLogger.info(`Prefix settings saved: "${newPrefix}", prefixless: ${isNone}`);
         return true;
@@ -856,8 +886,8 @@ function savePrefixToFile(newPrefix) {
 
 function loadPrefixFromFiles() {
     try {
-        if (fs.existsSync(PREFIX_CONFIG_FILE)) {
-            const config = JSON.parse(fs.readFileSync(PREFIX_CONFIG_FILE, 'utf8'));
+        if (_cache_prefix_config) {
+            const config = _cache_prefix_config;
             
             if (config.isPrefixless !== undefined) {
                 isPrefixless = config.isPrefixless;
@@ -872,8 +902,8 @@ function loadPrefixFromFiles() {
             }
         }
         
-        if (fs.existsSync(BOT_SETTINGS_FILE)) {
-            const settings = JSON.parse(fs.readFileSync(BOT_SETTINGS_FILE, 'utf8'));
+        if (_cache_bot_settings) {
+            const settings = _cache_bot_settings;
             
             if (settings.isPrefixless !== undefined) {
                 isPrefixless = settings.isPrefixless;
@@ -1133,12 +1163,12 @@ const DiskManager = {
 
     getCleanupReport() {
         const sessionFiles = this._countSessionSignalFiles();
-        const voMedia = this.getDirSize('./data/viewonce_messages') + this.getDirSize('./data/viewonce_private');
+        const voMedia = 0;
         const adMedia = this.getDirSize('./data/antidelete/media');
         const statusMedia = this.getDirSize('./data/antidelete/status/media');
         const tempFiles = this.getDirSize('./temp') + this.getDirSize('./commands/temp');
         const backupFiles = this.getDirSize('./session_backup');
-        const statusLogs = (() => { try { return fs.existsSync('./data/status_detection_logs.json') ? fs.statSync('./data/status_detection_logs.json').size : 0; } catch { return 0; } })();
+        const statusLogs = (() => { try { return _cache_status_logs ? JSON.stringify(_cache_status_logs).length : 0; } catch { return 0; } })();
         const freeMB = this.getDiskFree();
         return {
             freeMB,
@@ -1438,9 +1468,8 @@ class JidManager {
     
     loadOwnerData() {
         try {
-            if (fs.existsSync(OWNER_FILE)) {
-                const data = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
-                
+            const data = _cache_owner_data;
+            if (data) {
                 const ownerJid = data.OWNER_JID;
                 if (ownerJid) {
                     const cleaned = this.cleanJid(ownerJid);
@@ -1481,13 +1510,11 @@ class JidManager {
     
     loadWhitelist() {
         try {
-            if (fs.existsSync(WHITELIST_FILE)) {
-                const data = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf8'));
-                if (data.whitelist && Array.isArray(data.whitelist)) {
-                    data.whitelist.forEach(item => {
-                        WHITELIST.add(item);
-                    });
-                }
+            const data = _cache_whitelist;
+            if (data && data.whitelist && Array.isArray(data.whitelist)) {
+                data.whitelist.forEach(item => {
+                    WHITELIST.add(item);
+                });
             }
         } catch {
             // Silent fail
@@ -1694,7 +1721,8 @@ class JidManager {
                 version: VERSION
             };
             
-            fs.writeFileSync(OWNER_FILE, JSON.stringify(ownerData, null, 2));
+            _cache_owner_data = ownerData;
+            _saveConfigCache('owner_data', ownerData);
             
             UltraCleanLogger.success(`New owner set: ${cleaned.cleanJid}`);
             
@@ -1738,15 +1766,26 @@ class NewMemberDetector {
     
     loadDetectionData() {
         try {
-            if (fs.existsSync('./data/member_detection.json')) {
-                const data = JSON.parse(fs.readFileSync('./data/member_detection.json', 'utf8'));
-                if (data.detectedMembers) {
-                    for (const [groupId, members] of Object.entries(data.detectedMembers)) {
-                        this.detectedMembers.set(groupId, members);
-                    }
+            if (_cache_member_detection && _cache_member_detection.detectedMembers) {
+                for (const [groupId, members] of Object.entries(_cache_member_detection.detectedMembers)) {
+                    this.detectedMembers.set(groupId, members);
                 }
                 UltraCleanLogger.info(`📊 Loaded ${this.detectedMembers.size} groups member data`);
+                return;
             }
+            supabaseDb.getConfig('member_detection', {}).then(data => {
+                try {
+                    _cache_member_detection = data;
+                    if (data && data.detectedMembers) {
+                        for (const [groupId, members] of Object.entries(data.detectedMembers)) {
+                            this.detectedMembers.set(groupId, members);
+                        }
+                        UltraCleanLogger.info(`📊 Loaded ${this.detectedMembers.size} groups member data`);
+                    }
+                } catch {}
+            }).catch(err => {
+                UltraCleanLogger.warning(`Could not load member detection data: ${err.message}`);
+            });
         } catch (error) {
             UltraCleanLogger.warning(`Could not load member detection data: ${error.message}`);
         }
@@ -1764,11 +1803,10 @@ class NewMemberDetector {
                 data.detectedMembers[groupId] = members;
             }
             
-            if (!fs.existsSync('./data')) {
-                fs.mkdirSync('./data', { recursive: true });
-            }
-            
-            safeWriteFile('./data/member_detection.json', data);
+            _cache_member_detection = data;
+            supabaseDb.setConfig('member_detection', data).catch(err => {
+                UltraCleanLogger.warning(`Could not save member detection data: ${err.message}`);
+            });
         } catch (error) {
             UltraCleanLogger.warning(`Could not save member detection data: ${error.message}`);
         }
@@ -1931,8 +1969,8 @@ class NewMemberDetector {
     
     loadWelcomeData() {
         try {
-            if (fs.existsSync(WELCOME_DATA_FILE)) {
-                return JSON.parse(fs.readFileSync(WELCOME_DATA_FILE, 'utf8'));
+            if (_cache_welcome_data) {
+                return _cache_welcome_data;
             }
         } catch (error) {
             UltraCleanLogger.warning(`Error loading welcome data: ${error.message}`);
@@ -1947,12 +1985,9 @@ class NewMemberDetector {
     
     saveWelcomeData(data) {
         try {
-            if (!fs.existsSync('./data')) {
-                fs.mkdirSync('./data', { recursive: true });
-            }
-            
             data.updated = new Date().toISOString();
-            safeWriteFile(WELCOME_DATA_FILE, data);
+            _cache_welcome_data = data;
+            _saveConfigCache('welcome_data', data);
             return true;
         } catch (error) {
             UltraCleanLogger.warning(`Error saving welcome data: ${error.message}`);
@@ -2225,8 +2260,8 @@ class UltimateFixSystem {
             
             jidManager.loadOwnerDataFromFile = function() {
                 try {
-                    if (fs.existsSync('./owner.json')) {
-                        const data = JSON.parse(fs.readFileSync('./owner.json', 'utf8'));
+                    const data = _cache_owner_data;
+                    if (data) {
                         let cleanNumber = data.OWNER_CLEAN_NUMBER || data.OWNER_NUMBER;
                         let cleanJid = data.OWNER_CLEAN_JID || data.OWNER_JID;
                         
@@ -2278,11 +2313,11 @@ class UltimateFixSystem {
     }
     
     shouldRunRestartFix(ownerJid) {
-        const hasOwnerFile = fs.existsSync(OWNER_FILE);
+        const hasOwnerData = !!_cache_owner_data;
         const isFixNeeded = this.isFixNeeded(ownerJid);
         const notAttempted = !this.restartFixAttempted;
         
-        return hasOwnerFile && isFixNeeded && notAttempted && RESTART_AUTO_FIX_ENABLED;
+        return hasOwnerData && isFixNeeded && notAttempted && RESTART_AUTO_FIX_ENABLED;
     }
     
     markRestartFixAttempted() {
@@ -2606,33 +2641,21 @@ class AntiViewOnceSystem {
     }
     
     setupDirectories() {
-        try {
-            if (!fs.existsSync(ANTIVIEWONCE_SAVE_DIR)) {
-                fs.mkdirSync(ANTIVIEWONCE_SAVE_DIR, { recursive: true });
-                UltraCleanLogger.info(`📁 Created: ${ANTIVIEWONCE_SAVE_DIR}`);
-            }
-            
-            if (!fs.existsSync(ANTIVIEWONCE_PRIVATE_DIR)) {
-                fs.mkdirSync(ANTIVIEWONCE_PRIVATE_DIR, { recursive: true });
-                UltraCleanLogger.info(`📁 Created: ${ANTIVIEWONCE_PRIVATE_DIR}`);
-            }
-        } catch (error) {
-            UltraCleanLogger.error(`Directory setup error: ${error.message}`);
-        }
     }
     
     loadConfig() {
         try {
-            if (fs.existsSync(ANTIVIEWONCE_CONFIG_FILE)) {
-                const config = JSON.parse(fs.readFileSync(ANTIVIEWONCE_CONFIG_FILE, 'utf8'));
-                UltraCleanLogger.info('🔧 Loaded anti-viewonce config');
-                return config;
+            if (_cache_antiviewonce_config) {
+                UltraCleanLogger.info('🔧 Loaded anti-viewonce config from cache');
+                return _cache_antiviewonce_config;
             }
-            const legacyPath = './antiviewonce_config.json';
-            if (fs.existsSync(legacyPath)) {
-                const config = JSON.parse(fs.readFileSync(legacyPath, 'utf8'));
-                return config;
-            }
+            supabaseDb.getConfig('antiviewonce_config', DEFAULT_ANTIVIEWONCE_CONFIG).then(config => {
+                try {
+                    _cache_antiviewonce_config = config;
+                    this.config = config;
+                    UltraCleanLogger.info('🔧 Loaded anti-viewonce config from DB');
+                } catch {}
+            }).catch(() => {});
         } catch (error) {
             UltraCleanLogger.warning(`Config load warning: ${error.message}`);
         }
@@ -2642,11 +2665,12 @@ class AntiViewOnceSystem {
     
     saveConfig(config) {
         try {
-            if (!fs.existsSync(ANTIVIEWONCE_DATA_DIR)) {
-                fs.mkdirSync(ANTIVIEWONCE_DATA_DIR, { recursive: true });
-            }
-            safeWriteFile(ANTIVIEWONCE_CONFIG_FILE, config);
-            UltraCleanLogger.info('💾 Anti-viewonce config saved');
+            _cache_antiviewonce_config = config;
+            supabaseDb.setConfig('antiviewonce_config', config).then(() => {
+                UltraCleanLogger.info('💾 Anti-viewonce config saved');
+            }).catch(err => {
+                UltraCleanLogger.error(`Config save error: ${err.message}`);
+            });
         } catch (error) {
             UltraCleanLogger.error(`Config save error: ${error.message}`);
         }
@@ -2654,11 +2678,22 @@ class AntiViewOnceSystem {
     
     loadHistory() {
         try {
-            if (fs.existsSync(ANTIVIEWONCE_HISTORY_FILE)) {
-                const data = JSON.parse(fs.readFileSync(ANTIVIEWONCE_HISTORY_FILE, 'utf8'));
-                this.detectedMessages = data.messages || [];
-                UltraCleanLogger.info(`📊 Loaded ${this.detectedMessages.length} viewonce records`);
+            if (_cache_antiviewonce_history) {
+                this.detectedMessages = _cache_antiviewonce_history.messages || [];
+                UltraCleanLogger.info(`📊 Loaded ${this.detectedMessages.length} viewonce records from cache`);
+                return;
             }
+            supabaseDb.getConfig('antiviewonce_history', {}).then(data => {
+                try {
+                    _cache_antiviewonce_history = data;
+                    if (data && data.messages) {
+                        this.detectedMessages = data.messages;
+                        UltraCleanLogger.info(`📊 Loaded ${this.detectedMessages.length} viewonce records from DB`);
+                    }
+                } catch {}
+            }).catch(err => {
+                UltraCleanLogger.warning(`History load warning: ${err.message}`);
+            });
         } catch (error) {
             UltraCleanLogger.warning(`History load warning: ${error.message}`);
         }
@@ -2672,7 +2707,10 @@ class AntiViewOnceSystem {
                 total: this.detectedMessages.length,
                 mode: this.config.mode
             };
-            safeWriteFile(ANTIVIEWONCE_HISTORY_FILE, data);
+            _cache_antiviewonce_history = data;
+            supabaseDb.setConfig('antiviewonce_history', data).catch(err => {
+                UltraCleanLogger.warning(`History save warning: ${err.message}`);
+            });
         } catch (error) {
             UltraCleanLogger.warning(`History save warning: ${error.message}`);
         }
@@ -2729,18 +2767,25 @@ class AntiViewOnceSystem {
     
     async saveMediaToFile(buffer, filename, isPrivate = false) {
         try {
-            const savePath = isPrivate ? ANTIVIEWONCE_PRIVATE_DIR : ANTIVIEWONCE_SAVE_DIR;
-            const filepath = join(savePath, filename);
+            const mimetype = filename.endsWith('.jpg') ? 'image/jpeg' :
+                           filename.endsWith('.mp4') ? 'video/mp4' :
+                           filename.endsWith('.mp3') ? 'audio/mpeg' :
+                           filename.endsWith('.webp') ? 'image/webp' :
+                           filename.endsWith('.ogg') ? 'audio/ogg' :
+                           'application/octet-stream';
+            const folder = isPrivate ? 'viewonce_private' : 'viewonce';
+            const storagePath = await supabaseDb.uploadMedia(filename, buffer, mimetype, folder);
             
-            if (!safeWriteFile(filepath, buffer)) {
-                UltraCleanLogger.error(`💾 Cannot save media - disk full`);
+            if (!storagePath) {
+                UltraCleanLogger.error(`💾 Cannot save media to DB`);
                 return null;
             }
             
+            _cache_antiviewonce_captured_count++;
             const sizeKB = Math.round(buffer.length / 1024);
-            UltraCleanLogger.success(`💾 Saved: ${filename} (${sizeKB}KB) to ${isPrivate ? 'private' : 'public'} folder`);
+            UltraCleanLogger.success(`💾 Saved: ${filename} (${sizeKB}KB) to DB ${isPrivate ? 'private' : 'public'}`);
             
-            return filepath;
+            return storagePath;
         } catch (error) {
             UltraCleanLogger.error(`Save error: ${error.message}`);
             return null;
@@ -3133,12 +3178,21 @@ class StatusDetector {
     
     loadStatusLogs() {
         try {
-            if (fs.existsSync('./data/status_detection_logs.json')) {
-                const data = JSON.parse(fs.readFileSync('./data/status_detection_logs.json', 'utf8'));
+            if (_cache_status_logs) {
+                const data = _cache_status_logs;
                 if (Array.isArray(data.logs)) {
                     this.statusLogs = data.logs.slice(-100);
                 }
+                return;
             }
+            supabaseDb.getConfig('status_detection_logs', {}).then(data => {
+                try {
+                    _cache_status_logs = data;
+                    if (data && Array.isArray(data.logs)) {
+                        this.statusLogs = data.logs.slice(-100);
+                    }
+                } catch {}
+            }).catch(() => {});
         } catch (error) {
             // Silent fail
         }
@@ -3151,7 +3205,8 @@ class StatusDetector {
                 updatedAt: new Date().toISOString(),
                 count: this.statusLogs.length
             };
-            safeWriteFile('./data/status_detection_logs.json', data);
+            _cache_status_logs = data;
+            supabaseDb.setConfig('status_detection_logs', data).catch(() => {});
         } catch (error) {
             // Silent fail
         }
@@ -3270,8 +3325,8 @@ let statusDetector = null;
 // ====== HELPER FUNCTIONS ======
 function isUserBlocked(jid) {
     try {
-        if (fs.existsSync(BLOCKED_USERS_FILE)) {
-            const data = JSON.parse(fs.readFileSync(BLOCKED_USERS_FILE, 'utf8'));
+        const data = _cache_blocked_users;
+        if (data) {
             return data.users && data.users.includes(jid);
         }
     } catch {
@@ -3290,9 +3345,8 @@ function checkBotMode(msg, commandName, isSudoOverride = false) {
             return true;
         }
         
-        if (fs.existsSync(BOT_MODE_FILE)) {
-            const modeData = JSON.parse(fs.readFileSync(BOT_MODE_FILE, 'utf8'));
-            BOT_MODE = modeData.mode || 'public';
+        if (_cache_bot_mode) {
+            BOT_MODE = _cache_bot_mode.mode || 'public';
         } else {
             BOT_MODE = 'public';
         }
@@ -3949,6 +4003,7 @@ async function initDatabase() {
 async function runDataMigrations() {
     try {
         UltraCleanLogger.info('💾 Database: Running data migrations...');
+        await initSudo();
         await migrateSudoToSupabase();
         await migrateWarningsToSupabase();
 
@@ -3956,20 +4011,39 @@ async function runDataMigrations() {
             { file: './bot_mode.json', key: 'bot_mode' },
             { file: './bot_settings.json', key: 'bot_settings' },
             { file: './prefix_config.json', key: 'prefix_config' },
-            { file: './owner.json', key: 'owner' },
+            { file: './owner.json', key: 'owner_data' },
             { file: './whitelist.json', key: 'whitelist' },
             { file: './blocked_users.json', key: 'blocked_users' },
             { file: './data/welcome_data.json', key: 'welcome_data' },
             { file: './data/autoViewConfig.json', key: 'autoview_config' },
             { file: './data/autoReactConfig.json', key: 'autoreact_config' },
-            { file: './data/member_detection.json', key: 'member_detection' }
+            { file: './data/member_detection.json', key: 'member_detection' },
+            { file: './data/antiviewonce/config.json', key: 'antiviewonce_config' },
+            { file: './data/viewonce_messages/history.json', key: 'antiviewonce_history' },
+            { file: './data/status_detection_logs.json', key: 'status_detection_logs' }
         ];
 
         for (const { file, key } of configFiles) {
             await supabaseDb.migrateJSONToConfig(file, key);
         }
 
-        UltraCleanLogger.success('💾 Database: Data migration complete');
+        _cache_owner_data = await _loadConfigCache('owner_data', {});
+        _cache_prefix_config = await _loadConfigCache('prefix_config', { prefix: '.' });
+        _cache_bot_settings = await _loadConfigCache('bot_settings', {});
+        _cache_bot_mode = await _loadConfigCache('bot_mode', { mode: 'public' });
+        _cache_whitelist = await _loadConfigCache('whitelist', { whitelist: [] });
+        _cache_blocked_users = await _loadConfigCache('blocked_users', { blocked: [] });
+        _cache_welcome_data = await _loadConfigCache('welcome_data', {});
+        _cache_status_logs = await _loadConfigCache('status_detection_logs', {});
+        _cache_member_detection = await _loadConfigCache('member_detection', {});
+        _cache_antiviewonce_config = await _loadConfigCache('antiviewonce_config', DEFAULT_ANTIVIEWONCE_CONFIG);
+        _cache_antiviewonce_history = await _loadConfigCache('antiviewonce_history', {});
+
+        if (_cache_owner_data && Object.keys(_cache_owner_data).length === 0) _cache_owner_data = null;
+        if (_cache_bot_settings && Object.keys(_cache_bot_settings).length === 0) _cache_bot_settings = null;
+        if (_cache_welcome_data && Object.keys(_cache_welcome_data).length === 0) _cache_welcome_data = null;
+
+        UltraCleanLogger.success('💾 Database: Data migration & cache load complete');
     } catch (err) {
         UltraCleanLogger.error(`💾 Database: Migration error - ${err.message}`);
     }
@@ -4510,8 +4584,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }).filter(p => p && p.includes('@'));
                 
                 if (update.action === 'add' && participants.length > 0) {
-                    if (isWelcomeEnabled(groupId)) {
-                        const welcomeMsg = getWelcomeMessage(groupId);
+                    if (await isWelcomeEnabled(groupId)) {
+                        const welcomeMsg = await getWelcomeMessage(groupId);
                         UltraCleanLogger.info(`🎉 Welcoming ${participants.length} new member(s) in ${groupId.split('@')[0]}`);
                         sendWelcomeMessage(sock, groupId, participants, welcomeMsg).catch(() => {});
                     }
@@ -5046,18 +5120,8 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
 // ====== VIEW-ONCE DETECTION HANDLER ======
 function loadAntiViewOnceConfig() {
     try {
-        if (fs.existsSync(ANTIVIEWONCE_CONFIG_FILE)) {
-            return JSON.parse(fs.readFileSync(ANTIVIEWONCE_CONFIG_FILE, 'utf8'));
-        }
-        const legacyPath = './antiviewonce_config.json';
-        if (fs.existsSync(legacyPath)) {
-            const legacy = JSON.parse(fs.readFileSync(legacyPath, 'utf8'));
-            if (!fs.existsSync(ANTIVIEWONCE_DATA_DIR)) {
-                fs.mkdirSync(ANTIVIEWONCE_DATA_DIR, { recursive: true });
-            }
-            fs.writeFileSync(ANTIVIEWONCE_CONFIG_FILE, JSON.stringify(legacy, null, 2));
-            try { fs.unlinkSync(legacyPath); } catch {}
-            return legacy;
+        if (_cache_antiviewonce_config) {
+            return _cache_antiviewonce_config;
         }
     } catch {}
     return { mode: 'private', ownerJid: '' };
@@ -5065,10 +5129,10 @@ function loadAntiViewOnceConfig() {
 
 function saveAntiViewOnceConfig(config) {
     try {
-        if (!fs.existsSync(ANTIVIEWONCE_DATA_DIR)) {
-            fs.mkdirSync(ANTIVIEWONCE_DATA_DIR, { recursive: true });
-        }
-        fs.writeFileSync(ANTIVIEWONCE_CONFIG_FILE, JSON.stringify(config, null, 2));
+        _cache_antiviewonce_config = config;
+        supabaseDb.setConfig('antiviewonce_config', config).catch(err => {
+            console.log('⚠️ Anti-viewonce config save error:', err.message);
+        });
     } catch (err) {
         console.log('⚠️ Anti-viewonce config save error:', err.message);
     }
@@ -5230,11 +5294,9 @@ async function handleViewOnceDetection(sock, msg) {
         }
 
         try {
-            const saveDir = ANTIVIEWONCE_PRIVATE_DIR;
-            if (!fs.existsSync(saveDir)) {
-                fs.mkdirSync(saveDir, { recursive: true });
-            }
-            fs.writeFileSync(join(saveDir, filename), buffer);
+            const mimetype = type === 'image' ? 'image/jpeg' : type === 'video' ? 'video/mp4' : 'audio/mpeg';
+            await supabaseDb.uploadMedia(filename, buffer, mimetype, 'viewonce');
+            _cache_antiviewonce_captured_count++;
         } catch {}
 
     } catch (error) {
@@ -5767,12 +5829,7 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                         const modeDisplay = avConfig.mode === 'private' ? '🔒 Private (Owner DM)' :
                                            avConfig.mode === 'public' ? '🌐 Public (In Chat)' :
                                            '❌ Off';
-                        let capturedCount = 0;
-                        try {
-                            if (fs.existsSync(ANTIVIEWONCE_PRIVATE_DIR)) {
-                                capturedCount = fs.readdirSync(ANTIVIEWONCE_PRIVATE_DIR).filter(f => !f.endsWith('.json')).length;
-                            }
-                        } catch {}
+                        let capturedCount = _cache_antiviewonce_captured_count;
                         await sock.sendMessage(chatId, {
                             text: `🔐 *ANTI-VIEWONCE SETTINGS*\n\n` +
                                  `*Mode:* ${modeDisplay}\n` +
@@ -6000,9 +6057,9 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                 break;
                 
             case 'prefixinfo':
-                const prefixFiles = {
-                    'bot_settings.json': fs.existsSync('./bot_settings.json'),
-                    'prefix_config.json': fs.existsSync('./prefix_config.json')
+                const prefixDbStatus = {
+                    'bot_settings (DB)': !!_cache_bot_settings,
+                    'prefix_config (DB)': !!_cache_prefix_config
                 };
                 
                 let infoText = `⚡ *PREFIX INFORMATION*\n\n`;
@@ -6012,12 +6069,12 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                 infoText += `📁 ENV Prefix: ${process.env.PREFIX || 'Not set'}\n`;
                 infoText += `🎯 Prefixless Mode: ${isPrefixless ? '✅ ENABLED' : '❌ DISABLED'}\n\n`;
                 
-                infoText += `📋 *File Status:*\n`;
-                for (const [fileName, exists] of Object.entries(prefixFiles)) {
-                    infoText += `├─ ${fileName}: ${exists ? '✅' : '❌'}\n`;
+                infoText += `📋 *Config Status:*\n`;
+                for (const [cfgName, loaded] of Object.entries(prefixDbStatus)) {
+                    infoText += `├─ ${cfgName}: ${loaded ? '✅' : '❌'}\n`;
                 }
                 
-                infoText += `\n💡 *Changes are saved and persist after restart!*`;
+                infoText += `\n💡 *Changes are saved to database and persist after restart!*`;
                 
                 await sock.sendMessage(chatId, { text: infoText }, { quoted: msg });
                 break;
@@ -6267,10 +6324,9 @@ const isHeroku = process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.
         }
         
         // 3. Check for saved owner number to attempt pairing
-        const ownerFileExists = fs.existsSync(OWNER_FILE);
-        if (ownerFileExists) {
+        if (_cache_owner_data) {
             try {
-                const ownerData = JSON.parse(fs.readFileSync(OWNER_FILE, 'utf8'));
+                const ownerData = _cache_owner_data;
                 if (ownerData.OWNER_NUMBER) {
                     UltraCleanLogger.info(`📱 Found saved owner number: ${ownerData.OWNER_NUMBER}, attempting to reconnect...`);
                     await startBot('pair', ownerData.OWNER_NUMBER);

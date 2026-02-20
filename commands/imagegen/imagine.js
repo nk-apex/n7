@@ -422,10 +422,9 @@
 
 // commands/ai/imagine.js
 import axios from 'axios';
-import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'fs';
+import { createWriteStream, existsSync, readFileSync } from 'fs';
 import fs from 'fs';
 
-// Import caption system
 let getUserCaption;
 
 async function initializeCaptionSystem() {
@@ -561,11 +560,9 @@ export default {
 // ==================== IMAGE GENERATION FUNCTIONS ====================
 
 async function generateImageWithStyle(prompt, style) {
-  const tempDir = './temp/imagine';
-  if (!existsSync(tempDir)) mkdirSync(tempDir, { recursive: true });
-
   const timestamp = Date.now();
-  const imagePath = `${tempDir}/imagine_${timestamp}.png`;
+  const rand = Math.random().toString(36).slice(2);
+  const imagePath = `/tmp/wolfbot_imagine_${timestamp}_${rand}.png`;
 
   try {
     // Enhance prompt based on style
@@ -911,16 +908,11 @@ async function downloadImageFile(url, filePath) {
 }
 
 function cleanupFile(filePath) {
-  setTimeout(() => {
-    try {
-      if (existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log(`✅ Cleaned up imagine image: ${filePath}`);
-      }
-    } catch (e) {
-      console.log('Imagine cleanup error:', e.message);
+  try {
+    if (filePath && existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
-  }, 10000);
+  } catch (e) {}
 }
 
 // ==================== HELP FUNCTIONS ====================

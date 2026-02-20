@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'fs';
+import { createWriteStream, existsSync, readFileSync } from 'fs';
 import fs from 'fs';
 
 // Import caption system
@@ -98,11 +98,9 @@ export default {
 // ==================== ANIME GENERATION FUNCTIONS ====================
 
 async function generateAnimeImage(prompt) {
-  const tempDir = './temp/anime';
-  if (!existsSync(tempDir)) mkdirSync(tempDir, { recursive: true });
-
   const timestamp = Date.now();
-  const imagePath = `${tempDir}/anime_${timestamp}.png`;
+  const rand = Math.random().toString(36).slice(2);
+  const imagePath = `/tmp/wolfbot_anime_${timestamp}_${rand}.png`;
 
   try {
     // Try Prodia API first (fast, free, reliable for anime)
@@ -458,16 +456,11 @@ async function downloadImageFile(url, filePath) {
 }
 
 function cleanupFile(filePath) {
-  setTimeout(() => {
-    try {
-      if (existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log(`✅ Cleaned up anime image: ${filePath}`);
-      }
-    } catch (e) {
-      console.log('Anime cleanup error:', e.message);
+  try {
+    if (filePath && existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
-  }, 10000); // Cleanup after 10 seconds
+  } catch (e) {}
 }
 
 // ==================== ADDITIONAL COMMANDS ====================

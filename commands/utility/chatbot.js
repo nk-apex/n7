@@ -1,14 +1,8 @@
 
 import axios from "axios";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import { downloadMediaFromMessage } from "@whiskeysockets/baileys";
+import db from '../../lib/supabase.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Available voices for text-to-speech
 const availableVoices = [
   "alloy", "echo", "fable", "onyx", "nova", "shimmer", "adam", "antoni",
   "arnold", "bella", "callum", "charlie", "charlotte", "chris", "cora",
@@ -20,27 +14,21 @@ const availableVoices = [
   "victoria", "walter"
 ];
 
-// Default chatbot settings
 const defaultSettings = {
-  status: 'on', // 'on' or 'off'
-  mode: 'both', // 'private', 'group', 'both'
-  trigger: 'all', // 'dm' (only when mentioned), 'all' (all messages)
-  default_response: 'text', // 'text' or 'audio'
+  status: 'on',
+  mode: 'both',
+  trigger: 'all',
+  default_response: 'text',
   voice: 'alloy'
 };
 
-// Storage paths
-const settingsPath = path.join(__dirname, "../data/chatbot_settings.json");
-const historyPath = path.join(__dirname, "../data/chatbot_history.json");
+let historyCache = {};
+let historyCacheLoaded = false;
 
-// Load/save settings
 async function loadSettings() {
   try {
-    if (fs.existsSync(settingsPath)) {
-      const data = fs.readFileSync(settingsPath, 'utf8');
-      return { ...defaultSettings, ...JSON.parse(data) };
-    }
-    return defaultSettings;
+    const settings = await db.getConfig('chatbot_settings', defaultSettings);
+    return { ...defaultSettings, ...settings };
   } catch (error) {
     console.error("Error loading chatbot settings:", error);
     return defaultSettings;
@@ -49,12 +37,7 @@ async function loadSettings() {
 
 async function saveSettings(settings) {
   try {
-    const dir = path.dirname(settingsPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-    return true;
+    return await db.setConfig('chatbot_settings', settings);
   } catch (error) {
     console.error("Error saving chatbot settings:", error);
     return false;
@@ -72,35 +55,40 @@ async function getChatbotSettings() {
   return await loadSettings();
 }
 
-// Conversation history management
+async function ensureHistoryCacheLoaded() {
+  if (!historyCacheLoaded) {
+    try {
+      const data = await db.getConfig('chatbot_history', {});
+      historyCache = data || {};
+      historyCacheLoaded = true;
+    } catch (error) {
+      console.error("Error loading history cache:", error);
+      historyCache = {};
+      historyCacheLoaded = true;
+    }
+  }
+}
+
 async function addToHistory(jid, userMessage, aiResponse, type = 'text') {
   try {
-    if (!fs.existsSync(historyPath)) {
-      const dir = path.dirname(historyPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(historyPath, JSON.stringify({}));
+    await ensureHistoryCacheLoaded();
+
+    if (!historyCache[jid]) {
+      historyCache[jid] = [];
     }
 
-    const data = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
-    if (!data[jid]) {
-      data[jid] = [];
-    }
-
-    // Keep only last 50 messages per chat
-    data[jid].push({
+    historyCache[jid].push({
       timestamp: Date.now(),
       user: userMessage.substring(0, 500),
       ai: typeof aiResponse === 'string' ? aiResponse.substring(0, 1000) : aiResponse,
       type: type
     });
 
-    if (data[jid].length > 50) {
-      data[jid] = data[jid].slice(-50);
+    if (historyCache[jid].length > 50) {
+      historyCache[jid] = historyCache[jid].slice(-50);
     }
 
-    fs.writeFileSync(historyPath, JSON.stringify(data, null, 2));
+    await db.setConfig('chatbot_history', historyCache);
     return true;
   } catch (error) {
     console.error("Error adding to history:", error);
@@ -110,12 +98,11 @@ async function addToHistory(jid, userMessage, aiResponse, type = 'text') {
 
 async function getConversationHistory(jid, limit = 10) {
   try {
-    if (!fs.existsSync(historyPath)) return [];
-    
-    const data = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
-    if (!data[jid]) return [];
-    
-    return data[jid].slice(-limit).reverse();
+    await ensureHistoryCacheLoaded();
+
+    if (!historyCache[jid]) return [];
+
+    return historyCache[jid].slice(-limit).reverse();
   } catch (error) {
     console.error("Error getting history:", error);
     return [];
@@ -124,12 +111,11 @@ async function getConversationHistory(jid, limit = 10) {
 
 async function clearConversationHistory(jid) {
   try {
-    if (!fs.existsSync(historyPath)) return true;
-    
-    const data = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
-    if (data[jid]) {
-      delete data[jid];
-      fs.writeFileSync(historyPath, JSON.stringify(data, null, 2));
+    await ensureHistoryCacheLoaded();
+
+    if (historyCache[jid]) {
+      delete historyCache[jid];
+      await db.setConfig('chatbot_history', historyCache);
     }
     return true;
   } catch (error) {
@@ -138,9 +124,7 @@ async function clearConversationHistory(jid) {
   }
 }
 
-// AI APIs
 const aiApis = {
-  // Keith AI for text responses
   keithAI: async (query) => {
     try {
       const response = await axios.get(
@@ -157,12 +141,10 @@ const aiApis = {
       throw new Error('Invalid response from Keith AI');
     } catch (error) {
       console.error("Keith AI error:", error.message);
-      // Fallback to alternative AI
       return await aiApis.geminiAI(query);
     }
   },
 
-  // Gemini AI as fallback
   geminiAI: async (query) => {
     try {
       const response = await axios.get(
@@ -186,7 +168,6 @@ const aiApis = {
     }
   },
 
-  // Text to Speech
   textToSpeech: async (text, voice = 'alloy') => {
     try {
       const response = await axios.get(
@@ -210,7 +191,6 @@ const aiApis = {
     }
   },
 
-  // Image generation
   generateImage: async (prompt) => {
     try {
       const response = await axios.get(
@@ -234,7 +214,6 @@ const aiApis = {
     }
   },
 
-  // Video generation
   generateVideo: async (prompt) => {
     try {
       const response = await axios.get(
@@ -258,7 +237,6 @@ const aiApis = {
     }
   },
 
-  // Vision analysis (image understanding)
   analyzeImage: async (imageUrl) => {
     try {
       const response = await axios.get(
@@ -283,33 +261,14 @@ const aiApis = {
   }
 };
 
-// Helper functions
-function downloadMedia(url) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const response = await axios({
-        url,
-        method: 'GET',
-        responseType: 'stream',
-        timeout: 30000
-      });
-
-      const tempFile = path.join(__dirname, `../temp/${Date.now()}_${Math.random().toString(36).substring(7)}`);
-      const writer = fs.createWriteStream(tempFile);
-      
-      response.data.pipe(writer);
-      
-      writer.on('finish', () => {
-        const buffer = fs.readFileSync(tempFile);
-        fs.unlinkSync(tempFile);
-        resolve(buffer);
-      });
-      
-      writer.on('error', reject);
-    } catch (error) {
-      reject(error);
-    }
+async function downloadMedia(url) {
+  const response = await axios({
+    url,
+    method: 'GET',
+    responseType: 'arraybuffer',
+    timeout: 30000
   });
+  return Buffer.from(response.data);
 }
 
 function getTypeIcon(type) {
@@ -336,7 +295,6 @@ export default {
     const quoted = m.quoted;
     const isGroup = jid.endsWith('@g.us');
     
-    // Check if owner (you can adjust this logic)
     const isOwner = m.key.fromMe || sender.includes("947") || sender.includes("owner-number");
     if (!isOwner) {
       return sock.sendMessage(jid, {
@@ -349,7 +307,6 @@ export default {
     const value = args.slice(1).join(" ");
 
     if (!subcommand) {
-      // Show current settings
       const statusMap = {
         'on': '✅ ON',
         'off': '❌ OFF'
@@ -514,7 +471,6 @@ export default {
           }, { quoted: m });
 
           if (testType === 'audio') {
-            // Test audio response
             const aiResult = await aiApis.keithAI(testMessage);
             if (aiResult.success) {
               const ttsResult = await aiApis.textToSpeech(aiResult.text, settings.voice);
@@ -535,7 +491,6 @@ export default {
               }
             }
           } else if (testType === 'video') {
-            // Test video generation
             const videoResult = await aiApis.generateVideo(testMessage);
             if (videoResult.success) {
               const videoBuffer = await downloadMedia(videoResult.url);
@@ -545,7 +500,6 @@ export default {
               }, { quoted: m });
             }
           } else if (testType === 'image') {
-            // Test image generation
             const imageResult = await aiApis.generateImage(testMessage);
             if (imageResult.success) {
               const imageBuffer = await downloadMedia(imageResult.url);
@@ -555,7 +509,6 @@ export default {
               }, { quoted: m });
             }
           } else {
-            // Text test
             const textResult = await aiApis.keithAI(testMessage);
             if (textResult.success) {
               await sock.sendMessage(jid, {
@@ -591,7 +544,6 @@ export default {
     }
   },
 
-  // Chatbot message handler (to be called from main bot file)
   async handleMessage(sock, m) {
     const jid = m.key.remoteJid;
     const sender = m.key.participant || m.key.remoteJid;
@@ -601,25 +553,19 @@ export default {
                        m.message?.imageMessage?.caption ||
                        "";
 
-    // Load settings
     const settings = await getChatbotSettings();
     
-    // Check if chatbot is off
     if (settings.status !== 'on') return;
 
-    // Check mode restrictions
     if (settings.mode === 'private' && isGroup) return;
     if (settings.mode === 'group' && !isGroup) return;
 
-    // Check trigger mode
     const isMentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.includes(sock.user.id.split(':')[0]);
     if (settings.trigger === 'dm' && !isMentioned) return;
 
-    // Check if message is for chatbot
     let query = messageText.trim();
     let responseType = settings.default_response;
     
-    // Check for special commands
     if (query.toLowerCase().startsWith('audio ')) {
       responseType = 'audio';
       query = query.substring(6);
@@ -636,12 +582,9 @@ export default {
     if (!query && responseType !== 'vision') return;
 
     try {
-      // Handle different response types
       if (responseType === 'audio') {
-        // Get text response first
         const textResult = await aiApis.keithAI(query);
         if (textResult.success) {
-          // Convert to speech
           const ttsResult = await aiApis.textToSpeech(textResult.text, settings.voice);
           if (ttsResult.success) {
             const audioBuffer = await downloadMedia(ttsResult.url);
@@ -674,11 +617,8 @@ export default {
           await addToHistory(jid, query, '[Image Generated]', 'image');
         }
       } else if (responseType === 'vision' && m.message?.imageMessage) {
-        // Handle image analysis
         try {
-          // Download the image
           const media = await downloadMediaFromMessage(m, 'image');
-          // For now, send a placeholder response since we need to upload image
           const visionResult = await aiApis.analyzeImage("[IMAGE_UPLOADED]");
           if (visionResult.success) {
             await sock.sendMessage(jid, {
@@ -690,7 +630,6 @@ export default {
           console.error("Vision error:", error);
         }
       } else {
-        // Text response
         const textResult = await aiApis.keithAI(query);
         if (textResult.success) {
           await sock.sendMessage(jid, {

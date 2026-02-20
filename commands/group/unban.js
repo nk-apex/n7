@@ -1,19 +1,23 @@
-import fs from 'fs';
-const banFile = '../../lib/banned.json';
+import db from '../../lib/supabase.js';
 
-// ===== Helper functions =====
-function loadBans() {
+let bansCache = null;
+let cacheLoaded = false;
+
+async function loadBans() {
+    if (cacheLoaded && bansCache) return bansCache;
     try {
-        if (!fs.existsSync(banFile)) return [];
-        const data = JSON.parse(fs.readFileSync(banFile, 'utf8'));
-        return Array.isArray(data) ? data : [];
+        const data = await db.getConfig('banned_users', {});
+        bansCache = Array.isArray(data) ? data : [];
+        cacheLoaded = true;
     } catch {
-        return [];
+        if (!bansCache) bansCache = [];
     }
+    return bansCache;
 }
 
-function saveBans(bans) {
-    fs.writeFileSync(banFile, JSON.stringify(bans, null, 2));
+async function saveBans(bans) {
+    bansCache = bans;
+    await db.setConfig('banned_users', bans);
 }
 
 export default {
@@ -28,7 +32,6 @@ export default {
             return sock.sendMessage(chatId, { text: '❌ This command can only be used in groups.' }, { quoted: msg });
         }
 
-        // ✅ Check admin status from metadata
         const metadata = await sock.groupMetadata(chatId);
         const senderId = msg.key.participant || msg.participant || msg.key.remoteJid;
         const isAdmin = metadata.participants.some(
@@ -39,22 +42,18 @@ export default {
             return sock.sendMessage(chatId, { text: '🛑 Only group admins can use this command.' }, { quoted: msg });
         }
 
-        // ===== Get target user =====
         let targetJid;
 
-        // 1️⃣ Mentioned user
         if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]) {
             targetJid = msg.message.extendedTextMessage.contextInfo.mentionedJid[0];
         }
 
-        // 2️⃣ Reply to a message
         else if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
             targetJid = msg.message.extendedTextMessage.contextInfo.participant;
         }
 
-        // 3️⃣ Number provided as argument
         else if (args[0]) {
-            let num = args[0].replace(/[^0-9]/g, ''); // Remove non-digits
+            let num = args[0].replace(/[^0-9]/g, '');
             if (num.length < 8) {
                 return sock.sendMessage(chatId, { text: '⚠️ Invalid number format.' }, { quoted: msg });
             }
@@ -68,10 +67,10 @@ export default {
             return sock.sendMessage(chatId, { text: '⚠️ Please tag, reply, or provide a number to unban.' }, { quoted: msg });
         }
 
-        let bans = loadBans();
+        let bans = await loadBans();
         if (bans.includes(targetJid)) {
             bans = bans.filter(id => id !== targetJid);
-            saveBans(bans);
+            await saveBans(bans);
             await sock.sendMessage(chatId, { 
                 text: `✅ @${targetJid.split('@')[0]} has been unbanned!`,
                 mentions: [targetJid]

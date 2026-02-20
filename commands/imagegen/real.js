@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'fs';
+import { createWriteStream, existsSync, readFileSync } from 'fs';
 import fs from 'fs';
 
 // Import caption system
@@ -109,11 +109,9 @@ export default {
 // ==================== REALISTIC GENERATION FUNCTIONS ====================
 
 async function generateRealisticImage(prompt) {
-  const tempDir = './temp/realistic';
-  if (!existsSync(tempDir)) mkdirSync(tempDir, { recursive: true });
-
   const timestamp = Date.now();
-  const imagePath = `${tempDir}/real_${timestamp}.png`;
+  const rand = Math.random().toString(36).slice(2);
+  const imagePath = `/tmp/wolfbot_real_${timestamp}_${rand}.png`;
 
   try {
     // Try Prodia API first (has best realistic models)
@@ -629,16 +627,11 @@ async function downloadImageFile(url, filePath) {
 }
 
 function cleanupFile(filePath) {
-  setTimeout(() => {
-    try {
-      if (existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log(`✅ Cleaned up realistic image: ${filePath}`);
-      }
-    } catch (e) {
-      console.log('Realistic cleanup error:', e.message);
+  try {
+    if (filePath && existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
-  }, 10000);
+  } catch (e) {}
 }
 
 // ==================== ADDITIONAL COMMANDS ====================

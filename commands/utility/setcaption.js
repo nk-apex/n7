@@ -48,7 +48,7 @@
 
 
 import axios from 'axios';
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
+import { createWriteStream, existsSync } from 'fs';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import fs from 'fs';
@@ -99,11 +99,7 @@ export default {
         caption: userCaption
       }, { quoted: m });
 
-      setTimeout(() => {
-        try {
-          if (existsSync(videoPath)) fs.unlinkSync(videoPath);
-        } catch (e) {}
-      }, 30000);
+      try { if (existsSync(videoPath)) fs.unlinkSync(videoPath); } catch (e) {}
 
     } catch (error) {
       await sock.sendMessage(jid, { text: `❌ Error` }, { quoted: m });
@@ -164,11 +160,9 @@ function isValidTikTokUrl(url) {
 
 async function downloadTikTok(url) {
   try {
-    const tempDir = './temp/tiktok';
-    if (!existsSync(tempDir)) mkdirSync(tempDir, { recursive: true });
-
     const timestamp = Date.now();
-    const videoPath = `${tempDir}/tiktok_${timestamp}.mp4`;
+    const rand = Math.random().toString(36).slice(2);
+    const videoPath = `/tmp/wolfbot_tiktok_${timestamp}_${rand}.mp4`;
 
     const apis = [
       {

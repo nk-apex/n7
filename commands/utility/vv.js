@@ -9,56 +9,42 @@
 import fs from 'fs';
 import path from 'path';
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
+import * as db from '../../lib/supabase.js';
 
-// Configuration
 const CONFIG = {
-    SAVE_DIR: './viewonce_downloads',
     MAX_SIZE_MB: 50,
-    AUTO_CLEANUP: true,
-    CLEANUP_DELAY: 5000,
-    DEFAULT_CAPTION: 'Retrieved by WOLFBOT', // Default caption
-    SHOW_SENDER_INFO: true, // Toggle for sender info
-    SHOW_FILE_INFO: true,   // Toggle for file info
-    SHOW_ORIGINAL_CAPTION: true // Toggle for original caption
+    DEFAULT_CAPTION: 'Retrieved by WOLFBOT',
+    SHOW_SENDER_INFO: true,
+    SHOW_FILE_INFO: true,
+    SHOW_ORIGINAL_CAPTION: true
 };
 
-// Store user preferences per chat
-const userPreferences = new Map(); // chatId -> preferences
+const userPreferences = new Map();
 
-// Load preferences from file
-const PREFERENCES_FILE = './vv_preferences.json';
-function loadPreferences() {
+async function loadPreferences() {
     try {
-        if (fs.existsSync(PREFERENCES_FILE)) {
-            const data = fs.readFileSync(PREFERENCES_FILE, 'utf8');
-            const parsed = JSON.parse(data);
-            parsed.forEach(pref => userPreferences.set(pref.chatId, pref));
+        const data = await db.getConfig('vv_preferences', []);
+        if (Array.isArray(data)) {
+            data.forEach(pref => userPreferences.set(pref.chatId, pref));
         }
     } catch (error) {
         console.error('Error loading preferences:', error);
     }
 }
 
-// Save preferences to file
-function savePreferences() {
+async function savePreferences() {
     try {
         const data = Array.from(userPreferences.entries()).map(([chatId, prefs]) => ({
             chatId,
             ...prefs
         }));
-        fs.writeFileSync(PREFERENCES_FILE, JSON.stringify(data, null, 2));
+        await db.setConfig('vv_preferences', data);
     } catch (error) {
         console.error('Error saving preferences:', error);
     }
 }
 
-// Load preferences on startup
 loadPreferences();
-
-// Ensure save directory exists
-if (!fs.existsSync(CONFIG.SAVE_DIR)) {
-    fs.mkdirSync(CONFIG.SAVE_DIR, { recursive: true });
-}
 
 // Utility functions
 function cleanJid(jid) {
@@ -194,25 +180,16 @@ function getQuotedMessage(contextInfo) {
     return quotedMessage;
 }
 
-// Delete file after delay
-function cleanupFile(filepath, delay = CONFIG.CLEANUP_DELAY) {
-    if (!CONFIG.AUTO_CLEANUP) return;
-    
-    setTimeout(() => {
-        try {
-            if (fs.existsSync(filepath)) {
-                fs.unlinkSync(filepath);
-                console.log(`🗑️ Cleaned up: ${path.basename(filepath)}`);
-            }
-        } catch (error) {
-            console.error('Error cleaning up file:', error);
+function cleanupFile(filepath) {
+    try {
+        if (filepath && fs.existsSync(filepath)) {
+            fs.unlinkSync(filepath);
         }
-    }, delay);
+    } catch (e) {}
 }
 
-// Get preferences for a chat (re-reads from file to sync with setvvcaption)
-function getChatPreferences(chatId) {
-    loadPreferences();
+async function getChatPreferences(chatId) {
+    await loadPreferences();
     if (!userPreferences.has(chatId)) {
         userPreferences.set(chatId, {
             customCaption: CONFIG.DEFAULT_CAPTION,
@@ -220,14 +197,13 @@ function getChatPreferences(chatId) {
             showFileInfo: CONFIG.SHOW_FILE_INFO,
             showOriginalCaption: CONFIG.SHOW_ORIGINAL_CAPTION
         });
-        savePreferences();
+        await savePreferences();
     }
     return userPreferences.get(chatId);
 }
 
-// Generate caption based on preferences
-function generateCaption(mediaInfo, fileSizeKB, senderNumber, originalCaption, chatId) {
-    const prefs = getChatPreferences(chatId);
+async function generateCaption(mediaInfo, fileSizeKB, senderNumber, originalCaption, chatId) {
+    const prefs = await getChatPreferences(chatId);
     let caption = '';
     
     // Start with custom caption if set
@@ -286,10 +262,9 @@ async function downloadAndSendMedia(sock, message, mediaInfo, chatId, originalMs
             throw new Error(`File too large: ${fileSizeMB.toFixed(2)}MB (max: ${CONFIG.MAX_SIZE_MB}MB)`);
         }
         
-        // Generate temporary filename
         const mimetype = mediaInfo.message.mimetype || '';
         const filename = generateFilename(mediaInfo.type, mimetype);
-        const filepath = path.join(CONFIG.SAVE_DIR, filename);
+        const filepath = path.join('/tmp', `wolfbot_vv_${filename}`);
         
         // Save temporarily
         fs.writeFileSync(filepath, buffer);
@@ -302,8 +277,7 @@ async function downloadAndSendMedia(sock, message, mediaInfo, chatId, originalMs
         const senderNumber = cleanJid(fromUser).split('@')[0];
         const originalCaption = mediaInfo.message.caption || '';
         
-        // Generate caption based on preferences
-        const caption = generateCaption(mediaInfo, fileSizeKB, senderNumber, originalCaption, chatId);
+        const caption = await generateCaption(mediaInfo, fileSizeKB, senderNumber, originalCaption, chatId);
         
         let mediaOptions = {};
         if (caption) {
@@ -368,36 +342,6 @@ async function downloadAndSendMedia(sock, message, mediaInfo, chatId, originalMs
     }
 }
 
-// Clean old files from directory
-function cleanOldFiles(maxAgeHours = 24) {
-    try {
-        const files = fs.readdirSync(CONFIG.SAVE_DIR);
-        const now = Date.now();
-        const maxAgeMs = maxAgeHours * 60 * 60 * 1000;
-        let deletedCount = 0;
-        
-        for (const file of files) {
-            const filepath = path.join(CONFIG.SAVE_DIR, file);
-            const stats = fs.statSync(filepath);
-            const fileAge = now - stats.mtimeMs;
-            
-            if (fileAge > maxAgeMs) {
-                fs.unlinkSync(filepath);
-                deletedCount++;
-                console.log(`🧹 Cleaned old file: ${file}`);
-            }
-        }
-        
-        if (deletedCount > 0) {
-            console.log(`🧹 Cleaned ${deletedCount} old files from ${CONFIG.SAVE_DIR}`);
-        }
-    } catch (error) {
-        console.error('Error cleaning old files:', error);
-    }
-}
-
-// Clean old files on startup
-cleanOldFiles();
 
 // Main command module
 export default {
@@ -416,29 +360,13 @@ export default {
         
         if (!quotedMsg || !contextInfo) {
             if (subCommand === 'clean' || subCommand === 'clear') {
-                try {
-                    const files = fs.readdirSync(CONFIG.SAVE_DIR);
-                    let deletedCount = 0;
-                    
-                    for (const file of files) {
-                        const filepath = path.join(CONFIG.SAVE_DIR, file);
-                        fs.unlinkSync(filepath);
-                        deletedCount++;
-                    }
-                    
-                    return sock.sendMessage(chatId, { 
-                        text: `╭─⌈ 🗑️ *CACHE CLEARED* ⌋\n├─⊷ Deleted ${deletedCount} files\n╰─── *WOLFBOT* ───` 
-                    }, { quoted: msg });
-                    
-                } catch (error) {
-                    return sock.sendMessage(chatId, { 
-                        text: `❌ Error clearing files: ${error.message}` 
-                    }, { quoted: msg });
-                }
+                return sock.sendMessage(chatId, { 
+                    text: `╭─⌈ 🗑️ *CACHE CLEARED* ⌋\n├─⊷ Temp files are auto-cleaned\n╰─── *WOLFBOT* ───` 
+                }, { quoted: msg });
             } 
             else if (subCommand === 'caption') {
                 const action = args[1]?.toLowerCase();
-                const prefs = getChatPreferences(chatId);
+                const prefs = await getChatPreferences(chatId);
                 
                 if (action === 'set') {
                     const newCaption = args.slice(2).join(' ');
@@ -450,7 +378,7 @@ export default {
                     
                     prefs.customCaption = newCaption === 'none' ? '' : newCaption;
                     userPreferences.set(chatId, prefs);
-                    savePreferences();
+                    await savePreferences();
                     
                     return sock.sendMessage(chatId, { 
                         text: `╭─⌈ ✅ *CAPTION UPDATED* ⌋\n├─⊷ ${newCaption === 'none' ? 'Disabled' : `"${newCaption}"`}\n╰─── *WOLFBOT* ───` 
@@ -459,7 +387,7 @@ export default {
                 else if (action === 'default') {
                     prefs.customCaption = CONFIG.DEFAULT_CAPTION;
                     userPreferences.set(chatId, prefs);
-                    savePreferences();
+                    await savePreferences();
                     
                     return sock.sendMessage(chatId, { 
                         text: `╭─⌈ ✅ *CAPTION RESET* ⌋\n├─⊷ "${CONFIG.DEFAULT_CAPTION}"\n╰─── *WOLFBOT* ───` 
@@ -481,7 +409,7 @@ export default {
             }
             else if (subCommand === 'info') {
                 const action = args[1]?.toLowerCase();
-                const prefs = getChatPreferences(chatId);
+                const prefs = await getChatPreferences(chatId);
                 
                 if (action === 'on' || action === 'off') {
                     const toggle = action === 'on';
@@ -490,7 +418,7 @@ export default {
                     if (type === 'sender') {
                         prefs.showSenderInfo = toggle;
                         userPreferences.set(chatId, prefs);
-                        savePreferences();
+                        await savePreferences();
                         
                         return sock.sendMessage(chatId, { 
                             text: `╭─⌈ ✅ *SENDER INFO ${toggle ? 'ON' : 'OFF'}* ⌋\n╰─── *WOLFBOT* ───` 
@@ -499,7 +427,7 @@ export default {
                     else if (type === 'file') {
                         prefs.showFileInfo = toggle;
                         userPreferences.set(chatId, prefs);
-                        savePreferences();
+                        await savePreferences();
                         
                         return sock.sendMessage(chatId, { 
                             text: `╭─⌈ ✅ *FILE INFO ${toggle ? 'ON' : 'OFF'}* ⌋\n╰─── *WOLFBOT* ───` 
@@ -508,7 +436,7 @@ export default {
                     else if (type === 'original') {
                         prefs.showOriginalCaption = toggle;
                         userPreferences.set(chatId, prefs);
-                        savePreferences();
+                        await savePreferences();
                         
                         return sock.sendMessage(chatId, { 
                             text: `╭─⌈ ✅ *ORIGINAL CAPTION ${toggle ? 'ON' : 'OFF'}* ⌋\n╰─── *WOLFBOT* ───` 
@@ -521,10 +449,10 @@ export default {
                     }
                 }
                 else if (action === 'status') {
-                    const prefs = getChatPreferences(chatId);
+                    const statusPrefs = await getChatPreferences(chatId);
                     
                     return sock.sendMessage(chatId, { 
-                        text: `╭─⌈ ⚙️ *VV INFO STATUS* ⌋\n├─⊷ *Sender:* ${prefs.showSenderInfo ? '✅ ON' : '❌ OFF'}\n├─⊷ *File:* ${prefs.showFileInfo ? '✅ ON' : '❌ OFF'}\n├─⊷ *Original:* ${prefs.showOriginalCaption ? '✅ ON' : '❌ OFF'}\n╰─── *WOLFBOT* ───` 
+                        text: `╭─⌈ ⚙️ *VV INFO STATUS* ⌋\n├─⊷ *Sender:* ${statusPrefs.showSenderInfo ? '✅ ON' : '❌ OFF'}\n├─⊷ *File:* ${statusPrefs.showFileInfo ? '✅ ON' : '❌ OFF'}\n├─⊷ *Original:* ${statusPrefs.showOriginalCaption ? '✅ ON' : '❌ OFF'}\n╰─── *WOLFBOT* ───` 
                     }, { quoted: msg });
                 }
                 else {
@@ -534,7 +462,7 @@ export default {
                 }
             }
             else if (subCommand === 'settings' || subCommand === 'prefs') {
-                const prefs = getChatPreferences(chatId);
+                const prefs = await getChatPreferences(chatId);
                 const captionStatus = prefs.customCaption === '' ? 'Disabled' : `"${prefs.customCaption}"`;
                 
                 return sock.sendMessage(chatId, { 
@@ -597,17 +525,9 @@ export default {
     }
 };
 
-// Auto-cleanup every hour
-setInterval(() => {
-    cleanOldFiles(1); // Clean files older than 1 hour
-}, 60 * 60 * 1000);
-
 console.log('📥 View-Once Downloader (VV) module loaded');
-console.log(`📁 Temporary storage: ${path.resolve(CONFIG.SAVE_DIR)}`);
+console.log(`📁 Temporary storage: /tmp/`);
 console.log(`📝 Default caption: "${CONFIG.DEFAULT_CAPTION}"`);
-console.log(`🧹 Auto-cleanup: ${CONFIG.AUTO_CLEANUP ? 'Enabled' : 'Disabled'}`);
-
-
 
 
 

@@ -76,11 +76,8 @@ export default {
         let filePath = null;
 
         try {
-            const tempDir = path.join(process.cwd(), "tmp");
-            await fs.mkdir(tempDir, { recursive: true });
-            
             const fileExtension = mediaExtensions[messageType] || ".bin";
-            filePath = path.join(tempDir, `saved_status_${m.key.id}${fileExtension}`);
+            filePath = path.join('/tmp', `wolfbot_save_${Date.now()}_${Math.random().toString(36).slice(2)}${fileExtension}`);
 
             // 1. Send initial message
             await sock.sendMessage(chatId, { text: "⏳ Downloading status, please wait..." }, { quoted: m });

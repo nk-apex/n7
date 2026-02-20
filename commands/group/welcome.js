@@ -1,18 +1,32 @@
-import fs from 'fs';
 import axios from 'axios';
-import supabase from '../../lib/supabase.js';
+import db from '../../lib/supabase.js';
 
-(async () => {
+let welcomeCache = null;
+let cacheLoaded = false;
+
+async function loadWelcomeData() {
+    if (cacheLoaded && welcomeCache) return welcomeCache;
     try {
-        if (!fs.existsSync('./data/welcome_data.json') && supabase.isAvailable()) {
-            const dbData = await supabase.getConfig('welcome_data');
-            if (dbData && dbData.groups) {
-                if (!fs.existsSync('./data')) fs.mkdirSync('./data', { recursive: true });
-                fs.writeFileSync('./data/welcome_data.json', JSON.stringify(dbData, null, 2));
-            }
-        }
-    } catch {}
-})();
+        const data = await db.getConfig('welcome_data', {});
+        welcomeCache = data && data.groups ? data : { groups: {}, version: '2.0', created: new Date().toISOString() };
+        cacheLoaded = true;
+    } catch {
+        if (!welcomeCache) welcomeCache = { groups: {}, version: '2.0', created: new Date().toISOString() };
+    }
+    return welcomeCache;
+}
+
+async function saveWelcomeData(data) {
+    try {
+        data.updated = new Date().toISOString();
+        welcomeCache = data;
+        await db.setConfig('welcome_data', data);
+        return true;
+    } catch (error) {
+        console.error('Error saving welcome data:', error);
+        return false;
+    }
+}
 
 export default {
     name: 'welcome',
@@ -48,7 +62,7 @@ export default {
             }, { quoted: msg });
         }
         
-        const welcomeData = loadWelcomeData();
+        const welcomeData = await loadWelcomeData();
         const groupWelcome = welcomeData.groups[chatId] || {
             enabled: false,
             message: "🎉 *Welcome to {group}!*\n\nHey {mention}, glad to have you here! 🎊\nWe're now *{members}* members strong! 💪\n\nEnjoy your stay! 😊",
@@ -61,7 +75,7 @@ export default {
                 case 'enable':
                     groupWelcome.enabled = true;
                     welcomeData.groups[chatId] = groupWelcome;
-                    saveWelcomeData(welcomeData);
+                    await saveWelcomeData(welcomeData);
                     
                     await sock.sendMessage(chatId, {
                         text: '✅ *Welcome messages ENABLED*\nNew members will now receive welcome messages with their profile picture!'
@@ -72,7 +86,7 @@ export default {
                 case 'disable':
                     groupWelcome.enabled = false;
                     welcomeData.groups[chatId] = groupWelcome;
-                    saveWelcomeData(welcomeData);
+                    await saveWelcomeData(welcomeData);
                     
                     await sock.sendMessage(chatId, {
                         text: '❌ *Welcome messages DISABLED*\nNew members will not receive welcome messages.'
@@ -89,7 +103,7 @@ export default {
                     const newMessage = args.slice(1).join(' ');
                     groupWelcome.message = newMessage;
                     welcomeData.groups[chatId] = groupWelcome;
-                    saveWelcomeData(welcomeData);
+                    await saveWelcomeData(welcomeData);
                     
                     await sock.sendMessage(chatId, {
                         text: `✅ *Welcome message UPDATED*\n\nNew message:\n"${newMessage}"`
@@ -116,7 +130,7 @@ export default {
                     const defaultMsg = "🎉 *Welcome to {group}!*\n\nHey {mention}, glad to have you here! 🎊\nWe're now *{members}* members strong! 💪\n\nEnjoy your stay! 😊";
                     groupWelcome.message = defaultMsg;
                     welcomeData.groups[chatId] = groupWelcome;
-                    saveWelcomeData(welcomeData);
+                    await saveWelcomeData(welcomeData);
 
                     await sock.sendMessage(chatId, {
                         text: `🔄 *Welcome message RESET*\n\nMessage has been restored to default:\n"${defaultMsg}"`
@@ -256,10 +270,10 @@ export async function sendWelcomeMessage(sock, groupId, memberJids, customMessag
             }
         }
         
-        const welcomeData = loadWelcomeData();
+        const welcomeData = await loadWelcomeData();
         if (welcomeData.groups[groupId]) {
             welcomeData.groups[groupId].lastWelcome = Date.now();
-            saveWelcomeData(welcomeData);
+            await saveWelcomeData(welcomeData);
         }
         
     } catch (error) {
@@ -267,52 +281,20 @@ export async function sendWelcomeMessage(sock, groupId, memberJids, customMessag
     }
 }
 
-export function isWelcomeEnabled(groupId) {
+export async function isWelcomeEnabled(groupId) {
     try {
-        const welcomeData = loadWelcomeData();
+        const welcomeData = await loadWelcomeData();
         return welcomeData.groups[groupId]?.enabled === true;
     } catch {
         return false;
     }
 }
 
-export function getWelcomeMessage(groupId) {
+export async function getWelcomeMessage(groupId) {
     try {
-        const welcomeData = loadWelcomeData();
+        const welcomeData = await loadWelcomeData();
         return welcomeData.groups[groupId]?.message || "🎉 *Welcome to {group}!*\n\nHey {mention}, glad to have you here! 🎊\nWe're now *{members}* members strong! 💪\n\nEnjoy your stay! 😊";
     } catch {
         return "🎉 *Welcome to {group}!*\n\nHey {mention}, glad to have you here! 🎊\nWe're now *{members}* members strong! 💪\n\nEnjoy your stay! 😊";
-    }
-}
-
-function loadWelcomeData() {
-    try {
-        if (fs.existsSync('./data/welcome_data.json')) {
-            return JSON.parse(fs.readFileSync('./data/welcome_data.json', 'utf8'));
-        }
-    } catch (error) {
-        console.error('Error loading welcome data:', error);
-    }
-    
-    return {
-        groups: {},
-        version: '2.0',
-        created: new Date().toISOString()
-    };
-}
-
-function saveWelcomeData(data) {
-    try {
-        if (!fs.existsSync('./data')) {
-            fs.mkdirSync('./data', { recursive: true });
-        }
-        
-        data.updated = new Date().toISOString();
-        fs.writeFileSync('./data/welcome_data.json', JSON.stringify(data, null, 2));
-        supabase.setConfig('welcome_data', data).catch(() => {});
-        return true;
-    } catch (error) {
-        console.error('Error saving welcome data:', error);
-        return false;
     }
 }

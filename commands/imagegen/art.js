@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'fs';
+import { createWriteStream, existsSync, readFileSync } from 'fs';
 import fs from 'fs';
 
 // Import caption system
@@ -255,11 +255,9 @@ function formatStyleName(styleKey) {
 // ==================== ARTISTIC GENERATION FUNCTIONS ====================
 
 async function generateArtisticImage(prompt, styleInfo) {
-  const tempDir = './temp/art';
-  if (!existsSync(tempDir)) mkdirSync(tempDir, { recursive: true });
-
   const timestamp = Date.now();
-  const imagePath = `${tempDir}/art_${timestamp}.png`;
+  const rand = Math.random().toString(36).slice(2);
+  const imagePath = `/tmp/wolfbot_art_${timestamp}_${rand}.png`;
 
   try {
     // Try Prodia API first (best for artistic styles)
@@ -713,16 +711,11 @@ async function downloadImageFile(url, filePath) {
 }
 
 function cleanupFile(filePath) {
-  setTimeout(() => {
-    try {
-      if (existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log(`✅ Cleaned up artwork: ${filePath}`);
-      }
-    } catch (e) {
-      console.log('Art cleanup error:', e.message);
+  try {
+    if (filePath && existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
-  }, 10000);
+  } catch (e) {}
 }
 
 // ==================== ART STYLES COMMAND ====================

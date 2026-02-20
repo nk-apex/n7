@@ -1,5 +1,20 @@
 // File: ./commands/owner/autobio.js
-import { writeFileSync, readFileSync, existsSync } from 'fs';
+import db from '../../lib/supabase.js';
+
+let configCache = null;
+
+async function loadConfig(defaultConfig) {
+    if (!configCache) {
+        configCache = await db.getConfig('autobio_config', defaultConfig);
+        configCache = { ...defaultConfig, ...configCache };
+    }
+    return configCache;
+}
+
+async function saveConfig(config) {
+    configCache = config;
+    await db.setConfig('autobio_config', config);
+}
 
 export default {
     name: 'autobio',
@@ -24,13 +39,9 @@ export default {
         console.log('Is Owner:', jidManager.isOwner(msg));
         console.log('========================================\n');
         
-        // ====== AUTO BIO CONFIG FILE ======
-        const BIO_CONFIG_FILE = './autobio_config.json';
-        
-        // MODIFIED: Default config now enabled by default
         const defaultConfig = {
-            enabled: true, // CHANGED: Now true by default
-            interval: 5, // minutes
+            enabled: true,
+            interval: 5,
             format: 'default',
             lastUpdate: null,
             nextUpdate: null,
@@ -46,17 +57,7 @@ export default {
             customTemplates: []
         };
         
-        // Load or create config
-        let config = defaultConfig;
-        if (existsSync(BIO_CONFIG_FILE)) {
-            try {
-                config = JSON.parse(readFileSync(BIO_CONFIG_FILE, 'utf8'));
-                // Merge with defaults for any missing fields
-                config = { ...defaultConfig, ...config };
-            } catch (error) {
-                config = defaultConfig;
-            }
-        }
+        let config = await loadConfig(defaultConfig);
         
         // ====== REAL-TIME FUNCTIONS ======
         function getRealTime() {
@@ -66,7 +67,7 @@ export default {
                 minute: '2-digit',
                 second: '2-digit',
                 hour12: true,
-                timeZone: 'Africa/Nairobi' // You can adjust timezone
+                timeZone: 'Africa/Nairobi'
             });
         }
         
@@ -115,10 +116,9 @@ export default {
         // ====== WEATHER FUNCTIONS ======
         async function getWeather(city = 'Nairobi', country = 'KE') {
             try {
-                // Using OpenWeatherMap API
                 const apiKey = config.weather.apiKey || process.env.WEATHER_API_KEY;
                 if (!apiKey) {
-                    return null; // No API key configured
+                    return null;
                 }
                 
                 const response = await fetch(
@@ -261,7 +261,6 @@ export default {
             try {
                 let bioText = '';
                 
-                // Use custom template if provided
                 if (config.customTemplates.length > 0 && config.format === 'custom') {
                     const template = config.customTemplates[0];
                     bioText = template.text
@@ -277,25 +276,21 @@ export default {
                             return `${hours}h ${minutes}m`;
                         });
                 } else {
-                    // Use predefined template with real-time data
                     const template = templates[config.format] || templates.default;
                     bioText = await template();
                 }
                 
-                // Ensure bio doesn't exceed WhatsApp limit (139 characters)
                 if (bioText.length > 139) {
                     bioText = bioText.substring(0, 136) + '...';
                 }
                 
-                // Update WhatsApp bio
                 await sock.updateProfileStatus(bioText);
                 
-                // Update config with real-time timestamp
                 config.lastUpdate = new Date().toISOString();
                 config.nextUpdate = new Date(Date.now() + config.interval * 60000).toISOString();
                 config.updateCount++;
                 
-                writeFileSync(BIO_CONFIG_FILE, JSON.stringify(config, null, 2));
+                await saveConfig(config);
                 
                 console.log(`✅ Bio updated (Real-time): "${bioText}"`);
                 return { success: true, bio: bioText, timestamp: new Date().toISOString() };
@@ -307,7 +302,6 @@ export default {
         }
         
         // ====== INITIALIZE AUTO-BIO ON BOT START ======
-        // This ensures the auto-bio starts automatically when bot starts
         if (!global.BIO_INTERVAL && config.enabled) {
             console.log('🚀 Auto-bio enabled on startup');
             global.BIO_INTERVAL = setInterval(async () => {
@@ -316,7 +310,6 @@ export default {
                 }
             }, config.interval * 60000);
             
-            // Do initial update
             setTimeout(async () => {
                 await updateBio();
             }, 2000);
@@ -325,7 +318,6 @@ export default {
         // ====== COMMAND HANDLING ======
         const command = args[0]?.toLowerCase();
         
-        // Show current status if no command
         if (!command) {
             const formatList = Object.keys(templates).join(', ');
             return sock.sendMessage(chatId, {
@@ -350,9 +342,8 @@ export default {
                 config.lastUpdate = null;
                 config.nextUpdate = null;
                 
-                writeFileSync(BIO_CONFIG_FILE, JSON.stringify(config, null, 2));
+                await saveConfig(config);
                 
-                // Start the interval
                 clearInterval(global.BIO_INTERVAL);
                 global.BIO_INTERVAL = setInterval(async () => {
                     if (config.enabled) {
@@ -360,7 +351,6 @@ export default {
                     }
                 }, config.interval * 60000);
                 
-                // Do immediate update
                 const result = await updateBio();
                 
                 let response = `✅ *Auto Bio ENABLED*\n\n`;
@@ -388,9 +378,8 @@ export default {
             case 'disable':
             case 'stop':
                 config.enabled = false;
-                writeFileSync(BIO_CONFIG_FILE, JSON.stringify(config, null, 2));
+                await saveConfig(config);
                 
-                // Clear interval
                 clearInterval(global.BIO_INTERVAL);
                 global.BIO_INTERVAL = null;
                 
@@ -449,9 +438,8 @@ export default {
                 }
                 
                 config.interval = interval;
-                writeFileSync(BIO_CONFIG_FILE, JSON.stringify(config, null, 2));
+                await saveConfig(config);
                 
-                // Restart interval if enabled
                 if (config.enabled) {
                     clearInterval(global.BIO_INTERVAL);
                     global.BIO_INTERVAL = setInterval(async () => {
@@ -476,9 +464,8 @@ export default {
                 }
                 
                 config.format = format;
-                writeFileSync(BIO_CONFIG_FILE, JSON.stringify(config, null, 2));
+                await saveConfig(config);
                 
-                // Test the new format
                 const formatTest = await updateBio();
                 
                 let formatMsg = `✅ *Bio Format Changed*\n\n📝 New format: *${format}*\n📱 Current time: ${getRealTime()}\n\n`;
@@ -497,7 +484,7 @@ export default {
                 
                 if (!subCommand || subCommand === 'off') {
                     config.weather.enabled = false;
-                    writeFileSync(BIO_CONFIG_FILE, JSON.stringify(config, null, 2));
+                    await saveConfig(config);
                     
                     await sock.sendMessage(chatId, {
                         text: `✅ *Weather Updates DISABLED*\n\nWeather information will no longer be included in the bio.\n\nCurrent time: ${getRealTime()}`
@@ -515,9 +502,8 @@ export default {
                     
                     config.weather.apiKey = apiKey;
                     config.weather.enabled = true;
-                    writeFileSync(BIO_CONFIG_FILE, JSON.stringify(config, null, 2));
+                    await saveConfig(config);
                     
-                    // Test weather fetch
                     const weather = await getWeather(config.weather.city, config.weather.country);
                     
                     let weatherMsg = `✅ *Weather API Key Set*\n\n`;
@@ -536,7 +522,6 @@ export default {
                     break;
                 }
                 
-                // Enable weather with location
                 const city = args[1];
                 const country = args[2] || 'KE';
                 
@@ -549,9 +534,8 @@ export default {
                 config.weather.enabled = true;
                 config.weather.city = city;
                 config.weather.country = country;
-                writeFileSync(BIO_CONFIG_FILE, JSON.stringify(config, null, 2));
+                await saveConfig(config);
                 
-                // Test weather fetch
                 const locationWeather = await getWeather(city, country);
                 
                 let locationMsg = `✅ *Weather Updates ENABLED*\n\n`;
@@ -590,9 +574,8 @@ export default {
                     text: customText,
                     created: new Date().toISOString()
                 }];
-                writeFileSync(BIO_CONFIG_FILE, JSON.stringify(config, null, 2));
+                await saveConfig(config);
                 
-                // Test the custom template
                 const customResult = await updateBio();
                 
                 let customMsg = `✅ *Custom Template Set*\n\n`;
@@ -612,13 +595,12 @@ export default {
                 break;
                 
             case 'reset':
-                config = defaultConfig;
-                writeFileSync(BIO_CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
+                config = { ...defaultConfig };
+                await saveConfig(config);
                 
                 clearInterval(global.BIO_INTERVAL);
                 global.BIO_INTERVAL = null;
                 
-                // Start the default interval (since default is enabled)
                 if (config.enabled) {
                     global.BIO_INTERVAL = setInterval(async () => {
                         if (config.enabled) {
