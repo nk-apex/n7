@@ -584,6 +584,7 @@ async function autoScanGroupsForSudo(sock) {
 
 // Import automation handlers
 import { handleAutoReact } from './commands/automation/autoreactstatus.js';
+import { handleChannelReact } from './commands/channel/channelreact.js';
 import { handleReactOwner } from './commands/automation/reactowner.js';
 import { handleAutoView } from './commands/automation/autoviewstatus.js';
 import { initializeAutoJoin } from './commands/group/add.js';
@@ -4617,6 +4618,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
             
             if (store && msg?.key?.remoteJid && msg?.key?.id && msg?.message) {
                 store.addMessage(msg.key.remoteJid, msg.key.id, msg);
+                const msgKeys = Object.keys(msg.message);
+                if (msgKeys.some(k => k.includes('viewOnce') || k.includes('ViewOnce'))) {
+                    originalConsoleMethods.log(`🔐 [VO-STORE] Cached view-once msg ${msg.key.id.substring(0, 8)}... keys: ${msgKeys.join(',')}`);
+                }
             }
             
             if (type !== 'notify') return;
@@ -4749,6 +4754,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 return;
             }
             
+            if (msg.key?.remoteJid?.endsWith('@newsletter')) {
+                handleChannelReact(sock, msg).catch(() => {});
+            }
+
             const messageId = msg.key.id;
             
             if (store) {
@@ -4772,12 +4781,17 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     if (!reactedChatId || !reactedMsgId) continue;
                     
                     const cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
+                    originalConsoleMethods.log(`🔐 [VO-REACT] Reaction ${reactionEmoji} on ${reactedMsgId.substring(0, 8)}... | cached: ${!!cachedMsg} | hasMessage: ${!!(cachedMsg?.message)} | keys: ${cachedMsg?.message ? Object.keys(cachedMsg.message).join(',') : 'none'}`);
                     if (!cachedMsg || !cachedMsg.message) continue;
                     
                     let viewOnce = detectViewOnceMedia(cachedMsg.message);
+                    originalConsoleMethods.log(`🔐 [VO-REACT] detectViewOnceMedia(raw): ${!!viewOnce}`);
                     if (!viewOnce) {
                         const cachedContent = normalizeMessageContent(cachedMsg.message);
-                        if (cachedContent) viewOnce = detectViewOnceMedia(cachedContent);
+                        if (cachedContent) {
+                            viewOnce = detectViewOnceMedia(cachedContent);
+                            originalConsoleMethods.log(`🔐 [VO-REACT] detectViewOnceMedia(normalized): ${!!viewOnce} | normalizedKeys: ${Object.keys(cachedContent).join(',')}`);
+                        }
                     }
                     if (!viewOnce) continue;
                     
