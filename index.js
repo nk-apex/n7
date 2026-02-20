@@ -3930,10 +3930,6 @@ updateTerminalHeader();
 // ====== DATABASE INIT ======
 async function initDatabase() {
     try {
-        if (!process.env.DATABASE_URL) {
-            UltraCleanLogger.info('💾 Database: No DATABASE_URL found, using local JSON storage');
-            return false;
-        }
         UltraCleanLogger.info('💾 Database: Connecting to PostgreSQL...');
         const ready = await supabaseDb.initTables();
         if (ready && supabaseDb.isAvailable()) {
