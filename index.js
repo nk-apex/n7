@@ -219,7 +219,7 @@ import axios from "axios";
 import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessage, jidNormalizedUser } from '@whiskeysockets/baileys';
 import NodeCache from 'node-cache';
 import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList } from './lib/sudo-store.js';
-import supabaseDb from './lib/supabase.js';
+import supabaseDb, { setConfigBotId } from './lib/supabase.js';
 import { migrateSudoToSupabase, initSudo, setBotId } from './lib/sudo-store.js';
 import { migrateWarningsToSupabase } from './lib/warnings-store.js';
 
@@ -653,6 +653,25 @@ function _saveConfigCache(key, value) {
     supabaseDb.setConfig(key, value).catch(err => {
         UltraCleanLogger.warning(`DB save error for ${key}: ${err.message}`);
     });
+}
+
+async function reloadConfigCaches() {
+    try {
+        _cache_owner_data = await _loadConfigCache('owner_data', {});
+        _cache_prefix_config = await _loadConfigCache('prefix_config', { prefix: '.' });
+        _cache_bot_settings = await _loadConfigCache('bot_settings', {});
+        _cache_bot_mode = await _loadConfigCache('bot_mode', { mode: 'public' });
+        _cache_whitelist = await _loadConfigCache('whitelist', { whitelist: [] });
+        _cache_blocked_users = await _loadConfigCache('blocked_users', { blocked: [] });
+        _cache_welcome_data = await _loadConfigCache('welcome_data', {});
+        _cache_status_logs = await _loadConfigCache('status_detection_logs', {});
+        _cache_member_detection = await _loadConfigCache('member_detection', {});
+        _cache_antiviewonce_config = await _loadConfigCache('antiviewonce_config', DEFAULT_ANTIVIEWONCE_CONFIG);
+        _cache_antiviewonce_history = await _loadConfigCache('antiviewonce_history', {});
+        if (_cache_owner_data && Object.keys(_cache_owner_data).length === 0) _cache_owner_data = null;
+        if (_cache_bot_settings && Object.keys(_cache_bot_settings).length === 0) _cache_bot_settings = null;
+        if (_cache_welcome_data && Object.keys(_cache_welcome_data).length === 0) _cache_welcome_data = null;
+    } catch {}
 }
 
 // Auto-connect features
@@ -4254,7 +4273,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 
                 if (sock.user?.id) {
                     setBotId(sock.user.id);
+                    setConfigBotId(sock.user.id);
                     initSudo(sock.user.id).catch(() => {});
+                    reloadConfigCaches().catch(() => {});
                 }
 
                 if (!antideleteInitDone) {

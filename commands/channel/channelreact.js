@@ -14,7 +14,7 @@ function initConfig() {
 
     if (!fs.existsSync(CONFIG_FILE)) {
         const defaultConfig = {
-            enabled: false,
+            enabled: true,
             emoji: '🐺',
             totalReacted: 0,
             lastReacted: null,
@@ -44,7 +44,7 @@ class ChannelReactManager {
         try {
             if (supabase.isAvailable()) {
                 const dbData = await supabase.getConfig('channel_react_config');
-                if (dbData && dbData.enabled !== undefined) {
+                if (dbData && typeof dbData === 'object' && Object.keys(dbData).length > 0) {
                     this.config = { ...this.config, ...dbData };
                     this.lastReactionTime = this.config.lastReactionTime || 0;
                     fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2));
@@ -58,7 +58,7 @@ class ChannelReactManager {
             const data = fs.readFileSync(CONFIG_FILE, 'utf8');
             return JSON.parse(data);
         } catch {
-            return { enabled: false, emoji: '🐺', totalReacted: 0, lastReacted: null, lastReactionTime: 0, settings: { rateLimitDelay: 2000 } };
+            return { enabled: true, emoji: '🐺', totalReacted: 0, lastReacted: null, lastReactionTime: 0, settings: { rateLimitDelay: 2000 } };
         }
     }
 
