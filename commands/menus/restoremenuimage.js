@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import axios from "axios";
+import { invalidateMenuImageCache } from "./menu.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,7 +31,7 @@ export default {
       const wolfbotGifPath = path.join(mediaDir, "wolfbot.gif");
       
       // Your default menu image URL
-      const defaultImageUrl = "https://i.ibb.co/SDWKT5nx/0b3fef5fc5e9.jpg";
+      const defaultImageUrl = "https://i.ibb.co/Gvkt4q9d/Chat-GPT-Image-Feb-21-2026-12-47-33-AM.png";
 
       // If no arguments, restore to default image from URL
       if (args.length === 0) {
@@ -82,6 +83,7 @@ export default {
 
           // Save the default image
           fs.writeFileSync(wolfbotPath, imageBuffer);
+          try { invalidateMenuImageCache(); } catch {}
           
           console.log(`✅ Default menu image restored from URL`);
 
@@ -192,6 +194,7 @@ export default {
         fs.copyFileSync(backupPath, wolfbotPath);
       }
       
+      try { invalidateMenuImageCache(); } catch {}
       console.log(`✅ Menu ${isGifBackup ? 'GIF' : 'image'} restored from backup: ${backupToRestore}`);
 
       await sock.sendMessage(jid, { react: { text: "✅", key: m.key } });

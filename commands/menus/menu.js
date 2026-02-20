@@ -28,6 +28,63 @@ import { setLastMenu, getAllFieldsStatus } from "../menus/menuToggles.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const DEFAULT_MENU_IMAGE_URL = "https://i.ibb.co/Gvkt4q9d/Chat-GPT-Image-Feb-21-2026-12-47-33-AM.png";
+
+let _cachedMenuImage = null;
+let _cachedMenuImageTime = 0;
+let _cachedMenuGif = null;
+let _cachedMenuGifMp4 = null;
+const CACHE_TTL = 10 * 60 * 1000;
+
+function getMenuMedia() {
+  const now = Date.now();
+  const gifPath1 = path.join(__dirname, "media", "wolfbot.gif");
+  const gifPath2 = path.join(__dirname, "../media/wolfbot.gif");
+  const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
+  const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
+
+  const gifPath = fs.existsSync(gifPath1) ? gifPath1 : fs.existsSync(gifPath2) ? gifPath2 : null;
+  const imgPath = fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null;
+
+  if (gifPath) {
+    if (!_cachedMenuGif || (now - _cachedMenuImageTime > CACHE_TTL)) {
+      try {
+        _cachedMenuGif = fs.readFileSync(gifPath);
+        _cachedMenuGifMp4 = null;
+        const tmpDir = path.join(process.cwd(), 'tmp');
+        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+        const tmpMp4 = path.join(tmpDir, `menu_gif_cached.mp4`);
+        try {
+          execSync(`ffmpeg -y -i "${gifPath}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}" 2>/dev/null`, { timeout: 30000 });
+          _cachedMenuGifMp4 = fs.readFileSync(tmpMp4);
+          try { fs.unlinkSync(tmpMp4); } catch {}
+        } catch {}
+        _cachedMenuImageTime = now;
+      } catch {}
+    }
+    return { type: 'gif', buffer: _cachedMenuGif, mp4Buffer: _cachedMenuGifMp4 };
+  }
+
+  if (imgPath) {
+    if (!_cachedMenuImage || (now - _cachedMenuImageTime > CACHE_TTL)) {
+      try {
+        _cachedMenuImage = fs.readFileSync(imgPath);
+        _cachedMenuImageTime = now;
+      } catch {}
+    }
+    return { type: 'image', buffer: _cachedMenuImage };
+  }
+
+  return null;
+}
+
+export function invalidateMenuImageCache() {
+  _cachedMenuImage = null;
+  _cachedMenuGif = null;
+  _cachedMenuGifMp4 = null;
+  _cachedMenuImageTime = 0;
+}
+
 export default {
   name: "menu",
   description: "Shows the Wolf Command Center in various styles",
@@ -1980,50 +2037,15 @@ case 1: {
   finalCaption = createReadMoreEffect(fadedInfoSection, commandsText);
   // ========== END "READ MORE" EFFECT ==========
 
-  // Load and send the image or GIF
-  const gifPath1 = path.join(__dirname, "media", "wolfbot.gif");
-  const gifPath2 = path.join(__dirname, "../media/wolfbot.gif");
-  const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
-  const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
-  const gifMenuPath = fs.existsSync(gifPath1) ? gifPath1 : fs.existsSync(gifPath2) ? gifPath2 : null;
-  const imagePath = gifMenuPath || (fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null);
-  
-  if (!imagePath) {
+  const media = getMenuMedia();
+  if (!media) {
     await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: fkontak });
     return;
   }
-  
-  const buffer = fs.readFileSync(imagePath);
-
-  if (gifMenuPath) {
-    const tmpDir = path.join(process.cwd(), 'tmp');
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-    const tmpMp4 = path.join(tmpDir, `menu_gif_${Date.now()}.mp4`);
-    try {
-      execSync(`ffmpeg -y -i "${gifMenuPath}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}" 2>/dev/null`, { timeout: 30000 });
-      const mp4Buffer = fs.readFileSync(tmpMp4);
-      await sock.sendMessage(jid, { 
-        video: mp4Buffer, 
-        gifPlayback: true,
-        caption: finalCaption, 
-        mimetype: "video/mp4"
-      }, { quoted: fkontak });
-      try { fs.unlinkSync(tmpMp4); } catch {}
-    } catch (e) {
-      console.error('❌ GIF to MP4 conversion failed:', e.message);
-      try { fs.unlinkSync(tmpMp4); } catch {}
-      await sock.sendMessage(jid, { 
-        image: buffer, 
-        caption: finalCaption, 
-        mimetype: "image/jpeg"
-      }, { quoted: fkontak });
-    }
+  if (media.type === 'gif' && media.mp4Buffer) {
+    await sock.sendMessage(jid, { video: media.mp4Buffer, gifPlayback: true, caption: finalCaption, mimetype: "video/mp4" }, { quoted: fkontak });
   } else {
-    await sock.sendMessage(jid, { 
-      image: buffer, 
-      caption: finalCaption, 
-      mimetype: "image/jpeg"
-    }, { quoted: fkontak });
+    await sock.sendMessage(jid, { image: media.buffer, caption: finalCaption, mimetype: "image/jpeg" }, { quoted: fkontak });
   }
   
   console.log(`✅ ${currentBotName} menu sent with faded effect, box style, and "Read more" effect`);
@@ -6610,47 +6632,15 @@ case 6: {
   finalCaption = createReadMoreEffect(infoSection, commandsText);
   // ========== END "READ MORE" EFFECT ==========
 
-  const gifPath1s6 = path.join(__dirname, "media", "wolfbot.gif");
-  const gifPath2s6 = path.join(__dirname, "../media/wolfbot.gif");
-  const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
-  const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
-  const gifMenuPaths6 = fs.existsSync(gifPath1s6) ? gifPath1s6 : fs.existsSync(gifPath2s6) ? gifPath2s6 : null;
-  const imagePath = gifMenuPaths6 || (fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null);
-  if (!imagePath) {
+  const media = getMenuMedia();
+  if (!media) {
     await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: m });
     return;
   }
-  const buffer = fs.readFileSync(imagePath);
-
-  if (gifMenuPaths6) {
-    const tmpDir = path.join(process.cwd(), 'tmp');
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-    const tmpMp4 = path.join(tmpDir, `menu_gif_${Date.now()}.mp4`);
-    try {
-      execSync(`ffmpeg -y -i "${gifMenuPaths6}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}" 2>/dev/null`, { timeout: 30000 });
-      const mp4Buffer = fs.readFileSync(tmpMp4);
-      await sock.sendMessage(jid, { 
-        video: mp4Buffer, 
-        gifPlayback: true,
-        caption: finalCaption, 
-        mimetype: "video/mp4"
-      }, { quoted: m });
-      try { fs.unlinkSync(tmpMp4); } catch {}
-    } catch (e) {
-      console.error('❌ GIF to MP4 conversion failed:', e.message);
-      try { fs.unlinkSync(tmpMp4); } catch {}
-      await sock.sendMessage(jid, { 
-        image: buffer, 
-        caption: finalCaption, 
-        mimetype: "image/jpeg"
-      }, { quoted: m });
-    }
+  if (media.type === 'gif' && media.mp4Buffer) {
+    await sock.sendMessage(jid, { video: media.mp4Buffer, gifPlayback: true, caption: finalCaption, mimetype: "video/mp4" }, { quoted: m });
   } else {
-    await sock.sendMessage(jid, { 
-      image: buffer, 
-      caption: finalCaption, 
-      mimetype: "image/jpeg"
-    }, { quoted: m });
+    await sock.sendMessage(jid, { image: media.buffer, caption: finalCaption, mimetype: "image/jpeg" }, { quoted: m });
   }
   
   console.log(`✅ ${currentBotName} menu sent with image and "Read more" effect`);
@@ -8380,47 +8370,15 @@ case 7: {
   const commandsText = categorySections.join(`\n${readMoreSep}\n`);
   finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
 
-  const gifPath1s10 = path.join(__dirname, "media", "wolfbot.gif");
-  const gifPath2s10 = path.join(__dirname, "../media/wolfbot.gif");
-  const imgPath1 = path.join(__dirname, "media", "wolfbot.jpg");
-  const imgPath2 = path.join(__dirname, "../media/wolfbot.jpg");
-  const gifMenuPaths10 = fs.existsSync(gifPath1s10) ? gifPath1s10 : fs.existsSync(gifPath2s10) ? gifPath2s10 : null;
-  const imagePath = gifMenuPaths10 || (fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null);
-  if (!imagePath) {
+  const media = getMenuMedia();
+  if (!media) {
     await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: m });
     return;
   }
-  const buffer = fs.readFileSync(imagePath);
-
-  if (gifMenuPaths10) {
-    const tmpDir = path.join(process.cwd(), 'tmp');
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-    const tmpMp4 = path.join(tmpDir, `menu_gif_${Date.now()}.mp4`);
-    try {
-      execSync(`ffmpeg -y -i "${gifMenuPaths10}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}" 2>/dev/null`, { timeout: 30000 });
-      const mp4Buffer = fs.readFileSync(tmpMp4);
-      await sock.sendMessage(jid, { 
-        video: mp4Buffer, 
-        gifPlayback: true,
-        caption: finalCaption, 
-        mimetype: "video/mp4"
-      }, { quoted: m });
-      try { fs.unlinkSync(tmpMp4); } catch {}
-    } catch (e) {
-      console.error('❌ GIF to MP4 conversion failed:', e.message);
-      try { fs.unlinkSync(tmpMp4); } catch {}
-      await sock.sendMessage(jid, { 
-        image: buffer, 
-        caption: finalCaption, 
-        mimetype: "image/jpeg"
-      }, { quoted: m });
-    }
+  if (media.type === 'gif' && media.mp4Buffer) {
+    await sock.sendMessage(jid, { video: media.mp4Buffer, gifPlayback: true, caption: finalCaption, mimetype: "video/mp4" }, { quoted: m });
   } else {
-    await sock.sendMessage(jid, { 
-      image: buffer, 
-      caption: finalCaption, 
-      mimetype: "image/jpeg"
-    }, { quoted: m });
+    await sock.sendMessage(jid, { image: media.buffer, caption: finalCaption, mimetype: "image/jpeg" }, { quoted: m });
   }
   
   console.log(`✅ ${currentBotName} menu sent with "Read more" effect`);

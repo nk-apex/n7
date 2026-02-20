@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import axios from "axios";
 import { downloadContentFromMessage } from "@whiskeysockets/baileys";
 import { execSync } from "child_process";
+import { invalidateMenuImageCache } from "./menu.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -280,6 +281,8 @@ export default {
 
       const stats = fs.statSync(wolfbotPath);
       if (stats.size === 0) throw new Error("Saved file is empty");
+
+      try { invalidateMenuImageCache(); } catch {}
 
       await sock.sendMessage(jid, { react: { text: "✅", key: m.key } });
 
