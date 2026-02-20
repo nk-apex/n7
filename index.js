@@ -4962,9 +4962,22 @@ async function startBot(loginMode = 'auto', loginData = null) {
                             const reactorShort = (reactorJid || 'unknown').split('@')[0].split(':')[0];
                             const senderJid = reactedKey.participant || reactedChatId;
                             
+                            let stickerMode = false;
+                            try {
+                                const lcf = './data/antiviewonce/config.json';
+                                if (fs.existsSync(lcf)) {
+                                    const lcp = JSON.parse(fs.readFileSync(lcf, 'utf8'));
+                                    if (lcp?.sendAsSticker === true && type === 'image') stickerMode = true;
+                                }
+                            } catch {}
+                            
                             const mediaPayload = {};
-                            mediaPayload[type] = buffer;
-                            mediaPayload.caption = await generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, null, sock);
+                            if (stickerMode) {
+                                mediaPayload.sticker = buffer;
+                            } else {
+                                mediaPayload[type] = buffer;
+                                mediaPayload.caption = await generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, null, sock);
+                            }
                             
                             await sock.sendMessage(normalizedOwner, mediaPayload);
                             UltraCleanLogger.info(`🔐 View-once captured via reaction ${reactionEmoji} from ${reactorShort}`);
@@ -4986,9 +4999,23 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                 const normalizedOwner = jidNormalizedUser(ownerJid);
                                 const reactorShort = (reactorJid || 'unknown').split('@')[0].split(':')[0];
                                 const senderJid = reactedKey.participant || reactedChatId;
+                                
+                                let stickerMode2 = false;
+                                try {
+                                    const lcf2 = './data/antiviewonce/config.json';
+                                    if (fs.existsSync(lcf2)) {
+                                        const lcp2 = JSON.parse(fs.readFileSync(lcf2, 'utf8'));
+                                        if (lcp2?.sendAsSticker === true && type === 'image') stickerMode2 = true;
+                                    }
+                                } catch {}
+                                
                                 const mediaPayload = {};
-                                mediaPayload[type] = buffer;
-                                mediaPayload.caption = await generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, null, sock);
+                                if (stickerMode2) {
+                                    mediaPayload.sticker = buffer;
+                                } else {
+                                    mediaPayload[type] = buffer;
+                                    mediaPayload.caption = await generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, null, sock);
+                                }
                                 await sock.sendMessage(normalizedOwner, mediaPayload);
                                 UltraCleanLogger.info(`🔐 View-once captured via reaction ${reactionEmoji} (fallback) from ${reactorShort}`);
                             }
@@ -5489,21 +5516,30 @@ async function handleViewOnceDetection(sock, msg) {
 
         const retrievalCaption = await generateRetrievalCaption(sender, 'auto-detect', chatId, null, sock);
 
+        let localConfig = config;
+        try {
+            const localFile = './data/antiviewonce/config.json';
+            if (fs.existsSync(localFile)) {
+                const parsed = JSON.parse(fs.readFileSync(localFile, 'utf8'));
+                if (parsed && typeof parsed === 'object') localConfig = { ...config, ...parsed };
+            }
+        } catch {}
+        const sendAsSticker = localConfig.sendAsSticker === true && type === 'image';
+
         const mediaPayload = {};
-        mediaPayload[type] = buffer;
-        mediaPayload.caption = retrievalCaption;
-        mediaPayload.fileName = filename;
+        if (sendAsSticker) {
+            mediaPayload.sticker = buffer;
+        } else {
+            mediaPayload[type] = buffer;
+            mediaPayload.caption = retrievalCaption;
+            mediaPayload.fileName = filename;
+        }
 
         if (config.mode === 'public') {
-
             await sock.sendMessage(chatId, mediaPayload);
-
-
         } else {
             const normalizedOwner = jidNormalizedUser(ownerJid);
-
             await sock.sendMessage(normalizedOwner, mediaPayload);
-
         }
 
         try {

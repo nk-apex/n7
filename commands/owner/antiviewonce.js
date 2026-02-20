@@ -49,7 +49,7 @@ export default {
         
         switch (action) {
             case 'private': {
-                saveConfig({ mode: 'private', ownerJid, updatedAt: new Date().toISOString() });
+                saveConfig({ ...config, mode: 'private', ownerJid, updatedAt: new Date().toISOString() });
                 await sock.sendMessage(chatId, {
                     text: `✅ *ANTI-VIEWONCE: PRIVATE MODE*\n\n` +
                          `View-once media will be sent to your DMs:\n` +
@@ -59,7 +59,7 @@ export default {
                 break;
             }
             case 'public': {
-                saveConfig({ mode: 'public', ownerJid, updatedAt: new Date().toISOString() });
+                saveConfig({ ...config, mode: 'public', ownerJid, updatedAt: new Date().toISOString() });
                 await sock.sendMessage(chatId, {
                     text: `✅ *ANTI-VIEWONCE: PUBLIC MODE*\n\n` +
                          `View-once media will be revealed in the original chat:\n` +
@@ -70,7 +70,7 @@ export default {
             }
             case 'off':
             case 'disable': {
-                saveConfig({ mode: 'off', ownerJid, updatedAt: new Date().toISOString() });
+                saveConfig({ ...config, mode: 'off', ownerJid, updatedAt: new Date().toISOString() });
                 await sock.sendMessage(chatId, {
                     text: '❌ *ANTI-VIEWONCE DISABLED*\n\nNo view-once media will be captured.'
                 }, { quoted: msg });
@@ -78,7 +78,7 @@ export default {
             }
             case 'on':
             case 'enable': {
-                saveConfig({ mode: 'private', ownerJid, updatedAt: new Date().toISOString() });
+                saveConfig({ ...config, mode: 'private', ownerJid, updatedAt: new Date().toISOString() });
                 await sock.sendMessage(chatId, {
                     text: `✅ *ANTI-VIEWONCE ENABLED (PRIVATE)*\n\n` +
                          `View-once media will be sent to your DMs:\n` +
@@ -100,8 +100,9 @@ export default {
                         capturedCount = fs.readdirSync(PRIVATE_DIR).filter(f => !f.endsWith('.json')).length;
                     }
                 } catch {}
+                const outputMode = config.sendAsSticker ? '🏷️ Sticker' : '🖼️ Image';
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🔐 *ANTI-VIEWONCE SETTINGS* ⌋\n│\n├─⊷ *${prefix}av private*\n│  └⊷ Send to DM\n├─⊷ *${prefix}av public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}av off*\n│  └⊷ Disable\n├─⊷ *${prefix}av settings*\n│  └⊷ This menu\n╰───`
+                    text: `╭─⌈ 🔐 *ANTI-VIEWONCE SETTINGS* ⌋\n│\n├─⊷ *Mode:* ${modeDisplay}\n├─⊷ *Output:* ${outputMode}\n│\n├─⊷ *${prefix}av private*\n│  └⊷ Send to DM\n├─⊷ *${prefix}av public*\n│  └⊷ Show in chat\n├─⊷ *${prefix}av off*\n│  └⊷ Disable\n├─⊷ *${prefix}vvmode*\n│  └⊷ Toggle image/sticker\n├─⊷ *${prefix}av settings*\n│  └⊷ This menu\n╰───`
                 }, { quoted: msg });
                 break;
             }
