@@ -39,6 +39,45 @@ function resolveRealNumber(participant, sock) {
     return null;
 }
 
+function resolveUsername(participant, sock) {
+    const jid = normalizeParticipantJid(participant);
+    const number = extractNumberFromJid(jid);
+
+    if (participant.notify) return participant.notify;
+    if (participant.name) return participant.name;
+    if (participant.vname) return participant.vname;
+    if (participant.short) return participant.short;
+
+    if (number && global.contactNames instanceof Map) {
+        const cached = global.contactNames.get(number);
+        if (cached) return cached;
+    }
+
+    if (jid && sock?.store?.contacts) {
+        try {
+            const normalized = jidNormalizedUser(jid);
+            const contact = sock.store.contacts[normalized];
+            if (contact) {
+                const name = contact.notify || contact.name || contact.vname || contact.short;
+                if (name) return name;
+            }
+        } catch {}
+    }
+
+    if (number && sock?.store?.contacts) {
+        try {
+            const phoneJid = `${number}@s.whatsapp.net`;
+            const contact = sock.store.contacts[phoneJid];
+            if (contact) {
+                const name = contact.notify || contact.name || contact.vname || contact.short;
+                if (name) return name;
+            }
+        } catch {}
+    }
+
+    return null;
+}
+
 export default {
     name: 'getparticipants',
     alias: ['gp', 'participants', 'members', 'memberlist'],
@@ -77,12 +116,14 @@ export default {
 
             for (const p of participants) {
                 const realNumber = resolveRealNumber(p, sock);
+                const username = resolveUsername(p, sock);
 
                 let role = 'member';
                 if (p.admin === 'superadmin' || p.isSuperAdmin) role = 'superadmin';
                 else if (p.admin === 'admin' || p.isAdmin) role = 'admin';
 
                 const entry = {
+                    name: username || 'Unknown',
                     number: realNumber ? `+${realNumber}` : 'unavailable',
                     role: role
                 };
