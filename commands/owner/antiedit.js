@@ -1,18 +1,6 @@
-// File: ./commands/utility/antiedit.js - FULLY UPDATED & WORKING
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { downloadMediaMessage, getContentType } from '@whiskeysockets/baileys';
+import db from '../../lib/supabase.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Storage paths
-const STORAGE_DIR = './data/antiedit';
-const MEDIA_DIR = path.join(STORAGE_DIR, 'media');
-const CACHE_FILE = path.join(STORAGE_DIR, 'cache.json');
-
-// Global state
 let antieditState = {
     enabled: true,
     mode: 'private',
@@ -31,78 +19,46 @@ let antieditState = {
     }
 };
 
-// Ensure directories exist
-async function ensureDirs() {
-    try {
-        await fs.mkdir(STORAGE_DIR, { recursive: true });
-        await fs.mkdir(MEDIA_DIR, { recursive: true });
-        return true;
-    } catch (error) {
-        console.error('❌ Antiedit: Failed to create directories:', error.message);
-        return false;
+const defaultSettings = {
+    enabled: true,
+    mode: 'private',
+    stats: {
+        totalMessages: 0,
+        editsDetected: 0,
+        retrieved: 0,
+        mediaCaptured: 0,
+        sentToDm: 0,
+        sentToChat: 0
     }
-}
+};
 
-// Load saved data
 async function loadData() {
     try {
-        await ensureDirs();
-        
-        if (await fs.access(CACHE_FILE).then(() => true).catch(() => false)) {
-            const data = JSON.parse(await fs.readFile(CACHE_FILE, 'utf8'));
-            
-            if (data.messageHistory && Array.isArray(data.messageHistory)) {
-                antieditState.messageHistory.clear();
-                data.messageHistory.forEach(([key, value]) => {
-                    antieditState.messageHistory.set(key, value);
-                });
-            }
-            
-            if (data.currentMessages && Array.isArray(data.currentMessages)) {
-                antieditState.currentMessages.clear();
-                data.currentMessages.forEach(([key, value]) => {
-                    antieditState.currentMessages.set(key, value);
-                });
-            }
-            
-            if (data.mediaCache && Array.isArray(data.mediaCache)) {
-                antieditState.mediaCache.clear();
-                data.mediaCache.forEach(([key, value]) => {
-                    antieditState.mediaCache.set(key, value);
-                });
-            }
-            
-            if (data.stats) {
-                antieditState.stats = data.stats;
-            }
-            
-            console.log(`✅ Antiedit: Loaded ${antieditState.messageHistory.size} history entries, ${antieditState.currentMessages.size} current messages`);
+        const settings = await db.getConfig('antiedit_settings', defaultSettings);
+        if (settings) {
+            if (settings.mode) antieditState.mode = settings.mode;
+            if (settings.enabled !== undefined) antieditState.enabled = settings.enabled;
+            if (settings.stats) antieditState.stats = { ...antieditState.stats, ...settings.stats };
         }
+        console.log(`✅ Antiedit: Loaded settings from DB (mode: ${antieditState.mode})`);
     } catch (error) {
         console.error('❌ Antiedit: Error loading data:', error.message);
     }
 }
 
-// Save data
 async function saveData() {
     try {
-        await ensureDirs();
-        
-        const data = {
-            messageHistory: Array.from(antieditState.messageHistory.entries()),
-            currentMessages: Array.from(antieditState.currentMessages.entries()),
-            mediaCache: Array.from(antieditState.mediaCache.entries()),
-            stats: antieditState.stats,
-            savedAt: Date.now()
+        const settings = {
+            enabled: antieditState.enabled,
+            mode: antieditState.mode,
+            stats: antieditState.stats
         };
-        
-        await fs.writeFile(CACHE_FILE, JSON.stringify(data, null, 2));
+        await db.setConfig('antiedit_settings', settings);
     } catch (error) {
         console.error('❌ Antiedit: Error saving data:', error.message);
     }
 }
 
-// Get file extension from mimetype
 function getExtensionFromMime(mimetype) {
     const mimeToExt = {
         'image/jpeg': '.jpg',
@@ -122,7 +78,6 @@ function getExtensionFromMime(mimetype) {
     return mimeToExt[mimetype] || '.bin';
 }
 
-// Download and save media
 async function downloadAndSaveMedia(msgId, message, messageType, mimetype, version = 1) {
     try {
         const buffer = await downloadMediaMessage(
@@ -139,27 +94,27 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype, versi
             return null;
         }
         
-        const timestamp = Date.now();
-        const extension = getExtensionFromMime(mimetype);
-        const filename = `${messageType}_${msgId}_v${version}_${timestamp}${extension}`;
-        const filePath = path.join(MEDIA_DIR, filename);
-        
-        await fs.writeFile(filePath, buffer);
-        
         const mediaKey = `${msgId}_v${version}`;
+
         antieditState.mediaCache.set(mediaKey, {
-            filePath: filePath,
             buffer: buffer,
             type: messageType,
             mimetype: mimetype,
             size: buffer.length,
             version: version
         });
+
+        const dbMediaId = `edit_${mediaKey}`;
+        try {
+            await db.uploadMedia(dbMediaId, buffer, mimetype, 'edits');
+        } catch (dbErr) {
+            console.error('⚠️ Antiedit: DB media upload failed:', dbErr.message);
+        }
         
         antieditState.stats.mediaCaptured++;
         
-        console.log(`📸 Antiedit: Saved ${messageType} media v${version}: ${filename} (${Math.round(buffer.length/1024)}KB)`);
-        return { filePath, mediaKey };
+        console.log(`📸 Antiedit: Saved ${messageType} media v${version}: ${mediaKey} (${Math.round(buffer.length/1024)}KB)`);
+        return { mediaKey };
         
     } catch (error) {
         console.error('❌ Antiedit: Media download error:', error.message);
@@ -167,7 +122,6 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype, versi
     }
 }
 
-// Extract message content
 function extractMessageContent(message) {
     const msgContent = message.message;
     let type = 'text';
@@ -218,7 +172,6 @@ function extractMessageContent(message) {
     return { type, text, hasMedia, mimetype };
 }
 
-// Store incoming message
 async function storeIncomingMessage(message, isEdit = false, originalMessageData = null) {
     try {
         if (!antieditState.sock || antieditState.mode === 'off') return null;
@@ -232,23 +185,18 @@ async function storeIncomingMessage(message, isEdit = false, originalMessageData
         const pushName = message.pushName || 'Unknown';
         const timestamp = message.messageTimestamp ? message.messageTimestamp * 1000 : Date.now();
         
-        // Skip status broadcasts
         if (chatJid === 'status@broadcast') return null;
         
-        // Extract message content
         const { type, text, hasMedia, mimetype } = extractMessageContent(message);
         
-        // Skip empty messages
         if (!text && !hasMedia && type === 'text') return null;
         
-        // Get version number
         let version = 1;
         let history = antieditState.messageHistory.get(msgId) || [];
         
         if (isEdit) {
             version = history.length + 1;
         } else {
-            // Check if this is actually an edit of existing message
             const existing = antieditState.currentMessages.get(msgId);
             if (existing) {
                 isEdit = true;
@@ -273,19 +221,22 @@ async function storeIncomingMessage(message, isEdit = false, originalMessageData
             originalVersion: originalMessageData?.version || 1
         };
         
-        // Store in current messages
         antieditState.currentMessages.set(msgId, messageData);
         
-        // Add to history
         history.push({...messageData});
         antieditState.messageHistory.set(msgId, history);
+
+        try {
+            await db.storeAntideleteMessage(`edit_${msgId}`, messageData);
+        } catch (dbErr) {
+            console.error('⚠️ Antiedit: DB store failed:', dbErr.message);
+        }
         
         if (!isEdit) {
             antieditState.stats.totalMessages++;
         } else {
             antieditState.stats.editsDetected++;
             
-            // Trigger edit alert
             setTimeout(async () => {
                 if (antieditState.mode === 'private' && antieditState.ownerJid) {
                     await sendEditAlertToOwnerDM(originalMessageData, messageData, history);
@@ -298,7 +249,6 @@ async function storeIncomingMessage(message, isEdit = false, originalMessageData
             }, 1000);
         }
         
-        // Download media if present
         if (hasMedia) {
             setTimeout(async () => {
                 try {
@@ -309,7 +259,6 @@ async function storeIncomingMessage(message, isEdit = false, originalMessageData
             }, 1500);
         }
         
-        // Save periodically
         if (antieditState.stats.totalMessages % 20 === 0) {
             await saveData();
         }
@@ -322,7 +271,6 @@ async function storeIncomingMessage(message, isEdit = false, originalMessageData
     }
 }
 
-// Handle message updates (edits detection)
 async function handleMessageUpdates(updates) {
     try {
         if (!antieditState.sock || antieditState.mode === 'off') return;
@@ -334,19 +282,24 @@ async function handleMessageUpdates(updates) {
             const msgId = msgKey.id;
             const chatJid = msgKey.remoteJid;
             
-            // Check if we have this message stored
-            const existingMessage = antieditState.currentMessages.get(msgId);
+            let existingMessage = antieditState.currentMessages.get(msgId);
+            if (!existingMessage) {
+                try {
+                    const dbMsg = await db.getAntideleteMessage(`edit_${msgId}`);
+                    if (dbMsg) {
+                        existingMessage = dbMsg;
+                        antieditState.currentMessages.set(msgId, existingMessage);
+                    }
+                } catch {}
+            }
             if (!existingMessage) continue;
             
-            // Check if this update contains new message content (edit)
             const updateContent = update.update;
             if (!updateContent || typeof updateContent !== 'object') continue;
             
-            // Get the content type of the update
             const contentType = getContentType(updateContent);
             if (!contentType) continue;
             
-            // Check if this is a message edit (has text or media content)
             const isMessageEdit = [
                 'extendedTextMessage',
                 'conversation',
@@ -359,7 +312,6 @@ async function handleMessageUpdates(updates) {
             if (isMessageEdit) {
                 console.log(`🔍 Antiedit: Detected edit for message ${msgId} in ${chatJid}`);
                 
-                // Create a message object from the update
                 const editedMessage = {
                     key: msgKey,
                     message: { [contentType]: updateContent[contentType] },
@@ -367,7 +319,6 @@ async function handleMessageUpdates(updates) {
                     messageTimestamp: Math.floor(Date.now() / 1000)
                 };
                 
-                // Store the edit
                 await storeIncomingMessage(editedMessage, true, existingMessage);
             }
         }
@@ -376,7 +327,21 @@ async function handleMessageUpdates(updates) {
     }
 }
 
-// Send edit alert to owner DM
+async function getMediaBuffer(mediaKey) {
+    const cached = antieditState.mediaCache.get(mediaKey);
+    if (cached?.buffer) return cached.buffer;
+
+    try {
+        const dbMediaId = `edit_${mediaKey}`;
+        const ext = cached?.mimetype?.split('/')[1]?.split(';')[0] || 'bin';
+        const storagePath = `edits/${dbMediaId}.${ext}`;
+        const buffer = await db.downloadMedia(storagePath);
+        if (buffer) return buffer;
+    } catch {}
+
+    return null;
+}
+
 async function sendEditAlertToOwnerDM(originalMsg, editedMsg, history) {
     try {
         if (!antieditState.sock || !antieditState.ownerJid) {
@@ -426,46 +391,40 @@ async function sendEditAlertToOwnerDM(originalMsg, editedMsg, history) {
         alertText += `\n\n────────────\n`;
         alertText += `🔍 *Captured by antiedit*`;
         
-        // Check if we have media
         const originalMediaKey = `${originalMsg.id}_v${originalMsg.version}`;
         const editedMediaKey = `${editedMsg.id}_v${editedMsg.version}`;
-        const originalMedia = antieditState.mediaCache.get(originalMediaKey);
-        const editedMedia = antieditState.mediaCache.get(editedMediaKey);
+        const editedMediaMeta = antieditState.mediaCache.get(editedMediaKey);
         
         let mediaSent = false;
         
-        // Try to send edited media
-        if (editedMsg.hasMedia && editedMedia) {
+        if (editedMsg.hasMedia && editedMediaMeta) {
             try {
-                let buffer = editedMedia.buffer;
-                if (!buffer) {
-                    buffer = await fs.readFile(editedMedia.filePath);
-                }
+                const buffer = await getMediaBuffer(editedMediaKey);
                 
                 if (buffer && buffer.length > 0) {
                     if (editedMsg.type === 'sticker') {
                         await antieditState.sock.sendMessage(ownerJid, {
                             sticker: buffer,
-                            mimetype: editedMedia.mimetype
+                            mimetype: editedMediaMeta.mimetype
                         });
                     } else if (editedMsg.type === 'image') {
                         await antieditState.sock.sendMessage(ownerJid, {
                             image: buffer,
                             caption: alertText,
-                            mimetype: editedMedia.mimetype
+                            mimetype: editedMediaMeta.mimetype
                         });
                         mediaSent = true;
                     } else if (editedMsg.type === 'video') {
                         await antieditState.sock.sendMessage(ownerJid, {
                             video: buffer,
                             caption: alertText,
-                            mimetype: editedMedia.mimetype
+                            mimetype: editedMediaMeta.mimetype
                         });
                         mediaSent = true;
                     } else if (editedMsg.type === 'audio' || editedMsg.type === 'voice') {
                         await antieditState.sock.sendMessage(ownerJid, {
                             audio: buffer,
-                            mimetype: editedMedia.mimetype,
+                            mimetype: editedMediaMeta.mimetype,
                             ptt: editedMsg.type === 'voice'
                         });
                     }
@@ -475,7 +434,6 @@ async function sendEditAlertToOwnerDM(originalMsg, editedMsg, history) {
             }
         }
         
-        // Send text alert if media wasn't sent or failed
         if (!mediaSent) {
             await antieditState.sock.sendMessage(ownerJid, { text: alertText });
         }
@@ -489,7 +447,6 @@ async function sendEditAlertToOwnerDM(originalMsg, editedMsg, history) {
     }
 }
 
-// Send edit alert to chat
 async function sendEditAlertToChat(originalMsg, editedMsg, history, chatJid) {
     try {
         if (!antieditState.sock) return false;
@@ -541,12 +498,21 @@ async function sendEditAlertToChat(originalMsg, editedMsg, history, chatJid) {
     }
 }
 
-// Show message history
 async function showMessageHistory(msgId, chatJid) {
     try {
         if (!antieditState.sock) return false;
         
-        const history = antieditState.messageHistory.get(msgId);
+        let history = antieditState.messageHistory.get(msgId);
+
+        if (!history || history.length < 1) {
+            try {
+                const dbMsg = await db.getAntideleteMessage(`edit_${msgId}`);
+                if (dbMsg) {
+                    history = [dbMsg];
+                }
+            } catch {}
+        }
+
         if (!history || history.length < 1) {
             await antieditState.sock.sendMessage(chatJid, { 
                 text: `❌ No history found for this message.` 
@@ -593,7 +559,6 @@ async function showMessageHistory(msgId, chatJid) {
     }
 }
 
-// Setup listeners
 function setupListeners(sock) {
     if (!sock) {
         console.error('❌ Antiedit: No socket provided');
@@ -604,7 +569,6 @@ function setupListeners(sock) {
     
     console.log('🚀 Antiedit: Setting up listeners...');
     
-    // Listen for incoming messages
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
         try {
             if (type !== 'notify' || antieditState.mode === 'off') return;
@@ -617,7 +581,6 @@ function setupListeners(sock) {
         }
     });
     
-    // Listen for message updates (edits)
     sock.ev.on('messages.update', async (updates) => {
         try {
             if (antieditState.mode === 'off') return;
@@ -628,7 +591,6 @@ function setupListeners(sock) {
         }
     });
     
-    // Listen for connection updates
     sock.ev.on('connection.update', (update) => {
         if (update.connection === 'open') {
             console.log('✅ Antiedit: Connected and ready');
@@ -638,7 +600,6 @@ function setupListeners(sock) {
     console.log('✅ Antiedit: Listeners active');
 }
 
-// Initialize system
 async function initializeSystem(sock) {
     try {
         await loadData();
@@ -656,7 +617,6 @@ async function initializeSystem(sock) {
         console.log(`   Tracking: ${antieditState.currentMessages.size} messages`);
         console.log(`   History: ${antieditState.messageHistory.size} entries`);
         
-        // Auto-save every 5 minutes
         setInterval(async () => {
             if (antieditState.stats.totalMessages > 0) {
                 await saveData();
@@ -668,12 +628,10 @@ async function initializeSystem(sock) {
     }
 }
 
-// Export initialization function
 export async function initAntiedit(sock) {
     await initializeSystem(sock);
 }
 
-// The command module
 export default {
     name: 'antiedit',
     alias: ['editdetect', 'edited', 'ae'],
@@ -684,13 +642,11 @@ export default {
         const chatId = msg.key.remoteJid;
         const command = args[0]?.toLowerCase() || 'status';
         
-        // Ensure system has socket
         if (!antieditState.sock) {
             antieditState.sock = sock;
             setupListeners(sock);
         }
         
-        // Set owner from metadata if available
         if (!antieditState.ownerJid && metadata.OWNER_JID) {
             antieditState.ownerJid = metadata.OWNER_JID;
         }
@@ -780,14 +736,12 @@ Socket: ${antieditState.sock ? '✅ CONNECTED' : '❌ DISCONNECTED'}
                 break;
                 
             case 'test':
-                // Send a test message
                 const testText = `🧪 *Test Message for Antiedit*\n\nMode: ${antieditState.mode.toUpperCase()}\nStatus: ${antieditState.mode === 'off' ? '❌ INACTIVE' : '✅ ACTIVE'}\n\nEdit this message to test the system!`;
                 
                 const testMsg = await sock.sendMessage(chatId, { 
                     text: testText 
                 });
                 
-                // Store test message
                 if (testMsg?.key) {
                     const testData = {
                         id: testMsg.key.id,
@@ -804,6 +758,10 @@ Socket: ${antieditState.sock ? '✅ CONNECTED' : '❌ DISCONNECTED'}
                     
                     antieditState.currentMessages.set(testMsg.key.id, testData);
                     antieditState.messageHistory.set(testMsg.key.id, [{...testData}]);
+
+                    try {
+                        await db.storeAntideleteMessage(`edit_${testMsg.key.id}`, testData);
+                    } catch {}
                     
                     await sock.sendMessage(chatId, {
                         text: `✅ Test message stored (ID: ${testMsg.key.id})!\n\nNow edit the previous message to test antiedit.`
@@ -827,15 +785,11 @@ Socket: ${antieditState.sock ? '✅ CONNECTED' : '❌ DISCONNECTED'}
                 antieditState.stats.mediaCaptured = 0;
                 antieditState.stats.sentToDm = 0;
                 antieditState.stats.sentToChat = 0;
-                
-                // Delete media files
+
                 try {
-                    const files = await fs.readdir(MEDIA_DIR);
-                    for (const file of files) {
-                        await fs.unlink(path.join(MEDIA_DIR, file)).catch(() => {});
-                    }
-                } catch (error) {}
-                
+                    await db.cleanOlderThan('antidelete_messages', 'timestamp', 0);
+                } catch {}
+
                 await saveData();
                 
                 await sock.sendMessage(chatId, {
@@ -850,6 +804,7 @@ Socket: ${antieditState.sock ? '✅ CONNECTED' : '❌ DISCONNECTED'}
 Mode: ${antieditState.mode}
 Owner JID: ${antieditState.ownerJid || 'Not set'}
 Socket: ${antieditState.sock ? 'Present' : 'Missing'}
+DB Available: ${db.isAvailable() ? '✅' : '❌'}
 
 Storage:
 • Current messages: ${antieditState.currentMessages.size}
@@ -875,7 +830,6 @@ Auto-save: ✅
                 }, { quoted: msg });
         }
         
-        // Save state after command
         await saveData();
     }
 };
