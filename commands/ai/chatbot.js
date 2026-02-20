@@ -5,8 +5,21 @@ import { normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/bail
 import supabase from '../../lib/supabase.js';
 
 const DATA_DIR = './data/chatbot';
-const CONFIG_FILE = path.join(DATA_DIR, 'chatbot_config.json');
 const CONVERSATIONS_DIR = path.join(DATA_DIR, 'conversations');
+
+function getBotId() {
+  return supabase.getConfigBotId ? supabase.getConfigBotId() : 'default';
+}
+
+function getConfigFile() {
+  const botId = getBotId();
+  return path.join(DATA_DIR, `chatbot_config_${botId}.json`);
+}
+
+function getConversationsDir() {
+  const botId = getBotId();
+  return path.join(DATA_DIR, 'conversations', botId);
+}
 
 const pendingActions = new Map();
 const PENDING_TIMEOUT = 120000;
@@ -254,23 +267,27 @@ const CANCEL_WORDS = ['cancel', 'nevermind', 'never mind', 'nvm', 'stop', 'nah',
 
 function ensureDataDirs() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(CONVERSATIONS_DIR)) fs.mkdirSync(CONVERSATIONS_DIR, { recursive: true });
+  const convDir = getConversationsDir();
+  if (!fs.existsSync(convDir)) fs.mkdirSync(convDir, { recursive: true });
 }
 
 function loadConfig() {
   ensureDataDirs();
   const defaultConfig = { mode: 'off', preferredModel: 'gpt', allowedGroups: [], allowedDMs: [], stats: { totalQueries: 0, modelsUsed: {} } };
+  const configFile = getConfigFile();
   try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+    if (fs.existsSync(configFile)) {
+      const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
       return config;
     }
   } catch (e) {}
   if (supabase.isAvailable()) {
-    supabase.get('chatbot_config', 'main', 'key').then(data => {
+    const botId = getBotId();
+    supabase.getAll('chatbot_config', { key: 'main', bot_id: botId }).then(rows => {
+      const data = rows?.[0];
       if (data && data.config) {
         try {
-          fs.writeFileSync(CONFIG_FILE, JSON.stringify(data.config, null, 2));
+          fs.writeFileSync(configFile, JSON.stringify(data.config, null, 2));
         } catch (e) {}
       }
     }).catch(() => {});
@@ -280,15 +297,19 @@ function loadConfig() {
 
 function saveConfig(config) {
   ensureDataDirs();
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
-  supabase.upsert('chatbot_config', { key: 'main', config: config, updated_at: new Date().toISOString() }, 'key').catch(() => {});
+  const configFile = getConfigFile();
+  fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+  const botId = getBotId();
+  supabase.upsert('chatbot_config', { key: 'main', config: config, bot_id: botId, updated_at: new Date().toISOString() }, 'key,bot_id').catch(() => {});
 }
 
 function getConversationFile(userId) {
-  return path.join(CONVERSATIONS_DIR, `${userId.replace(/[^a-zA-Z0-9]/g, '_')}.json`);
+  const convDir = getConversationsDir();
+  return path.join(convDir, `${userId.replace(/[^a-zA-Z0-9]/g, '_')}.json`);
 }
 
 function loadConversation(userId) {
+  ensureDataDirs();
   const file = getConversationFile(userId);
   try {
     if (fs.existsSync(file)) {
@@ -302,7 +323,9 @@ function loadConversation(userId) {
   } catch (e) {}
   if (supabase.isAvailable()) {
     const sanitizedId = userId.replace(/[^a-zA-Z0-9]/g, '_');
-    supabase.get('chatbot_conversations', sanitizedId, 'user_id').then(data => {
+    const botId = getBotId();
+    supabase.getAll('chatbot_conversations', { user_id: sanitizedId, bot_id: botId }).then(rows => {
+      const data = rows?.[0];
       if (data && data.conversation) {
         try {
           ensureDataDirs();
@@ -322,17 +345,24 @@ function saveConversation(userId, conversation) {
     conversation.messages = conversation.messages.slice(-20);
   }
   fs.writeFileSync(file, JSON.stringify(conversation, null, 2));
+  const botId = getBotId();
   supabase.upsert('chatbot_conversations', {
     user_id: userId.replace(/[^a-zA-Z0-9]/g, '_'),
     conversation: conversation,
+    bot_id: botId,
     last_updated: new Date().toISOString()
-  }, 'user_id').catch(() => {});
+  }, 'user_id,bot_id').catch(() => {});
 }
 
 function clearConversation(userId) {
   const file = getConversationFile(userId);
   if (fs.existsSync(file)) fs.unlinkSync(file);
-  supabase.remove('chatbot_conversations', userId.replace(/[^a-zA-Z0-9]/g, '_'), 'user_id').catch(() => {});
+  const botId = getBotId();
+  const sanitizedUserId = userId.replace(/[^a-zA-Z0-9]/g, '_');
+  supabase.query(
+    `DELETE FROM chatbot_conversations WHERE user_id = $1 AND bot_id = $2`,
+    [sanitizedUserId, botId]
+  ).catch(() => {});
 }
 
 function buildContextPrompt(conversation, newQuery) {
