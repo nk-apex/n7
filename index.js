@@ -5431,23 +5431,14 @@ async function handleIncomingMessage(sock, msg) {
                 if (replyCtx?.quotedMessage) {
                     let quotedMsg = replyCtx.quotedMessage;
                     
-                    let innerMsg = quotedMsg;
-                    if (quotedMsg.viewOnceMessageV2?.message) innerMsg = quotedMsg.viewOnceMessageV2.message;
-                    else if (quotedMsg.viewOnceMessageV2Extension?.message) innerMsg = quotedMsg.viewOnceMessageV2Extension.message;
-                    else if (quotedMsg.viewOnceMessage?.message) innerMsg = quotedMsg.viewOnceMessage.message;
-                    else if (quotedMsg.ephemeralMessage?.message?.viewOnceMessage?.message) innerMsg = quotedMsg.ephemeralMessage.message.viewOnceMessage.message;
-                    else if (quotedMsg.ephemeralMessage?.message?.viewOnceMessageV2?.message) innerMsg = quotedMsg.ephemeralMessage.message.viewOnceMessageV2.message;
+                    const viewOnceCheck = detectViewOnceMedia(quotedMsg);
                     
-                    const isQuotedViewOnce = innerMsg?.imageMessage?.viewOnce || 
-                                            innerMsg?.videoMessage?.viewOnce || 
-                                            innerMsg !== quotedMsg;
-                    
-                    if (isQuotedViewOnce) {
+                    if (viewOnceCheck) {
                         const config = loadAntiViewOnceConfig();
                         const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
                         
                         if (ownerJid) {
-                            const viewOnce = detectViewOnceMedia(quotedMsg);
+                            const viewOnce = viewOnceCheck;
                             
                             if (viewOnce) {
                                 const { type, media } = viewOnce;
@@ -5506,23 +5497,14 @@ async function handleIncomingMessage(sock, msg) {
                     const cachedContent = normalizeMessageContent(cachedMsg.message) || cachedMsg.message;
                     
                     if (cachedContent) {
-                        let innerMsg = cachedContent;
-                        if (cachedContent.viewOnceMessageV2?.message) innerMsg = cachedContent.viewOnceMessageV2.message;
-                        else if (cachedContent.viewOnceMessageV2Extension?.message) innerMsg = cachedContent.viewOnceMessageV2Extension.message;
-                        else if (cachedContent.viewOnceMessage?.message) innerMsg = cachedContent.viewOnceMessage.message;
-                        else if (cachedContent.ephemeralMessage?.message?.viewOnceMessage?.message) innerMsg = cachedContent.ephemeralMessage.message.viewOnceMessage.message;
-                        else if (cachedContent.ephemeralMessage?.message?.viewOnceMessageV2?.message) innerMsg = cachedContent.ephemeralMessage.message.viewOnceMessageV2.message;
+                        const viewOnceReactCheck = detectViewOnceMedia(cachedContent);
                         
-                        const isViewOnce = innerMsg?.imageMessage?.viewOnce || 
-                                           innerMsg?.videoMessage?.viewOnce || 
-                                           innerMsg !== cachedContent;
-                        
-                        if (isViewOnce) {
+                        if (viewOnceReactCheck) {
                             const config = loadAntiViewOnceConfig();
                             const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
                             
                             if (ownerJid) {
-                                const viewOnce = detectViewOnceMedia(cachedContent);
+                                const viewOnce = viewOnceReactCheck;
                                 
                                 if (viewOnce) {
                                     const { type, media } = viewOnce;
