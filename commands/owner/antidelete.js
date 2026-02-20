@@ -458,6 +458,8 @@ export async function antideleteStoreMessage(message) {
 }
 
 const recentlyProcessedDeletions = new Map();
+const publicModeChatCooldowns = new Map();
+const PUBLIC_MODE_COOLDOWN_MS = 5000;
 
 export async function antideleteHandleUpdate(update) {
     try {
@@ -465,6 +467,8 @@ export async function antideleteHandleUpdate(update) {
         
         const msgKey = update.key;
         if (!msgKey || !msgKey.id) return;
+        
+        if (msgKey.fromMe) return;
         
         const msgId = msgKey.id;
         
@@ -487,21 +491,12 @@ export async function antideleteHandleUpdate(update) {
         }
         
         const isDeleted = 
-            update.message === null ||
-            update.update?.message === null ||
-            update.update?.status === 6 ||
             update.update?.messageStubType === 1 ||
             update.update?.messageStubType === 2 ||
             update.messageStubType === 1 ||
-            update.messageStubType === 2 ||
-            update.messageStubType === 7 ||
-            update.messageStubType === 8;
+            update.messageStubType === 2;
         
         if (!isDeleted) {
-            if (isStatus) {
-                const _log2 = globalThis.originalConsoleMethods?.log || console.log;
-                _log2(`📊 [AD-STATUS] Not detected as deletion, skipping`);
-            }
             return;
         }
         
@@ -538,6 +533,8 @@ export async function antideleteHandleUpdate(update) {
         }
         
         antideleteState.messageCache.delete(msgId);
+        antideleteState.mediaCache.delete(msgId);
+        db.deleteAntideleteMessage(msgId).catch(() => {});
         antideleteState.stats.deletedDetected++;
         
         let sent = false;
@@ -546,19 +543,25 @@ export async function antideleteHandleUpdate(update) {
             sent = await sendToOwnerDM(cachedMessage, deletedByNumber);
             if (sent) {
                 antideleteState.stats.sentToDm++;
-                await cleanRetrievedMessage(msgId);
             }
         } else if (antideleteState.mode === 'private') {
             sent = await sendToOwnerDM(cachedMessage, deletedByNumber);
             if (sent) {
                 antideleteState.stats.sentToDm++;
-                await cleanRetrievedMessage(msgId);
             }
         } else if (antideleteState.mode === 'public') {
+            const lastSendTime = publicModeChatCooldowns.get(chatJid) || 0;
+            if (now - lastSendTime < PUBLIC_MODE_COOLDOWN_MS) {
+                return;
+            }
+            publicModeChatCooldowns.set(chatJid, now);
+            if (publicModeChatCooldowns.size > 200) {
+                const oldest = [...publicModeChatCooldowns.entries()].sort((a, b) => a[1] - b[1]).slice(0, 50);
+                oldest.forEach(([k]) => publicModeChatCooldowns.delete(k));
+            }
             sent = await sendToChat(cachedMessage, chatJid, deletedByNumber);
             if (sent) {
                 antideleteState.stats.sentToChat++;
-                await cleanRetrievedMessage(msgId);
             }
         }
         

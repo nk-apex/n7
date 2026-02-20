@@ -5012,7 +5012,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }
 
                 try {
-                    if (update.update?.message) {
+                    if (update.update?.message && !update.key?.fromMe) {
                         const updatedMsg = {
                             key: update.key,
                             message: update.update.message
@@ -5402,6 +5402,8 @@ function detectViewOnceMedia(rawMessage) {
 
 async function handleViewOnceDetection(sock, msg) {
     try {
+        if (msg.key?.fromMe) return;
+        
         const config = loadAntiViewOnceConfig();
 
         if (config.mode === 'off' || (!config.mode && !config.enabled)) return;

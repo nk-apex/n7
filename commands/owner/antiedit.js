@@ -1,6 +1,9 @@
 import { downloadMediaMessage, getContentType } from '@whiskeysockets/baileys';
 import db from '../../lib/supabase.js';
 
+const publicModeChatCooldowns = new Map();
+const PUBLIC_MODE_COOLDOWN_MS = 5000;
+
 let antieditState = {
     enabled: true,
     mode: 'private',
@@ -242,6 +245,15 @@ async function storeIncomingMessage(message, isEdit = false, originalMessageData
                     await sendEditAlertToOwnerDM(originalMessageData, messageData, history);
                     antieditState.stats.sentToDm++;
                 } else if (antieditState.mode === 'public') {
+                    const lastSend = publicModeChatCooldowns.get(chatJid) || 0;
+                    if (Date.now() - lastSend < PUBLIC_MODE_COOLDOWN_MS) {
+                        return;
+                    }
+                    publicModeChatCooldowns.set(chatJid, Date.now());
+                    if (publicModeChatCooldowns.size > 200) {
+                        const oldest = [...publicModeChatCooldowns.entries()].sort((a, b) => a[1] - b[1]).slice(0, 50);
+                        oldest.forEach(([k]) => publicModeChatCooldowns.delete(k));
+                    }
                     await sendEditAlertToChat(originalMessageData, messageData, history, chatJid);
                     antieditState.stats.sentToChat++;
                 }
