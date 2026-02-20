@@ -1128,10 +1128,10 @@ setInterval(() => {
 }, 5000);
 
 const DiskManager = {
-    WARNING_MB: 50,
-    CRITICAL_MB: 20,
-    CHECK_INTERVAL: 30 * 60 * 1000,
-    CLEANUP_INTERVAL: 30 * 60 * 1000,
+    WARNING_MB: 100,
+    CRITICAL_MB: 30,
+    CHECK_INTERVAL: 10 * 60 * 1000,
+    CLEANUP_INTERVAL: 15 * 60 * 1000,
     lastWarning: 0,
     lastCleanup: 0,
     isLow: false,
@@ -1230,21 +1230,23 @@ const DiskManager = {
             const preKeys = files.filter(f => f.startsWith('pre-key-'));
             const appSync = files.filter(f => f.startsWith('app-state-sync-version-'));
 
-            const limit = aggressive ? 100 : 500;
-            if (senderKeys.length > limit) {
-                const toRemove = senderKeys.slice(0, senderKeys.length - limit);
+            const senderLimit = aggressive ? 50 : 200;
+            const preKeyLimit = aggressive ? 50 : 200;
+            const appSyncLimit = aggressive ? 10 : 30;
+            if (senderKeys.length > senderLimit) {
+                const toRemove = senderKeys.slice(0, senderKeys.length - senderLimit);
                 for (const f of toRemove) {
                     try { fs.unlinkSync(path.join(SESSION_DIR, f)); removed++; } catch {}
                 }
             }
-            if (preKeys.length > limit) {
-                const toRemove = preKeys.slice(0, preKeys.length - limit);
+            if (preKeys.length > preKeyLimit) {
+                const toRemove = preKeys.slice(0, preKeys.length - preKeyLimit);
                 for (const f of toRemove) {
                     try { fs.unlinkSync(path.join(SESSION_DIR, f)); removed++; } catch {}
                 }
             }
-            if (appSync.length > 50) {
-                const toRemove = appSync.slice(0, appSync.length - 50);
+            if (appSync.length > appSyncLimit) {
+                const toRemove = appSync.slice(0, appSync.length - appSyncLimit);
                 for (const f of toRemove) {
                     try { fs.unlinkSync(path.join(SESSION_DIR, f)); removed++; } catch {}
                 }
@@ -1275,7 +1277,7 @@ const DiskManager = {
         return removed;
     },
 
-    cleanTempFiles() {
+    cleanTempFiles(aggressive = false) {
         let removed = 0;
         const tempDirs = [
             './temp',
@@ -1283,10 +1285,11 @@ const DiskManager = {
             './temp/snapchat',
             './temp/compressed',
             './temp/apk',
-            './commands/temp'
+            './commands/temp',
+            './viewonce_stealth'
         ];
         const now = Date.now();
-        const maxAge = 30 * 60 * 1000;
+        const maxAge = aggressive ? 5 * 60 * 1000 : 30 * 60 * 1000;
         for (const dir of tempDirs) {
             try {
                 if (!fs.existsSync(dir)) continue;
@@ -1361,7 +1364,7 @@ const DiskManager = {
             viewonceMedia: this.cleanOldMedia('./data/viewonce_messages', 3, aggressive) + this.cleanOldMedia('./data/viewonce_private', 3, aggressive),
             antideleteMedia: this.cleanOldMedia('./data/antidelete/media', 2, aggressive),
             statusMedia: this.cleanStatusMedia(aggressive),
-            tempFiles: this.cleanTempFiles(),
+            tempFiles: this.cleanTempFiles(aggressive),
             backups: aggressive ? this.cleanBackups() : 0,
             statusLogs: this.truncateStatusLogs() ? 1 : 0
         };
@@ -1384,7 +1387,7 @@ const DiskManager = {
         await yieldToLoop();
         results.statusMedia = this.cleanStatusMedia(aggressive);
         await yieldToLoop();
-        results.tempFiles = this.cleanTempFiles();
+        results.tempFiles = this.cleanTempFiles(aggressive);
         await yieldToLoop();
         results.backups = aggressive ? this.cleanBackups() : 0;
         results.statusLogs = this.truncateStatusLogs() ? 1 : 0;
@@ -4576,15 +4579,20 @@ async function startBot(loginMode = 'auto', loginData = null) {
         const debouncedSaveCreds = () => {
             credsPending = true;
             if (credsTimer) clearTimeout(credsTimer);
-            credsTimer = setTimeout(() => {
+            credsTimer = setTimeout(async () => {
                 credsPending = false;
-                saveCreds().catch((err) => {
+                if (DiskManager.isLow) {
+                    DiskManager.runCleanup(true);
+                }
+                try {
+                    await saveCreds();
+                } catch (err) {
                     if (err?.code === 'ENOSPC') {
                         UltraCleanLogger.error('💾 Disk full during saveCreds! Running emergency cleanup...');
                         DiskManager.runCleanup(true);
-                        saveCreds().catch(() => {});
+                        try { await saveCreds(); } catch {}
                     }
-                });
+                }
             }, 500);
         };
         const flushCreds = () => {
