@@ -1221,11 +1221,15 @@ const DiskManager = {
         return { count, bytes };
     },
 
-    cleanSessionSignalFiles(aggressive = false) {
+    async _yieldBatch(i, batchSize = 50) {
+        if (i > 0 && i % batchSize === 0) await new Promise(r => setImmediate(r));
+    },
+
+    async cleanSessionSignalFilesAsync(aggressive = false) {
         let removed = 0;
         try {
             if (!fs.existsSync(SESSION_DIR)) return 0;
-            const files = fs.readdirSync(SESSION_DIR);
+            const files = await fs.promises.readdir(SESSION_DIR);
             const senderKeys = files.filter(f => f.startsWith('sender-key-'));
             const preKeys = files.filter(f => f.startsWith('pre-key-'));
             const appSync = files.filter(f => f.startsWith('app-state-sync-version-'));
@@ -1233,51 +1237,49 @@ const DiskManager = {
             const senderLimit = aggressive ? 50 : 200;
             const preKeyLimit = aggressive ? 50 : 200;
             const appSyncLimit = aggressive ? 10 : 30;
-            if (senderKeys.length > senderLimit) {
-                const toRemove = senderKeys.slice(0, senderKeys.length - senderLimit);
-                for (const f of toRemove) {
-                    try { fs.unlinkSync(path.join(SESSION_DIR, f)); removed++; } catch {}
+
+            const removeFiles = async (list, limit) => {
+                if (list.length <= limit) return 0;
+                const toRemove = list.slice(0, list.length - limit);
+                let count = 0;
+                for (let i = 0; i < toRemove.length; i++) {
+                    try { await fs.promises.unlink(path.join(SESSION_DIR, toRemove[i])); count++; } catch {}
+                    await this._yieldBatch(i);
                 }
-            }
-            if (preKeys.length > preKeyLimit) {
-                const toRemove = preKeys.slice(0, preKeys.length - preKeyLimit);
-                for (const f of toRemove) {
-                    try { fs.unlinkSync(path.join(SESSION_DIR, f)); removed++; } catch {}
-                }
-            }
-            if (appSync.length > appSyncLimit) {
-                const toRemove = appSync.slice(0, appSync.length - appSyncLimit);
-                for (const f of toRemove) {
-                    try { fs.unlinkSync(path.join(SESSION_DIR, f)); removed++; } catch {}
-                }
-            }
+                return count;
+            };
+            removed += await removeFiles(senderKeys, senderLimit);
+            removed += await removeFiles(preKeys, preKeyLimit);
+            removed += await removeFiles(appSync, appSyncLimit);
         } catch {}
         return removed;
     },
 
-    cleanOldMedia(dirPath, maxAgeDays = 3, aggressive = false) {
+    async cleanOldMediaAsync(dirPath, maxAgeDays = 3, aggressive = false) {
         let removed = 0;
         try {
             if (!fs.existsSync(dirPath)) return 0;
             const now = Date.now();
             const maxAge = (aggressive ? 1 : maxAgeDays) * 24 * 60 * 60 * 1000;
-            const files = fs.readdirSync(dirPath);
-            for (const file of files) {
+            const files = await fs.promises.readdir(dirPath);
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
                 if (file.endsWith('.json')) continue;
                 try {
                     const full = path.join(dirPath, file);
-                    const stat = fs.statSync(full);
+                    const stat = await fs.promises.stat(full);
                     if (stat.isFile() && (now - stat.mtimeMs) > maxAge) {
-                        fs.unlinkSync(full);
+                        await fs.promises.unlink(full);
                         removed++;
                     }
                 } catch {}
+                await this._yieldBatch(i);
             }
         } catch {}
         return removed;
     },
 
-    cleanTempFiles(aggressive = false) {
+    async cleanTempFilesAsync(aggressive = false) {
         let removed = 0;
         const tempDirs = [
             './temp',
@@ -1293,104 +1295,96 @@ const DiskManager = {
         for (const dir of tempDirs) {
             try {
                 if (!fs.existsSync(dir)) continue;
-                const files = fs.readdirSync(dir);
-                for (const file of files) {
+                const files = await fs.promises.readdir(dir);
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
                     try {
                         const full = path.join(dir, file);
-                        const stat = fs.statSync(full);
+                        const stat = await fs.promises.stat(full);
                         if (stat.isFile() && (now - stat.mtimeMs) > maxAge) {
-                            fs.unlinkSync(full);
+                            await fs.promises.unlink(full);
                             removed++;
                         }
                     } catch {}
+                    await this._yieldBatch(i);
                 }
             } catch {}
         }
         return removed;
     },
 
-    cleanBackups() {
+    async cleanBackupsAsync() {
         let removed = 0;
         try {
             if (!fs.existsSync('./session_backup')) return 0;
-            const files = fs.readdirSync('./session_backup');
-            for (const file of files) {
-                try { fs.unlinkSync(path.join('./session_backup', file)); removed++; } catch {}
+            const files = await fs.promises.readdir('./session_backup');
+            for (let i = 0; i < files.length; i++) {
+                try { await fs.promises.unlink(path.join('./session_backup', files[i])); removed++; } catch {}
+                await this._yieldBatch(i);
             }
-            try { fs.rmdirSync('./session_backup'); } catch {}
+            try { await fs.promises.rmdir('./session_backup'); } catch {}
         } catch {}
         return removed;
     },
 
-    truncateStatusLogs() {
+    async truncateStatusLogsAsync() {
         try {
             const logFile = './data/status_detection_logs.json';
             if (!fs.existsSync(logFile)) return false;
-            const data = JSON.parse(fs.readFileSync(logFile, 'utf8'));
+            const raw = await fs.promises.readFile(logFile, 'utf8');
+            const data = JSON.parse(raw);
             if (data.logs && data.logs.length > 50) {
                 data.logs = data.logs.slice(-50);
-                fs.writeFileSync(logFile, JSON.stringify(data));
+                await fs.promises.writeFile(logFile, JSON.stringify(data));
                 return true;
             }
         } catch {}
         return false;
     },
 
-    cleanStatusMedia(aggressive = false) {
+    async cleanStatusMediaAsync(aggressive = false) {
         let removed = 0;
         const statusMediaDir = './data/antidelete/status/media';
         try {
             if (!fs.existsSync(statusMediaDir)) return 0;
             const now = Date.now();
             const maxAge = (aggressive ? 6 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000);
-            const files = fs.readdirSync(statusMediaDir);
-            for (const file of files) {
+            const files = await fs.promises.readdir(statusMediaDir);
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
                 try {
                     const full = path.join(statusMediaDir, file);
-                    const stat = fs.statSync(full);
+                    const stat = await fs.promises.stat(full);
                     if (stat.isFile() && (now - stat.mtimeMs) > maxAge) {
-                        fs.unlinkSync(full);
+                        await fs.promises.unlink(full);
                         removed++;
                     }
                 } catch {}
+                await this._yieldBatch(i);
             }
         } catch {}
         return removed;
     },
 
     runCleanup(aggressive = false) {
-        const results = {
-            sessionFiles: this.cleanSessionSignalFiles(aggressive),
-            viewonceMedia: this.cleanOldMedia('./data/viewonce_messages', 3, aggressive) + this.cleanOldMedia('./data/viewonce_private', 3, aggressive),
-            antideleteMedia: this.cleanOldMedia('./data/antidelete/media', 2, aggressive),
-            statusMedia: this.cleanStatusMedia(aggressive),
-            tempFiles: this.cleanTempFiles(aggressive),
-            backups: aggressive ? this.cleanBackups() : 0,
-            statusLogs: this.truncateStatusLogs() ? 1 : 0
-        };
-        const total = Object.values(results).reduce((a, b) => a + b, 0);
-        if (total > 0) {
-            UltraCleanLogger.info(`🧹 Disk cleanup: removed ${total} items (session: ${results.sessionFiles}, viewonce: ${results.viewonceMedia}, antidelete: ${results.antideleteMedia}, status-media: ${results.statusMedia}, temp: ${results.tempFiles}, backups: ${results.backups})`);
-        }
-        this.lastCleanup = Date.now();
-        return results;
+        this.runCleanupAsync(aggressive).catch(() => {});
     },
 
     async runCleanupAsync(aggressive = false) {
         const yieldToLoop = () => new Promise(r => setImmediate(r));
         const results = {};
-        results.sessionFiles = this.cleanSessionSignalFiles(aggressive);
+        results.sessionFiles = await this.cleanSessionSignalFilesAsync(aggressive);
         await yieldToLoop();
-        results.viewonceMedia = this.cleanOldMedia('./data/viewonce_messages', 3, aggressive) + this.cleanOldMedia('./data/viewonce_private', 3, aggressive);
+        results.viewonceMedia = await this.cleanOldMediaAsync('./data/viewonce_messages', 3, aggressive) + await this.cleanOldMediaAsync('./data/viewonce_private', 3, aggressive);
         await yieldToLoop();
-        results.antideleteMedia = this.cleanOldMedia('./data/antidelete/media', 2, aggressive);
+        results.antideleteMedia = await this.cleanOldMediaAsync('./data/antidelete/media', 2, aggressive);
         await yieldToLoop();
-        results.statusMedia = this.cleanStatusMedia(aggressive);
+        results.statusMedia = await this.cleanStatusMediaAsync(aggressive);
         await yieldToLoop();
-        results.tempFiles = this.cleanTempFiles(aggressive);
+        results.tempFiles = await this.cleanTempFilesAsync(aggressive);
         await yieldToLoop();
-        results.backups = aggressive ? this.cleanBackups() : 0;
-        results.statusLogs = this.truncateStatusLogs() ? 1 : 0;
+        results.backups = aggressive ? await this.cleanBackupsAsync() : 0;
+        results.statusLogs = await this.truncateStatusLogsAsync() ? 1 : 0;
         const total = Object.values(results).reduce((a, b) => a + b, 0);
         if (total > 0) {
             UltraCleanLogger.info(`🧹 Disk cleanup: removed ${total} items (session: ${results.sessionFiles}, viewonce: ${results.viewonceMedia}, antidelete: ${results.antideleteMedia}, status-media: ${results.statusMedia}, temp: ${results.tempFiles}, backups: ${results.backups})`);
