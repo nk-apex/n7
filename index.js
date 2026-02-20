@@ -2635,15 +2635,15 @@ const memoryMonitor = {
                 }
                 if (label) UltraCleanLogger.info(`${label} trimmed to ${map.size} entries`);
             };
-            trimMap(lidPhoneCache, 1000, 500, 'LID cache');
-            trimMap(phoneLidCache, 1000, 500, null);
-            trimMap(groupMetadataCache, 50, 20, 'Group metadata cache');
-            trimMap(global.contactNames, 3000, 1500, null);
-            if (store && store.messages && store.messages.size > 500) {
-                trimMap(store.messages, 500, 300, 'Message store');
+            trimMap(lidPhoneCache, 800, 400, 'LID cache');
+            trimMap(phoneLidCache, 800, 400, null);
+            trimMap(groupMetadataCache, 30, 15, 'Group metadata cache');
+            trimMap(global.contactNames, 2000, 1000, null);
+            if (store && store.messages && store.messages.size > 300) {
+                trimMap(store.messages, 300, 150, 'Message store');
             }
-            if (store && store.sentMessages && store.sentMessages.size > 300) {
-                trimMap(store.sentMessages, 300, 150, null);
+            if (store && store.sentMessages && store.sentMessages.size > 200) {
+                trimMap(store.sentMessages, 200, 100, null);
             }
             if (global.gc) { global.gc(); }
         } catch {}
@@ -3516,9 +3516,9 @@ function getViewOnceFromCache(chatId, messageId) {
 class MessageStore {
     constructor() {
         this.messages = new Map();
-        this.maxMessages = 1000;
+        this.maxMessages = 500;
         this.sentMessages = new Map();
-        this.maxSentMessages = 500;
+        this.maxSentMessages = 200;
     }
     
     addMessage(jid, messageId, message) {
@@ -4115,6 +4115,7 @@ initDatabase().catch(() => {});
 // ====== MAIN BOT FUNCTION ======
 async function startBot(loginMode = 'auto', loginData = null) {
     try {
+        if (connectionStableTimer) { clearTimeout(connectionStableTimer); connectionStableTimer = null; }
         if (SOCKET_INSTANCE) {
             try {
                 stopHeartbeat();
@@ -4593,6 +4594,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 try { saveCreds(); } catch {}
             }
         };
+        if (global._flushCredsExit) process.removeListener('exit', global._flushCredsExit);
+        if (global._flushCredsTerm) process.removeListener('SIGTERM', global._flushCredsTerm);
+        global._flushCredsExit = flushCreds;
+        global._flushCredsTerm = flushCreds;
         process.on('exit', flushCreds);
         process.on('SIGTERM', flushCreds);
         sock.ev.on('creds.update', debouncedSaveCreds);
@@ -4836,8 +4841,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 const senderJid = msg.key.participant || msg.key.remoteJid;
                 if (senderJid && !senderJid.includes('status') && !senderJid.includes('broadcast')) {
                     global.contactNames = global.contactNames || new Map();
-                    if (global.contactNames.size > 5000) {
-                        const excess = global.contactNames.size - 3000;
+                    if (global.contactNames.size > 2000) {
+                        const excess = global.contactNames.size - 1000;
                         let removed = 0;
                         for (const k of global.contactNames.keys()) {
                             if (removed >= excess) break;
@@ -5230,6 +5235,14 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
     if (statusCode === 409 || statusCode === 440) {
         conflictCount++;
         isConflictRecovery = true;
+        if (conflictCount >= 10) {
+            UltraCleanLogger.warning(`⚠️ Too many conflicts (${conflictCount}). Waiting 5 minutes before retry to let other sessions settle...`);
+            conflictCount = 0;
+            setTimeout(async () => {
+                await main();
+            }, 300000);
+            return;
+        }
         const conflictDelay = Math.min(8000 + (conflictCount * 5000), 120000);
         UltraCleanLogger.warning(`Device conflict detected (${statusCode}). Attempt ${conflictCount}. Reconnecting in ${Math.round(conflictDelay/1000)}s...`);
         if (conflictCount === 3) {
