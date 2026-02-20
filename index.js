@@ -220,7 +220,7 @@ import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessa
 import NodeCache from 'node-cache';
 import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList } from './lib/sudo-store.js';
 import supabaseDb from './lib/supabase.js';
-import { migrateSudoToSupabase, initSudo } from './lib/sudo-store.js';
+import { migrateSudoToSupabase, initSudo, setBotId } from './lib/sudo-store.js';
 import { migrateWarningsToSupabase } from './lib/warnings-store.js';
 
 const msgRetryCounterCache = new NodeCache({ stdTTL: 600 });
@@ -4226,6 +4226,11 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     antiViewOnceSystem.sock = sock;
                 }
                 
+                if (sock.user?.id) {
+                    setBotId(sock.user.id);
+                    initSudo(sock.user.id).catch(() => {});
+                }
+
                 if (!antideleteInitDone) {
                     antideleteInitDone = true;
                     initAntidelete(sock).catch(err => {
