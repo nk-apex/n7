@@ -21,8 +21,8 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 
 **Database Integration:**
 *   **Supabase PostgreSQL (Primary)**: Bot data is stored in Supabase PostgreSQL for multi-user, cross-platform support. Connection auto-built from `SUPABASE_DB_PASSWORD` secret using Session Pooler (`aws-1-eu-west-1.pooler.supabase.com:5432`).
-*   **Connection Priority**: Auto-built Supabase URL (from `SUPABASE_DB_PASSWORD` env var) > `DATABASE_URL` env var (fallback) > no database (local JSON fallback).
-*   **Cross-Platform**: Works on Replit, Pterodactyl, and any platform. Only requires `SUPABASE_DB_PASSWORD` to be set as an environment variable/secret. The Supabase project ref, pooler host, user, and port are hardcoded in `lib/supabase.js` — only the password comes from the environment.
+*   **Connection Priority**: `SUPABASE_DB_PASSWORD` env var (if set) > `DATABASE_URL` env var > hardcoded default password (built-in fallback). All three resolve to a Supabase connection.
+*   **Cross-Platform & Zero-Config**: Works on Replit, Pterodactyl, and any platform with zero setup. The Supabase project ref, pooler host, user, port, and default password are all hardcoded in `lib/supabase.js`. Every bot instance automatically connects to the central Supabase database — no environment variables needed by end users.
 *   **Fallback Mechanism**: The bot remains fully functional using local JSON even if PostgreSQL is unavailable.
 *   **Module**: `lib/supabase.js` manages connections, health checks, and CRUD operations (name kept for backward compatibility).
 *   **Tables**: 14 tables are defined, covering bot configurations, warnings, sudoers, chatbot data, antidelete, welcome/goodbye, group features, auto-configurations, and media storage.
