@@ -1809,39 +1809,59 @@ case 1: {
 
 ╭─⊷ *🛡️ ETHICAL HACKING*
 │
-├─⊷ *RECON & OSINT*
-│  • whois • dnslookup • subdomain
-│  • reverseip • geoip • portscan
-│  • headers • traceroute • asnlookup • shodan
-│
-├─⊷ *NETWORK ANALYSIS*
-│  • pinghost • latency • sslcheck
-│  • tlsinfo • openports • firewallcheck
-│  • maclookup • bandwidthtest
-│
-├─⊷ *WEB SECURITY*
-│  • securityheaders • wafdetect • robotscheck
-│  • sitemap • cmsdetect • techstack
-│  • cookiescan • redirectcheck
-│
-├─⊷ *VULNERABILITY CHECKS*
-│  • xsscheck • sqlicheck • csrfcheck
-│  • clickjackcheck • directoryscan
-│  • exposedfiles • misconfigcheck • cvecheck
-│
-├─⊷ *PASSWORD & HASH TOOLS*
-│  • hashidentify • hashcheck • bcryptcheck
-│  • passwordstrength • leakcheck
-│
-├─⊷ *FORENSICS & ANALYSIS*
-│  • metadata • filehash • malwarecheck
-│  • urlscan • phishcheck
+│  • whois
+│  • dnslookup
+│  • subdomain
+│  • reverseip
+│  • geoip
+│  • portscan
+│  • headers
+│  • traceroute
+│  • asnlookup
+│  • shodan
+│  • pinghost
+│  • latency
+│  • sslcheck
+│  • tlsinfo
+│  • openports
+│  • firewallcheck
+│  • maclookup
+│  • bandwidthtest
+│  • securityheaders
+│  • wafdetect
+│  • robotscheck
+│  • sitemap
+│  • cmsdetect
+│  • techstack
+│  • cookiescan
+│  • redirectcheck
+│  • xsscheck
+│  • sqlicheck
+│  • csrfcheck
+│  • clickjackcheck
+│  • directoryscan
+│  • exposedfiles
+│  • misconfigcheck
+│  • cvecheck
+│  • hashidentify
+│  • hashcheck
+│  • bcryptcheck
+│  • passwordstrength
+│  • leakcheck
+│  • metadata
+│  • filehash
+│  • malwarecheck
+│  • urlscan
+│  • phishcheck
+│  • nmap
+│  • ipinfo
+│  • nglattack
+│  • securitymenu
 │
 ╰─⊷
 
 ╭─⊷ *🎨 LOGO DESIGN STUDIO*
 │
-├─⊷ *🌟 PREMIUM METALS*
 │  • goldlogo
 │  • silverlogo
 │  • platinumlogo
@@ -1851,8 +1871,6 @@ case 1: {
 │  • steelogo
 │  • copperlogo
 │  • titaniumlogo
-│
-├─⊷ *🔥 ELEMENTAL EFFECTS*
 │  • firelogo
 │  • icelogo
 │  • iceglowlogo
@@ -1860,24 +1878,20 @@ case 1: {
 │  • rainbowlogo
 │  • sunlogo
 │  • moonlogo
-│
-├─⊷ *🎭 MYTHICAL & MAGICAL*
 │  • dragonlogo
 │  • phoenixlogo
 │  • wizardlogo
 │  • crystallogo
 │  • darkmagiclogo
-│
-├─⊷ *🌌 DARK & GOTHIC*
 │  • shadowlogo
 │  • smokelogo
 │  • bloodlogo
-│
-├─⊷ *💫 GLOW & NEON*
 │  • neonlogo
 │  • glowlogo
 │  • gradientlogo
 │  • matrixlogo
+│  • aqualogo
+│  • logomenu
 │
 ╰─⊷
 
@@ -3107,8 +3121,6 @@ case 3: {
 │ sportsmenu
 └───────────────`,
 `┌──⌈ \`ETHICAL HACKING\` ⌋
-│
-├─⌈ \`RECON & OSINT\` ⌋
 │ whois
 │ dnslookup
 │ subdomain
@@ -3119,8 +3131,6 @@ case 3: {
 │ traceroute
 │ asnlookup
 │ shodan
-│
-├─⌈ \`NETWORK ANALYSIS\` ⌋
 │ pinghost
 │ latency
 │ sslcheck
@@ -3129,8 +3139,6 @@ case 3: {
 │ firewallcheck
 │ maclookup
 │ bandwidthtest
-│
-├─⌈ \`WEB SECURITY\` ⌋
 │ securityheaders
 │ wafdetect
 │ robotscheck
@@ -3139,8 +3147,6 @@ case 3: {
 │ techstack
 │ cookiescan
 │ redirectcheck
-│
-├─⌈ \`VULNERABILITY CHECKS\` ⌋
 │ xsscheck
 │ sqlicheck
 │ csrfcheck
@@ -3149,21 +3155,20 @@ case 3: {
 │ exposedfiles
 │ misconfigcheck
 │ cvecheck
-│
-├─⌈ \`PASSWORD & HASH TOOLS\` ⌋
 │ hashidentify
 │ hashcheck
 │ bcryptcheck
 │ passwordstrength
 │ leakcheck
-│
-├─⌈ \`FORENSICS & ANALYSIS\` ⌋
 │ metadata
 │ filehash
 │ malwarecheck
 │ urlscan
 │ phishcheck
-│
+│ nmap
+│ ipinfo
+│ nglattack
+│ securitymenu
 └───────────────`,
 `┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
 │ goldlogo
@@ -3982,39 +3987,59 @@ case 4: {
 
 ╭─⊷ *🛡️ ETHICAL HACKING*
 │
-├─⊷ *RECON & OSINT*
-│  • whois • dnslookup • subdomain
-│  • reverseip • geoip • portscan
-│  • headers • traceroute • asnlookup • shodan
-│
-├─⊷ *NETWORK ANALYSIS*
-│  • pinghost • latency • sslcheck
-│  • tlsinfo • openports • firewallcheck
-│  • maclookup • bandwidthtest
-│
-├─⊷ *WEB SECURITY*
-│  • securityheaders • wafdetect • robotscheck
-│  • sitemap • cmsdetect • techstack
-│  • cookiescan • redirectcheck
-│
-├─⊷ *VULNERABILITY CHECKS*
-│  • xsscheck • sqlicheck • csrfcheck
-│  • clickjackcheck • directoryscan
-│  • exposedfiles • misconfigcheck • cvecheck
-│
-├─⊷ *PASSWORD & HASH TOOLS*
-│  • hashidentify • hashcheck • bcryptcheck
-│  • passwordstrength • leakcheck
-│
-├─⊷ *FORENSICS & ANALYSIS*
-│  • metadata • filehash • malwarecheck
-│  • urlscan • phishcheck
+│  • whois
+│  • dnslookup
+│  • subdomain
+│  • reverseip
+│  • geoip
+│  • portscan
+│  • headers
+│  • traceroute
+│  • asnlookup
+│  • shodan
+│  • pinghost
+│  • latency
+│  • sslcheck
+│  • tlsinfo
+│  • openports
+│  • firewallcheck
+│  • maclookup
+│  • bandwidthtest
+│  • securityheaders
+│  • wafdetect
+│  • robotscheck
+│  • sitemap
+│  • cmsdetect
+│  • techstack
+│  • cookiescan
+│  • redirectcheck
+│  • xsscheck
+│  • sqlicheck
+│  • csrfcheck
+│  • clickjackcheck
+│  • directoryscan
+│  • exposedfiles
+│  • misconfigcheck
+│  • cvecheck
+│  • hashidentify
+│  • hashcheck
+│  • bcryptcheck
+│  • passwordstrength
+│  • leakcheck
+│  • metadata
+│  • filehash
+│  • malwarecheck
+│  • urlscan
+│  • phishcheck
+│  • nmap
+│  • ipinfo
+│  • nglattack
+│  • securitymenu
 │
 ╰─⊷
 
 ╭─⊷ *🎨 LOGO DESIGN STUDIO*
 │
-├─⊷ *🌟 PREMIUM METALS*
 │  • goldlogo
 │  • silverlogo
 │  • platinumlogo
@@ -4024,8 +4049,6 @@ case 4: {
 │  • steelogo
 │  • copperlogo
 │  • titaniumlogo
-│
-├─⊷ *🔥 ELEMENTAL EFFECTS*
 │  • firelogo
 │  • icelogo
 │  • iceglowlogo
@@ -4034,25 +4057,18 @@ case 4: {
 │  • rainbowlogo
 │  • sunlogo
 │  • moonlogo
-│
-├─⊷ *🎭 MYTHICAL & MAGICAL*
 │  • dragonlogo
 │  • phoenixlogo
 │  • wizardlogo
 │  • crystallogo
 │  • darkmagiclogo
-│
-├─⊷ *🌌 DARK & GOTHIC*
 │  • shadowlogo
 │  • smokelogo
 │  • bloodlogo
-│
-├─⊷ *💫 GLOW & NEON EFFECTS*
 │  • neonlogo
 │  • glowlogo
-│
-├─⊷ *🤖 TECH & FUTURISTIC*
 │  • matrixlogo
+│  • logomenu
 │
 ╰─⊷
 
@@ -5747,39 +5763,59 @@ case 5: {
 
 ╭─⊷ *🛡️ ETHICAL HACKING*
 │
-├─⊷ *RECON & OSINT*
-│  • whois • dnslookup • subdomain
-│  • reverseip • geoip • portscan
-│  • headers • traceroute • asnlookup • shodan
-│
-├─⊷ *NETWORK ANALYSIS*
-│  • pinghost • latency • sslcheck
-│  • tlsinfo • openports • firewallcheck
-│  • maclookup • bandwidthtest
-│
-├─⊷ *WEB SECURITY*
-│  • securityheaders • wafdetect • robotscheck
-│  • sitemap • cmsdetect • techstack
-│  • cookiescan • redirectcheck
-│
-├─⊷ *VULNERABILITY CHECKS*
-│  • xsscheck • sqlicheck • csrfcheck
-│  • clickjackcheck • directoryscan
-│  • exposedfiles • misconfigcheck • cvecheck
-│
-├─⊷ *PASSWORD & HASH TOOLS*
-│  • hashidentify • hashcheck • bcryptcheck
-│  • passwordstrength • leakcheck
-│
-├─⊷ *FORENSICS & ANALYSIS*
-│  • metadata • filehash • malwarecheck
-│  • urlscan • phishcheck
+│  • whois
+│  • dnslookup
+│  • subdomain
+│  • reverseip
+│  • geoip
+│  • portscan
+│  • headers
+│  • traceroute
+│  • asnlookup
+│  • shodan
+│  • pinghost
+│  • latency
+│  • sslcheck
+│  • tlsinfo
+│  • openports
+│  • firewallcheck
+│  • maclookup
+│  • bandwidthtest
+│  • securityheaders
+│  • wafdetect
+│  • robotscheck
+│  • sitemap
+│  • cmsdetect
+│  • techstack
+│  • cookiescan
+│  • redirectcheck
+│  • xsscheck
+│  • sqlicheck
+│  • csrfcheck
+│  • clickjackcheck
+│  • directoryscan
+│  • exposedfiles
+│  • misconfigcheck
+│  • cvecheck
+│  • hashidentify
+│  • hashcheck
+│  • bcryptcheck
+│  • passwordstrength
+│  • leakcheck
+│  • metadata
+│  • filehash
+│  • malwarecheck
+│  • urlscan
+│  • phishcheck
+│  • nmap
+│  • ipinfo
+│  • nglattack
+│  • securitymenu
 │
 ╰─⊷
 
 ╭─⊷ *🎨 LOGO DESIGN STUDIO*
 │
-├─⊷ *🌟 PREMIUM METALS*
 │  • goldlogo
 │  • silverlogo
 │  • platinumlogo
@@ -5789,8 +5825,6 @@ case 5: {
 │  • steelogo
 │  • copperlogo
 │  • titaniumlogo
-│
-├─⊷ *🔥 ELEMENTAL EFFECTS*
 │  • firelogo
 │  • icelogo
 │  • iceglowlogo
@@ -5799,25 +5833,18 @@ case 5: {
 │  • rainbowlogo
 │  • sunlogo
 │  • moonlogo
-│
-├─⊷ *🎭 MYTHICAL & MAGICAL*
 │  • dragonlogo
 │  • phoenixlogo
 │  • wizardlogo
 │  • crystallogo
 │  • darkmagiclogo
-│
-├─⊷ *🌌 DARK & GOTHIC*
 │  • shadowlogo
 │  • smokelogo
 │  • bloodlogo
-│
-├─⊷ *💫 GLOW & NEON EFFECTS*
 │  • neonlogo
 │  • glowlogo
-│
-├─⊷ *🤖 TECH & FUTURISTIC*
 │  • matrixlogo
+│  • logomenu
 │
 ╰─⊷
 
@@ -8203,8 +8230,6 @@ case 7: {
 │ sportsmenu
 └───────────────`,
 `┌──⌈ \`ETHICAL HACKING\` ⌋
-│
-├─⌈ \`RECON & OSINT\` ⌋
 │ whois
 │ dnslookup
 │ subdomain
@@ -8215,8 +8240,6 @@ case 7: {
 │ traceroute
 │ asnlookup
 │ shodan
-│
-├─⌈ \`NETWORK ANALYSIS\` ⌋
 │ pinghost
 │ latency
 │ sslcheck
@@ -8225,8 +8248,6 @@ case 7: {
 │ firewallcheck
 │ maclookup
 │ bandwidthtest
-│
-├─⌈ \`WEB SECURITY\` ⌋
 │ securityheaders
 │ wafdetect
 │ robotscheck
@@ -8235,8 +8256,6 @@ case 7: {
 │ techstack
 │ cookiescan
 │ redirectcheck
-│
-├─⌈ \`VULNERABILITY CHECKS\` ⌋
 │ xsscheck
 │ sqlicheck
 │ csrfcheck
@@ -8245,21 +8264,20 @@ case 7: {
 │ exposedfiles
 │ misconfigcheck
 │ cvecheck
-│
-├─⌈ \`PASSWORD & HASH TOOLS\` ⌋
 │ hashidentify
 │ hashcheck
 │ bcryptcheck
 │ passwordstrength
 │ leakcheck
-│
-├─⌈ \`FORENSICS & ANALYSIS\` ⌋
 │ metadata
 │ filehash
 │ malwarecheck
 │ urlscan
 │ phishcheck
-│
+│ nmap
+│ ipinfo
+│ nglattack
+│ securitymenu
 └───────────────`,
 `┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
 │ goldlogo

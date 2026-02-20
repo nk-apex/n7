@@ -4100,6 +4100,17 @@ initDatabase().catch(() => {});
 // ====== MAIN BOT FUNCTION ======
 async function startBot(loginMode = 'auto', loginData = null) {
     try {
+        if (SOCKET_INSTANCE) {
+            try {
+                stopHeartbeat();
+                SOCKET_INSTANCE.ev.removeAllListeners();
+                SOCKET_INSTANCE.ws.close();
+            } catch (closeErr) {}
+            SOCKET_INSTANCE = null;
+            currentSock = null;
+            await new Promise(r => setTimeout(r, 2000));
+        }
+
         UltraCleanLogger.info('🚀 Initializing WhatsApp connection...');
         
         // Handle different login modes
