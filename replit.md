@@ -20,14 +20,15 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   `commands/`: Holds command handlers by category.
 
 **Database Integration:**
-*   **Supabase (PostgreSQL)**: All bot data is dual-written to local JSON and Supabase for portability. Local JSON serves as the primary, fast read source, with Supabase as a fallback.
-*   **Fallback Mechanism**: The bot remains fully functional using local JSON even if Supabase is unavailable.
-*   **Module**: `lib/supabase.js` manages connections, health checks, and CRUD operations.
-*   **Tables**: 13 tables are defined, covering bot configurations, warnings, sudoers, chatbot data, antidelete, welcome/goodbye, group features, and auto-configurations.
+*   **Replit PostgreSQL (Neon-backed)**: All bot data is stored in PostgreSQL via DATABASE_URL. Replaced Supabase with direct PostgreSQL using the `pg` library (Feb 2026).
+*   **Fallback Mechanism**: The bot remains fully functional using local JSON even if PostgreSQL is unavailable.
+*   **Module**: `lib/supabase.js` manages connections, health checks, and CRUD operations (name kept for backward compatibility).
+*   **Tables**: 14 tables are defined, covering bot configurations, warnings, sudoers, chatbot data, antidelete, welcome/goodbye, group features, auto-configurations, and media storage.
+*   **Periodic Cleanup**: Auto-cleans antidelete messages, statuses, and media older than 24 hours every 30 minutes to prevent storage bloat.
 
 **Key Features & Implementations:**
 
-*   **Antidelete System**: Caches messages to detect and resend deleted content, supporting both private and public modes. Media files are dual-written to local disk and Supabase Storage (bucket: `antidelete-media`). On deletion, retrieves from Supabase if local file is missing, then auto-deletes from Supabase after successful retrieval. Message metadata stored in `antidelete_messages` and `antidelete_statuses` tables.
+*   **Antidelete System**: Caches messages to detect and resend deleted content, supporting both private and public modes. Media files stored in PostgreSQL `media_store` table instead of local disk. Message metadata stored in `antidelete_messages` and `antidelete_statuses` tables. All data auto-cleaned after 24 hours.
 *   **W.O.L.F Chatbot**: Integrates multiple AI models (GPT-5, Copilot, Claude, Grok, Blackbox, Google Bard, Perplexity) with automatic fallback. It features conversational memory, context-aware prompting, and interactive media capabilities (image generation, music/video).
 *   **Anti-ViewOnce System**: Detects and reveals ViewOnce messages, with options for private or public display.
 *   **Bot Mode System**: Allows operation in `public`, `groups`, `dms`, or `silent` (owner-only) modes.

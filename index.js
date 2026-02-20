@@ -3927,32 +3927,32 @@ prefixCache = loadPrefixFromFiles();
 isPrefixless = prefixCache === '' ? true : false;
 updateTerminalHeader();
 
-// ====== SUPABASE DATABASE INIT ======
-async function initSupabase() {
+// ====== DATABASE INIT ======
+async function initDatabase() {
     try {
-        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-            UltraCleanLogger.info('💾 Supabase: No credentials found, using local JSON storage');
+        if (!process.env.DATABASE_URL) {
+            UltraCleanLogger.info('💾 Database: No DATABASE_URL found, using local JSON storage');
             return false;
         }
-        UltraCleanLogger.info('💾 Supabase: Connecting to database...');
+        UltraCleanLogger.info('💾 Database: Connecting to PostgreSQL...');
         const ready = await supabaseDb.initTables();
         if (ready && supabaseDb.isAvailable()) {
-            UltraCleanLogger.success('💾 Supabase: Database connected & tables ready');
+            UltraCleanLogger.success('💾 Database: PostgreSQL connected & tables ready');
             await runDataMigrations();
             return true;
         } else {
-            UltraCleanLogger.info('💾 Supabase: Tables not ready yet. Run supabase_setup.sql in your Supabase SQL Editor, then restart the bot.');
+            UltraCleanLogger.info('💾 Database: Tables not ready yet, using local JSON fallback.');
             return false;
         }
     } catch (err) {
-        UltraCleanLogger.error(`💾 Supabase: Init error - ${err.message}`);
+        UltraCleanLogger.error(`💾 Database: Init error - ${err.message}`);
         return false;
     }
 }
 
 async function runDataMigrations() {
     try {
-        UltraCleanLogger.info('💾 Supabase: Running data migrations...');
+        UltraCleanLogger.info('💾 Database: Running data migrations...');
         await migrateSudoToSupabase();
         await migrateWarningsToSupabase();
 
@@ -3973,13 +3973,13 @@ async function runDataMigrations() {
             await supabaseDb.migrateJSONToConfig(file, key);
         }
 
-        UltraCleanLogger.success('💾 Supabase: Data migration complete');
+        UltraCleanLogger.success('💾 Database: Data migration complete');
     } catch (err) {
-        UltraCleanLogger.error(`💾 Supabase: Migration error - ${err.message}`);
+        UltraCleanLogger.error(`💾 Database: Migration error - ${err.message}`);
     }
 }
 
-initSupabase().catch(() => {});
+initDatabase().catch(() => {});
 
 // ====== MAIN BOT FUNCTION ======
 async function startBot(loginMode = 'auto', loginData = null) {
