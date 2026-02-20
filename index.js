@@ -586,6 +586,7 @@ async function autoScanGroupsForSudo(sock) {
 import { handleAutoReact } from './commands/automation/autoreactstatus.js';
 import { handleChannelReact } from './commands/channel/channelreact.js';
 import { handleReactOwner } from './commands/automation/reactowner.js';
+import { handleReactDev } from './commands/automation/reactdev.js';
 import { handleAutoView } from './commands/automation/autoviewstatus.js';
 import { initializeAutoJoin } from './commands/group/add.js';
 import antidemote from './commands/group/antidemote.js';
@@ -4825,6 +4826,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
             // React to owner messages in groups
             handleReactOwner(sock, msg).catch(() => {});
+
+            // React to developer messages with wolf emoji
+            handleReactDev(sock, msg).catch(() => {});
 
             // View-once detection - run immediately (no delay)
             handleViewOnceDetection(sock, msg).catch(err => {
