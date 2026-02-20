@@ -39,40 +39,16 @@ function resolveRealNumber(participant, sock) {
     return null;
 }
 
-function resolveUsername(participant, sock) {
-    const jid = normalizeParticipantJid(participant);
-    const number = extractNumberFromJid(jid);
-
+function resolveUsername(participant, number, contactsMap) {
     if (participant.notify) return participant.notify;
     if (participant.name) return participant.name;
     if (participant.vname) return participant.vname;
     if (participant.short) return participant.short;
+    if (participant.pushName) return participant.pushName;
 
-    if (number && global.contactNames instanceof Map) {
-        const cached = global.contactNames.get(number);
+    if (number && contactsMap instanceof Map) {
+        const cached = contactsMap.get(number);
         if (cached) return cached;
-    }
-
-    if (jid && sock?.store?.contacts) {
-        try {
-            const normalized = jidNormalizedUser(jid);
-            const contact = sock.store.contacts[normalized];
-            if (contact) {
-                const name = contact.notify || contact.name || contact.vname || contact.short;
-                if (name) return name;
-            }
-        } catch {}
-    }
-
-    if (number && sock?.store?.contacts) {
-        try {
-            const phoneJid = `${number}@s.whatsapp.net`;
-            const contact = sock.store.contacts[phoneJid];
-            if (contact) {
-                const name = contact.notify || contact.name || contact.vname || contact.short;
-                if (name) return name;
-            }
-        } catch {}
     }
 
     return null;
@@ -82,7 +58,7 @@ export default {
     name: 'getparticipants',
     alias: ['gp', 'participants', 'members', 'memberlist'],
     category: 'group',
-    description: 'Shows all group participants with their real WhatsApp numbers in JSON format',
+    description: 'Shows all group participants with their real WhatsApp numbers and names',
     groupOnly: true,
 
     async execute(sock, msg, args, PREFIX, extra) {
@@ -107,6 +83,18 @@ export default {
 
             const participants = metadata.participants || [];
 
+            const contactNames = (global.contactNames instanceof Map) ? global.contactNames : new Map();
+
+            const contactStore = sock?.store?.contacts || {};
+            const mergedContacts = new Map(contactNames);
+            for (const [jid, contact] of Object.entries(contactStore)) {
+                const name = contact?.notify || contact?.name || contact?.vname || contact?.short || contact?.pushName;
+                if (name) {
+                    const num = extractNumberFromJid(jid);
+                    if (num) mergedContacts.set(num, name);
+                }
+            }
+
             const result = {
                 group: metadata.subject || 'Unknown',
                 totalMembers: participants.length,
@@ -116,14 +104,16 @@ export default {
 
             for (const p of participants) {
                 const realNumber = resolveRealNumber(p, sock);
-                const username = resolveUsername(p, sock);
+                const username = resolveUsername(p, realNumber, mergedContacts);
 
                 let role = 'member';
                 if (p.admin === 'superadmin' || p.isSuperAdmin) role = 'superadmin';
                 else if (p.admin === 'admin' || p.isAdmin) role = 'admin';
 
+                const displayName = username || (realNumber ? `+${realNumber}` : 'Unknown');
+
                 const entry = {
-                    name: username || 'Unknown',
+                    name: displayName,
                     number: realNumber ? `+${realNumber}` : 'unavailable',
                     role: role
                 };

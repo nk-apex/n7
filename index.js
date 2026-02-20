@@ -4774,10 +4774,11 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     const cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
                     if (!cachedMsg || !cachedMsg.message) continue;
                     
-                    const cachedContent = normalizeMessageContent(cachedMsg.message) || cachedMsg.message;
-                    if (!cachedContent) continue;
-                    
-                    const viewOnce = detectViewOnceMedia(cachedContent);
+                    let viewOnce = detectViewOnceMedia(cachedMsg.message);
+                    if (!viewOnce) {
+                        const cachedContent = normalizeMessageContent(cachedMsg.message);
+                        if (cachedContent) viewOnce = detectViewOnceMedia(cachedContent);
+                    }
                     if (!viewOnce) continue;
                     
                     const config = loadAntiViewOnceConfig();
@@ -4795,22 +4796,48 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     
                     const silentLogger = { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) };
                     
-                    const buffer = await Promise.race([
-                        downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
-                        new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
-                    ]);
-                    
-                    if (buffer && buffer.length > 0) {
-                        const normalizedOwner = jidNormalizedUser(ownerJid);
-                        const reactorShort = (reactorJid || 'unknown').split('@')[0].split(':')[0];
-                        const senderJid = reactedKey.participant || reactedChatId;
+                    try {
+                        const buffer = await Promise.race([
+                            downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
+                            new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
+                        ]);
                         
-                        const mediaPayload = {};
-                        mediaPayload[type] = buffer;
-                        mediaPayload.caption = await generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, null, sock);
-                        
-                        await sock.sendMessage(normalizedOwner, mediaPayload);
-                        UltraCleanLogger.info(`🔐 View-once captured via reaction ${reactionEmoji} from ${reactorShort}`);
+                        if (buffer && buffer.length > 0) {
+                            const normalizedOwner = jidNormalizedUser(ownerJid);
+                            const reactorShort = (reactorJid || 'unknown').split('@')[0].split(':')[0];
+                            const senderJid = reactedKey.participant || reactedChatId;
+                            
+                            const mediaPayload = {};
+                            mediaPayload[type] = buffer;
+                            mediaPayload.caption = await generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, null, sock);
+                            
+                            await sock.sendMessage(normalizedOwner, mediaPayload);
+                            UltraCleanLogger.info(`🔐 View-once captured via reaction ${reactionEmoji} from ${reactorShort}`);
+                        }
+                    } catch (dlErr) {
+                        try {
+                            const { downloadContentFromMessage } = await import('@whiskeysockets/baileys');
+                            const stream = await Promise.race([
+                                downloadContentFromMessage(cleanMedia, type),
+                                new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
+                            ]);
+                            const chunks = [];
+                            for await (const chunk of stream) {
+                                chunks.push(chunk);
+                                if (chunks.length > 500) break;
+                            }
+                            const buffer = Buffer.concat(chunks);
+                            if (buffer && buffer.length > 0) {
+                                const normalizedOwner = jidNormalizedUser(ownerJid);
+                                const reactorShort = (reactorJid || 'unknown').split('@')[0].split(':')[0];
+                                const senderJid = reactedKey.participant || reactedChatId;
+                                const mediaPayload = {};
+                                mediaPayload[type] = buffer;
+                                mediaPayload.caption = await generateRetrievalCaption(senderJid, reactorJid || 'unknown', reactedChatId, null, sock);
+                                await sock.sendMessage(normalizedOwner, mediaPayload);
+                                UltraCleanLogger.info(`🔐 View-once captured via reaction ${reactionEmoji} (fallback) from ${reactorShort}`);
+                            }
+                        } catch {}
                     }
                 } catch (err) {
                     if (err.message !== 'dl_timeout') {
@@ -5494,54 +5521,50 @@ async function handleIncomingMessage(sock, msg) {
                 const cachedMsg = store?.getMessage(reactedChatId, reactedMsgId);
                 
                 if (cachedMsg) {
-                    const cachedContent = normalizeMessageContent(cachedMsg.message) || cachedMsg.message;
+                    let viewOnceReactCheck = detectViewOnceMedia(cachedMsg.message || cachedMsg);
+                    if (!viewOnceReactCheck) {
+                        const cachedContent = normalizeMessageContent(cachedMsg.message || cachedMsg);
+                        if (cachedContent) viewOnceReactCheck = detectViewOnceMedia(cachedContent);
+                    }
                     
-                    if (cachedContent) {
-                        const viewOnceReactCheck = detectViewOnceMedia(cachedContent);
+                    if (viewOnceReactCheck) {
+                        const config = loadAntiViewOnceConfig();
+                        const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
                         
-                        if (viewOnceReactCheck) {
-                            const config = loadAntiViewOnceConfig();
-                            const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
+                        if (ownerJid) {
+                            const { type, media } = viewOnceReactCheck;
+                            const cleanMedia = { ...media };
+                            delete cleanMedia.viewOnce;
                             
-                            if (ownerJid) {
-                                const viewOnce = viewOnceReactCheck;
+                            const dlMsg = { 
+                                key: { remoteJid: reactedChatId, id: reactedMsgId, participant: reactedKey.participant, fromMe: reactedKey.fromMe }, 
+                                message: { [`${type}Message`]: cleanMedia } 
+                            };
+                            
+                            const silentLogger = { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) };
+                            
+                            try {
+                                const buffer = await Promise.race([
+                                    downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
+                                    new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
+                                ]);
                                 
-                                if (viewOnce) {
-                                    const { type, media } = viewOnce;
-                                    const cleanMedia = { ...media };
-                                    delete cleanMedia.viewOnce;
+                                if (buffer && buffer.length > 0) {
+                                    const normalizedOwner = jidNormalizedUser(ownerJid);
+                                    const reactorJid2 = msg.key.participant || msg.key.remoteJid;
+                                    const reactorShort = (reactorJid2).split('@')[0].split(':')[0];
+                                    const senderJid2 = reactedKey.participant || reactedChatId;
+                                    const senderShort = senderJid2.split('@')[0].split(':')[0];
                                     
-                                    const dlMsg = { 
-                                        key: { remoteJid: reactedChatId, id: reactedMsgId, participant: reactedKey.participant, fromMe: reactedKey.fromMe }, 
-                                        message: { [`${type}Message`]: cleanMedia } 
-                                    };
+                                    const mediaPayload = {};
+                                    mediaPayload[type] = buffer;
+                                    mediaPayload.caption = await generateRetrievalCaption(senderJid2, reactorJid2, reactedChatId, null, sock);
                                     
-                                    const silentLogger = { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) };
-                                    
-                                    try {
-                                        const buffer = await Promise.race([
-                                            downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
-                                            new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
-                                        ]);
-                                        
-                                        if (buffer && buffer.length > 0) {
-                                            const normalizedOwner = jidNormalizedUser(ownerJid);
-                                            const reactorJid2 = msg.key.participant || msg.key.remoteJid;
-                                            const reactorShort = (reactorJid2).split('@')[0].split(':')[0];
-                                            const senderJid2 = reactedKey.participant || reactedChatId;
-                                            const senderShort = senderJid2.split('@')[0].split(':')[0];
-                                            
-                                            const mediaPayload = {};
-                                            mediaPayload[type] = buffer;
-                                            mediaPayload.caption = await generateRetrievalCaption(senderJid2, reactorJid2, reactedChatId, null, sock);
-                                            
-                                            await sock.sendMessage(normalizedOwner, mediaPayload);
-                                            UltraCleanLogger.info(`🔐 View-once auto-captured via reaction ${reactionMsg.text} from ${reactorShort} on ${senderShort}'s message`);
-                                        }
-                                    } catch (dlErr) {
-                                        UltraCleanLogger.warning(`🔐 View-once reaction capture failed: ${dlErr.message}`);
-                                    }
+                                    await sock.sendMessage(normalizedOwner, mediaPayload);
+                                    UltraCleanLogger.info(`🔐 View-once auto-captured via reaction ${reactionMsg.text} from ${reactorShort} on ${senderShort}'s message`);
                                 }
+                            } catch (dlErr) {
+                                UltraCleanLogger.warning(`🔐 View-once reaction capture failed: ${dlErr.message}`);
                             }
                         }
                     }
