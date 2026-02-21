@@ -11,22 +11,15 @@ export default {
     alias: ['js', 'eval', 'node', 'runjs'],
     description: 'Execute JavaScript code',
     category: 'utility',
-    ownerOnly: true,
+    ownerOnly: false,
     usage: 'javascript <code>',
 
     async execute(sock, msg, args, PREFIX, extra) {
         const chatId = msg.key.remoteJid;
-        const isOwner = extra?.isOwner?.() || false;
-
-        if (!isOwner) {
-            return await sock.sendMessage(chatId, {
-                text: '❌ This command is owner-only.'
-            }, { quoted: msg });
-        }
 
         if (!args.length) {
             return await sock.sendMessage(chatId, {
-                text: `╭─⌈ 💻 *JAVASCRIPT EXECUTOR* ⌋\n│\n├─⊷ *${PREFIX}js <code>*\n│  └⊷ Run JavaScript code\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}js console.log("Hello World")\n│  └⊷ ${PREFIX}js Math.random()\n│  └⊷ ${PREFIX}js [1,2,3].map(x => x*2)\n│\n├─⊷ *Features:*\n│  └⊷ 15s timeout\n│  └⊷ Owner-only (full access)\n│  └⊷ Auto-prints last expression\n│\n╰───────────────\n> *WOLFBOT*`
+                text: `╭─⌈ 💻 *JAVASCRIPT EXECUTOR* ⌋\n│\n├─⊷ *${PREFIX}js <code>*\n│  └⊷ Run JavaScript code\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}js console.log("Hello World")\n│  └⊷ ${PREFIX}js Math.random()\n│  └⊷ ${PREFIX}js [1,2,3].map(x => x*2)\n│\n├─⊷ *Features:*\n│  └⊷ 15s timeout\n│  └⊷ Auto-prints last expression\n│\n╰───────────────\n> *WOLFBOT*`
             }, { quoted: msg });
         }
 

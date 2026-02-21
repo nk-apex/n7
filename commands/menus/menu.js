@@ -5590,327 +5590,242 @@ case 5: {
   // Apply faded effect to the info section
   const fadedInfoSection = createFadedEffect(infoSection);
 
-  // ========== MENU LIST WITH BOX STYLE ==========
-  const commandsText = `╭─⊷ *🏠 GROUP MANAGEMENT*
+  // ========== MENU CATEGORIES WITH "READ MORE" PER CATEGORY ==========
+  const categories = [];
+
+  categories.push(`╭─⊷ *🏠 GROUP MANAGEMENT*
 │
 ├─⊷ *🛡️ ADMIN & MODERATION*
-│  • add
-│  • promote
-│  • demote
-│  • kick
-│  • kickall
-│  • ban
-│  • unban
-│  • banlist
-│  • clearbanlist
-│  • warn
-│  • resetwarn
-│  • setwarn
-│  • mute
-│  • unmute
-│  • gctime
-│  • antileave
-│  • antilink
-│  • welcome
+│  • add • promote • demote
+│  • kick • kickall • ban
+│  • unban • banlist • clearbanlist
+│  • warn • resetwarn • setwarn
+│  • mute • unmute • gctime
+│  • antileave • antilink • welcome
+│  • goodbye • approveall • rejectall
+│  • creategroup • fangwarn
 │
 ├─⊷ *🚫 AUTO-MODERATION*
-│  • antisticker
-│  • antiviewonce
-│  • antilink
-│  • antiimage
-│  • antivideo
-│  • antiaudio
-│  • antimention
-│  • antistatusmention
-│  • antigrouplink
+│  • antisticker • antiviewonce
+│  • antilink • antiimage
+│  • antivideo • antiaudio
+│  • antimention • antistatusmention
+│  • antigrouplink • antidemote
+│  • antipromote • antibug
 │
 ├─⊷ *📊 GROUP INFO & TOOLS*
-│  • groupinfo
-│  • tagadmin
-│  • tagall
-│  • hidetag
-│  • link
-│  • invite
-│  • revoke
-│  • setdesc
-│  • fangtrace
-│  • getgpp
+│  • groupinfo • tagadmin
+│  • tagall • hidetag
+│  • link • invite • revoke
+│  • setdesc • fangtrace
+│  • getgpp • getnumber • vcf
+│  • getparticipants
+│
+╰─⊷`);
+
+  categories.push(`╭─⊷ *👑 OWNER CONTROLS*
+│
+├─⊷ *⚡ CORE MANAGEMENT*
+│  • setbotname • setowner
+│  • setprefix • iamowner
+│  • about • block • unblock
+│  • blockcheck • silent
+│  • anticall • mode • online
+│  • setpp • repo • delete
+│  • privacy • tostatus
+│
+├─⊷ *🔐 ANTIDELETE & VIEWONCE*
+│  • antidelete • antideletestatus
+│  • antiviewonce • antiedit
+│  • vvmode • viewer
+│
+├─⊷ *👤 SUDO MANAGEMENT*
+│  • addsudo • delsudo • listsudo
+│  • checksudo • clearsudo
+│  • sudoinfo • sudomode
+│  • sudodebug • linksudo • mysudo
+│
+├─⊷ *🔄 SYSTEM & MAINTENANCE*
+│  • restart • reload • reloadenv
+│  • getsettings • setsettings
+│  • test • disk • hostip
+│  • findcmds • clearcache
+│  • shutdown • start • disp
+│  • clearsupabase • pannel
+│
+╰─⊷`);
+
+  categories.push(`╭─⊷ *⚙️ AUTOMATION*
+│
+│  • autoread • autotyping
+│  • autorecording • autoreact
+│  • autoreactstatus • autobio
+│  • autorec • autoviewstatus
+│  • reactdev • reactowner
 │
 ╰─⊷
 
 ╭─⊷ *🎨 MENU COMMANDS*
 │
-│  • togglemenuinfo
-│  • setmenuimage
-│  • resetmenuinfo
-│  • menustyle
+│  • togglemenuinfo • setmenuimage
+│  • resetmenuinfo • menustyle
 │
-╰─⊷
+╰─⊷`);
 
-╭─⊷ *👑 OWNER CONTROLS*
-│
-├─⊷ *⚡ CORE MANAGEMENT*
-│  • setbotname
-│  • setowner
-│  • setprefix
-│  • iamowner
-│  • about
-│  • block
-│  • unblock
-│  • blockdetect
-│  • silent
-│  • anticall
-│  • mode
-│  • online
-│  • setpp
-│  • repo
-│
-├─⊷ *🔄 SYSTEM & MAINTENANCE*
-│  • restart
-│  • workingreload
-│  • reloadenv
-│  • getsettings
-│  • setsetting
-│  • test
-│  • disk
-│  • hostip
-│  • findcommands
-│
-╰─⊷
-
-╭─⊷ *⚙️ AUTOMATION*
-│
-│  • autoread
-│  • autotyping
-│  • autorecording
-│  • autoreact
-│  • autoreactstatus
-│  • autobio
-│  • autorec
-│
-╰─⊷
-
-╭─⊷ *✨ GENERAL UTILITIES*
+  categories.push(`╭─⊷ *✨ GENERAL UTILITIES*
 │
 ├─⊷ *🔍 INFO & SEARCH*
-│  • alive
-│  • ping
-│  • ping2
-│  • time
-│  • connection
-│  • define
-│  • news
-│  • covid
-│  • iplookup
-│  • getip
-│  • getpp
-│  • getgpp
-│  • prefixinfo
+│  • alive • ping • ping2
+│  • time • connection • define
+│  • news • covid • weather
+│  • wiki • uptime • speed
+│  • iplookup • getip
+│  • getpp • getgpp • prefixinfo
 │
 ├─⊷ *🔗 CONVERSION & MEDIA*
-│  • shorturl
-│  • qrencode
-│  • take
-│  • imgbb
-│  • tiktok
-│  • save
+│  • shorturl • qrencode • qrdecode
+│  • take • save • translate
+│  • tosticker • toimage • toaudio
+│  • tts • vcf • viewvcf
+│  • calc • url • fetch
+│  • screenshot • vv • vv2
+│
+├─⊷ *💻 CODE EXECUTION*
+│  • js • py
 │
 ├─⊷ *📝 PERSONAL TOOLS*
-│  • pair
-│  • resetwarn
-│  • setwarn
+│  • pair • chatbot • stealth
+│  • quoted • inspect
+│
+╰─⊷`);
+
+  categories.push(`╭─⊷ *🎵 MUSIC & MEDIA*
+│
+│  • play • song • lyrics
+│  • spotify • video • video2
+│  • bassboost • trebleboost
+│  • shazam
 │
 ╰─⊷
 
-╭─⊷ *🎵 MUSIC & MEDIA*
-│
-│  • play
-│  • song
-│  • lyrics
-│  • spotify
-│  • video
-│  • video2
-│  • bassboost
-│  • trebleboost
-│
-╰─⊷
-
-╭─⊷ *🤖 MEDIA & AI COMMANDS*
+╭─⊷ *🤖 AI COMMANDS*
 │
 ├─⊷ *⬇️ MEDIA DOWNLOADS*
-│  • youtube
-│  • tiktok
-│  • instagram
-│  • facebook
-│  • snapchat
-│  • apk
+│  • youtube • tiktok
+│  • instagram • facebook
+│  • snapchat • apk
 │
 ├─⊷ *🎨 AI GENERATION*
-│  • gpt
-│  • gemini
-│  • deepseek
-│  • deepseek+
-│  • analyze
-│  • suno
-│  • wolfbot
-│  • videogen
+│  • gpt • gemini • deepseek
+│  • deepseek+ • analyze
+│  • suno • wolfbot • videogen
+│  • jarvis
 │
 ╰─⊷
 
 ╭─⊷ *🖼️ IMAGE TOOLS*
 │
-│  • image
-│  • imagegenerate
-│  • anime
-│  • art
-│  • real
+│  • image • imagegenerate
+│  • anime • art • real
+│  • reverseimage
 │
-╰─⊷
+╰─⊷`);
 
-╭─⊷ *🏆 SPORTS*
+  categories.push(`╭─⊷ *🏆 SPORTS*
 │
-│  • football
-│  • basketball
-│  • cricket
-│  • f1
-│  • nfl
-│  • mma
-│  • tennis
-│  • baseball
-│  • hockey
-│  • golf
-│  • sportsmenu
+│  • football • basketball
+│  • cricket • f1 • nfl
+│  • mma • tennis • baseball
+│  • hockey • golf • sportsmenu
 │
 ╰─⊷
 
 ╭─⊷ *🛡️ ETHICAL HACKING*
 │
-│  • whois
-│  • dnslookup
-│  • subdomain
-│  • reverseip
-│  • geoip
-│  • portscan
-│  • headers
-│  • traceroute
-│  • asnlookup
-│  • shodan
-│  • pinghost
-│  • latency
-│  • sslcheck
-│  • tlsinfo
-│  • openports
-│  • firewallcheck
-│  • maclookup
-│  • bandwidthtest
-│  • securityheaders
-│  • wafdetect
-│  • robotscheck
-│  • sitemap
-│  • cmsdetect
-│  • techstack
-│  • cookiescan
-│  • redirectcheck
-│  • xsscheck
-│  • sqlicheck
-│  • csrfcheck
-│  • clickjackcheck
-│  • directoryscan
-│  • exposedfiles
-│  • misconfigcheck
+├─⊷ *🌐 RECON & OSINT*
+│  • whois • dnslookup • subdomain
+│  • reverseip • geoip • ipinfo
+│  • asnlookup • shodan • nmap
+│
+├─⊷ *📡 NETWORK ANALYSIS*
+│  • portscan • traceroute • pinghost
+│  • latency • openports • maclookup
+│  • bandwidthtest • firewallcheck
+│
+├─⊷ *🔒 WEB SECURITY*
+│  • sslcheck • tlsinfo • securityheaders
+│  • wafdetect • headers • techstack
+│  • cmsdetect • robotscheck • sitemap
+│  • cookiescan • redirectcheck
+│
+├─⊷ *⚠️ VULNERABILITY CHECKS*
+│  • xsscheck • sqlicheck • csrfcheck
+│  • clickjackcheck • directoryscan
+│  • exposedfiles • misconfigcheck
 │  • cvecheck
-│  • hashidentify
-│  • hashcheck
-│  • bcryptcheck
-│  • passwordstrength
+│
+├─⊷ *🔑 PASSWORD & HASH TOOLS*
+│  • hashidentify • hashcheck
+│  • bcryptcheck • passwordstrength
 │  • leakcheck
-│  • metadata
-│  • filehash
-│  • malwarecheck
-│  • urlscan
-│  • phishcheck
-│  • nmap
-│  • ipinfo
-│  • nglattack
+│
+├─⊷ *🔬 FORENSICS & ANALYSIS*
+│  • metadata • filehash • malwarecheck
+│  • urlscan • phishcheck • nglattack
 │  • securitymenu
 │
-╰─⊷
+╰─⊷`);
 
-╭─⊷ *🎨 LOGO DESIGN STUDIO*
+  categories.push(`╭─⊷ *🎨 LOGO DESIGN STUDIO*
 │
-│  • goldlogo
-│  • silverlogo
-│  • platinumlogo
-│  • chromelogo
-│  • diamondlogo
-│  • bronzelogo
-│  • steelogo
-│  • copperlogo
-│  • titaniumlogo
-│  • firelogo
-│  • icelogo
-│  • iceglowlogo
-│  • lightninglogo
-│  • aqualogo
-│  • rainbowlogo
-│  • sunlogo
-│  • moonlogo
-│  • dragonlogo
-│  • phoenixlogo
-│  • wizardlogo
-│  • crystallogo
-│  • darkmagiclogo
-│  • shadowlogo
-│  • smokelogo
-│  • bloodlogo
-│  • neonlogo
-│  • glowlogo
-│  • matrixlogo
+│  • goldlogo • silverlogo
+│  • platinumlogo • chromelogo
+│  • diamondlogo • bronzelogo
+│  • steelogo • copperlogo
+│  • titaniumlogo • firelogo
+│  • icelogo • iceglowlogo
+│  • lightninglogo • aqualogo
+│  • rainbowlogo • sunlogo
+│  • moonlogo • dragonlogo
+│  • phoenixlogo • wizardlogo
+│  • crystallogo • darkmagiclogo
+│  • shadowlogo • smokelogo
+│  • bloodlogo • neonlogo
+│  • glowlogo • matrixlogo
 │  • logomenu
 │
 ╰─⊷
 
 ╭─⊷ *🐙 GITHUB COMMANDS*
 │
-│  • gitclone
-│  • gitinfo
-│  • repo
-│  • commits
-│  • stars
-│  • watchers
-│  • release
+│  • gitclone • gitinfo • repo
+│  • commits • stars
+│  • watchers • release
 │
 ╰─⊷
 
 ╭─⊷ *🌸 ANIME COMMANDS*
 │
-│  • awoo
-│  • bj
-│  • bully
-│  • cringe
-│  • cry
-│  • dance
-│  • glomp
-│  • highfive
-│  • kill
-│  • kiss
-│  • lick
-│  • megumin
-│  • neko
-│  • pat
-│  • shinobu
-│  • trap
-│  • trap2
-│  • waifu
-│  • wink
-│  • yeet
+│  • awoo • bully • cringe
+│  • cry • cuddle • dance
+│  • glomp • highfive • hug
+│  • kill • kiss • lick
+│  • megumin • neko • nom
+│  • pat • shinobu • trap
+│  • trap2 • waifu • wink
+│  • yeet • animemenu
 │
 ╰─⊷
 
-🐺 *POWERED BY WOLF TECH* 🐺`;
+🐺 *POWERED BY WOLF TECH* 🐺`);
+
+  // Build final text with "Read more" between each category
+  let commandsText = categories[0];
+  for (let i = 1; i < categories.length; i++) {
+    commandsText = createReadMoreEffect(commandsText, categories[i]);
+  }
 
   // ========== APPLY "READ MORE" EFFECT ==========
-  // Combine faded info section (visible) and commands (hidden) with "Read more"
   finalText = createReadMoreEffect(fadedInfoSection, commandsText);
   // ========== END "READ MORE" EFFECT ==========
 
