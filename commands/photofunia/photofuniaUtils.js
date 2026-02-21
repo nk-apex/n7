@@ -1,4 +1,7 @@
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
 
 const API_BASE = 'https://apis.xcasper.space/api/photofunia/generate';
@@ -220,23 +223,38 @@ async function generatePhotofunia(effectSlug, options = {}) {
   }
 
   console.log(`🎨 [PHOTOFUNIA] Generating effect: ${effectSlug}`);
-  const res = await axios.get(API_BASE, { params, timeout: 30000, responseType: 'arraybuffer' });
 
-  if (res.headers['content-type']?.includes('image')) {
-    return Buffer.from(res.data);
+  let res;
+  try {
+    res = await axios.get(API_BASE, { params, timeout: 30000 });
+  } catch (err) {
+    res = await axios.get(API_BASE, { params, timeout: 30000, responseType: 'arraybuffer' });
+    if (res.headers['content-type']?.includes('image') || res.headers['content-type']?.includes('gif')) {
+      const isGif = res.headers['content-type']?.includes('gif');
+      return { buffer: Buffer.from(res.data), isGif };
+    }
+    return { buffer: Buffer.from(res.data), isGif: false };
   }
 
-  const text = Buffer.from(res.data).toString('utf-8');
-  try {
-    const json = JSON.parse(text);
-    const imgUrl = json.url || json.image || json.result?.url || json.result?.image || json.data?.url || json.data?.image;
-    if (imgUrl) {
-      const imgRes = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 30000 });
-      return Buffer.from(imgRes.data);
-    }
-  } catch {}
+  const json = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
 
-  return Buffer.from(res.data);
+  const imgUrl = json.imageUrl || json.downloadUrl || json.url || json.image ||
+    json.result?.url || json.result?.image || json.data?.url || json.data?.image ||
+    (json.images && json.images[0]?.url);
+
+  if (imgUrl) {
+    const isGif = imgUrl.endsWith('.gif') || imgUrl.includes('.gif');
+    console.log(`🎨 [PHOTOFUNIA] Downloading result from: ${imgUrl} (isGif: ${isGif})`);
+    const imgRes = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 30000 });
+    return { buffer: Buffer.from(imgRes.data), isGif };
+  }
+
+  if (res.headers?.['content-type']?.includes('image') || res.headers?.['content-type']?.includes('gif')) {
+    const isGif = res.headers['content-type']?.includes('gif');
+    return { buffer: Buffer.from(res.data), isGif };
+  }
+
+  throw new Error('No image URL found in API response');
 }
 
 function isUrl(text) {
@@ -354,6 +372,37 @@ async function getImageUrl(m, sock, textArgs) {
   }
 }
 
+async function sendPhotofuniaResult(sock, chatId, result, caption, msg) {
+  if (!result || !result.buffer || result.buffer.length === 0) {
+    await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
+    return await sock.sendMessage(chatId, { text: 'Failed to generate effect. Try again later.' }, { quoted: msg });
+  }
+
+  if (result.isGif) {
+    try {
+      const tmpDir = path.join(process.cwd(), 'tmp');
+      if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+      const tmpGif = path.join(tmpDir, `pf_${Date.now()}.gif`);
+      const tmpMp4 = path.join(tmpDir, `pf_${Date.now()}.mp4`);
+      fs.writeFileSync(tmpGif, result.buffer);
+      try {
+        execSync(`ffmpeg -y -i "${tmpGif}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}" 2>/dev/null`, { timeout: 30000 });
+        const mp4Buffer = fs.readFileSync(tmpMp4);
+        await sock.sendMessage(chatId, { video: mp4Buffer, gifPlayback: true, caption, mimetype: 'video/mp4' }, { quoted: msg });
+      } catch {
+        await sock.sendMessage(chatId, { video: result.buffer, gifPlayback: true, caption, mimetype: 'video/mp4' }, { quoted: msg });
+      }
+      try { fs.unlinkSync(tmpGif); } catch {}
+      try { fs.unlinkSync(tmpMp4); } catch {}
+    } catch {
+      await sock.sendMessage(chatId, { image: result.buffer, caption }, { quoted: msg });
+    }
+  } else {
+    await sock.sendMessage(chatId, { image: result.buffer, caption, mimetype: 'image/jpeg' }, { quoted: msg });
+  }
+  await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
+}
+
 function createPhotofuniaCommand(effectKey) {
   const effectData = EFFECTS[effectKey];
   if (!effectData) throw new Error(`Unknown PhotoFunia effect: ${effectKey}`);
@@ -388,13 +437,8 @@ function createPhotofuniaCommand(effectKey) {
 
         await sock.sendMessage(chatId, { react: { text: '⏳', key: msg.key } });
         try {
-          const resultBuffer = await generatePhotofunia(effectData.effect, { imageUrl: imgResult.url });
-          if (!resultBuffer || resultBuffer.length === 0) {
-            await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
-            return await sock.sendMessage(chatId, { text: `Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
-          }
-          await sock.sendMessage(chatId, { image: resultBuffer, caption: `*${effectData.name}*\n\nCreated by WOLFBOT` }, { quoted: msg });
-          await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
+          const result = await generatePhotofunia(effectData.effect, { imageUrl: imgResult.url });
+          await sendPhotofuniaResult(sock, chatId, result, `*${effectData.name}*\n\nCreated by WOLFBOT`, msg);
         } catch (error) {
           console.log(`[PHOTOFUNIA] ${cmdName} error:`, error.message);
           await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
@@ -420,13 +464,8 @@ function createPhotofuniaCommand(effectKey) {
           } else {
             options.text = textArgs;
           }
-          const resultBuffer = await generatePhotofunia(effectData.effect, options);
-          if (!resultBuffer || resultBuffer.length === 0) {
-            await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
-            return await sock.sendMessage(chatId, { text: `Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
-          }
-          await sock.sendMessage(chatId, { image: resultBuffer, caption: `*${effectData.name}*\nText: ${textArgs}\n\nCreated by WOLFBOT` }, { quoted: msg });
-          await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
+          const result = await generatePhotofunia(effectData.effect, options);
+          await sendPhotofuniaResult(sock, chatId, result, `*${effectData.name}*\nText: ${textArgs}\n\nCreated by WOLFBOT`, msg);
         } catch (error) {
           console.log(`[PHOTOFUNIA] ${cmdName} error:`, error.message);
           await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
@@ -464,13 +503,8 @@ function createPhotofuniaCommand(effectKey) {
           } else {
             options.text = actualText;
           }
-          const resultBuffer = await generatePhotofunia(effectData.effect, options);
-          if (!resultBuffer || resultBuffer.length === 0) {
-            await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
-            return await sock.sendMessage(chatId, { text: `Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
-          }
-          await sock.sendMessage(chatId, { image: resultBuffer, caption: `*${effectData.name}*\nText: ${actualText}\n\nCreated by WOLFBOT` }, { quoted: msg });
-          await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
+          const result = await generatePhotofunia(effectData.effect, options);
+          await sendPhotofuniaResult(sock, chatId, result, `*${effectData.name}*\nText: ${actualText}\n\nCreated by WOLFBOT`, msg);
         } catch (error) {
           console.log(`[PHOTOFUNIA] ${cmdName} error:`, error.message);
           await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
