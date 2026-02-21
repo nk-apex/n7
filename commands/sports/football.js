@@ -6,7 +6,7 @@ export default {
   name: 'football',
   description: 'Get live football scores, standings, fixtures, top scorers & stats',
   category: 'sports',
-  aliases: ['soccer', 'epl', 'premierleague'],
+  alias: ['soccer', 'epl', 'premierleague'],
   usage: 'football [scores|standings|fixtures|topscorers|stats] [league]',
 
   async execute(sock, m, args, PREFIX) {

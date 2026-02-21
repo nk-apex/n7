@@ -6,7 +6,7 @@ export default {
   name: 'matchstats',
   description: 'Get detailed statistics for a specific match',
   category: 'sports',
-  aliases: ['mstats', 'matchinfo'],
+  alias: ['mstats', 'matchinfo'],
   usage: 'matchstats <matchId>',
 
   async execute(sock, m, args, PREFIX) {

@@ -38,7 +38,7 @@ const EFFECTS = {
   'typewriter': { effect: 'typewriter', name: 'Typewriter', type: 'text', emoji: '⌨️', category: 'lab' },
   'diptych': { effect: 'diptych', name: 'Diptych', type: 'image', emoji: '🖼️', category: 'lab' },
   'badges': { effect: 'badges', name: 'Badges', type: 'text+image', emoji: '🏅', category: 'lab' },
-  'wanted': { effect: 'wanted', name: 'Wanted', type: 'text+image', emoji: '🤠', category: 'lab' },
+  'wanted': { effect: 'wanted', name: 'Wanted', type: 'text+image', emoji: '🤠', category: 'lab', textParams: ['text1', 'text2', 'name', 'reward', 'signed'] },
   'crown': { effect: 'crown', name: 'Crown', type: 'image', emoji: '👑', category: 'lab' },
   'anime': { effect: 'anime', name: 'Anime', type: 'image', emoji: '🎌', category: 'lab' },
   'popart': { effect: 'popart', name: 'Pop Art', type: 'image', emoji: '🎭', category: 'lab' },
@@ -159,7 +159,7 @@ const EFFECTS = {
   'the-book': { effect: 'the-book', name: 'The Book', type: 'text+image', emoji: '📕', category: 'books', textParams: ['text', 'text2'] },
   'very-old-book': { effect: 'very-old-book', name: 'Very Old Book', type: 'text+image', emoji: '📜', category: 'books', textParams: ['text', 'text2'] },
 
-  'rose-vine': { effect: 'rose-vine', name: 'Rose Vine', type: 'text+image', emoji: '🌹', category: 'valentine' },
+  'rose-vine': { effect: 'rose-vine', name: 'Rose Vine', type: 'text+image', emoji: '🌹', category: 'valentine', textParams: ['text', 'text2'] },
   'love-letter': { effect: 'love-letter', name: 'Love Letter', type: 'image', emoji: '💌', category: 'valentine' },
   'love-lock': { effect: 'love-lock', name: 'Love Lock', type: 'text', emoji: '🔐', category: 'valentine' },
   'wedding-day': { effect: 'wedding-day', name: 'Wedding Day', type: 'image', emoji: '💒', category: 'valentine' },
@@ -171,7 +171,7 @@ const EFFECTS = {
 
   'snow-sign': { effect: 'snow-sign', name: 'Snow Sign', type: 'text', emoji: '❄️', category: 'christmas' },
   'christmas-writing': { effect: 'christmas-writing', name: 'Christmas Writing', type: 'text', emoji: '🎄', category: 'christmas' },
-  'snow-globe': { effect: 'snow-globe', name: 'Snow Globe', type: 'text+image', emoji: '🔮', category: 'christmas' },
+  'snow-globe': { effect: 'snow-globe', name: 'Snow Globe', type: 'text+image', emoji: '🔮', category: 'christmas', textParams: ['text1', 'text2'] },
   'frosty-window-writing': { effect: 'frosty-window-writing', name: 'Frosty Window Writing', type: 'text', emoji: '🪟', category: 'christmas' },
   'santa-snow-angel': { effect: 'santa-snow-angel', name: 'Santa Snow Angel', type: 'image', emoji: '🎅', category: 'christmas' },
   'santas-parcel-picture': { effect: 'santas-parcel-picture', name: "Santa's Parcel Picture", type: 'text+image', emoji: '🎁', category: 'christmas' },
@@ -267,4 +267,126 @@ async function getImageUrl(m, sock) {
   }
 }
 
-export { EFFECTS, CATEGORY_META, generatePhotofunia, getImageUrl, getEffectsByCategory, getAllCategories };
+function createPhotofuniaCommand(effectKey) {
+  const effectData = EFFECTS[effectKey];
+  if (!effectData) throw new Error(`Unknown PhotoFunia effect: ${effectKey}`);
+
+  const cmdName = effectKey.replace(/-/g, '');
+  const aliases = [effectKey];
+  if (cmdName !== effectKey) aliases.push(cmdName);
+
+  return {
+    name: cmdName,
+    alias: aliases,
+    description: `${effectData.emoji} ${effectData.name} Effect`,
+    category: 'photofunia',
+    ownerOnly: false,
+    usage: effectData.type === 'image'
+      ? `${cmdName} (reply to image)`
+      : effectData.type === 'text'
+        ? `${cmdName} <text>${effectData.textParams ? ' (use | to separate: ' + effectData.textParams.join(', ') + ')' : ''}`
+        : `${cmdName} <text> (reply to image)${effectData.textParams ? ' (use | to separate: ' + effectData.textParams.join(', ') + ')' : ''}`,
+
+    async execute(sock, msg, args, PREFIX) {
+      const chatId = msg.key.remoteJid;
+      const textArgs = args.join(' ');
+
+      if (effectData.type === 'image') {
+        const imageUrl = await getImageUrl(msg, sock);
+        if (!imageUrl) {
+          return await sock.sendMessage(chatId, {
+            text: `╭─⌈ ${effectData.emoji} *${effectData.name.toUpperCase()}* ⌋\n│\n├─⊷ This effect requires an *image*\n├─⊷ Reply to an image with:\n│  └⊷ ${PREFIX}${cmdName}\n│\n╰───────────────\n> *WOLFBOT PHOTOFUNIA*`
+          }, { quoted: msg });
+        }
+
+        await sock.sendMessage(chatId, { react: { text: '⏳', key: msg.key } });
+        try {
+          const resultBuffer = await generatePhotofunia(effectData.effect, { imageUrl });
+          if (!resultBuffer || resultBuffer.length === 0) {
+            await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
+            return await sock.sendMessage(chatId, { text: `❌ Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
+          }
+          await sock.sendMessage(chatId, { image: resultBuffer, caption: `${effectData.emoji} *${effectData.name}*\n\n🐺 *Created by WOLFBOT*` }, { quoted: msg });
+          await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
+        } catch (error) {
+          console.log(`❌ [PHOTOFUNIA] ${cmdName} error:`, error.message);
+          await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
+          await sock.sendMessage(chatId, { text: `❌ Error generating ${effectData.name}: ${error.message}` }, { quoted: msg });
+        }
+
+      } else if (effectData.type === 'text') {
+        if (!textArgs) {
+          const multiHint = effectData.textParams ? `\n├─⊷ Use | to separate: ${effectData.textParams.join(', ')}` : '';
+          return await sock.sendMessage(chatId, {
+            text: `╭─⌈ ${effectData.emoji} *${effectData.name.toUpperCase()}* ⌋\n│\n├─⊷ *Usage:* ${PREFIX}${cmdName} <text>${multiHint}\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}${cmdName} WolfBot\n│\n╰───────────────\n> *WOLFBOT PHOTOFUNIA*`
+          }, { quoted: msg });
+        }
+
+        await sock.sendMessage(chatId, { react: { text: '⏳', key: msg.key } });
+        try {
+          const options = {};
+          if (effectData.textParams) {
+            const parts = textArgs.split('|').map(t => t.trim());
+            effectData.textParams.forEach((param, i) => {
+              options[param] = parts[i] || parts[0] || textArgs;
+            });
+          } else {
+            options.text = textArgs;
+          }
+          const resultBuffer = await generatePhotofunia(effectData.effect, options);
+          if (!resultBuffer || resultBuffer.length === 0) {
+            await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
+            return await sock.sendMessage(chatId, { text: `❌ Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
+          }
+          await sock.sendMessage(chatId, { image: resultBuffer, caption: `${effectData.emoji} *${effectData.name}*\n📝 Text: ${textArgs}\n\n🐺 *Created by WOLFBOT*` }, { quoted: msg });
+          await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
+        } catch (error) {
+          console.log(`❌ [PHOTOFUNIA] ${cmdName} error:`, error.message);
+          await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
+          await sock.sendMessage(chatId, { text: `❌ Error generating ${effectData.name}: ${error.message}` }, { quoted: msg });
+        }
+
+      } else if (effectData.type === 'text+image') {
+        const imageUrl = await getImageUrl(msg, sock);
+        if (!imageUrl) {
+          const multiHint = effectData.textParams ? `\n├─⊷ Use | to separate: ${effectData.textParams.join(', ')}` : '';
+          return await sock.sendMessage(chatId, {
+            text: `╭─⌈ ${effectData.emoji} *${effectData.name.toUpperCase()}* ⌋\n│\n├─⊷ This effect requires *text + image*\n├─⊷ Reply to an image with:\n│  └⊷ ${PREFIX}${cmdName} <your text>${multiHint}\n│\n╰───────────────\n> *WOLFBOT PHOTOFUNIA*`
+          }, { quoted: msg });
+        }
+        if (!textArgs) {
+          const multiHint = effectData.textParams ? `\n├─⊷ Use | to separate: ${effectData.textParams.join(', ')}` : '';
+          return await sock.sendMessage(chatId, {
+            text: `╭─⌈ ${effectData.emoji} *${effectData.name.toUpperCase()}* ⌋\n│\n├─⊷ This effect requires *text + image*\n├─⊷ Reply to an image with:\n│  └⊷ ${PREFIX}${cmdName} <your text>${multiHint}\n│\n╰───────────────\n> *WOLFBOT PHOTOFUNIA*`
+          }, { quoted: msg });
+        }
+
+        await sock.sendMessage(chatId, { react: { text: '⏳', key: msg.key } });
+        try {
+          const options = { imageUrl };
+          if (effectData.textParams) {
+            const parts = textArgs.split('|').map(t => t.trim());
+            effectData.textParams.forEach((param, i) => {
+              options[param] = parts[i] || parts[0] || textArgs;
+            });
+          } else {
+            options.text = textArgs;
+          }
+          const resultBuffer = await generatePhotofunia(effectData.effect, options);
+          if (!resultBuffer || resultBuffer.length === 0) {
+            await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
+            return await sock.sendMessage(chatId, { text: `❌ Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
+          }
+          await sock.sendMessage(chatId, { image: resultBuffer, caption: `${effectData.emoji} *${effectData.name}*\n📝 Text: ${textArgs}\n\n🐺 *Created by WOLFBOT*` }, { quoted: msg });
+          await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
+        } catch (error) {
+          console.log(`❌ [PHOTOFUNIA] ${cmdName} error:`, error.message);
+          await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
+          await sock.sendMessage(chatId, { text: `❌ Error generating ${effectData.name}: ${error.message}` }, { quoted: msg });
+        }
+      }
+    }
+  };
+}
+
+export { EFFECTS, CATEGORY_META, generatePhotofunia, getImageUrl, getEffectsByCategory, getAllCategories, createPhotofuniaCommand };

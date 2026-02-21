@@ -6,7 +6,7 @@ export default {
   name: 'teamnews',
   description: 'Get team-specific sports news',
   category: 'sports',
-  aliases: ['tnews'],
+  alias: ['tnews'],
   usage: 'teamnews <teamname>',
 
   async execute(sock, m, args, PREFIX) {
