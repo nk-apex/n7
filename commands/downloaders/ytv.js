@@ -1,37 +1,32 @@
 import axios from "axios";
 import yts from "yt-search";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const WOLF_API = "https://apis.xwolf.space/download/mp4";
+const WOLF_STREAM = "https://apis.xwolf.space/download/stream/mp4";
 
-const KEITH_API = "https://apiskeith.top";
+async function downloadAndValidate(downloadUrl, timeout = 120000) {
+  const response = await axios({
+    url: downloadUrl,
+    method: 'GET',
+    responseType: 'arraybuffer',
+    timeout,
+    maxRedirects: 5,
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    },
+    validateStatus: (status) => status >= 200 && status < 400
+  });
 
-const videoEndpoints = [
-  `${KEITH_API}/download/video`,
-  `${KEITH_API}/download/ytmp4`
-];
+  const buffer = Buffer.from(response.data);
+  if (buffer.length < 5000) throw new Error('File too small, likely not video');
 
-const keithDownloadVideo = async (url) => {
-  for (const endpoint of videoEndpoints) {
-    try {
-      const response = await axios.get(
-        `${endpoint}?url=${encodeURIComponent(url)}`,
-        { timeout: 20000 }
-      );
-      if (response.data?.status && response.data?.result) {
-        console.log(`[YTV] Download success via: ${endpoint}`);
-        return response.data.result;
-      }
-    } catch (error) {
-      console.log(`[YTV] Endpoint failed: ${endpoint} - ${error.message}`);
-      continue;
-    }
+  const headerStr = buffer.slice(0, 50).toString('utf8').toLowerCase();
+  if (headerStr.includes('<!doctype') || headerStr.includes('<html') || headerStr.includes('bad gateway')) {
+    throw new Error('Received HTML instead of video');
   }
-  return null;
-};
+
+  return buffer;
+}
 
 export default {
   name: "ytv",
@@ -72,29 +67,17 @@ export default {
         if (!videoTitle) videoTitle = "YouTube Video";
       } else {
         try {
-          const searchRes = await axios.get(
-            `${KEITH_API}/search/yts?query=${encodeURIComponent(searchQuery)}`,
-            { timeout: 10000 }
-          );
-          const videos = searchRes.data?.result || [];
-          
-          if (videos.length > 0) {
-            videoUrl = videos[0].url;
-            videoTitle = videos[0].title;
-            videoId = videos[0].id || videos[0].videoId;
-          } else {
-            const { videos: ytResults } = await yts(searchQuery);
-            if (!ytResults || ytResults.length === 0) {
-              await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-              await sock.sendMessage(jid, { 
-                text: `❌ No videos found for "${searchQuery}"`
-              }, { quoted: m });
-              return;
-            }
-            videoUrl = ytResults[0].url;
-            videoTitle = ytResults[0].title;
-            videoId = ytResults[0].videoId;
+          const { videos: ytResults } = await yts(searchQuery);
+          if (!ytResults || ytResults.length === 0) {
+            await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+            await sock.sendMessage(jid, { 
+              text: `❌ No videos found for "${searchQuery}"`
+            }, { quoted: m });
+            return;
           }
+          videoUrl = ytResults[0].url;
+          videoTitle = ytResults[0].title;
+          videoId = ytResults[0].videoId;
         } catch (searchError) {
           console.error("❌ [YTV] Search error:", searchError);
           await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
@@ -106,12 +89,44 @@ export default {
       }
 
       console.log(`🎬 [YTV] Found: ${videoTitle} - ${videoUrl}`);
-
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      let downloadUrl = await keithDownloadVideo(videoUrl);
+      let videoBuffer = null;
+      let sourceUsed = '';
 
-      if (!downloadUrl) {
+      try {
+        const wolfRes = await axios.get(`${WOLF_API}?url=${encodeURIComponent(videoUrl)}`, { timeout: 30000 });
+        const apiData = wolfRes.data;
+
+        const downloadSources = [];
+
+        if (apiData?.downloadUrl && apiData.downloadUrl !== 'In Processing...' && apiData.downloadUrl.startsWith('http')) {
+          downloadSources.push({ url: apiData.downloadUrl, label: 'Wolf Direct' });
+        }
+
+        if (apiData?.streamUrl) {
+          const streamUrl = apiData.streamUrl.replace('http://', 'https://');
+          downloadSources.push({ url: streamUrl, label: 'Wolf Stream' });
+        }
+
+        downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(videoUrl)}`, label: 'Wolf Stream Q' });
+
+        for (const source of downloadSources) {
+          try {
+            console.log(`🎬 [YTV] Trying: ${source.label}`);
+            videoBuffer = await downloadAndValidate(source.url);
+            sourceUsed = source.label;
+            break;
+          } catch (err) {
+            console.log(`🎬 [YTV] ${source.label} failed: ${err.message}`);
+            continue;
+          }
+        }
+      } catch (err) {
+        console.log(`🎬 [YTV] WOLF API failed: ${err.message}`);
+      }
+
+      if (!videoBuffer) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
           text: `❌ Video download failed. Try again later.`
@@ -119,90 +134,42 @@ export default {
         return;
       }
 
-      const tempDir = path.join(__dirname, "../temp");
-      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-      
-      const tempFile = path.join(tempDir, `ytv_${Date.now()}.mp4`);
-      
-      try {
-        const response = await axios({
-          url: downloadUrl,
-          method: 'GET',
-          responseType: 'stream',
-          timeout: 120000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
+      const fileSizeMB = (videoBuffer.length / (1024 * 1024)).toFixed(1);
 
-        if (response.status !== 200) {
-          throw new Error(`Download failed with status: ${response.status}`);
-        }
-
-        const writer = fs.createWriteStream(tempFile);
-        response.data.pipe(writer);
-        
-        await new Promise((resolve, reject) => {
-          writer.on('finish', resolve);
-          writer.on('error', reject);
-        });
-
-        const stats = fs.statSync(tempFile);
-        const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(1);
-
-        if (stats.size === 0) throw new Error("Downloaded file is empty");
-
-        if (parseFloat(fileSizeMB) > 99) {
-          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-          await sock.sendMessage(jid, { 
-            text: `❌ Video too large: ${fileSizeMB}MB\nMax size: 99MB`
-          }, { quoted: m });
-          fs.unlinkSync(tempFile);
-          return;
-        }
-
-        const videoBuffer = fs.readFileSync(tempFile);
-
-        let thumbnailBuffer = null;
-        if (videoId) {
-          try {
-            const thumbResponse = await axios.get(
-              `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-              { responseType: 'arraybuffer', timeout: 10000 }
-            );
-            if (thumbResponse.status === 200) {
-              thumbnailBuffer = Buffer.from(thumbResponse.data);
-            }
-          } catch (e) {}
-        }
-
-        const cleanTitle = videoTitle.replace(/[^\w\s.-]/gi, '').substring(0, 50);
-
-        await sock.sendMessage(jid, {
-          video: videoBuffer,
-          mimetype: 'video/mp4',
-          caption: `🎬 ${videoTitle}\n📦 ${fileSizeMB}MB`,
-          fileName: `${cleanTitle}.mp4`,
-          thumbnail: thumbnailBuffer,
-          gifPlayback: false
-        }, { quoted: m });
-
-        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
-
-        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-
-        console.log(`✅ [YTV] Success: ${videoTitle} (${fileSizeMB}MB)`);
-
-      } catch (downloadError) {
-        console.error("❌ [YTV] Download error:", downloadError);
+      if (parseFloat(fileSizeMB) > 99) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Failed to download video: ${downloadError.message}`
+          text: `❌ Video too large: ${fileSizeMB}MB\nMax size: 99MB`
         }, { quoted: m });
-        if (fs.existsSync(tempFile)) {
-          try { fs.unlinkSync(tempFile); } catch {}
-        }
+        return;
       }
+
+      let thumbnailBuffer = null;
+      if (videoId) {
+        try {
+          const thumbResponse = await axios.get(
+            `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+            { responseType: 'arraybuffer', timeout: 10000 }
+          );
+          if (thumbResponse.status === 200) {
+            thumbnailBuffer = Buffer.from(thumbResponse.data);
+          }
+        } catch (e) {}
+      }
+
+      const cleanTitle = videoTitle.replace(/[^\w\s.-]/gi, '').substring(0, 50);
+
+      await sock.sendMessage(jid, {
+        video: videoBuffer,
+        mimetype: 'video/mp4',
+        caption: `🎬 ${videoTitle}\n📦 ${fileSizeMB}MB`,
+        fileName: `${cleanTitle}.mp4`,
+        thumbnail: thumbnailBuffer,
+        gifPlayback: false
+      }, { quoted: m });
+
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+      console.log(`✅ [YTV] Success: ${videoTitle} (${fileSizeMB}MB) [${sourceUsed}]`);
 
     } catch (error) {
       console.error("❌ [YTV] Fatal error:", error);

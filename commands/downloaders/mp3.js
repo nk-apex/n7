@@ -4,34 +4,6 @@ const WOLF_API = 'https://apis.xwolf.space/download/yta';
 const WOLF_STREAM = 'https://apis.xwolf.space/download/stream/mp3';
 const WOLF_API_2 = 'https://apis.xwolf.space/download/mp3';
 const WOLF_API_3 = 'https://apis.xwolf.space/download/dlmp3';
-const KEITH_API = 'https://apiskeith.top';
-
-const keithFallbackEndpoints = [
-  `${KEITH_API}/download/ytmp3`,
-  `${KEITH_API}/download/audio`,
-  `${KEITH_API}/download/dlmp3`,
-  `${KEITH_API}/download/mp3`,
-  `${KEITH_API}/download/yta`,
-  `${KEITH_API}/download/yta2`,
-  `${KEITH_API}/download/yta3`
-];
-
-async function getKeithDownloadUrl(videoUrl) {
-  for (const endpoint of keithFallbackEndpoints) {
-    try {
-      const response = await axios.get(
-        `${endpoint}?url=${encodeURIComponent(videoUrl)}`,
-        { timeout: 15000 }
-      );
-      if (response.data?.status && response.data?.result) {
-        return response.data.result;
-      }
-    } catch {
-      continue;
-    }
-  }
-  return null;
-}
 
 async function downloadAndValidate(downloadUrl) {
   const response = await axios({
@@ -145,15 +117,6 @@ export default {
           } catch (err) {
             console.log(`🎵 [MP3] Alt failed: ${err.message}`);
           }
-        }
-      }
-
-      if (!audioBuffer) {
-        console.log(`🎵 [MP3] All WOLF sources failed, trying Keith fallback`);
-        const keithUrl = await getKeithDownloadUrl(youtubeUrl);
-        if (keithUrl) {
-          audioBuffer = await downloadAndValidate(keithUrl);
-          sourceUsed = 'Keith Fallback';
         }
       }
 

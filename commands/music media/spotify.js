@@ -438,8 +438,7 @@ export default {
       // Check if it's a Spotify URL
       const isSpotifyUrl = query.match(/open\.spotify\.com\/(track|album|playlist|artist)/i);
       
-      // Build API URL
-      const apiUrl = `https://apiskeith.vercel.app/download/spotify?q=${encodeURIComponent(query)}`;
+      const apiUrl = `https://api.beautyofweb.com/spotify?q=${encodeURIComponent(query)}`;
       
       console.log(`🌐 [SPOTIFY] Calling API: ${apiUrl}`);
       
@@ -449,9 +448,7 @@ export default {
         timeout: 45000,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'application/json',
-          'Referer': 'https://apiskeith.vercel.app/',
-          'Origin': 'https://apiskeith.vercel.app'
+          'Accept': 'application/json'
         }
       });
 
@@ -493,39 +490,8 @@ export default {
       
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      // Try alternative APIs if Keith API fails
       let downloadUrl = track.downloadLink;
-      let apiUsed = "Keith API";
-      
-      if (!downloadUrl || !downloadUrl.startsWith('http')) {
-        console.log('⚠️ Keith API link invalid, trying alternative...');
-        
-        // Try alternative Spotify download API
-        try {
-          const altResponse = await axios.get(
-            `https://api.beautyofweb.com/spotify?q=${encodeURIComponent(query)}`,
-            { timeout: 30000 }
-          );
-          
-          if (altResponse.data?.result?.downloadLink) {
-            downloadUrl = altResponse.data.result.downloadLink;
-            apiUsed = "Alternative API";
-            
-            // Update track info if available
-            if (altResponse.data.result.title && !track.title) {
-              track.title = altResponse.data.result.title;
-            }
-            if (altResponse.data.result.artist && !track.artist) {
-              track.artist = altResponse.data.result.artist;
-            }
-            if (altResponse.data.result.thumbnail && !track.thumbnail) {
-              track.thumbnail = altResponse.data.result.thumbnail;
-            }
-          }
-        } catch (altError) {
-          console.error('Alternative API failed:', altError.message);
-        }
-      }
+      let apiUsed = "Spotify API";
 
       if (!downloadUrl || !downloadUrl.startsWith('http')) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });

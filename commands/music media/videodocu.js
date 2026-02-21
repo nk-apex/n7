@@ -413,34 +413,6 @@ const __dirname = path.dirname(__filename);
 
 // Updated Video download APIs from the second example
 const videoAPIs = {
-  keith: {
-    getVideo: async (youtubeUrl) => {
-      try {
-        const apiUrl = `https://apiskeith.vercel.app/download/video?url=${encodeURIComponent(youtubeUrl)}`;
-        const res = await axios.get(apiUrl, {
-          timeout: 30000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json'
-          }
-        });
-        
-        if (res?.data?.result) {
-          return {
-            success: true,
-            download: res.data.result,
-            title: res.data.title || "YouTube Video",
-            quality: "720p",
-            source: "keith"
-          };
-        }
-        throw new Error('Keith API: No download link');
-      } catch (error) {
-        return { success: false, error: error.message };
-      }
-    }
-  },
-  
   yupra: {
     getVideo: async (youtubeUrl) => {
       try {
@@ -599,10 +571,8 @@ export default {
         }
       }
 
-      // Try multiple APIs sequentially (Keith -> Yupra -> Okatsu)
       let videoResult = null;
       const apisToTry = [
-        () => videoAPIs.keith.getVideo(videoUrl),
         () => videoAPIs.yupra.getVideo(videoUrl),
         () => videoAPIs.okatsu.getVideo(videoUrl)
       ];

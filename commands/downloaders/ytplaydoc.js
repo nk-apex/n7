@@ -436,34 +436,6 @@ const __dirname = path.dirname(__filename);
 
 // Video download APIs with quality options
 const videoAPIs = {
-  keith: {
-    getVideo: async (youtubeUrl, quality = "360p") => {
-      try {
-        const apiUrl = `https://apiskeith.vercel.app/download/video?url=${encodeURIComponent(youtubeUrl)}`;
-        const res = await axios.get(apiUrl, {
-          timeout: 30000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json'
-          }
-        });
-        
-        if (res?.data?.result) {
-          return {
-            success: true,
-            download: res.data.result,
-            title: res.data.title || "YouTube Video",
-            quality: "auto", // Keith API doesn't specify quality
-            source: "keith"
-          };
-        }
-        throw new Error('Keith API: No download link');
-      } catch (error) {
-        return { success: false, error: error.message };
-      }
-    }
-  },
-  
   yupra: {
     getVideo: async (youtubeUrl, quality = "360p") => {
       try {
@@ -790,20 +762,16 @@ export default {
       let apisToTry;
       
       if (qualityFlag === 'low') {
-        // Try low quality APIs first
         apisToTry = [
           () => lowQualityAPIs.ytdl.getVideo(videoUrl, 'lowest'),
           () => lowQualityAPIs.yt5s.getVideo(videoUrl, '240p'),
-          () => videoAPIs.keith.getVideo(videoUrl),
           () => videoAPIs.yupra.getVideo(videoUrl),
           () => videoAPIs.okatsu.getVideo(videoUrl)
         ];
       } else {
-        // Default: try all APIs
         apisToTry = [
           () => lowQualityAPIs.ytdl.getVideo(videoUrl, 'lowest'),
           () => lowQualityAPIs.yt5s.getVideo(videoUrl, '360p'),
-          () => videoAPIs.keith.getVideo(videoUrl),
           () => videoAPIs.yupra.getVideo(videoUrl),
           () => videoAPIs.okatsu.getVideo(videoUrl)
         ];

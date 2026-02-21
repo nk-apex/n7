@@ -3,7 +3,6 @@ import yts from "yt-search";
 
 const WOLF_API = "https://apis.xwolf.space/download/mp4";
 const WOLF_STREAM = "https://apis.xwolf.space/download/stream/mp4";
-const KEITH_API = "https://apiskeith.top";
 
 async function downloadAndValidate(downloadUrl, timeout = 120000) {
   const response = await axios({
@@ -96,26 +95,12 @@ export default {
 
       downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(searchQuery)}`, label: 'Wolf Stream Q' });
 
-      if (youtubeUrl) {
-        downloadSources.push({ url: `${KEITH_API}/download/ytmp4?url=${encodeURIComponent(youtubeUrl)}`, label: 'Keith' });
-      }
-
       for (const source of downloadSources) {
         try {
           console.log(`🎬 [VIDEO] Trying: ${source.label}`);
-          if (source.label === 'Keith') {
-            const keithRes = await axios.get(source.url, { timeout: 20000 });
-            const dlUrl = keithRes.data?.result;
-            if (dlUrl && typeof dlUrl === 'string' && dlUrl.startsWith('http')) {
-              videoBuffer = await downloadAndValidate(dlUrl);
-              sourceUsed = source.label;
-              break;
-            }
-          } else {
-            videoBuffer = await downloadAndValidate(source.url);
-            sourceUsed = source.label;
-            break;
-          }
+          videoBuffer = await downloadAndValidate(source.url);
+          sourceUsed = source.label;
+          break;
         } catch (err) {
           console.log(`🎬 [VIDEO] ${source.label} failed: ${err.message}`);
           continue;

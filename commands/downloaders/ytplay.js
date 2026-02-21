@@ -562,57 +562,6 @@ const savetube = {
 
 // Working Audio APIs from play command
 const audioAPIs = {
-  keith: {
-    getAudio: async (youtubeUrl) => {
-      try {
-        const apiUrl = "https://apiskeith.vercel.app/download/audio";
-        
-        console.log(`🎵 [KEITH] Requesting audio from: ${youtubeUrl}`);
-        
-        const response = await axios({
-          method: 'GET',
-          url: apiUrl,
-          params: { url: youtubeUrl },
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json'
-          },
-          timeout: 30000
-        });
-
-        if (!response.data || response.status !== 200) {
-          throw new Error('Invalid response from Keith API');
-        }
-
-        let audioUrl = null;
-        
-        if (response.data.result && typeof response.data.result === 'string') {
-          audioUrl = response.data.result;
-        } else if (response.data.downloadUrl) {
-          audioUrl = response.data.downloadUrl;
-        } else if (response.data.url) {
-          audioUrl = response.data.url;
-        }
-        
-        if (!audioUrl) {
-          throw new Error('No audio URL found in Keith API response');
-        }
-
-        console.log(`🎵 [KEITH] Audio URL obtained`);
-        
-        return {
-          success: true,
-          audioUrl: audioUrl,
-          source: "keith"
-        };
-        
-      } catch (error) {
-        console.error(`🎵 [KEITH] Error:`, error.message);
-        return { success: false, error: error.message };
-      }
-    }
-  },
-  
   yupra: {
     getAudio: async (youtubeUrl) => {
       try {
@@ -809,9 +758,8 @@ export default {
       let audioResult = null;
       let usedSavetube = false;
       
-      // First try the new APIs (Keith, Yupra, Okatsu)
+      // Try download APIs (Yupra, Okatsu)
       const apisToTry = [
-        () => audioAPIs.keith.getAudio(videoUrl),
         () => audioAPIs.yupra.getAudio(videoUrl),
         () => audioAPIs.okatsu.getAudio(videoUrl)
       ];

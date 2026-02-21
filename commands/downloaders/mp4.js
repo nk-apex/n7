@@ -2,30 +2,6 @@ import axios from 'axios';
 
 const WOLF_API = 'https://apis.xwolf.space/download/mp4';
 const WOLF_STREAM = 'https://apis.xwolf.space/download/stream/mp4';
-const KEITH_API = 'https://apiskeith.top';
-
-const keithFallbackEndpoints = [
-  `${KEITH_API}/download/ytmp4`,
-  `${KEITH_API}/download/video`,
-  `${KEITH_API}/download/mp4`
-];
-
-async function getKeithDownloadUrl(videoUrl) {
-  for (const endpoint of keithFallbackEndpoints) {
-    try {
-      const response = await axios.get(
-        `${endpoint}?url=${encodeURIComponent(videoUrl)}`,
-        { timeout: 20000 }
-      );
-      if (response.data?.status && response.data?.result) {
-        return response.data.result;
-      }
-    } catch {
-      continue;
-    }
-  }
-  return null;
-}
 
 async function downloadAndValidate(downloadUrl, timeout = 120000) {
   const response = await axios({
@@ -123,19 +99,6 @@ export default {
         } catch (err) {
           console.log(`🎬 [MP4] ${source.label} failed: ${err.message}`);
           continue;
-        }
-      }
-
-      if (!videoBuffer) {
-        console.log(`🎬 [MP4] All WOLF sources failed, trying Keith fallback`);
-        const keithUrl = await getKeithDownloadUrl(youtubeUrl);
-        if (keithUrl) {
-          try {
-            videoBuffer = await downloadAndValidate(keithUrl);
-            sourceUsed = 'Keith Fallback';
-          } catch (err) {
-            console.log(`🎬 [MP4] Keith failed: ${err.message}`);
-          }
         }
       }
 
