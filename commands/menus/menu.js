@@ -5819,24 +5819,25 @@ case 5: {
   // Apply faded effect to the info section
   const fadedInfoSection = createFadedEffect(infoSection);
 
-  // ========== MENU CATEGORIES WITH "READ MORE" PER CATEGORY ==========
-  const categories = [];
-
-  categories.push(`╭─⊷ *🏠 GROUP MANAGEMENT*
+  // ========== COMMANDS SECTION ==========
+  const commandsText = `╭─⊷ *🏠 GROUP MANAGEMENT*
 │
 ├─⊷ *🛡️ ADMIN & MODERATION*
 │  • add
 │  • promote
+│  • promoteall
 │  • demote
+│  • demoteall
 │  • kick
 │  • kickall
 │  • ban
 │  • unban
-│  • banlist
+│  • ex
 │  • clearbanlist
 │  • warn
 │  • resetwarn
 │  • setwarn
+│  • warnings
 │  • mute
 │  • unmute
 │  • gctime
@@ -5844,15 +5845,11 @@ case 5: {
 │  • antilink
 │  • welcome
 │  • goodbye
-│  • approveall
-│  • rejectall
+│  • leave
 │  • creategroup
-│  • fangwarn
 │
 ├─⊷ *🚫 AUTO-MODERATION*
 │  • antisticker
-│  • antiviewonce
-│  • antilink
 │  • antiimage
 │  • antivideo
 │  • antiaudio
@@ -5861,10 +5858,11 @@ case 5: {
 │  • antigrouplink
 │  • antidemote
 │  • antipromote
-│  • antibug
+│  • antiviewonce
 │
 ├─⊷ *📊 GROUP INFO & TOOLS*
 │  • groupinfo
+│  • grouplink
 │  • tagadmin
 │  • tagall
 │  • hidetag
@@ -5874,111 +5872,120 @@ case 5: {
 │  • setdesc
 │  • fangtrace
 │  • getgpp
-│  • getnumber
-│  • vcf
+│  • togstatus
 │  • getparticipants
+│  • listonline
+│  • listinactive
+│  • approveall
+│  • rejectall
+│  • stickerpack
 │
-╰─⊷`);
+╰─⊷
 
-  categories.push(`╭─⊷ *👑 OWNER CONTROLS*
+╭─⊷ *🎨 MENU COMMANDS*
+│
+│  • menu
+│  • menustyle
+│  • togglemenuinfo
+│  • setmenuimage
+│  • restoremenuimage
+│
+╰─⊷
+
+╭─⊷ *👑 OWNER CONTROLS*
 │
 ├─⊷ *⚡ CORE MANAGEMENT*
 │  • setbotname
+│  • resetbotname
 │  • setowner
+│  • resetowner
 │  • setprefix
+│  • prefix
 │  • iamowner
 │  • about
+│  • owner
 │  • block
 │  • unblock
-│  • blockcheck
+│  • blockdetect
 │  • silent
 │  • anticall
 │  • mode
-│  • online
 │  • setpp
+│  • setfooter
 │  • repo
-│  • delete
-│  • privacy
-│  • tostatus
-│
-├─⊷ *🔐 ANTIDELETE & VIEWONCE*
+│  • pair
 │  • antidelete
 │  • antideletestatus
-│  • antiviewonce
 │  • antiedit
-│  • vvmode
+│  • chatbot
+│  • shutdown
+│
+├─⊷ *🔄 SYSTEM & MAINTENANCE*
+│  • restart
+│  • workingreload
+│  • reloadenv
+│  • getsettings
+│  • setsetting
+│  • test
+│  • disk
+│  • hostip
+│  • findcommands
+│  • latestupdates
+│  • panel
+│  • debugchat
+│
+├─⊷ *🔒 PRIVACY CONTROLS*
+│  • online
+│  • privacy
+│  • receipt
+│  • profilepic
 │  • viewer
 │
-├─⊷ *👤 SUDO MANAGEMENT*
+╰─⊷
+
+╭─⊷ *👥 SUDO*
+│
 │  • addsudo
 │  • delsudo
 │  • listsudo
 │  • checksudo
 │  • clearsudo
-│  • sudoinfo
 │  • sudomode
+│  • sudoinfo
+│  • mysudo
 │  • sudodebug
 │  • linksudo
-│  • mysudo
 │
-├─⊷ *🔄 SYSTEM & MAINTENANCE*
-│  • restart
-│  • reload
-│  • reloadenv
-│  • getsettings
-│  • setsettings
-│  • test
-│  • disk
-│  • hostip
-│  • findcmds
-│  • clearcache
-│  • shutdown
-│  • start
-│  • disp
-│  • clearsupabase
-│  • pannel
-│
-╰─⊷`);
+╰─⊷
 
-  categories.push(`╭─⊷ *⚙️ AUTOMATION*
+╭─⊷ *⚙️ AUTOMATION*
 │
 │  • autoread
 │  • autotyping
 │  • autorecording
 │  • autoreact
 │  • autoreactstatus
+│  • autoviewstatus
 │  • autobio
 │  • autorec
-│  • autoviewstatus
-│  • reactdev
 │  • reactowner
 │
 ╰─⊷
 
-╭─⊷ *🎨 MENU COMMANDS*
-│
-│  • togglemenuinfo
-│  • setmenuimage
-│  • resetmenuinfo
-│  • menustyle
-│
-╰─⊷`);
-
-  categories.push(`╭─⊷ *✨ GENERAL UTILITIES*
+╭─⊷ *✨ GENERAL UTILITIES*
 │
 ├─⊷ *🔍 INFO & SEARCH*
 │  • alive
 │  • ping
 │  • ping2
 │  • time
-│  • connection
+│  • uptime
 │  • define
 │  • news
 │  • covid
 │  • weather
 │  • wiki
-│  • uptime
-│  • speed
+│  • translate
 │  • iplookup
 │  • getip
 │  • getpp
@@ -5987,86 +5994,129 @@ case 5: {
 │
 ├─⊷ *🔗 CONVERSION & MEDIA*
 │  • shorturl
-│  • qrencode
-│  • qrdecode
-│  • take
-│  • save
-│  • translate
-│  • tosticker
-│  • toimage
-│  • toaudio
-│  • tts
-│  • vcf
-│  • viewvcf
-│  • calc
 │  • url
 │  • fetch
+│  • qrencode
+│  • take
+│  • imgbb
+│  • tiktok
+│  • save
 │  • screenshot
+│  • inspect
+│  • toimage
+│  • tosticker
+│  • toaudio
+│  • tovoice
+│  • tts
+│  • trebleboost
+│  • jarvis
+│
+├─⊷ *📇 CONTACT TOOLS*
+│  • vcf
+│  • viewvcf
 │  • vv
 │  • vv2
 │
-├─⊷ *💻 CODE EXECUTION*
-│  • js
-│  • py
-│
-├─⊷ *📝 PERSONAL TOOLS*
-│  • pair
-│  • chatbot
-│  • stealth
-│  • quoted
-│  • inspect
-│
-╰─⊷`);
+╰─⊷
 
-  categories.push(`╭─⊷ *🎵 MUSIC & MEDIA*
+╭─⊷ *🎵 MUSIC & MEDIA*
 │
 │  • play
 │  • song
-│  • lyrics
-│  • spotify
 │  • video
-│  • video2
-│  • bassboost
-│  • trebleboost
+│  • videodoc
+│  • lyrics
 │  • shazam
+│  • spotify
 │
 ╰─⊷
 
-╭─⊷ *🤖 AI COMMANDS*
+╭─⊷ *⬇️ MEDIA DOWNLOADS*
 │
-├─⊷ *⬇️ MEDIA DOWNLOADS*
-│  • youtube
 │  • tiktok
 │  • instagram
 │  • facebook
 │  • snapchat
 │  • apk
+│  • yts
+│  • ytplay
+│  • ytmp3
+│  • ytv
+│  • ytmp4
+│  • ytvdoc
+│  • videodl
+│  • playlist
+│
+╰─⊷
+
+╭─⊷ *🤖 AI COMMANDS*
+│
+├─⊷ *💬 AI CHAT*
+│  • gpt
+│  • chatgpt
+│  • copilot
+│  • bing
+│  • bard
+│  • claudeai
+│  • grok
+│  • blackbox
+│  • mistral
+│  • metai
+│  • perplexity
+│  • qwenai
+│  • ilama
+│  • venice
+│  • wormgpt
+│  • deepseek+
+│  • chatbot
 │
 ├─⊷ *🎨 AI GENERATION*
-│  • gpt
-│  • gemini
-│  • deepseek
-│  • deepseek+
+│  • imagine
+│  • imagegen
+│  • flux
 │  • analyze
 │  • suno
-│  • wolfbot
+│  • speechwriter
+│  • humanizer
+│  • summarize
+│  • totext
+│  • removebg
+│  • vision
+│
+├─⊷ *🎬 AI TOOLS*
 │  • videogen
-│  • jarvis
+│  • aiscanner
+│  • aimenu
+│  • brandlogo
+│  • companylogo
+│  • logoai
+│
+╰─⊷
+
+╭─⊷ *🎬 AI VIDEO EFFECTS*
+│
+│  • tigervideo
+│  • introvideo
+│  • lightningpubg
+│  • lovevideo
+│  • videogen
 │
 ╰─⊷
 
 ╭─⊷ *🖼️ IMAGE TOOLS*
 │
 │  • image
-│  • imagegenerate
+│  • imagegen
+│  • imagine
 │  • anime
 │  • art
 │  • real
-│  • reverseimage
+│  • remini
+│  • vision
 │
-╰─⊷`);
+╰─⊷
 
-  categories.push(`╭─⊷ *🏆 SPORTS*
+╭─⊷ *🏆 SPORTS*
 │
 │  • football
 │  • matchstats
@@ -6087,41 +6137,32 @@ case 5: {
 
 ╭─⊷ *🛡️ ETHICAL HACKING*
 │
-├─⊷ *🌐 RECON & OSINT*
 │  • whois
 │  • dnslookup
 │  • subdomain
 │  • reverseip
 │  • geoip
-│  • ipinfo
+│  • portscan
+│  • headers
+│  • traceroute
 │  • asnlookup
 │  • shodan
-│  • nmap
-│
-├─⊷ *📡 NETWORK ANALYSIS*
-│  • portscan
-│  • traceroute
 │  • pinghost
 │  • latency
-│  • openports
-│  • maclookup
-│  • bandwidthtest
-│  • firewallcheck
-│
-├─⊷ *🔒 WEB SECURITY*
 │  • sslcheck
 │  • tlsinfo
+│  • openports
+│  • firewallcheck
+│  • maclookup
+│  • bandwidthtest
 │  • securityheaders
 │  • wafdetect
-│  • headers
-│  • techstack
-│  • cmsdetect
 │  • robotscheck
 │  • sitemap
+│  • cmsdetect
+│  • techstack
 │  • cookiescan
 │  • redirectcheck
-│
-├─⊷ *⚠️ VULNERABILITY CHECKS*
 │  • xsscheck
 │  • sqlicheck
 │  • csrfcheck
@@ -6130,26 +6171,24 @@ case 5: {
 │  • exposedfiles
 │  • misconfigcheck
 │  • cvecheck
-│
-├─⊷ *🔑 PASSWORD & HASH TOOLS*
 │  • hashidentify
 │  • hashcheck
 │  • bcryptcheck
 │  • passwordstrength
 │  • leakcheck
-│
-├─⊷ *🔬 FORENSICS & ANALYSIS*
 │  • metadata
 │  • filehash
 │  • malwarecheck
 │  • urlscan
 │  • phishcheck
+│  • nmap
+│  • ipinfo
 │  • nglattack
 │  • securitymenu
 │
-╰─⊷`);
+╰─⊷
 
-  categories.push(`╭─⊷ *🎨 LOGO DESIGN STUDIO*
+╭─⊷ *🎨 LOGO DESIGN STUDIO*
 │
 │  • goldlogo
 │  • silverlogo
@@ -6164,7 +6203,6 @@ case 5: {
 │  • icelogo
 │  • iceglowlogo
 │  • lightninglogo
-│  • aqualogo
 │  • rainbowlogo
 │  • sunlogo
 │  • moonlogo
@@ -6178,7 +6216,9 @@ case 5: {
 │  • bloodlogo
 │  • neonlogo
 │  • glowlogo
+│  • gradientlogo
 │  • matrixlogo
+│  • aqualogo
 │  • logomenu
 │
 ╰─⊷
@@ -6187,16 +6227,16 @@ case 5: {
 │
 │  • gitclone
 │  • gitinfo
+│  • repanalyze
+│  • zip
+│  • update
 │  • repo
-│  • commits
-│  • stars
-│  • watchers
-│  • release
 │
 ╰─⊷
 
 ╭─⊷ *🌸 ANIME COMMANDS*
 │
+│  • animemenu
 │  • awoo
 │  • bully
 │  • cringe
@@ -6211,7 +6251,6 @@ case 5: {
 │  • lick
 │  • megumin
 │  • neko
-│  • nom
 │  • pat
 │  • shinobu
 │  • trap
@@ -6219,7 +6258,46 @@ case 5: {
 │  • waifu
 │  • wink
 │  • yeet
-│  • animemenu
+│
+╰─⊷
+
+╭─⊷ *🎮 GAMES*
+│
+│  • coinflip
+│  • dare
+│  • dice
+│  • emojimix
+│  • joke
+│  • quiz
+│  • rps
+│  • snake
+│  • tetris
+│  • truth
+│  • tictactoe
+│  • quote
+│
+╰─⊷
+
+╭─⊷ *🎭 FUN & TOOLS*
+│
+│  • bf
+│  • gf
+│  • couple
+│  • gay
+│  • getjid
+│  • movie
+│  • trailer
+│  • goodmorning
+│  • goodnight
+│  • channelstatus
+│  • hack
+│
+╰─⊷
+
+╭─⊷ *⚡ QUICK COMMANDS*
+│
+│  • p
+│  • up
 │
 ╰─⊷
 
@@ -6246,122 +6324,198 @@ case 5: {
 │  • colorfulneonlight
 │  • ephotomenu
 │
-╰─⊷`);
+╰─⊷
 
-  categories.push(`╭─⊷ *🎨 PHOTOFUNIA EFFECTS (154)*
+╭─⊷ *🎨 PHOTOFUNIA EFFECTS (154)*
 │
 ├─⊷ *🎃 HALLOWEEN*
-│  • smokeflare • nightmarewriting
-│  • lightning • cemeterygates
-│  • summoningspirits • ghostwood
+│  • smokeflare
+│  • nightmarewriting
+│  • lightning
+│  • cemeterygates
+│  • summoningspirits
+│  • ghostwood
 │
 ├─⊷ *🎨 FILTERS*
-│  • autumn • jade • romantic
-│  • mystical • lomography • sepia
+│  • autumn
+│  • jade
+│  • romantic
+│  • mystical
+│  • lomography
+│  • sepia
 │
 ├─⊷ *🔬 LAB*
-│  • watercolourtext • denimemdroidery
-│  • cinematicket • arrowsigns
-│  • yacht • cloudyfilter
-│  • lightgraffiti • chalkboard
-│  • rustywriting • streetsign
-│  • floralwreath • retrowave
-│  • youaremyuniverse • einstein
-│  • rugbyball • redandblue
-│  • vhs • typewriter • diptych
-│  • badges • wanted • crown
-│  • anime • popart • puzzle
-│  • glass • animator
+│  • watercolourtext
+│  • denimemdroidery
+│  • cinematicket
+│  • arrowsigns
+│  • yacht
+│  • cloudyfilter
+│  • lightgraffiti
+│  • chalkboard
+│  • rustywriting
+│  • streetsign
+│  • floralwreath
+│  • retrowave
+│  • youaremyuniverse
+│  • einstein
+│  • rugbyball
+│  • redandblue
+│  • vhs
+│  • typewriter
+│  • diptych
+│  • badges
+│  • wanted
+│  • crown
+│  • anime
+│  • popart
+│  • puzzle
+│  • glass
+│  • animator
 │
 ├─⊷ *📌 POSTERS*
-│  • postersonthewall • posterwall
-│  • trainstationposter • rainynight
-│  • nightmotion • campaign
-│  • bicycle • citylight • affiche
-│  • sidewalk • cyclist • tulips
-│  • cafe • underground
-│  • reconstruction • posters
+│  • postersonthewall
+│  • posterwall
+│  • trainstationposter
+│  • rainynight
+│  • nightmotion
+│  • campaign
+│  • bicycle
+│  • citylight
+│  • affiche
+│  • sidewalk
+│  • cyclist
+│  • tulips
+│  • cafe
+│  • underground
+│  • reconstruction
+│  • posters
 │
 ├─⊷ *🏛️ GALLERIES*
-│  • melbournegallery • artadmirer
+│  • melbournegallery
+│  • artadmirer
 │  • nationalgalleryinlondon
 │  • blackwhitegallery
 │  • galleryvisitor
 │  • paintingandsketches
 │  • passingbythepainting
-│  • silhouettes • rijskmuseum
+│  • silhouettes
+│  • rijskmuseum
 │
 ├─⊷ *📸 PHOTOGRAPHY*
-│  • oldcamera • kittyandframe
+│  • oldcamera
+│  • kittyandframe
 │  • frame
 │
 ├─⊷ *🎭 FACES*
-│  • mirror • formulaoneracer
-│  • warrior • knight • biker
-│  • surfer • snowboard • dj
-│  • bodybuilder • lulu • hockey
-│  • ethanol • godfather
-│  • pirates • miss
+│  • mirror
+│  • formulaoneracer
+│  • warrior
+│  • knight
+│  • biker
+│  • surfer
+│  • snowboard
+│  • dj
+│  • bodybuilder
+│  • lulu
+│  • hockey
+│  • ethanol
+│  • godfather
+│  • pirates
+│  • miss
 │
 ├─⊷ *🏙️ BILLBOARDS*
-│  • concretejungle • broadwayatnight
-│  • newyorkatnight • shoppingarcade
-│  • oldtram • workerbythebillboard
+│  • concretejungle
+│  • broadwayatnight
+│  • newyorkatnight
+│  • shoppingarcade
+│  • oldtram
+│  • workerbythebillboard
 │  • eveningbillboard
 │  • pedestriancrossing
-│  • cube • nyc • city • ax
+│  • cube
+│  • nyc
+│  • city
+│  • ax
 │
 ├─⊷ *⭐ CELEBRITIES*
-│  • trump • obama
-│  • madonna • putin
+│  • trump
+│  • obama
+│  • madonna
+│  • putin
 │
 ├─⊷ *🖼️ FRAMES*
-│  • theframe • atthebeach
-│  • lavander • reproduction
+│  • theframe
+│  • atthebeach
+│  • lavander
+│  • reproduction
 │  • daffodils
 │
 ├─⊷ *✏️ DRAWINGS*
-│  • painter • explorerdrawing
-│  • artistinahat • drawinglesson
-│  • brugge • watercolours
-│  • truck • portrait
+│  • painter
+│  • explorerdrawing
+│  • artistinahat
+│  • drawinglesson
+│  • brugge
+│  • watercolours
+│  • truck
+│  • portrait
 │
 ├─⊷ *📜 VINTAGE*
-│  • quill • stamps
+│  • quill
+│  • stamps
 │
 ├─⊷ *🎲 MISC*
-│  • magiccard • postagestamp
-│  • truckadvert • tablet
-│  • artonthebrickwall • toasts
-│  • photowall • lego • wall
-│  • eye • morningmug • topsecret
-│  • breakingnews • vinylrecord
-│  • beer • coin
+│  • magiccard
+│  • postagestamp
+│  • truckadvert
+│  • tablet
+│  • artonthebrickwall
+│  • toasts
+│  • photowall
+│  • lego
+│  • wall
+│  • eye
+│  • morningmug
+│  • topsecret
+│  • breakingnews
+│  • vinylrecord
+│  • beer
+│  • coin
 │
 ├─⊷ *📰 MAGAZINES*
 │  • readingmagazine
 │  • rosesandmarshmallows
-│  • interview • reading
-│  • esquire • vogue
+│  • interview
+│  • reading
+│  • esquire
+│  • vogue
 │
 ├─⊷ *📺 TV*
 │  • analoguetv
 │
 ├─⊷ *📚 BOOKS*
-│  • festivereading • thebook
+│  • festivereading
+│  • thebook
 │  • veryoldbook
 │
 ├─⊷ *❤️ VALENTINE*
-│  • rosevine • loveletter
-│  • lovelock • weddingday
-│  • brooches • valentine
+│  • rosevine
+│  • loveletter
+│  • lovelock
+│  • weddingday
+│  • brooches
+│  • valentine
 │
 ├─⊷ *🐣 EASTER*
-│  • eastercard • bunnies
+│  • eastercard
+│  • bunnies
 │
 ├─⊷ *🎄 CHRISTMAS*
-│  • snowsign • christmaswriting
-│  • snowglobe • frostywindowwriting
+│  • snowsign
+│  • christmaswriting
+│  • snowglobe
+│  • frostywindowwriting
 │  • santasnowangel
 │  • santasparcelpicture
 │  • newyearframes
@@ -6370,13 +6524,7 @@ case 5: {
 │
 ╰─⊷
 
-🐺 *POWERED BY WOLF TECH* 🐺`);
-
-  // Build final text with "Read more" between each category
-  let commandsText = categories[0];
-  for (let i = 1; i < categories.length; i++) {
-    commandsText = createReadMoreEffect(commandsText, categories[i]);
-  }
+🐺 *POWERED BY WOLF TECH* 🐺`;
 
   // ========== APPLY "READ MORE" EFFECT ==========
   finalText = createReadMoreEffect(fadedInfoSection, commandsText);
