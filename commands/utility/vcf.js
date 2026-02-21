@@ -62,6 +62,18 @@ function getDisplayName(participant, sock) {
     return null;
 }
 
+const RANDOM_EMOJIS = [
+    '🐺', '🔥', '⚡', '💎', '🌟', '✨', '🎯', '🦁', '🐉', '🌙',
+    '💫', '🗡️', '🛡️', '👑', '🎭', '🌀', '💠', '🔮', '🧿', '❄️',
+    '🌊', '🍀', '🦅', '🐍', '🦊', '🐾', '💀', '🎪', '🏴', '⭐',
+    '🌸', '🦋', '🔱', '🎖️', '🏆', '💥', '🌈', '🎩', '🧨', '🃏',
+    '🦇', '🐲', '🦈', '🦂', '🕷️', '🐧', '🦌', '🦎', '🐊', '🦉'
+];
+
+function getRandomEmoji() {
+    return RANDOM_EMOJIS[Math.floor(Math.random() * RANDOM_EMOJIS.length)];
+}
+
 function escapeVcf(str) {
     if (!str) return '';
     return str.replace(/[\\;,]/g, c => '\\' + c);
@@ -71,7 +83,7 @@ export default {
     name: 'vcf',
     alias: ['groupvcf', 'groupcontacts', 'savecontacts'],
     category: 'utility',
-    description: 'Creates a VCF contact file with real WhatsApp numbers. Usage: .vcf [emoji/identity]',
+    description: 'Creates a VCF contact file with Silent Wolf branded names and random emojis',
     groupOnly: true,
 
     async execute(sock, msg, args, PREFIX, extra) {
@@ -94,7 +106,8 @@ export default {
                 }, { quoted: msg });
             }
 
-            const identity = args.join(' ').trim() || '';
+            const customLabel = args.join(' ').trim() || '';
+            const brandName = customLabel || 'Silent Wolf';
 
             const participants = metadata.participants || [];
             const groupName = metadata.subject || 'Group';
@@ -109,21 +122,16 @@ export default {
                     continue;
                 }
 
-                const waName = getDisplayName(p, sock) || '';
                 count++;
-
-                const displayName = waName || `+${number}`;
-                const contactLabel = identity ? `${displayName} ${identity}` : displayName;
+                const emoji = getRandomEmoji();
+                const contactName = `${emoji} ${brandName} ${count}`;
 
                 vcfContent += `BEGIN:VCARD\r\n`;
                 vcfContent += `VERSION:3.0\r\n`;
-                vcfContent += `FN:${escapeVcf(contactLabel)}\r\n`;
-                if (waName) {
-                    vcfContent += `N:;${escapeVcf(waName)};;;\r\n`;
-                    vcfContent += `NICKNAME:${escapeVcf(waName)}\r\n`;
-                } else {
-                    vcfContent += `N:;+${number};;;\r\n`;
-                }
+                vcfContent += `FN:${escapeVcf(contactName)}\r\n`;
+                vcfContent += `N:${escapeVcf(brandName)};${emoji} ${count};;;\r\n`;
+                vcfContent += `NICKNAME:${escapeVcf(contactName)}\r\n`;
+                vcfContent += `ORG:${escapeVcf(brandName)}\r\n`;
                 vcfContent += `TEL;type=CELL;type=pref:+${number}\r\n`;
                 vcfContent += `END:VCARD\r\n`;
             }
@@ -135,17 +143,14 @@ export default {
             }
 
             const safeGroupName = groupName.replace(/[^a-zA-Z0-9 ]/g, '_').trim();
-            let caption = `📇 *${count}* contacts extracted from *${groupName}*`;
-            if (identity) {
-                caption += `\n🏷️ Identity: ${identity}`;
-            }
+            let caption = `📇 *${count}* contacts saved as *${brandName}*\n🐺 From: *${groupName}*\n✨ Each contact has a unique emoji + number`;
             if (skipped > 0) {
                 caption += `\n_${skipped} members had unavailable numbers_`;
             }
 
             await sock.sendMessage(chatId, {
                 document: Buffer.from(vcfContent),
-                fileName: `${safeGroupName}_Contacts.vcf`,
+                fileName: `${safeGroupName}_SilentWolf.vcf`,
                 mimetype: 'text/vcard',
                 caption: caption
             }, { quoted: msg });
