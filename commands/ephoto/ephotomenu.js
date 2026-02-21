@@ -11,18 +11,29 @@ export default {
   async execute(sock, msg, args, PREFIX) {
     const chatId = msg.key.remoteJid;
 
-    const effectList = Object.entries(EPHOTO_EFFECTS).map(([key, effect]) => {
-      return `│  ${effect.emoji} • ${key}`;
-    }).join('\n');
+    const neonEffects = [];
+    const threeDEffects = [];
+
+    for (const [key, effect] of Object.entries(EPHOTO_EFFECTS)) {
+      if (effect.apiId) {
+        threeDEffects.push(`│  ${effect.emoji} • ${key}`);
+      } else {
+        neonEffects.push(`│  ${effect.emoji} • ${key}`);
+      }
+    }
 
     const menuText = `╭─⌈ ✨ *EPHOTO TEXT EFFECTS* ⌋
 │
-│  Create stunning neon & glow
-│  text effects from your text!
+│  Create stunning text effects
+│  from your text!
 │
-├─⊷ *📋 AVAILABLE EFFECTS*
+├─⊷ *💡 NEON & GLOW EFFECTS (${neonEffects.length})*
 │
-${effectList}
+${neonEffects.join('\n')}
+│
+├─⊷ *🧊 3D TEXT EFFECTS (${threeDEffects.length})*
+│
+${threeDEffects.join('\n')}
 │
 ├─⊷ *💡 HOW TO USE*
 │  Type: ${PREFIX}<effect> <your text>
@@ -30,9 +41,9 @@ ${effectList}
 ├─⊷ *📌 EXAMPLES*
 │  └⊷ ${PREFIX}neon WolfBot
 │  └⊷ ${PREFIX}galaxyneon Silent Wolf
-│  └⊷ ${PREFIX}devilwings MyName
-│  └⊷ ${PREFIX}hackerneon Anonymous
-│  └⊷ ${PREFIX}neonglitch Hacker
+│  └⊷ ${PREFIX}wooden3d MyName
+│  └⊷ ${PREFIX}hologram3d Hacker
+│  └⊷ ${PREFIX}avengers3d Hero
 │
 ├─⊷ *🔢 TOTAL EFFECTS:* ${Object.keys(EPHOTO_EFFECTS).length}
 │

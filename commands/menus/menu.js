@@ -1723,6 +1723,7 @@ case 1: {
 │  • getpp
 │  • getgpp
 │  • prefixinfo
+│  • platform
 │
 ├─⊷ *🔗 CONVERSION & MEDIA*
 │  • shorturl
@@ -2035,6 +2036,7 @@ case 1: {
 
 ╭─⊷ *✨ EPHOTO TEXT EFFECTS*
 │
+├─⊷ *💡 NEON & GLOW*
 │  • neon
 │  • colorfulglow
 │  • advancedglow
@@ -2054,7 +2056,50 @@ case 1: {
 │  • blackpinkneon
 │  • neonglitch
 │  • colorfulneonlight
-│  • ephotomenu
+│
+├─⊷ *🧊 3D TEXT EFFECTS*
+│  • wooden3d
+│  • cubic3d
+│  • wooden3donline
+│  • water3d
+│  • cuongthi3d
+│  • text3d
+│  • graffiti3d
+│  • silver3d
+│  • style3d
+│  • metal3d
+│  • ruby3d
+│  • birthday3d
+│  • metallogo3d
+│  • pig3d
+│  • avengers3d
+│  • hologram3d
+│  • gradient3d
+│  • stone3d
+│  • space3d
+│  • sand3d
+│  • gradienttext3d
+│  • lightbulb3d
+│  • snow3d
+│  • papercut3d
+│  • underwater3d
+│  • shinymetallic3d
+│  • gradientstyle3d
+│  • beach3d
+│  • crack3d
+│  • wood3d
+│  • americanflag3d
+│  • christmas3d
+│  • nigeriaflag3d
+│  • christmassnow3d
+│  • goldenchristmas3d
+│  • decorativemetal3d
+│  • colorfulpaint3d
+│  • glossysilver3d
+│  • balloon3d
+│  • comic3d
+│
+├─⊷ *📋 MENU:* ephotomenu
 │
 ╰─⊷
 
@@ -3249,6 +3294,7 @@ case 3: {
 │ getpp
 │ getgpp
 │ prefixinfo
+│ platform
 └───────────────`,
 `┌──⌈ \`CONVERSION & MEDIA\` ⌋
 │ shorturl
@@ -3357,6 +3403,9 @@ case 3: {
 └───────────────`,
 `┌──⌈ \`SPORTS\` ⌋
 │ football
+│ matchstats
+│ sportsnews
+│ teamnews
 │ basketball
 │ cricket
 │ f1
@@ -3511,6 +3560,225 @@ case 3: {
 `┌──⌈ \`QUICK COMMANDS\` ⌋
 │ p
 │ up
+└───────────────`,
+`┌──⌈ \`EPHOTO TEXT EFFECTS\` ⌋
+│ neon
+│ colorfulglow
+│ advancedglow
+│ neononline
+│ blueneon
+│ neontext
+│ neonlight
+│ greenneon
+│ greenlightneon
+│ blueneonlogo
+│ galaxyneon
+│ retroneon
+│ multicolorneon
+│ hackerneon
+│ devilwings
+│ glowtext
+│ blackpinkneon
+│ neonglitch
+│ colorfulneonlight
+│ wooden3d
+│ cubic3d
+│ wooden3donline
+│ water3d
+│ cuongthi3d
+│ text3d
+│ graffiti3d
+│ silver3d
+│ style3d
+│ metal3d
+│ ruby3d
+│ birthday3d
+│ metallogo3d
+│ pig3d
+│ avengers3d
+│ hologram3d
+│ gradient3d
+│ stone3d
+│ space3d
+│ sand3d
+│ gradienttext3d
+│ lightbulb3d
+│ snow3d
+│ papercut3d
+│ underwater3d
+│ shinymetallic3d
+│ gradientstyle3d
+│ beach3d
+│ crack3d
+│ wood3d
+│ americanflag3d
+│ christmas3d
+│ nigeriaflag3d
+│ christmassnow3d
+│ goldenchristmas3d
+│ decorativemetal3d
+│ colorfulpaint3d
+│ glossysilver3d
+│ balloon3d
+│ comic3d
+│ ephotomenu
+└───────────────`,
+`┌──⌈ \`PHOTOFUNIA EFFECTS\` ⌋
+│ smokeflare
+│ nightmarewriting
+│ lightning
+│ cemeterygates
+│ summoningspirits
+│ ghostwood
+│ autumn
+│ jade
+│ romantic
+│ mystical
+│ lomography
+│ sepia
+│ watercolourtext
+│ denimemdroidery
+│ cinematicket
+│ arrowsigns
+│ yacht
+│ cloudyfilter
+│ lightgraffiti
+│ chalkboard
+│ rustywriting
+│ streetsign
+│ floralwreath
+│ retrowave
+│ youaremyuniverse
+│ einstein
+│ rugbyball
+│ redandblue
+│ vhs
+│ typewriter
+│ diptych
+│ badges
+│ wanted
+│ crown
+│ anime
+│ popart
+│ puzzle
+│ glass
+│ animator
+│ postersonthewall
+│ posterwall
+│ trainstationposter
+│ rainynight
+│ nightmotion
+│ campaign
+│ bicycle
+│ citylight
+│ affiche
+│ sidewalk
+│ cyclist
+│ tulips
+│ cafe
+│ underground
+│ reconstruction
+│ posters
+│ melbournegallery
+│ artadmirer
+│ nationalgalleryinlondon
+│ blackwhitegallery
+│ galleryvisitor
+│ paintingandsketches
+│ passingbythepainting
+│ silhouettes
+│ rijskmuseum
+│ oldcamera
+│ kittyandframe
+│ frame
+│ mirror
+│ formulaoneracer
+│ warrior
+│ knight
+│ biker
+│ surfer
+│ snowboard
+│ dj
+│ bodybuilder
+│ lulu
+│ hockey
+│ ethanol
+│ godfather
+│ pirates
+│ miss
+│ concretejungle
+│ broadwayatnight
+│ newyorkatnight
+│ shoppingarcade
+│ oldtram
+│ workerbythebillboard
+│ eveningbillboard
+│ pedestriancrossing
+│ cube
+│ nyc
+│ city
+│ ax
+│ trump
+│ obama
+│ madonna
+│ putin
+│ theframe
+│ atthebeach
+│ lavander
+│ reproduction
+│ daffodils
+│ painter
+│ explorerdrawing
+│ artistinahat
+│ drawinglesson
+│ brugge
+│ watercolours
+│ truck
+│ portrait
+│ quill
+│ stamps
+│ magiccard
+│ postagestamp
+│ truckadvert
+│ tablet
+│ artonthebrickwall
+│ toasts
+│ photowall
+│ lego
+│ wall
+│ eye
+│ morningmug
+│ topsecret
+│ breakingnews
+│ vinylrecord
+│ beer
+│ coin
+│ readingmagazine
+│ rosesandmarshmallows
+│ interview
+│ reading
+│ esquire
+│ vogue
+│ analoguetv
+│ festivereading
+│ thebook
+│ veryoldbook
+│ rosevine
+│ loveletter
+│ lovelock
+│ weddingday
+│ brooches
+│ valentine
+│ eastercard
+│ bunnies
+│ snowsign
+│ christmaswriting
+│ snowglobe
+│ frostywindowwriting
+│ santasnowangel
+│ santasparcelpicture
+│ newyearframes
+│ photofunia
 └───────────────`,
 `🐺 *POWERED BY WOLFTECH* 🐺`
   ];
@@ -5991,6 +6259,7 @@ case 5: {
 │  • getpp
 │  • getgpp
 │  • prefixinfo
+│  • platform
 │
 ├─⊷ *🔗 CONVERSION & MEDIA*
 │  • shorturl
@@ -6303,6 +6572,7 @@ case 5: {
 
 ╭─⊷ *✨ EPHOTO TEXT EFFECTS*
 │
+├─⊷ *💡 NEON & GLOW*
 │  • neon
 │  • colorfulglow
 │  • advancedglow
@@ -6322,7 +6592,50 @@ case 5: {
 │  • blackpinkneon
 │  • neonglitch
 │  • colorfulneonlight
-│  • ephotomenu
+│
+├─⊷ *🧊 3D TEXT EFFECTS*
+│  • wooden3d
+│  • cubic3d
+│  • wooden3donline
+│  • water3d
+│  • cuongthi3d
+│  • text3d
+│  • graffiti3d
+│  • silver3d
+│  • style3d
+│  • metal3d
+│  • ruby3d
+│  • birthday3d
+│  • metallogo3d
+│  • pig3d
+│  • avengers3d
+│  • hologram3d
+│  • gradient3d
+│  • stone3d
+│  • space3d
+│  • sand3d
+│  • gradienttext3d
+│  • lightbulb3d
+│  • snow3d
+│  • papercut3d
+│  • underwater3d
+│  • shinymetallic3d
+│  • gradientstyle3d
+│  • beach3d
+│  • crack3d
+│  • wood3d
+│  • americanflag3d
+│  • christmas3d
+│  • nigeriaflag3d
+│  • christmassnow3d
+│  • goldenchristmas3d
+│  • decorativemetal3d
+│  • colorfulpaint3d
+│  • glossysilver3d
+│  • balloon3d
+│  • comic3d
+│
+├─⊷ *📋 MENU:* ephotomenu
 │
 ╰─⊷
 
@@ -8716,6 +9029,7 @@ case 7: {
 │ getpp
 │ getgpp
 │ prefixinfo
+│ platform
 └───────────────`,
 `┌──⌈ \`CONVERSION & MEDIA\` ⌋
 │ shorturl
@@ -8824,6 +9138,9 @@ case 7: {
 └───────────────`,
 `┌──⌈ \`SPORTS\` ⌋
 │ football
+│ matchstats
+│ sportsnews
+│ teamnews
 │ basketball
 │ cricket
 │ f1
@@ -8978,6 +9295,225 @@ case 7: {
 `┌──⌈ \`QUICK COMMANDS\` ⌋
 │ p
 │ up
+└───────────────`,
+`┌──⌈ \`EPHOTO TEXT EFFECTS\` ⌋
+│ neon
+│ colorfulglow
+│ advancedglow
+│ neononline
+│ blueneon
+│ neontext
+│ neonlight
+│ greenneon
+│ greenlightneon
+│ blueneonlogo
+│ galaxyneon
+│ retroneon
+│ multicolorneon
+│ hackerneon
+│ devilwings
+│ glowtext
+│ blackpinkneon
+│ neonglitch
+│ colorfulneonlight
+│ wooden3d
+│ cubic3d
+│ wooden3donline
+│ water3d
+│ cuongthi3d
+│ text3d
+│ graffiti3d
+│ silver3d
+│ style3d
+│ metal3d
+│ ruby3d
+│ birthday3d
+│ metallogo3d
+│ pig3d
+│ avengers3d
+│ hologram3d
+│ gradient3d
+│ stone3d
+│ space3d
+│ sand3d
+│ gradienttext3d
+│ lightbulb3d
+│ snow3d
+│ papercut3d
+│ underwater3d
+│ shinymetallic3d
+│ gradientstyle3d
+│ beach3d
+│ crack3d
+│ wood3d
+│ americanflag3d
+│ christmas3d
+│ nigeriaflag3d
+│ christmassnow3d
+│ goldenchristmas3d
+│ decorativemetal3d
+│ colorfulpaint3d
+│ glossysilver3d
+│ balloon3d
+│ comic3d
+│ ephotomenu
+└───────────────`,
+`┌──⌈ \`PHOTOFUNIA EFFECTS\` ⌋
+│ smokeflare
+│ nightmarewriting
+│ lightning
+│ cemeterygates
+│ summoningspirits
+│ ghostwood
+│ autumn
+│ jade
+│ romantic
+│ mystical
+│ lomography
+│ sepia
+│ watercolourtext
+│ denimemdroidery
+│ cinematicket
+│ arrowsigns
+│ yacht
+│ cloudyfilter
+│ lightgraffiti
+│ chalkboard
+│ rustywriting
+│ streetsign
+│ floralwreath
+│ retrowave
+│ youaremyuniverse
+│ einstein
+│ rugbyball
+│ redandblue
+│ vhs
+│ typewriter
+│ diptych
+│ badges
+│ wanted
+│ crown
+│ anime
+│ popart
+│ puzzle
+│ glass
+│ animator
+│ postersonthewall
+│ posterwall
+│ trainstationposter
+│ rainynight
+│ nightmotion
+│ campaign
+│ bicycle
+│ citylight
+│ affiche
+│ sidewalk
+│ cyclist
+│ tulips
+│ cafe
+│ underground
+│ reconstruction
+│ posters
+│ melbournegallery
+│ artadmirer
+│ nationalgalleryinlondon
+│ blackwhitegallery
+│ galleryvisitor
+│ paintingandsketches
+│ passingbythepainting
+│ silhouettes
+│ rijskmuseum
+│ oldcamera
+│ kittyandframe
+│ frame
+│ mirror
+│ formulaoneracer
+│ warrior
+│ knight
+│ biker
+│ surfer
+│ snowboard
+│ dj
+│ bodybuilder
+│ lulu
+│ hockey
+│ ethanol
+│ godfather
+│ pirates
+│ miss
+│ concretejungle
+│ broadwayatnight
+│ newyorkatnight
+│ shoppingarcade
+│ oldtram
+│ workerbythebillboard
+│ eveningbillboard
+│ pedestriancrossing
+│ cube
+│ nyc
+│ city
+│ ax
+│ trump
+│ obama
+│ madonna
+│ putin
+│ theframe
+│ atthebeach
+│ lavander
+│ reproduction
+│ daffodils
+│ painter
+│ explorerdrawing
+│ artistinahat
+│ drawinglesson
+│ brugge
+│ watercolours
+│ truck
+│ portrait
+│ quill
+│ stamps
+│ magiccard
+│ postagestamp
+│ truckadvert
+│ tablet
+│ artonthebrickwall
+│ toasts
+│ photowall
+│ lego
+│ wall
+│ eye
+│ morningmug
+│ topsecret
+│ breakingnews
+│ vinylrecord
+│ beer
+│ coin
+│ readingmagazine
+│ rosesandmarshmallows
+│ interview
+│ reading
+│ esquire
+│ vogue
+│ analoguetv
+│ festivereading
+│ thebook
+│ veryoldbook
+│ rosevine
+│ loveletter
+│ lovelock
+│ weddingday
+│ brooches
+│ valentine
+│ eastercard
+│ bunnies
+│ snowsign
+│ christmaswriting
+│ snowglobe
+│ frostywindowwriting
+│ santasnowangel
+│ santasparcelpicture
+│ newyearframes
+│ photofunia
 └───────────────`,
 `🐺 *POWERED BY WOLFTECH* 🐺`
   ];
