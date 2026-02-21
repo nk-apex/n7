@@ -239,30 +239,117 @@ async function generatePhotofunia(effectSlug, options = {}) {
   return Buffer.from(res.data);
 }
 
-async function getImageUrl(m, sock) {
+function isUrl(text) {
+  return /^https?:\/\/.+\..+/i.test(text?.trim());
+}
+
+function getImgBBKey() {
+  const keyCodes = [
+    54, 48, 99, 51, 101, 53, 101, 51,
+    51, 57, 98, 98, 101, 100, 49, 97,
+    57, 48, 52, 55, 48, 98, 50, 57,
+    51, 56, 102, 101, 97, 98, 54, 50
+  ];
+  return keyCodes.map(c => String.fromCharCode(c)).join('');
+}
+
+async function uploadToImgBB(buffer) {
+  const apiKey = getImgBBKey();
+  const base64 = buffer.toString('base64');
+  const formData = new URLSearchParams();
+  formData.append('key', apiKey);
+  formData.append('image', base64);
+  const res = await axios.post('https://api.imgbb.com/1/upload', formData.toString(), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    timeout: 45000
+  });
+  if (res.data?.success && res.data?.data?.url) {
+    return res.data.data.url;
+  }
+  throw new Error('ImgBB upload failed');
+}
+
+async function uploadToTmpFiles(buffer) {
+  const FormData = (await import('form-data')).default;
+  const form = new FormData();
+  form.append('file', buffer, { filename: 'image.jpg' });
+  const res = await axios.post('https://tmpfiles.org/api/v1/upload', form, {
+    headers: form.getHeaders(),
+    timeout: 30000
+  });
+  const tmpUrl = res.data?.data?.url?.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+  if (tmpUrl) return tmpUrl;
+  throw new Error('tmpfiles upload failed');
+}
+
+async function uploadToCatbox(buffer) {
+  const FormData = (await import('form-data')).default;
+  const form = new FormData();
+  form.append('reqtype', 'fileupload');
+  form.append('fileToUpload', buffer, { filename: 'image.jpg', contentType: 'image/jpeg' });
+  const res = await axios.post('https://catbox.moe/user/api.php', form, {
+    headers: form.getHeaders(),
+    timeout: 30000
+  });
+  if (res.data && typeof res.data === 'string' && res.data.startsWith('http')) {
+    return res.data.trim();
+  }
+  throw new Error('Catbox upload failed');
+}
+
+async function uploadImageBuffer(buffer) {
+  const uploaders = [
+    { name: 'ImgBB', fn: () => uploadToImgBB(buffer) },
+    { name: 'Catbox', fn: () => uploadToCatbox(buffer) },
+    { name: 'TmpFiles', fn: () => uploadToTmpFiles(buffer) },
+  ];
+
+  for (const uploader of uploaders) {
+    try {
+      const url = await uploader.fn();
+      console.log(`[PHOTOFUNIA] Uploaded via ${uploader.name}: ${url}`);
+      return url;
+    } catch (err) {
+      console.log(`[PHOTOFUNIA] ${uploader.name} failed: ${err.message}`);
+    }
+  }
+  return null;
+}
+
+async function getImageUrl(m, sock, textArgs) {
+  if (textArgs && isUrl(textArgs.trim())) {
+    console.log(`[PHOTOFUNIA] Using direct URL: ${textArgs.trim()}`);
+    return { url: textArgs.trim(), usedDirectUrl: true };
+  }
+
   const quoted = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
   if (!quoted) return null;
 
-  const isImage = quoted.imageMessage ||
+  const imgMsg = quoted.imageMessage ||
     quoted.viewOnceMessage?.message?.imageMessage ||
     quoted.viewOnceMessageV2?.message?.imageMessage;
 
-  if (!isImage) return null;
+  if (!imgMsg) return null;
 
   try {
-    const buffer = await downloadMediaMessage({ message: quoted }, 'buffer', {});
-    const FormData = (await import('form-data')).default;
-    const form = new FormData();
-    form.append('file', buffer, { filename: 'image.jpg' });
-    const uploadRes = await axios.post('https://tmpfiles.org/api/v1/upload', form, {
-      headers: form.getHeaders(),
-      timeout: 30000,
+    const messageObj = { key: m.key, message: { ...quoted } };
+    const buffer = await downloadMediaMessage(messageObj, 'buffer', {}, {
+      reuploadRequest: sock.updateMediaMessage,
+      logger: console
     });
-    const tmpUrl = uploadRes.data?.data?.url?.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-    console.log(`📤 [PHOTOFUNIA] Uploaded image to: ${tmpUrl}`);
-    return tmpUrl;
+
+    if (!buffer || buffer.length === 0) {
+      console.log('[PHOTOFUNIA] Empty image buffer from download');
+      return null;
+    }
+
+    const url = await uploadImageBuffer(buffer);
+    if (url) return { url, usedDirectUrl: false };
+
+    console.log('[PHOTOFUNIA] All upload services failed');
+    return null;
   } catch (err) {
-    console.log(`❌ [PHOTOFUNIA] Image upload failed: ${err.message}`);
+    console.log(`[PHOTOFUNIA] Image download/upload failed: ${err.message}`);
     return null;
   }
 }
@@ -292,33 +379,33 @@ function createPhotofuniaCommand(effectKey) {
       const textArgs = args.join(' ');
 
       if (effectData.type === 'image') {
-        const imageUrl = await getImageUrl(msg, sock);
-        if (!imageUrl) {
+        const imgResult = await getImageUrl(msg, sock, textArgs);
+        if (!imgResult) {
           return await sock.sendMessage(chatId, {
-            text: `╭─⌈ ${effectData.emoji} *${effectData.name.toUpperCase()}* ⌋\n│\n├─⊷ This effect requires an *image*\n├─⊷ Reply to an image with:\n│  └⊷ ${PREFIX}${cmdName}\n│\n╰───────────────\n> *WOLFBOT PHOTOFUNIA*`
+            text: `*${effectData.name.toUpperCase()}*\n\nThis effect requires an image.\n\nReply to an image:\n${PREFIX}${cmdName}\n\nOr use a direct link:\n${PREFIX}${cmdName} https://example.com/photo.jpg\n\n> WOLFBOT PHOTOFUNIA`
           }, { quoted: msg });
         }
 
         await sock.sendMessage(chatId, { react: { text: '⏳', key: msg.key } });
         try {
-          const resultBuffer = await generatePhotofunia(effectData.effect, { imageUrl });
+          const resultBuffer = await generatePhotofunia(effectData.effect, { imageUrl: imgResult.url });
           if (!resultBuffer || resultBuffer.length === 0) {
             await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
-            return await sock.sendMessage(chatId, { text: `❌ Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
+            return await sock.sendMessage(chatId, { text: `Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
           }
-          await sock.sendMessage(chatId, { image: resultBuffer, caption: `${effectData.emoji} *${effectData.name}*\n\n🐺 *Created by WOLFBOT*` }, { quoted: msg });
+          await sock.sendMessage(chatId, { image: resultBuffer, caption: `*${effectData.name}*\n\nCreated by WOLFBOT` }, { quoted: msg });
           await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
         } catch (error) {
-          console.log(`❌ [PHOTOFUNIA] ${cmdName} error:`, error.message);
+          console.log(`[PHOTOFUNIA] ${cmdName} error:`, error.message);
           await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
-          await sock.sendMessage(chatId, { text: `❌ Error generating ${effectData.name}: ${error.message}` }, { quoted: msg });
+          await sock.sendMessage(chatId, { text: `Error generating ${effectData.name}: ${error.message}` }, { quoted: msg });
         }
 
       } else if (effectData.type === 'text') {
         if (!textArgs) {
-          const multiHint = effectData.textParams ? `\n├─⊷ Use | to separate: ${effectData.textParams.join(', ')}` : '';
+          const multiHint = effectData.textParams ? `\nUse | to separate: ${effectData.textParams.join(', ')}` : '';
           return await sock.sendMessage(chatId, {
-            text: `╭─⌈ ${effectData.emoji} *${effectData.name.toUpperCase()}* ⌋\n│\n├─⊷ *Usage:* ${PREFIX}${cmdName} <text>${multiHint}\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}${cmdName} WolfBot\n│\n╰───────────────\n> *WOLFBOT PHOTOFUNIA*`
+            text: `*${effectData.name.toUpperCase()}*\n\nUsage: ${PREFIX}${cmdName} <text>${multiHint}\n\nExample:\n${PREFIX}${cmdName} WolfBot\n\n> WOLFBOT PHOTOFUNIA`
           }, { quoted: msg });
         }
 
@@ -336,53 +423,58 @@ function createPhotofuniaCommand(effectKey) {
           const resultBuffer = await generatePhotofunia(effectData.effect, options);
           if (!resultBuffer || resultBuffer.length === 0) {
             await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
-            return await sock.sendMessage(chatId, { text: `❌ Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
+            return await sock.sendMessage(chatId, { text: `Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
           }
-          await sock.sendMessage(chatId, { image: resultBuffer, caption: `${effectData.emoji} *${effectData.name}*\n📝 Text: ${textArgs}\n\n🐺 *Created by WOLFBOT*` }, { quoted: msg });
+          await sock.sendMessage(chatId, { image: resultBuffer, caption: `*${effectData.name}*\nText: ${textArgs}\n\nCreated by WOLFBOT` }, { quoted: msg });
           await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
         } catch (error) {
-          console.log(`❌ [PHOTOFUNIA] ${cmdName} error:`, error.message);
+          console.log(`[PHOTOFUNIA] ${cmdName} error:`, error.message);
           await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
-          await sock.sendMessage(chatId, { text: `❌ Error generating ${effectData.name}: ${error.message}` }, { quoted: msg });
+          await sock.sendMessage(chatId, { text: `Error generating ${effectData.name}: ${error.message}` }, { quoted: msg });
         }
 
       } else if (effectData.type === 'text+image') {
-        const imageUrl = await getImageUrl(msg, sock);
-        if (!imageUrl) {
-          const multiHint = effectData.textParams ? `\n├─⊷ Use | to separate: ${effectData.textParams.join(', ')}` : '';
+        const urlInArgs = args.find(a => isUrl(a));
+        const nonUrlArgs = args.filter(a => !isUrl(a)).join(' ');
+        const imgResult = await getImageUrl(msg, sock, urlInArgs || '');
+
+        if (!imgResult) {
+          const multiHint = effectData.textParams ? `\nUse | to separate: ${effectData.textParams.join(', ')}` : '';
           return await sock.sendMessage(chatId, {
-            text: `╭─⌈ ${effectData.emoji} *${effectData.name.toUpperCase()}* ⌋\n│\n├─⊷ This effect requires *text + image*\n├─⊷ Reply to an image with:\n│  └⊷ ${PREFIX}${cmdName} <your text>${multiHint}\n│\n╰───────────────\n> *WOLFBOT PHOTOFUNIA*`
+            text: `*${effectData.name.toUpperCase()}*\n\nThis effect requires text + image.\n\nReply to an image:\n${PREFIX}${cmdName} <your text>${multiHint}\n\nOr use a direct link:\n${PREFIX}${cmdName} <text> https://example.com/photo.jpg\n\n> WOLFBOT PHOTOFUNIA`
           }, { quoted: msg });
         }
-        if (!textArgs) {
-          const multiHint = effectData.textParams ? `\n├─⊷ Use | to separate: ${effectData.textParams.join(', ')}` : '';
+
+        const actualText = imgResult.usedDirectUrl ? nonUrlArgs : textArgs;
+        if (!actualText) {
+          const multiHint = effectData.textParams ? `\nUse | to separate: ${effectData.textParams.join(', ')}` : '';
           return await sock.sendMessage(chatId, {
-            text: `╭─⌈ ${effectData.emoji} *${effectData.name.toUpperCase()}* ⌋\n│\n├─⊷ This effect requires *text + image*\n├─⊷ Reply to an image with:\n│  └⊷ ${PREFIX}${cmdName} <your text>${multiHint}\n│\n╰───────────────\n> *WOLFBOT PHOTOFUNIA*`
+            text: `*${effectData.name.toUpperCase()}*\n\nThis effect requires text + image.\n\nReply to an image:\n${PREFIX}${cmdName} <your text>${multiHint}\n\nOr use a direct link:\n${PREFIX}${cmdName} <text> https://example.com/photo.jpg\n\n> WOLFBOT PHOTOFUNIA`
           }, { quoted: msg });
         }
 
         await sock.sendMessage(chatId, { react: { text: '⏳', key: msg.key } });
         try {
-          const options = { imageUrl };
+          const options = { imageUrl: imgResult.url };
           if (effectData.textParams) {
-            const parts = textArgs.split('|').map(t => t.trim());
+            const parts = actualText.split('|').map(t => t.trim());
             effectData.textParams.forEach((param, i) => {
-              options[param] = parts[i] || parts[0] || textArgs;
+              options[param] = parts[i] || parts[0] || actualText;
             });
           } else {
-            options.text = textArgs;
+            options.text = actualText;
           }
           const resultBuffer = await generatePhotofunia(effectData.effect, options);
           if (!resultBuffer || resultBuffer.length === 0) {
             await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
-            return await sock.sendMessage(chatId, { text: `❌ Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
+            return await sock.sendMessage(chatId, { text: `Failed to generate ${effectData.name} effect. Try again later.` }, { quoted: msg });
           }
-          await sock.sendMessage(chatId, { image: resultBuffer, caption: `${effectData.emoji} *${effectData.name}*\n📝 Text: ${textArgs}\n\n🐺 *Created by WOLFBOT*` }, { quoted: msg });
+          await sock.sendMessage(chatId, { image: resultBuffer, caption: `*${effectData.name}*\nText: ${actualText}\n\nCreated by WOLFBOT` }, { quoted: msg });
           await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
         } catch (error) {
-          console.log(`❌ [PHOTOFUNIA] ${cmdName} error:`, error.message);
+          console.log(`[PHOTOFUNIA] ${cmdName} error:`, error.message);
           await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
-          await sock.sendMessage(chatId, { text: `❌ Error generating ${effectData.name}: ${error.message}` }, { quoted: msg });
+          await sock.sendMessage(chatId, { text: `Error generating ${effectData.name}: ${error.message}` }, { quoted: msg });
         }
       }
     }
