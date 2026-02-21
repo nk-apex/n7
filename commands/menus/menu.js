@@ -5733,10 +5733,12 @@ case 5: {
 
   categories.push(`╭─⊷ *🏆 SPORTS*
 │
-│  • football • basketball
-│  • cricket • f1 • nfl
-│  • mma • tennis • baseball
-│  • hockey • golf • sportsmenu
+│  • football • matchstats
+│  • sportsnews • teamnews
+│  • basketball • cricket
+│  • f1 • nfl • mma
+│  • tennis • baseball • hockey
+│  • golf • sportsmenu
 │
 ╰─⊷
 
@@ -5829,6 +5831,128 @@ case 5: {
 │  • devilwings • glowtext
 │  • blackpinkneon • neonglitch
 │  • colorfulneonlight • ephotomenu
+│
+╰─⊷`);
+
+  categories.push(`╭─⊷ *🎨 PHOTOFUNIA EFFECTS (154)*
+│
+├─⊷ *🎃 HALLOWEEN*
+│  • smokeflare • nightmarewriting
+│  • lightning • cemeterygates
+│  • summoningspirits • ghostwood
+│
+├─⊷ *🎨 FILTERS*
+│  • autumn • jade • romantic
+│  • mystical • lomography • sepia
+│
+├─⊷ *🔬 LAB*
+│  • watercolourtext • denimemdroidery
+│  • cinematicket • arrowsigns
+│  • yacht • cloudyfilter
+│  • lightgraffiti • chalkboard
+│  • rustywriting • streetsign
+│  • floralwreath • retrowave
+│  • youaremyuniverse • einstein
+│  • rugbyball • redandblue
+│  • vhs • typewriter • diptych
+│  • badges • wanted • crown
+│  • anime • popart • puzzle
+│  • glass • animator
+│
+├─⊷ *📌 POSTERS*
+│  • postersonthewall • posterwall
+│  • trainstationposter • rainynight
+│  • nightmotion • campaign
+│  • bicycle • citylight • affiche
+│  • sidewalk • cyclist • tulips
+│  • cafe • underground
+│  • reconstruction • posters
+│
+├─⊷ *🏛️ GALLERIES*
+│  • melbournegallery • artadmirer
+│  • nationalgalleryinlondon
+│  • blackwhitegallery
+│  • galleryvisitor
+│  • paintingandsketches
+│  • passingbythepainting
+│  • silhouettes • rijskmuseum
+│
+├─⊷ *📸 PHOTOGRAPHY*
+│  • oldcamera • kittyandframe
+│  • frame
+│
+├─⊷ *🎭 FACES*
+│  • mirror • formulaoneracer
+│  • warrior • knight • biker
+│  • surfer • snowboard • dj
+│  • bodybuilder • lulu • hockey
+│  • ethanol • godfather
+│  • pirates • miss
+│
+├─⊷ *🏙️ BILLBOARDS*
+│  • concretejungle • broadwayatnight
+│  • newyorkatnight • shoppingarcade
+│  • oldtram • workerbythebillboard
+│  • eveningbillboard
+│  • pedestriancrossing
+│  • cube • nyc • city • ax
+│
+├─⊷ *⭐ CELEBRITIES*
+│  • trump • obama
+│  • madonna • putin
+│
+├─⊷ *🖼️ FRAMES*
+│  • theframe • atthebeach
+│  • lavander • reproduction
+│  • daffodils
+│
+├─⊷ *✏️ DRAWINGS*
+│  • painter • explorerdrawing
+│  • artistinahat • drawinglesson
+│  • brugge • watercolours
+│  • truck • portrait
+│
+├─⊷ *📜 VINTAGE*
+│  • quill • stamps
+│
+├─⊷ *🎲 MISC*
+│  • magiccard • postagestamp
+│  • truckadvert • tablet
+│  • artonthebrickwall • toasts
+│  • photowall • lego • wall
+│  • eye • morningmug • topsecret
+│  • breakingnews • vinylrecord
+│  • beer • coin
+│
+├─⊷ *📰 MAGAZINES*
+│  • readingmagazine
+│  • rosesandmarshmallows
+│  • interview • reading
+│  • esquire • vogue
+│
+├─⊷ *📺 TV*
+│  • analoguetv
+│
+├─⊷ *📚 BOOKS*
+│  • festivereading • thebook
+│  • veryoldbook
+│
+├─⊷ *❤️ VALENTINE*
+│  • rosevine • loveletter
+│  • lovelock • weddingday
+│  • brooches • valentine
+│
+├─⊷ *🐣 EASTER*
+│  • eastercard • bunnies
+│
+├─⊷ *🎄 CHRISTMAS*
+│  • snowsign • christmaswriting
+│  • snowglobe • frostywindowwriting
+│  • santasnowangel
+│  • santasparcelpicture
+│  • newyearframes
+│
+├─⊷ *📋 MENU:* photofunia
 │
 ╰─⊷
 
