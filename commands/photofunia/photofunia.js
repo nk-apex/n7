@@ -2,7 +2,7 @@ import { EFFECTS, CATEGORY_META, getEffectsByCategory, getAllCategories } from '
 
 export default {
   name: 'photofunia',
-  description: '🎨 PhotoFunia effects menu - Browse all effects by category',
+  description: '🎨 PhotoFunia effects menu - Browse all 154 effects',
   category: 'photofunia',
   alias: ['pf', 'pfx', 'pfmenu', 'pflist', 'photofuniamenu'],
 
@@ -17,7 +17,7 @@ export default {
       for (const [key, eff] of effects) {
         const cmdName = key.replace(/-/g, '');
         const typeTag = eff.type === 'image' ? '🖼️' : eff.type === 'text' ? '📝' : '🔄';
-        list += `│  ${eff.emoji} *${PREFIX}${cmdName}* ${typeTag}\n│     └ ${eff.name}\n`;
+        list += `│  ${typeTag} ${eff.emoji} ${PREFIX}${cmdName}\n│     └ ${eff.name}\n`;
       }
       const catText = `╭─⌈ ${meta.emoji} *${meta.name.toUpperCase()} EFFECTS* ⌋\n│\n${list}│\n├─⊷ *Legend:* 🖼️ Image | 📝 Text | 🔄 Both\n├─⊷ *Usage:* ${PREFIX}<command> [text]\n│\n╰───────────────\n🐺 *POWERED BY WOLFBOT* 🐺`;
       return await sock.sendMessage(jid, { text: catText }, { quoted: m });
@@ -25,44 +25,46 @@ export default {
 
     const cats = getAllCategories();
     const totalEffects = Object.keys(EFFECTS).length;
+    const catOrder = Object.keys(CATEGORY_META);
 
-    let catList = '';
-    for (const [cat, effects] of Object.entries(cats)) {
-      const meta = CATEGORY_META[cat] || { emoji: '📁', name: cat };
-      const imageCount = effects.filter(e => e.type === 'image').length;
-      const textCount = effects.filter(e => e.type === 'text').length;
-      const bothCount = effects.filter(e => e.type === 'text+image').length;
-      let breakdown = [];
-      if (imageCount) breakdown.push(`🖼️${imageCount}`);
-      if (textCount) breakdown.push(`📝${textCount}`);
-      if (bothCount) breakdown.push(`🔄${bothCount}`);
-      catList += `│  ${meta.emoji} *${meta.name}* ─ ${effects.length} effects\n│     └ ${breakdown.join(' • ')}\n`;
+    let fullList = '';
+    for (const cat of catOrder) {
+      const effects = cats[cat];
+      if (!effects || effects.length === 0) continue;
+      const meta = CATEGORY_META[cat];
+
+      fullList += `├─⊷ ${meta.emoji} *${meta.name.toUpperCase()}* (${effects.length})\n`;
+      for (const eff of effects) {
+        const cmdName = eff.key.replace(/-/g, '');
+        const typeTag = eff.type === 'image' ? '🖼️' : eff.type === 'text' ? '📝' : '🔄';
+        fullList += `│  ${typeTag} ${eff.emoji} *${PREFIX}${cmdName}*\n`;
+      }
+      fullList += `│\n`;
     }
 
     const menuText = `╭─⌈ 🎨 *PHOTOFUNIA MENU* ⌋
 │
 │  Transform your photos and text
-│  with ${totalEffects} stunning effects!
+│  with *${totalEffects}* stunning effects!
 │
-├─⊷ *📂 CATEGORIES*
+│  🖼️ = Reply to image
+│  📝 = Text input
+│  🔄 = Text + image
 │
-${catList}│
-├─⊷ *💡 HOW TO USE*
+${fullList}├─⊷ *💡 HOW TO USE*
 │  ▸ ${PREFIX}photofunia <category>
-│     └ View effects in a category
+│     └ View a single category
 │  ▸ Each effect is its own command
-│  ▸ 🖼️ = Reply to image needed
-│  ▸ 📝 = Text input needed
-│  ▸ 🔄 = Both text + image needed
+│  ▸ Multi-text: use | to separate
 │
 ├─⊷ *📌 EXAMPLES*
-│  └⊷ ${PREFIX}photofunia halloween
 │  └⊷ ${PREFIX}smokeflare (reply to img)
 │  └⊷ ${PREFIX}einstein Hello World
-│  └⊷ ${PREFIX}breakingnews Text (reply)
+│  └⊷ ${PREFIX}breakingnews CNN | Title | Info
+│  └⊷ ${PREFIX}wanted A | B | Name | $500 | Sheriff
 │
 ├─⊷ *📊 TOTAL:* ${totalEffects} effects
-├─⊷ *📂 CATEGORIES:* ${Object.keys(cats).length}
+├─⊷ *📂 CATEGORIES:* ${catOrder.length}
 │
 ╰───────────────
 🐺 *POWERED BY WOLFBOT* 🐺`;
