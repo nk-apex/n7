@@ -1,8 +1,8 @@
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
 import db from '../../lib/supabase.js';
 
-const CACHE_CLEAN_INTERVAL = 24 * 60 * 60 * 1000;
-const MAX_MESSAGE_CACHE = 2000;
+const CACHE_CLEAN_INTERVAL = 2 * 60 * 60 * 1000;
+const MAX_MESSAGE_CACHE = 500;
 
 let antideleteState = {
     enabled: true,
@@ -24,8 +24,8 @@ let antideleteState = {
     },
     settings: {
         autoCleanEnabled: true,
-        maxAgeHours: 24,
-        maxStorageMB: 500,
+        maxAgeHours: 6,
+        maxStorageMB: 50,
         showPhoneNumbers: true,
         ownerOnly: true,
         autoCleanRetrieved: true,
@@ -306,12 +306,17 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
         const base64Data = buffer.toString('base64');
         
         antideleteState.mediaCache.set(msgId, {
-            base64: base64Data,
             type: messageType,
             mimetype: mimetype,
             size: buffer.length,
-            savedAt: timestamp
+            savedAt: timestamp,
+            dbPath: `messages/${msgId}`
         });
+        
+        if (antideleteState.mediaCache.size > 200) {
+            const oldest = antideleteState.mediaCache.keys().next().value;
+            antideleteState.mediaCache.delete(oldest);
+        }
         
         db.uploadMedia(msgId, buffer, mimetype, 'messages').catch(err => {
             console.error('❌ Antidelete: DB media upload error:', err.message);
@@ -605,6 +610,12 @@ async function getMediaBuffer(messageData) {
     }
     
     try {
+        if (mediaCache?.dbPath) {
+            const dbBuffer = await db.downloadMedia(mediaCache.dbPath);
+            if (dbBuffer && dbBuffer.length > 0) {
+                return { buffer: dbBuffer, mimetype: mediaCache.mimetype || messageData.mimetype };
+            }
+        }
         const ext = (messageData.mimetype || 'application/octet-stream').split('/')[1]?.split(';')[0] || 'bin';
         const storagePath = `messages/${messageData.id}.${ext}`;
         const dbBuffer = await db.downloadMedia(storagePath);

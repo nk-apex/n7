@@ -302,7 +302,7 @@ function getDisplayNumber(senderJid) {
 
 const groupMetadataCache = new Map();
 globalThis.groupMetadataCache = groupMetadataCache;
-const GROUP_CACHE_TTL = 30 * 60 * 1000;
+const GROUP_CACHE_TTL = 10 * 60 * 1000;
 const groupDiagDone = new Set();
 const _pendingGroupFetches = new Map();
 
@@ -2596,7 +2596,6 @@ class AutoLinkSystem {
 const autoLinkSystem = new AutoLinkSystem();
 
 // ====== LIGHTWEIGHT MEMORY MONITOR ======
-// Replaces the old Defibrillator with just the useful memory cleanup part
 const memoryMonitor = {
     _interval: null,
     _trimInterval: null,
@@ -2605,21 +2604,21 @@ const memoryMonitor = {
         this._interval = setInterval(() => {
             try {
                 const memMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
-                if (memMB > 400) {
+                if (memMB > 250) {
                     UltraCleanLogger.warning(`High memory: ${memMB}MB - trimming caches`);
-                    setImmediate(() => this.trimCaches());
+                    setImmediate(() => this.trimCaches(memMB > 350));
                 }
             } catch {}
-        }, 3 * 60 * 1000);
+        }, 60 * 1000);
         this._trimInterval = setInterval(() => {
-            try { this.trimCaches(); } catch {}
-        }, 10 * 60 * 1000);
+            try { this.trimCaches(false); } catch {}
+        }, 5 * 60 * 1000);
     },
     stop() {
         if (this._interval) { clearInterval(this._interval); this._interval = null; }
         if (this._trimInterval) { clearInterval(this._trimInterval); this._trimInterval = null; }
     },
-    trimCaches() {
+    trimCaches(aggressive = false) {
         try {
             const trimMap = (map, maxSize, keepCount, label) => {
                 if (!map || map.size <= maxSize) return;
@@ -2632,17 +2631,24 @@ const memoryMonitor = {
                 }
                 if (label) UltraCleanLogger.info(`${label} trimmed to ${map.size} entries`);
             };
-            trimMap(lidPhoneCache, 800, 400, 'LID cache');
-            trimMap(phoneLidCache, 800, 400, null);
-            trimMap(groupMetadataCache, 30, 15, 'Group metadata cache');
-            trimMap(global.contactNames, 2000, 1000, null);
-            if (store && store.messages && store.messages.size > 300) {
-                trimMap(store.messages, 300, 150, 'Message store');
+            const factor = aggressive ? 0.5 : 1;
+            trimMap(lidPhoneCache, Math.floor(400 * factor), Math.floor(200 * factor), 'LID cache');
+            trimMap(phoneLidCache, Math.floor(400 * factor), Math.floor(200 * factor), null);
+            trimMap(groupMetadataCache, Math.floor(20 * factor), Math.floor(10 * factor), 'Group metadata cache');
+            trimMap(global.contactNames, Math.floor(1000 * factor), Math.floor(500 * factor), null);
+            if (store && store.messages) {
+                trimMap(store.messages, Math.floor(150 * factor), Math.floor(75 * factor), 'Message store');
             }
-            if (store && store.sentMessages && store.sentMessages.size > 200) {
-                trimMap(store.sentMessages, 200, 100, null);
+            if (store && store.sentMessages) {
+                trimMap(store.sentMessages, Math.floor(100 * factor), Math.floor(50 * factor), null);
             }
+            trimMap(viewOnceCache, Math.floor(50 * factor), Math.floor(25 * factor), null);
+            trimMap(_lidResolveAttempts, 100, 50, null);
+            trimMap(_pendingGroupFetches, 20, 10, null);
             if (global.gc) { global.gc(); }
+            if (aggressive) {
+                UltraCleanLogger.info(`Aggressive cache trim complete`);
+            }
         } catch {}
     }
 };
@@ -3485,7 +3491,7 @@ function cleanSession(preserveExisting = false) {
     }
 }
 const viewOnceCache = new Map();
-const VIEW_ONCE_CACHE_MAX = 200;
+const VIEW_ONCE_CACHE_MAX = 50;
 
 function cacheViewOnceMessage(chatId, messageId, msg) {
     try {
@@ -3513,9 +3519,9 @@ function getViewOnceFromCache(chatId, messageId) {
 class MessageStore {
     constructor() {
         this.messages = new Map();
-        this.maxMessages = 500;
+        this.maxMessages = 150;
         this.sentMessages = new Map();
-        this.maxSentMessages = 200;
+        this.maxSentMessages = 100;
     }
     
     addMessage(jid, messageId, message) {
@@ -3833,10 +3839,9 @@ function setupHerokuKeepAlive() {
             const memoryUsage = process.memoryUsage();
             const memoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
             
-            if (memoryMB > 700) {
-                UltraCleanLogger.warning(`⚠️ High memory usage on Heroku: ${memoryMB}MB`);
-                
-                // Force garbage collection if available
+            if (memoryMB > 300) {
+                UltraCleanLogger.warning(`⚠️ High memory usage: ${memoryMB}MB`);
+                memoryMonitor.trimCaches(memoryMB > 400);
                 if (global.gc) {
                     global.gc();
                     UltraCleanLogger.info('🧹 Forced garbage collection');
@@ -4843,8 +4848,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 const senderJid = msg.key.participant || msg.key.remoteJid;
                 if (senderJid && !senderJid.includes('status') && !senderJid.includes('broadcast')) {
                     global.contactNames = global.contactNames || new Map();
-                    if (global.contactNames.size > 2000) {
-                        const excess = global.contactNames.size - 1000;
+                    if (global.contactNames.size > 1000) {
+                        const excess = global.contactNames.size - 500;
                         let removed = 0;
                         for (const k of global.contactNames.keys()) {
                             if (removed >= excess) break;

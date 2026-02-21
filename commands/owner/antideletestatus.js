@@ -1,8 +1,8 @@
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
 import db from '../../lib/supabase.js';
 
-const CACHE_CLEAN_INTERVAL = 6 * 60 * 60 * 1000;
-const MAX_CACHE_AGE = 12 * 60 * 60 * 1000;
+const CACHE_CLEAN_INTERVAL = 1 * 60 * 60 * 1000;
+const MAX_CACHE_AGE = 3 * 60 * 60 * 1000;
 
 let statusAntideleteState = {
     enabled: true,
@@ -23,8 +23,8 @@ let statusAntideleteState = {
     },
     settings: {
         autoCleanEnabled: true,
-        maxAgeHours: 12,
-        maxStorageMB: 100,
+        maxAgeHours: 3,
+        maxStorageMB: 30,
         ownerOnly: true,
         autoCleanRetrieved: true,
         initialized: false
@@ -39,8 +39,8 @@ const STATUS_PATTERNS = {
 
 const defaultSettings = {
     autoCleanEnabled: true,
-    maxAgeHours: 12,
-    maxStorageMB: 100,
+    maxAgeHours: 3,
+    maxStorageMB: 30,
     ownerOnly: true,
     autoCleanRetrieved: true,
     initialized: false
@@ -254,24 +254,24 @@ async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype)
         const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
         const base64Data = buffer.toString('base64');
         
+        let storagePath = null;
+        try {
+            storagePath = await db.uploadMedia(msgId, buffer, mimetype, 'statuses');
+        } catch {}
+
         statusAntideleteState.mediaCache.set(msgId, {
-            base64: base64Data,
             type: messageType,
             mimetype: mimetype,
             size: buffer.length,
             isStatus: true,
-            savedAt: timestamp
+            savedAt: timestamp,
+            dbPath: storagePath || `statuses/${msgId}`
         });
 
-        try {
-            const storagePath = await db.uploadMedia(msgId, buffer, mimetype, 'statuses');
-            if (storagePath) {
-                const cached = statusAntideleteState.mediaCache.get(msgId);
-                if (cached) {
-                    cached.dbPath = storagePath;
-                }
-            }
-        } catch {}
+        if (statusAntideleteState.mediaCache.size > 100) {
+            const oldest = statusAntideleteState.mediaCache.keys().next().value;
+            statusAntideleteState.mediaCache.delete(oldest);
+        }
         
         console.log(`💾 [STATUS ANTIDELETE] Media stored in DB ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
         

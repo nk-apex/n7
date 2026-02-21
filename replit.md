@@ -55,9 +55,9 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 **Performance & Stability Optimizations:**
 *   **Message Age Filtering**: All incoming messages are filtered at the top of the `messages.upsert` handler — messages older than 60 seconds (or older than the connection open time) are silently discarded to prevent processing historical synced messages on reconnection.
 *   **ReactDev/ReactOwner Guards**: Both reaction handlers independently reject messages older than 30 seconds as double protection against reacting to past messages.
-*   **Memory Leak Prevention**: Bounded caches (contactNames: 5000, lidPhoneCache: 1000), aggressive memory trimming at 400MB threshold, and proper interval cleanup on reconnect to prevent timer leaks.
+*   **Memory Leak Prevention**: Bounded caches (contactNames: 1000, lidPhoneCache: 400, groupMetadata: 20, viewOnce: 50, messageStore: 150). Memory trimming triggers at 250MB with aggressive mode at 350MB. Antidelete media stored as metadata-only in memory (base64 removed from RAM, fetched from PostgreSQL on demand). Antidelete cache cleanup every 2h (messages) / 1h (statuses). Proper interval cleanup on reconnect to prevent timer leaks.
 *   **Authentication Backoff**: Exponential backoff for 401/403 authentication failures prevents reconnection loops. Delay doubles each attempt up to 5-minute maximum.
-*   **Optimized Socket Config**: `generateHighQualityLinkPreview: false`, `keepAliveIntervalMs: 25000`, `MessageStore: 500` for balanced performance.
+*   **Optimized Socket Config**: `generateHighQualityLinkPreview: false`, `keepAliveIntervalMs: 25000`, `MessageStore: 150` for balanced performance.
 
 ## External Dependencies
 *   `@whiskeysockets/baileys`: WhatsApp Web API.
