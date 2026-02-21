@@ -1851,6 +1851,9 @@ case 1: {
 ╭─⊷ *🏆 SPORTS*
 │
 │  • football
+│  • matchstats
+│  • sportsnews
+│  • teamnews
 │  • basketball
 │  • cricket
 │  • f1
@@ -2027,6 +2030,229 @@ case 1: {
 │
 │  • p
 │  • up
+│
+╰─⊷
+
+╭─⊷ *✨ EPHOTO TEXT EFFECTS*
+│
+│  • neon
+│  • colorfulglow
+│  • advancedglow
+│  • neononline
+│  • blueneon
+│  • neontext
+│  • neonlight
+│  • greenneon
+│  • greenlightneon
+│  • blueneonlogo
+│  • galaxyneon
+│  • retroneon
+│  • multicolorneon
+│  • hackerneon
+│  • devilwings
+│  • glowtext
+│  • blackpinkneon
+│  • neonglitch
+│  • colorfulneonlight
+│  • ephotomenu
+│
+╰─⊷
+
+╭─⊷ *🎨 PHOTOFUNIA EFFECTS (154)*
+│
+├─⊷ *🎃 HALLOWEEN*
+│  • smokeflare
+│  • nightmarewriting
+│  • lightning
+│  • cemeterygates
+│  • summoningspirits
+│  • ghostwood
+│
+├─⊷ *🎨 FILTERS*
+│  • autumn
+│  • jade
+│  • romantic
+│  • mystical
+│  • lomography
+│  • sepia
+│
+├─⊷ *🔬 LAB*
+│  • watercolourtext
+│  • denimemdroidery
+│  • cinematicket
+│  • arrowsigns
+│  • yacht
+│  • cloudyfilter
+│  • lightgraffiti
+│  • chalkboard
+│  • rustywriting
+│  • streetsign
+│  • floralwreath
+│  • retrowave
+│  • youaremyuniverse
+│  • einstein
+│  • rugbyball
+│  • redandblue
+│  • vhs
+│  • typewriter
+│  • diptych
+│  • badges
+│  • wanted
+│  • crown
+│  • anime
+│  • popart
+│  • puzzle
+│  • glass
+│  • animator
+│
+├─⊷ *📌 POSTERS*
+│  • postersonthewall
+│  • posterwall
+│  • trainstationposter
+│  • rainynight
+│  • nightmotion
+│  • campaign
+│  • bicycle
+│  • citylight
+│  • affiche
+│  • sidewalk
+│  • cyclist
+│  • tulips
+│  • cafe
+│  • underground
+│  • reconstruction
+│  • posters
+│
+├─⊷ *🏛️ GALLERIES*
+│  • melbournegallery
+│  • artadmirer
+│  • nationalgalleryinlondon
+│  • blackwhitegallery
+│  • galleryvisitor
+│  • paintingandsketches
+│  • passingbythepainting
+│  • silhouettes
+│  • rijskmuseum
+│
+├─⊷ *📸 PHOTOGRAPHY*
+│  • oldcamera
+│  • kittyandframe
+│  • frame
+│
+├─⊷ *🎭 FACES*
+│  • mirror
+│  • formulaoneracer
+│  • warrior
+│  • knight
+│  • biker
+│  • surfer
+│  • snowboard
+│  • dj
+│  • bodybuilder
+│  • lulu
+│  • hockey
+│  • ethanol
+│  • godfather
+│  • pirates
+│  • miss
+│
+├─⊷ *🏙️ BILLBOARDS*
+│  • concretejungle
+│  • broadwayatnight
+│  • newyorkatnight
+│  • shoppingarcade
+│  • oldtram
+│  • workerbythebillboard
+│  • eveningbillboard
+│  • pedestriancrossing
+│  • cube
+│  • nyc
+│  • city
+│  • ax
+│
+├─⊷ *⭐ CELEBRITIES*
+│  • trump
+│  • obama
+│  • madonna
+│  • putin
+│
+├─⊷ *🖼️ FRAMES*
+│  • theframe
+│  • atthebeach
+│  • lavander
+│  • reproduction
+│  • daffodils
+│
+├─⊷ *✏️ DRAWINGS*
+│  • painter
+│  • explorerdrawing
+│  • artistinahat
+│  • drawinglesson
+│  • brugge
+│  • watercolours
+│  • truck
+│  • portrait
+│
+├─⊷ *📜 VINTAGE*
+│  • quill
+│  • stamps
+│
+├─⊷ *🎲 MISC*
+│  • magiccard
+│  • postagestamp
+│  • truckadvert
+│  • tablet
+│  • artonthebrickwall
+│  • toasts
+│  • photowall
+│  • lego
+│  • wall
+│  • eye
+│  • morningmug
+│  • topsecret
+│  • breakingnews
+│  • vinylrecord
+│  • beer
+│  • coin
+│
+├─⊷ *📰 MAGAZINES*
+│  • readingmagazine
+│  • rosesandmarshmallows
+│  • interview
+│  • reading
+│  • esquire
+│  • vogue
+│
+├─⊷ *📺 TV*
+│  • analoguetv
+│
+├─⊷ *📚 BOOKS*
+│  • festivereading
+│  • thebook
+│  • veryoldbook
+│
+├─⊷ *❤️ VALENTINE*
+│  • rosevine
+│  • loveletter
+│  • lovelock
+│  • weddingday
+│  • brooches
+│  • valentine
+│
+├─⊷ *🐣 EASTER*
+│  • eastercard
+│  • bunnies
+│
+├─⊷ *🎄 CHRISTMAS*
+│  • snowsign
+│  • christmaswriting
+│  • snowglobe
+│  • frostywindowwriting
+│  • santasnowangel
+│  • santasparcelpicture
+│  • newyearframes
+│
+├─⊷ *📋 MENU:* photofunia
 │
 ╰─⊷
 
@@ -3994,6 +4220,9 @@ case 4: {
 ╭─⊷ *🏆 SPORTS*
 │
 │  • football
+│  • matchstats
+│  • sportsnews
+│  • teamnews
 │  • basketball
 │  • cricket
 │  • f1
@@ -5837,117 +6066,193 @@ case 5: {
   categories.push(`╭─⊷ *🎨 PHOTOFUNIA EFFECTS (154)*
 │
 ├─⊷ *🎃 HALLOWEEN*
-│  • smokeflare • nightmarewriting
-│  • lightning • cemeterygates
-│  • summoningspirits • ghostwood
+│  • smokeflare
+│  • nightmarewriting
+│  • lightning
+│  • cemeterygates
+│  • summoningspirits
+│  • ghostwood
 │
 ├─⊷ *🎨 FILTERS*
-│  • autumn • jade • romantic
-│  • mystical • lomography • sepia
+│  • autumn
+│  • jade
+│  • romantic
+│  • mystical
+│  • lomography
+│  • sepia
 │
 ├─⊷ *🔬 LAB*
-│  • watercolourtext • denimemdroidery
-│  • cinematicket • arrowsigns
-│  • yacht • cloudyfilter
-│  • lightgraffiti • chalkboard
-│  • rustywriting • streetsign
-│  • floralwreath • retrowave
-│  • youaremyuniverse • einstein
-│  • rugbyball • redandblue
-│  • vhs • typewriter • diptych
-│  • badges • wanted • crown
-│  • anime • popart • puzzle
-│  • glass • animator
+│  • watercolourtext
+│  • denimemdroidery
+│  • cinematicket
+│  • arrowsigns
+│  • yacht
+│  • cloudyfilter
+│  • lightgraffiti
+│  • chalkboard
+│  • rustywriting
+│  • streetsign
+│  • floralwreath
+│  • retrowave
+│  • youaremyuniverse
+│  • einstein
+│  • rugbyball
+│  • redandblue
+│  • vhs
+│  • typewriter
+│  • diptych
+│  • badges
+│  • wanted
+│  • crown
+│  • anime
+│  • popart
+│  • puzzle
+│  • glass
+│  • animator
 │
 ├─⊷ *📌 POSTERS*
-│  • postersonthewall • posterwall
-│  • trainstationposter • rainynight
-│  • nightmotion • campaign
-│  • bicycle • citylight • affiche
-│  • sidewalk • cyclist • tulips
-│  • cafe • underground
-│  • reconstruction • posters
+│  • postersonthewall
+│  • posterwall
+│  • trainstationposter
+│  • rainynight
+│  • nightmotion
+│  • campaign
+│  • bicycle
+│  • citylight
+│  • affiche
+│  • sidewalk
+│  • cyclist
+│  • tulips
+│  • cafe
+│  • underground
+│  • reconstruction
+│  • posters
 │
 ├─⊷ *🏛️ GALLERIES*
-│  • melbournegallery • artadmirer
+│  • melbournegallery
+│  • artadmirer
 │  • nationalgalleryinlondon
 │  • blackwhitegallery
 │  • galleryvisitor
 │  • paintingandsketches
 │  • passingbythepainting
-│  • silhouettes • rijskmuseum
+│  • silhouettes
+│  • rijskmuseum
 │
 ├─⊷ *📸 PHOTOGRAPHY*
-│  • oldcamera • kittyandframe
+│  • oldcamera
+│  • kittyandframe
 │  • frame
 │
 ├─⊷ *🎭 FACES*
-│  • mirror • formulaoneracer
-│  • warrior • knight • biker
-│  • surfer • snowboard • dj
-│  • bodybuilder • lulu • hockey
-│  • ethanol • godfather
-│  • pirates • miss
+│  • mirror
+│  • formulaoneracer
+│  • warrior
+│  • knight
+│  • biker
+│  • surfer
+│  • snowboard
+│  • dj
+│  • bodybuilder
+│  • lulu
+│  • hockey
+│  • ethanol
+│  • godfather
+│  • pirates
+│  • miss
 │
 ├─⊷ *🏙️ BILLBOARDS*
-│  • concretejungle • broadwayatnight
-│  • newyorkatnight • shoppingarcade
-│  • oldtram • workerbythebillboard
+│  • concretejungle
+│  • broadwayatnight
+│  • newyorkatnight
+│  • shoppingarcade
+│  • oldtram
+│  • workerbythebillboard
 │  • eveningbillboard
 │  • pedestriancrossing
-│  • cube • nyc • city • ax
+│  • cube
+│  • nyc
+│  • city
+│  • ax
 │
 ├─⊷ *⭐ CELEBRITIES*
-│  • trump • obama
-│  • madonna • putin
+│  • trump
+│  • obama
+│  • madonna
+│  • putin
 │
 ├─⊷ *🖼️ FRAMES*
-│  • theframe • atthebeach
-│  • lavander • reproduction
+│  • theframe
+│  • atthebeach
+│  • lavander
+│  • reproduction
 │  • daffodils
 │
 ├─⊷ *✏️ DRAWINGS*
-│  • painter • explorerdrawing
-│  • artistinahat • drawinglesson
-│  • brugge • watercolours
-│  • truck • portrait
+│  • painter
+│  • explorerdrawing
+│  • artistinahat
+│  • drawinglesson
+│  • brugge
+│  • watercolours
+│  • truck
+│  • portrait
 │
 ├─⊷ *📜 VINTAGE*
-│  • quill • stamps
+│  • quill
+│  • stamps
 │
 ├─⊷ *🎲 MISC*
-│  • magiccard • postagestamp
-│  • truckadvert • tablet
-│  • artonthebrickwall • toasts
-│  • photowall • lego • wall
-│  • eye • morningmug • topsecret
-│  • breakingnews • vinylrecord
-│  • beer • coin
+│  • magiccard
+│  • postagestamp
+│  • truckadvert
+│  • tablet
+│  • artonthebrickwall
+│  • toasts
+│  • photowall
+│  • lego
+│  • wall
+│  • eye
+│  • morningmug
+│  • topsecret
+│  • breakingnews
+│  • vinylrecord
+│  • beer
+│  • coin
 │
 ├─⊷ *📰 MAGAZINES*
 │  • readingmagazine
 │  • rosesandmarshmallows
-│  • interview • reading
-│  • esquire • vogue
+│  • interview
+│  • reading
+│  • esquire
+│  • vogue
 │
 ├─⊷ *📺 TV*
 │  • analoguetv
 │
 ├─⊷ *📚 BOOKS*
-│  • festivereading • thebook
+│  • festivereading
+│  • thebook
 │  • veryoldbook
 │
 ├─⊷ *❤️ VALENTINE*
-│  • rosevine • loveletter
-│  • lovelock • weddingday
-│  • brooches • valentine
+│  • rosevine
+│  • loveletter
+│  • lovelock
+│  • weddingday
+│  • brooches
+│  • valentine
 │
 ├─⊷ *🐣 EASTER*
-│  • eastercard • bunnies
+│  • eastercard
+│  • bunnies
 │
 ├─⊷ *🎄 CHRISTMAS*
-│  • snowsign • christmaswriting
-│  • snowglobe • frostywindowwriting
+│  • snowsign
+│  • christmaswriting
+│  • snowglobe
+│  • frostywindowwriting
 │  • santasnowangel
 │  • santasparcelpicture
 │  • newyearframes
