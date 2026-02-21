@@ -224,6 +224,7 @@ import { migrateSudoToSupabase, initSudo, setBotId } from './lib/sudo-store.js';
 import { migrateWarningsToSupabase } from './lib/warnings-store.js';
 
 const msgRetryCounterCache = new NodeCache({ stdTTL: 600 });
+globalThis.msgRetryCounterCache_ref = msgRetryCounterCache;
 
 let currentSock = null;
 
@@ -302,6 +303,10 @@ function getDisplayNumber(senderJid) {
 
 const groupMetadataCache = new Map();
 globalThis.groupMetadataCache = groupMetadataCache;
+globalThis.lidPhoneCache = lidPhoneCache;
+globalThis.phoneLidCache = phoneLidCache;
+globalThis.viewOnceCache_ref = null;
+globalThis.msgRetryCounterCache_ref = null;
 const GROUP_CACHE_TTL = 10 * 60 * 1000;
 const groupDiagDone = new Set();
 const _pendingGroupFetches = new Map();
@@ -656,6 +661,7 @@ function _saveConfigCache(key, value) {
     });
 }
 
+globalThis.reloadConfigCaches = reloadConfigCaches;
 async function reloadConfigCaches() {
     try {
         _cache_owner_data = await _loadConfigCache('owner_data', {});
@@ -3523,6 +3529,7 @@ function cleanSession(preserveExisting = false) {
     }
 }
 const viewOnceCache = new Map();
+globalThis.viewOnceCache_ref = viewOnceCache;
 const VIEW_ONCE_CACHE_MAX = 50;
 
 function cacheViewOnceMessage(chatId, messageId, msg) {
