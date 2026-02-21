@@ -192,24 +192,33 @@ class AutoReactManager {
         return this.config.totalReacted;
     }
     
-    // Generate unique key for a status
     generateStatusKey(statusKey) {
         const sender = statusKey.participant || statusKey.remoteJid;
         const statusId = statusKey.id;
-        const timestamp = Date.now();
-        return `${sender}|${statusId}|${timestamp}`;
+        return `${sender}|${statusId}`;
     }
     
-    // Check if we've already reacted to this status
+    generateStatusKeyWithTimestamp(statusKey) {
+        const sender = statusKey.participant || statusKey.remoteJid;
+        const statusId = statusKey.id;
+        return `${sender}|${statusId}|${Date.now()}`;
+    }
+    
     hasReactedToStatus(statusKey) {
-        const statusUniqueKey = this.generateStatusKey(statusKey);
-        return this.reactedStatuses.has(statusUniqueKey);
+        const lookupKey = this.generateStatusKey(statusKey);
+        for (const key of this.reactedStatuses) {
+            if (key.startsWith(lookupKey)) return true;
+        }
+        return false;
     }
     
-    // Mark status as reacted
     markStatusAsReacted(statusKey) {
-        const statusUniqueKey = this.generateStatusKey(statusKey);
-        this.reactedStatuses.add(statusUniqueKey);
+        const storageKey = this.generateStatusKeyWithTimestamp(statusKey);
+        this.reactedStatuses.add(storageKey);
+        if (this.reactedStatuses.size > 500) {
+            const arr = Array.from(this.reactedStatuses);
+            this.reactedStatuses = new Set(arr.slice(-250));
+        }
         this.saveConfig();
     }
     

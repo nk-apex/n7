@@ -4256,7 +4256,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 if (storeMsg?.message) {
                     return storeMsg.message;
                 }
-                return { conversation: '' };
+                return undefined;
             },
             patchMessageBeforeSending: (message) => {
                 const requiresPatch = !!(
