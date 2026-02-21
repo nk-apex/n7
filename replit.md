@@ -52,6 +52,8 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **Chatbot Whitelist System**: Allows whitelisting specific groups and DMs for the W.O.L.F chatbot.
 *   **Code Execution**: Public JavaScript (`js`) and Python (`py`) code executors with 15s timeout, auto-print last expression, and 3000-char output limit.
 *   **Ephoto Text Effects**: 19 neon/glow text effect commands using mumaker + ephoto360 integration. Factory pattern via `commands/ephoto/ephotoUtils.js` with fallback APIs. Includes ephoto menu command.
+*   **PhotoFunia Effects**: 154 image effects across 19 categories (Halloween, Filters, Lab, Posters, Galleries, Photography, Faces, Billboards, Celebrities, Frames, Drawings, Vintage, Misc, Magazines, TV, Books, Valentine, Easter, Christmas) using `apis.xcasper.space/api/photofunia/generate`. Supports image-only, text-only, and text+image effects. Factory pattern via `commands/photofunia/photofuniaUtils.js`. Multi-text effects use `|` separator.
+*   **Sports Commands**: Live football scores, standings, fixtures, top scorers, league statistics, match stats, sports news, and team news using `apis.xcasper.space/api/sports`. Supports multiple leagues (EPL, La Liga, Bundesliga, Serie A, Ligue 1). Commands: `football`, `matchstats`, `sportsnews`, `teamnews`.
 *   **Ethical Hacking Suite**: A comprehensive collection of 44+ commands across categories like RECON & OSINT, Network Analysis, Web Security, Vulnerability Checks, Password & Hash Tools, and Forensics & Analysis. WHOIS uses 3 cascading API fallbacks (RDAP, whoisjson, ip2whois). Subdomain finder uses DNS bruteforce (~90 names) + crt.sh Certificate Transparency.
 *   **Disk Space Manager**: Monitors disk usage, performs periodic cleanups of temporary files and old media, and implements emergency cleanup on low disk space to prevent ENOSPC errors.
 
@@ -75,3 +77,5 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   Google TTS, StreamElements, VoiceRSS APIs: Text-to-speech.
 *   NGL API: Anonymous messaging.
 *   YouTube APIs (`apiskeith.top`): YouTube media handling.
+*   xcasper Sports API (`apis.xcasper.space/api/sports`): Live scores, standings, fixtures, news.
+*   xcasper PhotoFunia API (`apis.xcasper.space/api/photofunia/generate`): 154 image effects.

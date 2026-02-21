@@ -12,10 +12,19 @@ export default {
       `╭─⌈ 🏆 *WOLFBOT SPORTS MENU* ⌋\n` +
       `│\n` +
       `├─ ⚽ *FOOTBALL / SOCCER*\n` +
-      `│  ⊷ *${PREFIX}football scores* - Live scores\n` +
-      `│  ⊷ *${PREFIX}football standings* - League table\n` +
-      `│  ⊷ *${PREFIX}football laliga* - La Liga\n` +
-      `│  ⊷ *${PREFIX}football ucl* - Champions League\n` +
+      `│  ⊷ *${PREFIX}football scores* - Live/recent scores\n` +
+      `│  ⊷ *${PREFIX}football standings [league]* - League table\n` +
+      `│  ⊷ *${PREFIX}football fixtures* - Upcoming matches\n` +
+      `│  ⊷ *${PREFIX}football topscorers [league]* - Top scorers\n` +
+      `│  ⊷ *${PREFIX}football stats [league]* - League stats\n` +
+      `│  ⊷ Leagues: epl, laliga, bundesliga, seriea, ligue1\n` +
+      `│\n` +
+      `├─ 📊 *MATCH STATISTICS*\n` +
+      `│  ⊷ *${PREFIX}matchstats <matchId>* - Match details\n` +
+      `│\n` +
+      `├─ 📰 *SPORTS NEWS*\n` +
+      `│  ⊷ *${PREFIX}sportsnews* - Latest sports news\n` +
+      `│  ⊷ *${PREFIX}teamnews <team>* - Team-specific news\n` +
       `│\n` +
       `├─ 🏀 *NBA BASKETBALL*\n` +
       `│  ⊷ *${PREFIX}basketball scores* - Live NBA\n` +
