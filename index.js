@@ -4921,6 +4921,13 @@ async function startBot(loginMode = 'auto', loginData = null) {
             handleViewOnceDetection(sock, msg).catch(err => {
                 originalConsoleMethods.log('❌ [AV] Detection error:', err.message);
             });
+
+            if (msg.message?.groupStatusMentionMessage) {
+                console.log(`⚠️ [GSM] groupStatusMentionMessage received at ${msg.key?.remoteJid} from ${msg.key?.participant || 'unknown'}`);
+                try {
+                    statusMentionHandler(sock, msg).catch(() => {});
+                } catch {}
+            }
             
             if (msg.key?.remoteJid === 'status@broadcast') {
                 handleAutoView(sock, msg.key).catch(() => {});
