@@ -1,3 +1,5 @@
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: "musicmenu",
   alias: ["mmenu", "musichelp", "musiccmds"],
@@ -6,29 +8,20 @@ export default {
   usage: ".musicmenu",
 
   async execute(sock, m) {
-    const menu = `╭─⌈ 🎵 *MUSIC MENU* ⌋
-│
-├─⊷ *play*
-│  └⊷ Play a song by name
-├─⊷ *song*
-│  └⊷ Download song audio
-├─⊷ *video*
-│  └⊷ Download music video
-├─⊷ *videodoc*
-│  └⊷ Video as document
-├─⊷ *lyrics*
-│  └⊷ Get song lyrics
-├─⊷ *shazam*
-│  └⊷ Identify a song
-├─⊷ *spotify*
-│  └⊷ Download from Spotify
-│
-╰───`;
+    const jid = m.key.remoteJid;
 
-    await sock.sendMessage(
-      m.key.remoteJid,
-      { text: menu },
-      { quoted: m }
-    );
+    const commandsText = `╭─⊷ *🎵 MUSIC COMMANDS*
+│
+│  • play
+│  • song
+│  • video
+│  • videodoc
+│  • lyrics
+│  • shazam
+│  • spotify
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '🎵 MUSIC MENU', commandsText, m);
   }
 };

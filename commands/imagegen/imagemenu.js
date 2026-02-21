@@ -1,3 +1,5 @@
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: "imagemenu",
   alias: ["imgmenu", "imagehelp", "imgcmds"],
@@ -6,31 +8,21 @@ export default {
   usage: ".imagemenu",
 
   async execute(sock, m) {
-    const menu = `╭─⌈ 🖼️ *IMAGE MENU* ⌋
-│
-├─⊷ *image*
-│  └⊷ Search for images
-├─⊷ *imagine*
-│  └⊷ AI image generation
-├─⊷ *imagegen*
-│  └⊷ Advanced AI image gen
-├─⊷ *anime*
-│  └⊷ AI anime art
-├─⊷ *art*
-│  └⊷ AI art generation
-├─⊷ *real*
-│  └⊷ AI realistic images
-├─⊷ *remini*
-│  └⊷ Enhance image quality
-├─⊷ *vision*
-│  └⊷ AI image analysis
-│
-╰───`;
+    const jid = m.key.remoteJid;
 
-    await sock.sendMessage(
-      m.key.remoteJid,
-      { text: menu },
-      { quoted: m }
-    );
+    const commandsText = `╭─⊷ *🖼️ IMAGE GENERATION*
+│
+│  • image
+│  • imagine
+│  • imagegen
+│  • anime
+│  • art
+│  • real
+│  • remini
+│  • vision
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '🖼️ IMAGE MENU', commandsText, m);
   }
 };

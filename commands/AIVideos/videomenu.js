@@ -1,3 +1,5 @@
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: "videomenu",
   alias: ["vidmenu", "aividmenu", "videoeffects"],
@@ -6,25 +8,18 @@ export default {
   usage: ".videomenu",
 
   async execute(sock, m) {
-    const menu = `╭─⌈ 🎬 *AI VIDEO EFFECTS MENU* ⌋
-│
-├─⊷ *tigervideo*
-│  └⊷ Tiger themed video
-├─⊷ *introvideo*
-│  └⊷ Intro video effect
-├─⊷ *lightningpubg*
-│  └⊷ PUBG lightning effect
-├─⊷ *lovevideo*
-│  └⊷ Love themed video
-├─⊷ *videogen*
-│  └⊷ AI video generation
-│
-╰───`;
+    const jid = m.key.remoteJid;
 
-    await sock.sendMessage(
-      m.key.remoteJid,
-      { text: menu },
-      { quoted: m }
-    );
+    const commandsText = `╭─⊷ *🎬 AI VIDEO EFFECTS*
+│
+│  • tigervideo
+│  • introvideo
+│  • lightningpubg
+│  • lovevideo
+│  • videogen
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '🎬 AI VIDEO EFFECTS MENU', commandsText, m);
   }
 };

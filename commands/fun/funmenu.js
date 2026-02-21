@@ -1,3 +1,5 @@
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: "funmenu",
   alias: ["funcmds", "funhelp"],
@@ -6,37 +8,24 @@ export default {
   usage: ".funmenu",
 
   async execute(sock, m) {
-    const menu = `╭─⌈ 🎭 *FUN MENU* ⌋
-│
-├─⊷ *bf*
-│  └⊷ Find a boyfriend
-├─⊷ *gf*
-│  └⊷ Find a girlfriend
-├─⊷ *couple*
-│  └⊷ Random couple match
-├─⊷ *gay*
-│  └⊷ Gay meter
-├─⊷ *getjid*
-│  └⊷ Get user JID
-├─⊷ *movie*
-│  └⊷ Search movies
-├─⊷ *trailer*
-│  └⊷ Movie trailers
-├─⊷ *goodmorning*
-│  └⊷ Morning greeting
-├─⊷ *goodnight*
-│  └⊷ Night greeting
-├─⊷ *channelstatus*
-│  └⊷ Post to channel
-├─⊷ *hack*
-│  └⊷ Fake hacking prank
-│
-╰───`;
+    const jid = m.key.remoteJid;
 
-    await sock.sendMessage(
-      m.key.remoteJid,
-      { text: menu },
-      { quoted: m }
-    );
+    const commandsText = `╭─⊷ *🎭 FUN & TOOLS*
+│
+│  • bf
+│  • gf
+│  • couple
+│  • gay
+│  • getjid
+│  • movie
+│  • trailer
+│  • goodmorning
+│  • goodnight
+│  • channelstatus
+│  • hack
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '🎭 FUN MENU', commandsText, m);
   }
 };

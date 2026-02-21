@@ -1,8 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { sendSubMenu, getBotName } from '../../lib/menuHelper.js';
 
 export default {
   name: "ownermenu",
@@ -13,38 +9,10 @@ export default {
 
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
+    const botName = getBotName();
 
-    const createFakeContact = (message) => {
-      const uid = message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0];
-      return {
-        key: {
-          remoteJid: "status@broadcast",
-          fromMe: false,
-          id: "WOLF-X"
-        },
-        message: {
-          contactMessage: {
-            displayName: "WOLF BOT",
-            vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLF BOT\nitem1.TEL;waid=${uid}:${uid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
-          }
-        },
-        participant: "0@s.whatsapp.net"
-      };
-    };
-
-    const fkontak = createFakeContact(m);
-
-    const invisibleChars = [
-      '\u200E', '\u200F', '\u200B', '\u200C',
-      '\u200D', '\u2060', '\uFEFF',
-    ];
-    const invisibleString = Array.from({ length: 550 },
-      (_, i) => invisibleChars[i % invisibleChars.length]
-    ).join('');
-
-    let infoSection = `╭─⊷「 *WOLFBOT OWNER MENU* 」
+    const customHeader = `╭─⊷ *👑 ${botName} OWNER MENU*
 │
-├─⊷ *👑 OWNER PANEL*
 │  ├⊷ *User:* ${m.pushName || "Owner"}
 │  ├⊷ *Prefix:* [ ${PREFIX || '?'} ]
 │  └⊷ *Time:* ${new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' })}
@@ -148,25 +116,8 @@ export default {
 │  • repanalyze
 │  • update
 │
-╰─⊷
+╰─⊷`;
 
-🐺 *POWERED BY WOLF TECH* 🐺`;
-
-    const menu = `${infoSection}${invisibleString}\n${commandsText}`;
-
-    const imgPath1 = path.join(__dirname, '../menus/media/wolfbot.jpg');
-    const imgPath2 = path.join(__dirname, '../media/wolfbot.jpg');
-    const imagePath = fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null;
-
-    if (imagePath) {
-      const buffer = fs.readFileSync(imagePath);
-      await sock.sendMessage(jid, {
-        image: buffer,
-        caption: menu,
-        mimetype: "image/jpeg"
-      }, { quoted: fkontak });
-    } else {
-      await sock.sendMessage(jid, { text: menu }, { quoted: fkontak });
-    }
+    await sendSubMenu(sock, jid, 'Owner menu', commandsText, m, customHeader);
   }
 };

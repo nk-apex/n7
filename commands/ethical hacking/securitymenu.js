@@ -1,3 +1,5 @@
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: "securitymenu",
   alias: ["hackmenu", "secmenu", "hackingmenu", "ethicalmenu"],
@@ -6,67 +8,85 @@ export default {
   usage: ".securitymenu",
 
   async execute(sock, m, args, PREFIX) {
-    const menu = `╭──⌈ 🛡️ *ETHICAL HACKING* ⌋
-│
-├─⌈ \`RECON & OSINT\` ⌋
-│ ${PREFIX}whois
-│ ${PREFIX}dnslookup
-│ ${PREFIX}subdomain
-│ ${PREFIX}reverseip
-│ ${PREFIX}geoip
-│ ${PREFIX}portscan
-│ ${PREFIX}headers
-│ ${PREFIX}traceroute
-│ ${PREFIX}asnlookup
-│ ${PREFIX}shodan
-│
-├─⌈ \`NETWORK ANALYSIS\` ⌋
-│ ${PREFIX}pinghost
-│ ${PREFIX}latency
-│ ${PREFIX}sslcheck
-│ ${PREFIX}tlsinfo
-│ ${PREFIX}openports
-│ ${PREFIX}firewallcheck
-│ ${PREFIX}maclookup
-│ ${PREFIX}bandwidthtest
-│
-├─⌈ \`WEB SECURITY\` ⌋
-│ ${PREFIX}securityheaders
-│ ${PREFIX}wafdetect
-│ ${PREFIX}robotscheck
-│ ${PREFIX}sitemap
-│ ${PREFIX}cmsdetect
-│ ${PREFIX}techstack
-│ ${PREFIX}cookiescan
-│ ${PREFIX}redirectcheck
-│
-├─⌈ \`VULNERABILITY CHECKS\` ⌋
-│ ${PREFIX}xsscheck
-│ ${PREFIX}sqlicheck
-│ ${PREFIX}csrfcheck
-│ ${PREFIX}clickjackcheck
-│ ${PREFIX}directoryscan
-│ ${PREFIX}exposedfiles
-│ ${PREFIX}misconfigcheck
-│ ${PREFIX}cvecheck
-│
-├─⌈ \`PASSWORD & HASH TOOLS\` ⌋
-│ ${PREFIX}hashidentify
-│ ${PREFIX}hashcheck
-│ ${PREFIX}bcryptcheck
-│ ${PREFIX}passwordstrength
-│ ${PREFIX}leakcheck
-│
-├─⌈ \`FORENSICS & ANALYSIS\` ⌋
-│ ${PREFIX}metadata
-│ ${PREFIX}filehash
-│ ${PREFIX}malwarecheck
-│ ${PREFIX}urlscan
-│ ${PREFIX}phishcheck
-│
-╰───────────────
-> *WOLFBOT*`;
+    const jid = m.key.remoteJid;
 
-    await sock.sendMessage(m.key.remoteJid, { text: menu }, { quoted: m });
+    const commandsText = `╭─⊷ *🔍 RECON & OSINT*
+│
+│  • whois
+│  • dnslookup
+│  • subdomain
+│  • reverseip
+│  • geoip
+│  • portscan
+│  • headers
+│  • traceroute
+│  • asnlookup
+│  • shodan
+│
+╰─⊷
+
+╭─⊷ *📡 NETWORK ANALYSIS*
+│
+│  • pinghost
+│  • latency
+│  • sslcheck
+│  • tlsinfo
+│  • openports
+│  • firewallcheck
+│  • maclookup
+│  • bandwidthtest
+│
+╰─⊷
+
+╭─⊷ *🌐 WEB SECURITY*
+│
+│  • securityheaders
+│  • wafdetect
+│  • robotscheck
+│  • sitemap
+│  • cmsdetect
+│  • techstack
+│  • cookiescan
+│  • redirectcheck
+│
+╰─⊷
+
+╭─⊷ *⚠️ VULNERABILITY CHECKS*
+│
+│  • xsscheck
+│  • sqlicheck
+│  • csrfcheck
+│  • clickjackcheck
+│  • directoryscan
+│  • exposedfiles
+│  • misconfigcheck
+│  • cvecheck
+│
+╰─⊷
+
+╭─⊷ *🔐 PASSWORD & HASH TOOLS*
+│
+│  • hashidentify
+│  • hashcheck
+│  • bcryptcheck
+│  • passwordstrength
+│  • leakcheck
+│
+╰─⊷
+
+╭─⊷ *🔬 FORENSICS & ANALYSIS*
+│
+│  • metadata
+│  • filehash
+│  • malwarecheck
+│  • urlscan
+│  • phishcheck
+│  • nmap
+│  • ipinfo
+│  • nglattack
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '🛡️ ETHICAL HACKING MENU', commandsText, m);
   }
 };

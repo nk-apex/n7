@@ -1,3 +1,5 @@
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: "gitmenu",
   alias: ["githubmenu", "gitcmds", "githelp"],
@@ -6,27 +8,19 @@ export default {
   usage: ".gitmenu",
 
   async execute(sock, m) {
-    const menu = `╭─⌈ 🐙 *GITHUB MENU* ⌋
-│
-├─⊷ *gitclone*
-│  └⊷ Clone a repository
-├─⊷ *gitinfo*
-│  └⊷ GitHub user info
-├─⊷ *repanalyze*
-│  └⊷ Analyze a repository
-├─⊷ *zip*
-│  └⊷ Download repo as ZIP
-├─⊷ *update*
-│  └⊷ Update bot from GitHub
-├─⊷ *repo*
-│  └⊷ Bot repository link
-│
-╰───`;
+    const jid = m.key.remoteJid;
 
-    await sock.sendMessage(
-      m.key.remoteJid,
-      { text: menu },
-      { quoted: m }
-    );
+    const commandsText = `╭─⊷ *🐙 GITHUB COMMANDS*
+│
+│  • gitclone
+│  • gitinfo
+│  • repanalyze
+│  • zip
+│  • update
+│  • repo
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '🐙 GITHUB MENU', commandsText, m);
   }
 };

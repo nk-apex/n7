@@ -1,3 +1,5 @@
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: "automenu",
   alias: ["autocmds", "autohelp", "automationmenu"],
@@ -6,33 +8,22 @@ export default {
   usage: ".automenu",
 
   async execute(sock, m) {
-    const menu = `╭─⌈ ⚙️ *AUTOMATION MENU* ⌋
-│
-├─⊷ *autoread*
-│  └⊷ Auto-read messages
-├─⊷ *autotyping*
-│  └⊷ Auto typing indicator
-├─⊷ *autorecording*
-│  └⊷ Auto recording indicator
-├─⊷ *autoreact*
-│  └⊷ Auto-react to messages
-├─⊷ *autoreactstatus*
-│  └⊷ Auto-react to statuses
-├─⊷ *autoviewstatus*
-│  └⊷ Auto-view statuses
-├─⊷ *autobio*
-│  └⊷ Auto-update bot bio
-├─⊷ *autorec*
-│  └⊷ Auto voice recording
-├─⊷ *reactowner*
-│  └⊷ React to owner messages
-│
-╰───`;
+    const jid = m.key.remoteJid;
 
-    await sock.sendMessage(
-      m.key.remoteJid,
-      { text: menu },
-      { quoted: m }
-    );
+    const commandsText = `╭─⊷ *⚙️ AUTOMATION COMMANDS*
+│
+│  • autoread
+│  • autotyping
+│  • autorecording
+│  • autoreact
+│  • autoreactstatus
+│  • autoviewstatus
+│  • autobio
+│  • autorec
+│  • reactowner
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '⚙️ AUTOMATION MENU', commandsText, m);
   }
 };

@@ -1,3 +1,5 @@
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: "animemenu",
   alias: ["anime", "amenu"],
@@ -6,68 +8,49 @@ export default {
   usage: ".animemenu",
 
   async execute(sock, m) {
-    const menu = `╭─⌈ 🌸 *ANIME MENU* 🌸 ⌋
-│
-│ 💖 *AFFECTION & LOVE* 💕
-│
-├─⊷ *cuddle*
-│  └⊷ Cuddle someone
-├─⊷ *kiss*
-│  └⊷ Kiss someone
-├─⊷ *pat*
-│  └⊷ Headpat someone
-├─⊷ *lick*
-│  └⊷ Lick someone
-├─⊷ *glomp*
-│  └⊷ Tackle hug someone
-├─⊷ *wink*
-│  └⊷ Wink at someone
-├─⊷ *highfive*
-│  └⊷ Highfive someone
-│
-│ 😂 *FUN & REACTIONS* 🎭
-│
-├─⊷ *awoo*
-│  └⊷ Wolf howl reaction
-├─⊷ *bully*
-│  └⊷ Tease someone
-├─⊷ *cringe*
-│  └⊷ Cringe reaction
-├─⊷ *cry*
-│  └⊷ Crying reaction
-├─⊷ *dance*
-│  └⊷ Dance reaction
-├─⊷ *yeet*
-│  └⊷ Yeet someone
-│
-│ 🔥 *SPECIAL CHARACTERS* ✨
-│
-├─⊷ *waifu*
-│  └⊷ Random waifu image
-├─⊷ *neko*
-│  └⊷ Random neko image
-├─⊷ *megumin*
-│  └⊷ Random Megumin image
-├─⊷ *shinobu*
-│  └⊷ Random Shinobu image
-│
-│ ⚠️ *MISC & ACTION* 🌀
-│
-├─⊷ *kill*
-│  └⊷ Playful kill reaction
-├─⊷ *trap*
-│  └⊷ Trap character image
-├─⊷ *trap2*
-│  └⊷ Trap image (sfw/nsfw)
-├─⊷ *bj*
-│  └⊷ NSFW reaction
-│
-╰───`;
+    const jid = m.key.remoteJid;
 
-    await sock.sendMessage(
-      m.key.remoteJid,
-      { text: menu },
-      { quoted: m }
-    );
+    const commandsText = `╭─⊷ *💖 AFFECTION & LOVE*
+│
+│  • cuddle
+│  • kiss
+│  • pat
+│  • lick
+│  • glomp
+│  • wink
+│  • highfive
+│
+╰─⊷
+
+╭─⊷ *😂 FUN & REACTIONS*
+│
+│  • awoo
+│  • bully
+│  • cringe
+│  • cry
+│  • dance
+│  • yeet
+│
+╰─⊷
+
+╭─⊷ *🔥 SPECIAL CHARACTERS*
+│
+│  • waifu
+│  • neko
+│  • megumin
+│  • shinobu
+│
+╰─⊷
+
+╭─⊷ *⚠️ MISC & ACTION*
+│
+│  • kill
+│  • trap
+│  • trap2
+│  • bj
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '🌸 ANIME MENU', commandsText, m);
   }
 };

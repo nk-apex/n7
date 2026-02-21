@@ -1,3 +1,5 @@
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: "gamemenu",
   alias: ["gamecmds", "gamehelp", "gameslist"],
@@ -6,39 +8,25 @@ export default {
   usage: ".gamemenu",
 
   async execute(sock, m) {
-    const menu = `╭─⌈ 🎮 *GAMES MENU* ⌋
-│
-├─⊷ *coinflip*
-│  └⊷ Flip a coin
-├─⊷ *dare*
-│  └⊷ Dare challenge
-├─⊷ *dice*
-│  └⊷ Roll the dice
-├─⊷ *emojimix*
-│  └⊷ Mix two emojis
-├─⊷ *joke*
-│  └⊷ Random joke
-├─⊷ *quiz*
-│  └⊷ Trivia quiz
-├─⊷ *rps*
-│  └⊷ Rock Paper Scissors
-├─⊷ *snake*
-│  └⊷ Snake game
-├─⊷ *tetris*
-│  └⊷ Tetris game
-├─⊷ *truth*
-│  └⊷ Truth question
-├─⊷ *tictactoe*
-│  └⊷ Tic Tac Toe game
-├─⊷ *quote*
-│  └⊷ Random quote
-│
-╰───`;
+    const jid = m.key.remoteJid;
 
-    await sock.sendMessage(
-      m.key.remoteJid,
-      { text: menu },
-      { quoted: m }
-    );
+    const commandsText = `╭─⊷ *🎮 GAMES*
+│
+│  • coinflip
+│  • dare
+│  • dice
+│  • emojimix
+│  • joke
+│  • quiz
+│  • rps
+│  • snake
+│  • tetris
+│  • truth
+│  • tictactoe
+│  • quote
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '🎮 GAMES MENU', commandsText, m);
   }
 };
