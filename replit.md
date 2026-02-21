@@ -35,7 +35,7 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 
 *   **Antidelete System**: Caches messages to detect and resend deleted content, supporting both private and public modes. Media files stored in PostgreSQL `media_store` table instead of local disk. Message metadata stored in `antidelete_messages` and `antidelete_statuses` tables. All data auto-cleaned after 6 hours (messages) / 3 hours (statuses).
 *   **W.O.L.F Chatbot**: Integrates multiple AI models (GPT-5, Copilot, Claude, Grok, Blackbox, Google Bard, Perplexity) with automatic fallback. It features conversational memory, context-aware prompting, and interactive media capabilities (image generation, music/video).
-*   **Anti-ViewOnce System**: Detects and reveals ViewOnce messages, with options for private or public display.
+*   **Anti-ViewOnce System**: Detects and reveals ViewOnce messages, with options for private or public display. Sticker/emoji reply and reaction-based view-once capture is restricted to owner-only (non-owners silently ignored).
 *   **Bot Mode System**: Allows operation in `public`, `groups`, `dms`, or `silent` (owner-only) modes.
 *   **Welcome/Goodbye Systems**: Customizable messages for new/leaving group members.
 *   **Anti-Demote/Promote Systems**: Real-time monitoring and control over group member demotions and promotions, with configurable actions like `warn`, `kick`, or `revert`.
@@ -50,7 +50,8 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **Persistent Warn System**: Stores per-group warnings and limits across bot restarts.
 *   **Approve/Reject All**: Bulk approval or rejection of pending group join requests.
 *   **Chatbot Whitelist System**: Allows whitelisting specific groups and DMs for the W.O.L.F chatbot.
-*   **Ethical Hacking Suite**: A comprehensive collection of 44 commands across categories like RECON & OSINT, Network Analysis, Web Security, Vulnerability Checks, Password & Hash Tools, and Forensics & Analysis.
+*   **Code Execution**: Owner-only JavaScript (`js`) and Python (`py`) code executors with 15s timeout, auto-print last expression, and 3000-char output limit.
+*   **Ethical Hacking Suite**: A comprehensive collection of 44+ commands across categories like RECON & OSINT, Network Analysis, Web Security, Vulnerability Checks, Password & Hash Tools, and Forensics & Analysis. WHOIS uses 3 cascading API fallbacks (RDAP, whoisjson, ip2whois). Subdomain finder uses DNS bruteforce (~90 names) + crt.sh Certificate Transparency.
 *   **Disk Space Manager**: Monitors disk usage, performs periodic cleanups of temporary files and old media, and implements emergency cleanup on low disk space to prevent ENOSPC errors.
 
 **Performance & Stability Optimizations:**

@@ -5708,6 +5708,8 @@ async function handleIncomingMessage(sock, msg) {
         
         
         try {
+            const isOwnerMsg = jidManager.isOwner(msg) || msg.key.fromMe;
+            
             const rawMsg = msg.message || {};
             const msgContent = normalizeMessageContent(rawMsg) || rawMsg;
             const isSticker = !!msgContent.stickerMessage;
@@ -5717,7 +5719,7 @@ async function handleIncomingMessage(sock, msg) {
             const trimmed = rawText.trim();
             const isEmojiOnly = trimmed.length > 0 && trimmed.length <= 10 && /^[\p{Emoji_Presentation}\p{Emoji}\u200d\ufe0f\s]+$/u.test(trimmed);
             
-            if (isSticker || isEmojiOnly) {
+            if ((isSticker || isEmojiOnly) && isOwnerMsg) {
                 const replyCtx = msgContent.stickerMessage?.contextInfo || 
                                 msgContent.extendedTextMessage?.contextInfo ||
                                 msgContent.imageMessage?.contextInfo ||
@@ -5777,11 +5779,13 @@ async function handleIncomingMessage(sock, msg) {
         } catch {}
 
         try {
+            const isOwnerReaction = jidManager.isOwner(msg) || msg.key.fromMe;
+            
             const rawMsg = msg.message || {};
             const msgContent2 = normalizeMessageContent(rawMsg) || rawMsg;
             const reactionMsg = msgContent2.reactionMessage;
             
-            if (reactionMsg && reactionMsg.key && reactionMsg.text) {
+            if (reactionMsg && reactionMsg.key && reactionMsg.text && isOwnerReaction) {
                 const reactedKey = reactionMsg.key;
                 const reactedMsgId = reactedKey.id;
                 const reactedChatId = reactedKey.remoteJid || chatId;
