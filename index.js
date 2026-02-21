@@ -1128,10 +1128,10 @@ setInterval(() => {
 }, 5000);
 
 const DiskManager = {
-    WARNING_MB: 100,
-    CRITICAL_MB: 30,
-    CHECK_INTERVAL: 10 * 60 * 1000,
-    CLEANUP_INTERVAL: 15 * 60 * 1000,
+    WARNING_MB: 200,
+    CRITICAL_MB: 80,
+    CHECK_INTERVAL: 3 * 60 * 1000,
+    CLEANUP_INTERVAL: 10 * 60 * 1000,
     lastWarning: 0,
     lastCleanup: 0,
     isLow: false,
@@ -1234,9 +1234,9 @@ const DiskManager = {
             const preKeys = files.filter(f => f.startsWith('pre-key-'));
             const appSync = files.filter(f => f.startsWith('app-state-sync-version-'));
 
-            const senderLimit = aggressive ? 50 : 200;
-            const preKeyLimit = aggressive ? 50 : 200;
-            const appSyncLimit = aggressive ? 10 : 30;
+            const senderLimit = aggressive ? 20 : 80;
+            const preKeyLimit = aggressive ? 20 : 80;
+            const appSyncLimit = aggressive ? 5 : 15;
 
             const removeFiles = async (list, limit) => {
                 if (list.length <= limit) return 0;
@@ -1288,10 +1288,15 @@ const DiskManager = {
             './temp/compressed',
             './temp/apk',
             './commands/temp',
-            './viewonce_stealth'
+            './viewonce_stealth',
+            './viewonce_downloads',
+            './temp_stickers',
+            './temp_url_uploads',
+            './collected_stickers',
+            './sticker_packs'
         ];
         const now = Date.now();
-        const maxAge = aggressive ? 5 * 60 * 1000 : 30 * 60 * 1000;
+        const maxAge = aggressive ? 2 * 60 * 1000 : 15 * 60 * 1000;
         for (const dir of tempDirs) {
             try {
                 if (!fs.existsSync(dir)) continue;
@@ -1348,7 +1353,7 @@ const DiskManager = {
         try {
             if (!fs.existsSync(statusMediaDir)) return 0;
             const now = Date.now();
-            const maxAge = (aggressive ? 6 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000);
+            const maxAge = (aggressive ? 1 * 60 * 60 * 1000 : 6 * 60 * 60 * 1000);
             const files = await fs.promises.readdir(statusMediaDir);
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
@@ -1370,14 +1375,40 @@ const DiskManager = {
         this.runCleanupAsync(aggressive).catch(() => {});
     },
 
+    async cleanLogFilesAsync() {
+        let removed = 0;
+        try {
+            const logDirs = ['.', './logs'];
+            const now = Date.now();
+            for (const dir of logDirs) {
+                try {
+                    if (!fs.existsSync(dir)) continue;
+                    const files = await fs.promises.readdir(dir);
+                    for (const file of files) {
+                        if (!file.endsWith('.log')) continue;
+                        try {
+                            const full = path.join(dir, file);
+                            const stat = await fs.promises.stat(full);
+                            if (stat.isFile() && (stat.size > 5 * 1024 * 1024 || (now - stat.mtimeMs) > 24 * 60 * 60 * 1000)) {
+                                await fs.promises.unlink(full);
+                                removed++;
+                            }
+                        } catch {}
+                    }
+                } catch {}
+            }
+        } catch {}
+        return removed;
+    },
+
     async runCleanupAsync(aggressive = false) {
         const yieldToLoop = () => new Promise(r => setImmediate(r));
         const results = {};
         results.sessionFiles = await this.cleanSessionSignalFilesAsync(aggressive);
         await yieldToLoop();
-        results.viewonceMedia = await this.cleanOldMediaAsync('./data/viewonce_messages', 3, aggressive) + await this.cleanOldMediaAsync('./data/viewonce_private', 3, aggressive);
+        results.viewonceMedia = await this.cleanOldMediaAsync('./data/viewonce_messages', 1, aggressive) + await this.cleanOldMediaAsync('./data/viewonce_private', 1, aggressive);
         await yieldToLoop();
-        results.antideleteMedia = await this.cleanOldMediaAsync('./data/antidelete/media', 2, aggressive);
+        results.antideleteMedia = await this.cleanOldMediaAsync('./data/antidelete/media', 1, aggressive);
         await yieldToLoop();
         results.statusMedia = await this.cleanStatusMediaAsync(aggressive);
         await yieldToLoop();
@@ -1385,9 +1416,10 @@ const DiskManager = {
         await yieldToLoop();
         results.backups = aggressive ? await this.cleanBackupsAsync() : 0;
         results.statusLogs = await this.truncateStatusLogsAsync() ? 1 : 0;
+        results.logFiles = await this.cleanLogFilesAsync();
         const total = Object.values(results).reduce((a, b) => a + b, 0);
         if (total > 0) {
-            UltraCleanLogger.info(`🧹 Disk cleanup: removed ${total} items (session: ${results.sessionFiles}, viewonce: ${results.viewonceMedia}, antidelete: ${results.antideleteMedia}, status-media: ${results.statusMedia}, temp: ${results.tempFiles}, backups: ${results.backups})`);
+            UltraCleanLogger.info(`🧹 Disk cleanup: removed ${total} items (session: ${results.sessionFiles}, viewonce: ${results.viewonceMedia}, antidelete: ${results.antideleteMedia}, status-media: ${results.statusMedia}, temp: ${results.tempFiles}, backups: ${results.backups}, logs: ${results.logFiles})`);
         }
         this.lastCleanup = Date.now();
         return results;
@@ -4580,16 +4612,25 @@ async function startBot(loginMode = 'auto', loginData = null) {
             if (credsTimer) clearTimeout(credsTimer);
             credsTimer = setTimeout(async () => {
                 credsPending = false;
-                if (DiskManager.isLow) {
-                    DiskManager.runCleanup(true);
-                }
+                try {
+                    const freeMB = await DiskManager.getDiskFreeAsync();
+                    if (freeMB !== null && freeMB < DiskManager.CRITICAL_MB) {
+                        UltraCleanLogger.warning(`💾 Low disk (${freeMB}MB) before saveCreds - cleaning first...`);
+                        await DiskManager.runCleanupAsync(true);
+                    } else if (DiskManager.isLow) {
+                        await DiskManager.runCleanupAsync(true);
+                    }
+                } catch {}
                 try {
                     await saveCreds();
                 } catch (err) {
                     if (err?.code === 'ENOSPC') {
                         UltraCleanLogger.error('💾 Disk full during saveCreds! Running emergency cleanup...');
-                        DiskManager.runCleanup(true);
-                        try { await saveCreds(); } catch {}
+                        await DiskManager.runCleanupAsync(true);
+                        await new Promise(r => setTimeout(r, 1000));
+                        try { await saveCreds(); } catch (e2) {
+                            UltraCleanLogger.error(`💾 saveCreds still failing after cleanup: ${e2.message}`);
+                        }
                     }
                 }
             }, 500);

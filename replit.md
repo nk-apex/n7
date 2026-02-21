@@ -29,10 +29,11 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **Per-Bot Isolation**: All tables use composite primary keys with `bot_id` to ensure complete data isolation between different bot instances. Tables scoped by bot_id: `bot_configs`, `sudoers`, `sudo_config`, `chatbot_config`, `chatbot_conversations`, `auto_configs`, `warnings`, `warning_limits`, `welcome_goodbye`, `group_features`, `antidelete_messages`, `antidelete_statuses`. Only `lid_map` and `media_store` remain global (shared across instances).
 *   **Automatic Migration**: `initTables()` detects tables missing `bot_id` and migrates them independently (ADD COLUMN + DROP/ADD composite PK), ensuring safe upgrades from older schema versions.
 *   **Periodic Cleanup**: Auto-cleans antidelete messages, statuses, and media older than 24 hours every 30 minutes to prevent storage bloat. Cleanup is scoped by bot_id.
+*   **Disk Space Manager**: Monitors disk usage every 3 minutes, warns at 200MB free, critical cleanup at 80MB. Cleans session signal files (sender-keys, pre-keys), temp directories, viewonce/antidelete local media, log files, and backups. Proactive disk check runs before saveCreds to prevent ENOSPC errors. Emergency cleanup triggers on any ENOSPC write failure.
 
 **Key Features & Implementations:**
 
-*   **Antidelete System**: Caches messages to detect and resend deleted content, supporting both private and public modes. Media files stored in PostgreSQL `media_store` table instead of local disk. Message metadata stored in `antidelete_messages` and `antidelete_statuses` tables. All data auto-cleaned after 24 hours.
+*   **Antidelete System**: Caches messages to detect and resend deleted content, supporting both private and public modes. Media files stored in PostgreSQL `media_store` table instead of local disk. Message metadata stored in `antidelete_messages` and `antidelete_statuses` tables. All data auto-cleaned after 6 hours (messages) / 3 hours (statuses).
 *   **W.O.L.F Chatbot**: Integrates multiple AI models (GPT-5, Copilot, Claude, Grok, Blackbox, Google Bard, Perplexity) with automatic fallback. It features conversational memory, context-aware prompting, and interactive media capabilities (image generation, music/video).
 *   **Anti-ViewOnce System**: Detects and reveals ViewOnce messages, with options for private or public display.
 *   **Bot Mode System**: Allows operation in `public`, `groups`, `dms`, or `silent` (owner-only) modes.
