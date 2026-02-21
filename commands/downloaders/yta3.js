@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const WOLF_API = 'https://wolfmusicapi-al6b.onrender.com/download/yta3';
-const WOLF_STREAM = 'https://wolfmusicapi-al6b.onrender.com/download/stream/mp3';
-const WOLF_API_2 = 'https://wolfmusicapi-al6b.onrender.com/download/yta2';
-const WOLF_API_3 = 'https://wolfmusicapi-al6b.onrender.com/download/ytmp3';
+const WOLF_API = 'https://apis.xwolf.space/download/yta';
+const WOLF_STREAM = 'https://apis.xwolf.space/download/stream/mp3';
+const WOLF_API_2 = 'https://apis.xwolf.space/download/mp3';
+const WOLF_API_3 = 'https://apis.xwolf.space/download/dlmp3';
 const KEITH_API = 'https://apiskeith.top';
 
 const keithFallbackEndpoints = [

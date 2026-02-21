@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const WOLF_API = 'https://wolfmusicapi-al6b.onrender.com/download/mp4';
-const WOLF_STREAM = 'https://wolfmusicapi-al6b.onrender.com/download/stream/mp4';
+const WOLF_API = 'https://apis.xwolf.space/download/mp4';
+const WOLF_STREAM = 'https://apis.xwolf.space/download/stream/mp4';
 const KEITH_API = 'https://apiskeith.top';
 
 const keithFallbackEndpoints = [
