@@ -50,7 +50,8 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **Persistent Warn System**: Stores per-group warnings and limits across bot restarts.
 *   **Approve/Reject All**: Bulk approval or rejection of pending group join requests.
 *   **Chatbot Whitelist System**: Allows whitelisting specific groups and DMs for the W.O.L.F chatbot.
-*   **Code Execution**: Owner-only JavaScript (`js`) and Python (`py`) code executors with 15s timeout, auto-print last expression, and 3000-char output limit.
+*   **Code Execution**: Public JavaScript (`js`) and Python (`py`) code executors with 15s timeout, auto-print last expression, and 3000-char output limit.
+*   **Ephoto Text Effects**: 19 neon/glow text effect commands using mumaker + ephoto360 integration. Factory pattern via `commands/ephoto/ephotoUtils.js` with fallback APIs. Includes ephoto menu command.
 *   **Ethical Hacking Suite**: A comprehensive collection of 44+ commands across categories like RECON & OSINT, Network Analysis, Web Security, Vulnerability Checks, Password & Hash Tools, and Forensics & Analysis. WHOIS uses 3 cascading API fallbacks (RDAP, whoisjson, ip2whois). Subdomain finder uses DNS bruteforce (~90 names) + crt.sh Certificate Transparency.
 *   **Disk Space Manager**: Monitors disk usage, performs periodic cleanups of temporary files and old media, and implements emergency cleanup on low disk space to prevent ENOSPC errors.
 

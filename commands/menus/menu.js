@@ -5817,6 +5817,21 @@ case 5: {
 │
 ╰─⊷
 
+╭─⊷ *✨ EPHOTO TEXT EFFECTS*
+│
+│  • neon • colorfulglow
+│  • advancedglow • neononline
+│  • blueneon • neontext
+│  • neonlight • greenneon
+│  • greenlightneon • blueneonlogo
+│  • galaxyneon • retroneon
+│  • multicolorneon • hackerneon
+│  • devilwings • glowtext
+│  • blackpinkneon • neonglitch
+│  • colorfulneonlight • ephotomenu
+│
+╰─⊷
+
 🐺 *POWERED BY WOLF TECH* 🐺`);
 
   // Build final text with "Read more" between each category
