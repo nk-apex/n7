@@ -5825,29 +5825,57 @@ case 5: {
   categories.push(`╭─⊷ *🏠 GROUP MANAGEMENT*
 │
 ├─⊷ *🛡️ ADMIN & MODERATION*
-│  • add • promote • demote
-│  • kick • kickall • ban
-│  • unban • banlist • clearbanlist
-│  • warn • resetwarn • setwarn
-│  • mute • unmute • gctime
-│  • antileave • antilink • welcome
-│  • goodbye • approveall • rejectall
-│  • creategroup • fangwarn
+│  • add
+│  • promote
+│  • demote
+│  • kick
+│  • kickall
+│  • ban
+│  • unban
+│  • banlist
+│  • clearbanlist
+│  • warn
+│  • resetwarn
+│  • setwarn
+│  • mute
+│  • unmute
+│  • gctime
+│  • antileave
+│  • antilink
+│  • welcome
+│  • goodbye
+│  • approveall
+│  • rejectall
+│  • creategroup
+│  • fangwarn
 │
 ├─⊷ *🚫 AUTO-MODERATION*
-│  • antisticker • antiviewonce
-│  • antilink • antiimage
-│  • antivideo • antiaudio
-│  • antimention • antistatusmention
-│  • antigrouplink • antidemote
-│  • antipromote • antibug
+│  • antisticker
+│  • antiviewonce
+│  • antilink
+│  • antiimage
+│  • antivideo
+│  • antiaudio
+│  • antimention
+│  • antistatusmention
+│  • antigrouplink
+│  • antidemote
+│  • antipromote
+│  • antibug
 │
 ├─⊷ *📊 GROUP INFO & TOOLS*
-│  • groupinfo • tagadmin
-│  • tagall • hidetag
-│  • link • invite • revoke
-│  • setdesc • fangtrace
-│  • getgpp • getnumber • vcf
+│  • groupinfo
+│  • tagadmin
+│  • tagall
+│  • hidetag
+│  • link
+│  • invite
+│  • revoke
+│  • setdesc
+│  • fangtrace
+│  • getgpp
+│  • getnumber
+│  • vcf
 │  • getparticipants
 │
 ╰─⊷`);
@@ -5855,84 +5883,151 @@ case 5: {
   categories.push(`╭─⊷ *👑 OWNER CONTROLS*
 │
 ├─⊷ *⚡ CORE MANAGEMENT*
-│  • setbotname • setowner
-│  • setprefix • iamowner
-│  • about • block • unblock
-│  • blockcheck • silent
-│  • anticall • mode • online
-│  • setpp • repo • delete
-│  • privacy • tostatus
+│  • setbotname
+│  • setowner
+│  • setprefix
+│  • iamowner
+│  • about
+│  • block
+│  • unblock
+│  • blockcheck
+│  • silent
+│  • anticall
+│  • mode
+│  • online
+│  • setpp
+│  • repo
+│  • delete
+│  • privacy
+│  • tostatus
 │
 ├─⊷ *🔐 ANTIDELETE & VIEWONCE*
-│  • antidelete • antideletestatus
-│  • antiviewonce • antiedit
-│  • vvmode • viewer
+│  • antidelete
+│  • antideletestatus
+│  • antiviewonce
+│  • antiedit
+│  • vvmode
+│  • viewer
 │
 ├─⊷ *👤 SUDO MANAGEMENT*
-│  • addsudo • delsudo • listsudo
-│  • checksudo • clearsudo
-│  • sudoinfo • sudomode
-│  • sudodebug • linksudo • mysudo
+│  • addsudo
+│  • delsudo
+│  • listsudo
+│  • checksudo
+│  • clearsudo
+│  • sudoinfo
+│  • sudomode
+│  • sudodebug
+│  • linksudo
+│  • mysudo
 │
 ├─⊷ *🔄 SYSTEM & MAINTENANCE*
-│  • restart • reload • reloadenv
-│  • getsettings • setsettings
-│  • test • disk • hostip
-│  • findcmds • clearcache
-│  • shutdown • start • disp
-│  • clearsupabase • pannel
+│  • restart
+│  • reload
+│  • reloadenv
+│  • getsettings
+│  • setsettings
+│  • test
+│  • disk
+│  • hostip
+│  • findcmds
+│  • clearcache
+│  • shutdown
+│  • start
+│  • disp
+│  • clearsupabase
+│  • pannel
 │
 ╰─⊷`);
 
   categories.push(`╭─⊷ *⚙️ AUTOMATION*
 │
-│  • autoread • autotyping
-│  • autorecording • autoreact
-│  • autoreactstatus • autobio
-│  • autorec • autoviewstatus
-│  • reactdev • reactowner
+│  • autoread
+│  • autotyping
+│  • autorecording
+│  • autoreact
+│  • autoreactstatus
+│  • autobio
+│  • autorec
+│  • autoviewstatus
+│  • reactdev
+│  • reactowner
 │
 ╰─⊷
 
 ╭─⊷ *🎨 MENU COMMANDS*
 │
-│  • togglemenuinfo • setmenuimage
-│  • resetmenuinfo • menustyle
+│  • togglemenuinfo
+│  • setmenuimage
+│  • resetmenuinfo
+│  • menustyle
 │
 ╰─⊷`);
 
   categories.push(`╭─⊷ *✨ GENERAL UTILITIES*
 │
 ├─⊷ *🔍 INFO & SEARCH*
-│  • alive • ping • ping2
-│  • time • connection • define
-│  • news • covid • weather
-│  • wiki • uptime • speed
-│  • iplookup • getip
-│  • getpp • getgpp • prefixinfo
+│  • alive
+│  • ping
+│  • ping2
+│  • time
+│  • connection
+│  • define
+│  • news
+│  • covid
+│  • weather
+│  • wiki
+│  • uptime
+│  • speed
+│  • iplookup
+│  • getip
+│  • getpp
+│  • getgpp
+│  • prefixinfo
 │
 ├─⊷ *🔗 CONVERSION & MEDIA*
-│  • shorturl • qrencode • qrdecode
-│  • take • save • translate
-│  • tosticker • toimage • toaudio
-│  • tts • vcf • viewvcf
-│  • calc • url • fetch
-│  • screenshot • vv • vv2
+│  • shorturl
+│  • qrencode
+│  • qrdecode
+│  • take
+│  • save
+│  • translate
+│  • tosticker
+│  • toimage
+│  • toaudio
+│  • tts
+│  • vcf
+│  • viewvcf
+│  • calc
+│  • url
+│  • fetch
+│  • screenshot
+│  • vv
+│  • vv2
 │
 ├─⊷ *💻 CODE EXECUTION*
-│  • js • py
+│  • js
+│  • py
 │
 ├─⊷ *📝 PERSONAL TOOLS*
-│  • pair • chatbot • stealth
-│  • quoted • inspect
+│  • pair
+│  • chatbot
+│  • stealth
+│  • quoted
+│  • inspect
 │
 ╰─⊷`);
 
   categories.push(`╭─⊷ *🎵 MUSIC & MEDIA*
 │
-│  • play • song • lyrics
-│  • spotify • video • video2
-│  • bassboost • trebleboost
+│  • play
+│  • song
+│  • lyrics
+│  • spotify
+│  • video
+│  • video2
+│  • bassboost
+│  • trebleboost
 │  • shazam
 │
 ╰─⊷
@@ -5940,319 +6035,333 @@ case 5: {
 ╭─⊷ *🤖 AI COMMANDS*
 │
 ├─⊷ *⬇️ MEDIA DOWNLOADS*
-│  • youtube • tiktok
-│  • instagram • facebook
-│  • snapchat • apk
+│  • youtube
+│  • tiktok
+│  • instagram
+│  • facebook
+│  • snapchat
+│  • apk
 │
 ├─⊷ *🎨 AI GENERATION*
-│  • gpt • gemini • deepseek
-│  • deepseek+ • analyze
-│  • suno • wolfbot • videogen
+│  • gpt
+│  • gemini
+│  • deepseek
+│  • deepseek+
+│  • analyze
+│  • suno
+│  • wolfbot
+│  • videogen
 │  • jarvis
 │
 ╰─⊷
 
 ╭─⊷ *🖼️ IMAGE TOOLS*
 │
-│  • image • imagegenerate
-│  • anime • art • real
+│  • image
+│  • imagegenerate
+│  • anime
+│  • art
+│  • real
 │  • reverseimage
 │
 ╰─⊷`);
 
   categories.push(`╭─⊷ *🏆 SPORTS*
 │
-│  • football • matchstats
-│  • sportsnews • teamnews
-│  • basketball • cricket
-│  • f1 • nfl • mma
-│  • tennis • baseball • hockey
-│  • golf • sportsmenu
+│  • football
+│  • matchstats
+│  • sportsnews
+│  • teamnews
+│  • basketball
+│  • cricket
+│  • f1
+│  • nfl
+│  • mma
+│  • tennis
+│  • baseball
+│  • hockey
+│  • golf
+│  • sportsmenu
 │
 ╰─⊷
 
 ╭─⊷ *🛡️ ETHICAL HACKING*
 │
 ├─⊷ *🌐 RECON & OSINT*
-│  • whois • dnslookup • subdomain
-│  • reverseip • geoip • ipinfo
-│  • asnlookup • shodan • nmap
+│  • whois
+│  • dnslookup
+│  • subdomain
+│  • reverseip
+│  • geoip
+│  • ipinfo
+│  • asnlookup
+│  • shodan
+│  • nmap
 │
 ├─⊷ *📡 NETWORK ANALYSIS*
-│  • portscan • traceroute • pinghost
-│  • latency • openports • maclookup
-│  • bandwidthtest • firewallcheck
+│  • portscan
+│  • traceroute
+│  • pinghost
+│  • latency
+│  • openports
+│  • maclookup
+│  • bandwidthtest
+│  • firewallcheck
 │
 ├─⊷ *🔒 WEB SECURITY*
-│  • sslcheck • tlsinfo • securityheaders
-│  • wafdetect • headers • techstack
-│  • cmsdetect • robotscheck • sitemap
-│  • cookiescan • redirectcheck
+│  • sslcheck
+│  • tlsinfo
+│  • securityheaders
+│  • wafdetect
+│  • headers
+│  • techstack
+│  • cmsdetect
+│  • robotscheck
+│  • sitemap
+│  • cookiescan
+│  • redirectcheck
 │
 ├─⊷ *⚠️ VULNERABILITY CHECKS*
-│  • xsscheck • sqlicheck • csrfcheck
-│  • clickjackcheck • directoryscan
-│  • exposedfiles • misconfigcheck
+│  • xsscheck
+│  • sqlicheck
+│  • csrfcheck
+│  • clickjackcheck
+│  • directoryscan
+│  • exposedfiles
+│  • misconfigcheck
 │  • cvecheck
 │
 ├─⊷ *🔑 PASSWORD & HASH TOOLS*
-│  • hashidentify • hashcheck
-│  • bcryptcheck • passwordstrength
+│  • hashidentify
+│  • hashcheck
+│  • bcryptcheck
+│  • passwordstrength
 │  • leakcheck
 │
 ├─⊷ *🔬 FORENSICS & ANALYSIS*
-│  • metadata • filehash • malwarecheck
-│  • urlscan • phishcheck • nglattack
+│  • metadata
+│  • filehash
+│  • malwarecheck
+│  • urlscan
+│  • phishcheck
+│  • nglattack
 │  • securitymenu
 │
 ╰─⊷`);
 
   categories.push(`╭─⊷ *🎨 LOGO DESIGN STUDIO*
 │
-│  • goldlogo • silverlogo
-│  • platinumlogo • chromelogo
-│  • diamondlogo • bronzelogo
-│  • steelogo • copperlogo
-│  • titaniumlogo • firelogo
-│  • icelogo • iceglowlogo
-│  • lightninglogo • aqualogo
-│  • rainbowlogo • sunlogo
-│  • moonlogo • dragonlogo
-│  • phoenixlogo • wizardlogo
-│  • crystallogo • darkmagiclogo
-│  • shadowlogo • smokelogo
-│  • bloodlogo • neonlogo
-│  • glowlogo • matrixlogo
+│  • goldlogo
+│  • silverlogo
+│  • platinumlogo
+│  • chromelogo
+│  • diamondlogo
+│  • bronzelogo
+│  • steelogo
+│  • copperlogo
+│  • titaniumlogo
+│  • firelogo
+│  • icelogo
+│  • iceglowlogo
+│  • lightninglogo
+│  • aqualogo
+│  • rainbowlogo
+│  • sunlogo
+│  • moonlogo
+│  • dragonlogo
+│  • phoenixlogo
+│  • wizardlogo
+│  • crystallogo
+│  • darkmagiclogo
+│  • shadowlogo
+│  • smokelogo
+│  • bloodlogo
+│  • neonlogo
+│  • glowlogo
+│  • matrixlogo
 │  • logomenu
 │
 ╰─⊷
 
 ╭─⊷ *🐙 GITHUB COMMANDS*
 │
-│  • gitclone • gitinfo • repo
-│  • commits • stars
-│  • watchers • release
+│  • gitclone
+│  • gitinfo
+│  • repo
+│  • commits
+│  • stars
+│  • watchers
+│  • release
 │
 ╰─⊷
 
 ╭─⊷ *🌸 ANIME COMMANDS*
 │
-│  • awoo • bully • cringe
-│  • cry • cuddle • dance
-│  • glomp • highfive • hug
-│  • kill • kiss • lick
-│  • megumin • neko • nom
-│  • pat • shinobu • trap
-│  • trap2 • waifu • wink
-│  • yeet • animemenu
+│  • awoo
+│  • bully
+│  • cringe
+│  • cry
+│  • cuddle
+│  • dance
+│  • glomp
+│  • highfive
+│  • hug
+│  • kill
+│  • kiss
+│  • lick
+│  • megumin
+│  • neko
+│  • nom
+│  • pat
+│  • shinobu
+│  • trap
+│  • trap2
+│  • waifu
+│  • wink
+│  • yeet
+│  • animemenu
 │
 ╰─⊷
 
 ╭─⊷ *✨ EPHOTO TEXT EFFECTS*
 │
-│  • neon • colorfulglow
-│  • advancedglow • neononline
-│  • blueneon • neontext
-│  • neonlight • greenneon
-│  • greenlightneon • blueneonlogo
-│  • galaxyneon • retroneon
-│  • multicolorneon • hackerneon
-│  • devilwings • glowtext
-│  • blackpinkneon • neonglitch
-│  • colorfulneonlight • ephotomenu
+│  • neon
+│  • colorfulglow
+│  • advancedglow
+│  • neononline
+│  • blueneon
+│  • neontext
+│  • neonlight
+│  • greenneon
+│  • greenlightneon
+│  • blueneonlogo
+│  • galaxyneon
+│  • retroneon
+│  • multicolorneon
+│  • hackerneon
+│  • devilwings
+│  • glowtext
+│  • blackpinkneon
+│  • neonglitch
+│  • colorfulneonlight
+│  • ephotomenu
 │
 ╰─⊷`);
 
   categories.push(`╭─⊷ *🎨 PHOTOFUNIA EFFECTS (154)*
 │
 ├─⊷ *🎃 HALLOWEEN*
-│  • smokeflare
-│  • nightmarewriting
-│  • lightning
-│  • cemeterygates
-│  • summoningspirits
-│  • ghostwood
+│  • smokeflare • nightmarewriting
+│  • lightning • cemeterygates
+│  • summoningspirits • ghostwood
 │
 ├─⊷ *🎨 FILTERS*
-│  • autumn
-│  • jade
-│  • romantic
-│  • mystical
-│  • lomography
-│  • sepia
+│  • autumn • jade • romantic
+│  • mystical • lomography • sepia
 │
 ├─⊷ *🔬 LAB*
-│  • watercolourtext
-│  • denimemdroidery
-│  • cinematicket
-│  • arrowsigns
-│  • yacht
-│  • cloudyfilter
-│  • lightgraffiti
-│  • chalkboard
-│  • rustywriting
-│  • streetsign
-│  • floralwreath
-│  • retrowave
-│  • youaremyuniverse
-│  • einstein
-│  • rugbyball
-│  • redandblue
-│  • vhs
-│  • typewriter
-│  • diptych
-│  • badges
-│  • wanted
-│  • crown
-│  • anime
-│  • popart
-│  • puzzle
-│  • glass
-│  • animator
+│  • watercolourtext • denimemdroidery
+│  • cinematicket • arrowsigns
+│  • yacht • cloudyfilter
+│  • lightgraffiti • chalkboard
+│  • rustywriting • streetsign
+│  • floralwreath • retrowave
+│  • youaremyuniverse • einstein
+│  • rugbyball • redandblue
+│  • vhs • typewriter • diptych
+│  • badges • wanted • crown
+│  • anime • popart • puzzle
+│  • glass • animator
 │
 ├─⊷ *📌 POSTERS*
-│  • postersonthewall
-│  • posterwall
-│  • trainstationposter
-│  • rainynight
-│  • nightmotion
-│  • campaign
-│  • bicycle
-│  • citylight
-│  • affiche
-│  • sidewalk
-│  • cyclist
-│  • tulips
-│  • cafe
-│  • underground
-│  • reconstruction
-│  • posters
+│  • postersonthewall • posterwall
+│  • trainstationposter • rainynight
+│  • nightmotion • campaign
+│  • bicycle • citylight • affiche
+│  • sidewalk • cyclist • tulips
+│  • cafe • underground
+│  • reconstruction • posters
 │
 ├─⊷ *🏛️ GALLERIES*
-│  • melbournegallery
-│  • artadmirer
+│  • melbournegallery • artadmirer
 │  • nationalgalleryinlondon
 │  • blackwhitegallery
 │  • galleryvisitor
 │  • paintingandsketches
 │  • passingbythepainting
-│  • silhouettes
-│  • rijskmuseum
+│  • silhouettes • rijskmuseum
 │
 ├─⊷ *📸 PHOTOGRAPHY*
-│  • oldcamera
-│  • kittyandframe
+│  • oldcamera • kittyandframe
 │  • frame
 │
 ├─⊷ *🎭 FACES*
-│  • mirror
-│  • formulaoneracer
-│  • warrior
-│  • knight
-│  • biker
-│  • surfer
-│  • snowboard
-│  • dj
-│  • bodybuilder
-│  • lulu
-│  • hockey
-│  • ethanol
-│  • godfather
-│  • pirates
-│  • miss
+│  • mirror • formulaoneracer
+│  • warrior • knight • biker
+│  • surfer • snowboard • dj
+│  • bodybuilder • lulu • hockey
+│  • ethanol • godfather
+│  • pirates • miss
 │
 ├─⊷ *🏙️ BILLBOARDS*
-│  • concretejungle
-│  • broadwayatnight
-│  • newyorkatnight
-│  • shoppingarcade
-│  • oldtram
-│  • workerbythebillboard
+│  • concretejungle • broadwayatnight
+│  • newyorkatnight • shoppingarcade
+│  • oldtram • workerbythebillboard
 │  • eveningbillboard
 │  • pedestriancrossing
-│  • cube
-│  • nyc
-│  • city
-│  • ax
+│  • cube • nyc • city • ax
 │
 ├─⊷ *⭐ CELEBRITIES*
-│  • trump
-│  • obama
-│  • madonna
-│  • putin
+│  • trump • obama
+│  • madonna • putin
 │
 ├─⊷ *🖼️ FRAMES*
-│  • theframe
-│  • atthebeach
-│  • lavander
-│  • reproduction
+│  • theframe • atthebeach
+│  • lavander • reproduction
 │  • daffodils
 │
 ├─⊷ *✏️ DRAWINGS*
-│  • painter
-│  • explorerdrawing
-│  • artistinahat
-│  • drawinglesson
-│  • brugge
-│  • watercolours
-│  • truck
-│  • portrait
+│  • painter • explorerdrawing
+│  • artistinahat • drawinglesson
+│  • brugge • watercolours
+│  • truck • portrait
 │
 ├─⊷ *📜 VINTAGE*
-│  • quill
-│  • stamps
+│  • quill • stamps
 │
 ├─⊷ *🎲 MISC*
-│  • magiccard
-│  • postagestamp
-│  • truckadvert
-│  • tablet
-│  • artonthebrickwall
-│  • toasts
-│  • photowall
-│  • lego
-│  • wall
-│  • eye
-│  • morningmug
-│  • topsecret
-│  • breakingnews
-│  • vinylrecord
-│  • beer
-│  • coin
+│  • magiccard • postagestamp
+│  • truckadvert • tablet
+│  • artonthebrickwall • toasts
+│  • photowall • lego • wall
+│  • eye • morningmug • topsecret
+│  • breakingnews • vinylrecord
+│  • beer • coin
 │
 ├─⊷ *📰 MAGAZINES*
 │  • readingmagazine
 │  • rosesandmarshmallows
-│  • interview
-│  • reading
-│  • esquire
-│  • vogue
+│  • interview • reading
+│  • esquire • vogue
 │
 ├─⊷ *📺 TV*
 │  • analoguetv
 │
 ├─⊷ *📚 BOOKS*
-│  • festivereading
-│  • thebook
+│  • festivereading • thebook
 │  • veryoldbook
 │
 ├─⊷ *❤️ VALENTINE*
-│  • rosevine
-│  • loveletter
-│  • lovelock
-│  • weddingday
-│  • brooches
-│  • valentine
+│  • rosevine • loveletter
+│  • lovelock • weddingday
+│  • brooches • valentine
 │
 ├─⊷ *🐣 EASTER*
-│  • eastercard
-│  • bunnies
+│  • eastercard • bunnies
 │
 ├─⊷ *🎄 CHRISTMAS*
-│  • snowsign
-│  • christmaswriting
-│  • snowglobe
-│  • frostywindowwriting
+│  • snowsign • christmaswriting
+│  • snowglobe • frostywindowwriting
 │  • santasnowangel
 │  • santasparcelpicture
 │  • newyearframes
