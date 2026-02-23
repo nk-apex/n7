@@ -17,11 +17,19 @@ export default {
 
       if (shouldMute) {
         const muteUntil = Date.now() + (100 * 365 * 24 * 60 * 60 * 1000);
-        await sock.chatModify({ mute: muteUntil }, jid);
         setMuted(jid, muteUntil);
+        try {
+          await sock.chatModify({ mute: muteUntil }, jid);
+        } catch (e) {
+          console.log(`[notifications] chatModify failed (state saved locally): ${e.message}`);
+        }
       } else {
-        await sock.chatModify({ mute: null }, jid);
         setMuted(jid, null);
+        try {
+          await sock.chatModify({ mute: null }, jid);
+        } catch (e) {
+          console.log(`[notifications] chatModify failed (state saved locally): ${e.message}`);
+        }
       }
 
       await sock.sendMessage(jid, { react: { text: shouldMute ? '🔕' : '🔔', key: msg.key } });

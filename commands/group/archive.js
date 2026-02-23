@@ -15,8 +15,13 @@ export default {
       const currently = isArchived(jid);
       const shouldArchive = !currently;
 
-      await sock.chatModify({ archive: shouldArchive }, jid);
       setArchived(jid, shouldArchive);
+
+      try {
+        await sock.chatModify({ archive: shouldArchive }, jid);
+      } catch (e) {
+        console.log(`[archive] chatModify failed (state saved locally): ${e.message}`);
+      }
 
       await sock.sendMessage(jid, { react: { text: shouldArchive ? '📦' : '📂', key: msg.key } });
       await sock.sendMessage(jid, {

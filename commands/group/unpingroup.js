@@ -18,8 +18,13 @@ export default {
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: msg.key } });
 
-      await sock.chatModify({ pin: false }, jid);
       setPinned(jid, false);
+
+      try {
+        await sock.chatModify({ pin: false }, jid);
+      } catch (e) {
+        console.log(`[unpingroup] chatModify failed (state saved locally): ${e.message}`);
+      }
 
       await sock.sendMessage(jid, { react: { text: '✅', key: msg.key } });
       await sock.sendMessage(jid, {
