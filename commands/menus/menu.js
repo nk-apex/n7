@@ -1921,6 +1921,19 @@ case 1: {
 │
 ╰─⊷
 
+╭─⊷ *🕵️ STALKER COMMANDS*
+│
+│  • wachannel
+│  • tiktokstalk
+│  • twitterstalk
+│  • ipstalk
+│  • igstalk
+│  • npmstalk
+│  • gitstalk
+│  • stalkermenu
+│
+╰─⊷
+
 ╭─⊷ *🎨 LOGO DESIGN STUDIO*
 │
 │  • goldlogo
@@ -4557,6 +4570,19 @@ case 4: {
 │
 ╰─⊷
 
+╭─⊷ *🕵️ STALKER COMMANDS*
+│
+│  • wachannel
+│  • tiktokstalk
+│  • twitterstalk
+│  • ipstalk
+│  • igstalk
+│  • npmstalk
+│  • gitstalk
+│  • stalkermenu
+│
+╰─⊷
+
 ╭─⊷ *🎨 LOGO DESIGN STUDIO*
 │
 │  • goldlogo
@@ -6454,6 +6480,19 @@ case 5: {
 │  • ipinfo
 │  • nglattack
 │  • securitymenu
+│
+╰─⊷
+
+╭─⊷ *🕵️ STALKER COMMANDS*
+│
+│  • wachannel
+│  • tiktokstalk
+│  • twitterstalk
+│  • ipstalk
+│  • igstalk
+│  • npmstalk
+│  • gitstalk
+│  • stalkermenu
 │
 ╰─⊷
 

@@ -36,6 +36,8 @@ export default {
 │  └⊷ 👑 Owner controls
 ├─⊷ *securitymenu*
 │  └⊷ 🛡️ Security & hacking
+├─⊷ *stalkermenu*
+│  └⊷ 🕵️ Stalker commands
 ├─⊷ *sportsmenu*
 │  └⊷ 🏆 Live sports scores
 ├─⊷ *toolsmenu*
