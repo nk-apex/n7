@@ -4355,6 +4355,17 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     if (isConnected && !isConflictRecovery) handleSuccessfulConnection(sock, loginMode, loginData).catch(() => {});
                 }, 2000);
                 isWaitingForPairingCode = false;
+
+                setTimeout(() => {
+                    if (!isConnected) return;
+                    const hasAppStateKey = sock.authState?.creds?.myAppStateKeyId;
+                    if (!hasAppStateKey) {
+                        UltraCleanLogger.info('🔑 App state keys missing — requesting sync from WhatsApp...');
+                        sock.resyncAppState(['critical_block', 'critical_unblock_to_single', 'regular_high', 'regular_low', 'regular'], true)
+                            .then(() => UltraCleanLogger.info('✅ App state resync requested'))
+                            .catch(e => UltraCleanLogger.info(`⚠️ App state resync: ${e.message}`));
+                    }
+                }, 5000);
                 
                 if (!antiViewOnceSystem) {
                     antiViewOnceSystem = new AntiViewOnceSystem(sock);

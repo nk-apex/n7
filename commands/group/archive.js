@@ -1,4 +1,5 @@
 import { isArchived, setArchived } from '../../lib/chat-state.js';
+import { safeModify } from '../../lib/safe-modify.js';
 
 export default {
   name: 'archive',
@@ -16,12 +17,7 @@ export default {
       const shouldArchive = !currently;
 
       setArchived(jid, shouldArchive);
-
-      try {
-        await sock.chatModify({ archive: shouldArchive }, jid);
-      } catch (e) {
-        console.log(`[archive] chatModify failed (state saved locally): ${e.message}`);
-      }
+      await safeModify(sock, { archive: shouldArchive }, jid);
 
       await sock.sendMessage(jid, { react: { text: shouldArchive ? '📦' : '📂', key: msg.key } });
       await sock.sendMessage(jid, {
@@ -33,7 +29,7 @@ export default {
     } catch (err) {
       console.error('[archive]', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: msg.key } });
-      await sock.sendMessage(jid, { text: `❌ Failed to archive chat: ${err.message}` }, { quoted: msg });
+      await sock.sendMessage(jid, { text: `❌ Failed: ${err.message}` }, { quoted: msg });
     }
   }
 };

@@ -1,4 +1,5 @@
 import { isPinned, setPinned } from '../../lib/chat-state.js';
+import { safeModify } from '../../lib/safe-modify.js';
 
 export default {
   name: 'unpingroup',
@@ -19,12 +20,7 @@ export default {
       await sock.sendMessage(jid, { react: { text: '⏳', key: msg.key } });
 
       setPinned(jid, false);
-
-      try {
-        await sock.chatModify({ pin: false }, jid);
-      } catch (e) {
-        console.log(`[unpingroup] chatModify failed (state saved locally): ${e.message}`);
-      }
+      await safeModify(sock, { pin: false }, jid);
 
       await sock.sendMessage(jid, { react: { text: '✅', key: msg.key } });
       await sock.sendMessage(jid, {
@@ -34,7 +30,7 @@ export default {
     } catch (err) {
       console.error('[unpingroup]', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: msg.key } });
-      await sock.sendMessage(jid, { text: `❌ Failed to unpin group: ${err.message}` }, { quoted: msg });
+      await sock.sendMessage(jid, { text: `❌ Failed: ${err.message}` }, { quoted: msg });
     }
   }
 };

@@ -1,4 +1,5 @@
 import { isMuted, setMuted } from '../../lib/chat-state.js';
+import { safeModify } from '../../lib/safe-modify.js';
 
 export default {
   name: 'notifications',
@@ -18,18 +19,10 @@ export default {
       if (shouldMute) {
         const muteUntil = Date.now() + (100 * 365 * 24 * 60 * 60 * 1000);
         setMuted(jid, muteUntil);
-        try {
-          await sock.chatModify({ mute: muteUntil }, jid);
-        } catch (e) {
-          console.log(`[notifications] chatModify failed (state saved locally): ${e.message}`);
-        }
+        await safeModify(sock, { mute: muteUntil }, jid);
       } else {
         setMuted(jid, null);
-        try {
-          await sock.chatModify({ mute: null }, jid);
-        } catch (e) {
-          console.log(`[notifications] chatModify failed (state saved locally): ${e.message}`);
-        }
+        await safeModify(sock, { mute: null }, jid);
       }
 
       await sock.sendMessage(jid, { react: { text: shouldMute ? '🔕' : '🔔', key: msg.key } });
@@ -42,7 +35,7 @@ export default {
     } catch (err) {
       console.error('[notifications]', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: msg.key } });
-      await sock.sendMessage(jid, { text: `❌ Failed to toggle notifications: ${err.message}` }, { quoted: msg });
+      await sock.sendMessage(jid, { text: `❌ Failed: ${err.message}` }, { quoted: msg });
     }
   }
 };
