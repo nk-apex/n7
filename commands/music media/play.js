@@ -152,6 +152,18 @@ export default {
 
       await sock.sendMessage(jid, { audio: audioBuffer, mimetype: 'audio/mpeg', fileName, contextInfo }, { quoted: m });
 
+      await sock.sendMessage(jid, {
+        document: audioBuffer,
+        mimetype: 'audio/mpeg',
+        fileName,
+        contextInfo: {
+          externalAdReply: {
+            ...contextInfo.externalAdReply,
+            body: `📄 Document | ${quality} | Downloaded by WOLFBOT`
+          }
+        }
+      }, { quoted: m });
+
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       console.log(`✅ [PLAY] Success: "${trackTitle}" (${fileSizeMB}MB) via ${endpoint}`);
 
