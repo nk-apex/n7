@@ -791,6 +791,26 @@ class UltraCleanLogger {
         const timestamp = chalk.cyan(`[${new Date().toLocaleTimeString()}]`);
         originalConsoleMethods.log(timestamp, chalk.cyan('💬'), ...args);
     }
+
+    static ownerCommand(...args) {
+        const NC = '\x1b[38;2;0;255;65m';
+        const BOLD = '\x1b[1m';
+        const RESET = '\x1b[0m';
+        const timestamp = `${NC}${BOLD}[${new Date().toLocaleTimeString()}]${RESET}`;
+        const label = `${NC}${BOLD}⚡ 👑${RESET}`;
+        const msg = args.map(a => `${NC}${BOLD}${a}${RESET}`).join(' ');
+        originalConsoleMethods.log(timestamp, label, msg);
+    }
+
+    static ownerMessage(...args) {
+        const NC = '\x1b[38;2;0;255;65m';
+        const DIM = '\x1b[2m';
+        const RESET = '\x1b[0m';
+        const timestamp = `${NC}${DIM}[${new Date().toLocaleTimeString()}]${RESET}`;
+        const label = `${NC}💬 👑${RESET}`;
+        const msg = args.map(a => `${NC}${a}${RESET}`).join(' ');
+        originalConsoleMethods.log(timestamp, label, msg);
+    }
     
     static critical(...args) {
         const timestamp = chalk.red(`[${new Date().toLocaleTimeString()}]`);
@@ -5915,6 +5935,12 @@ async function handleIncomingMessage(sock, msg) {
         }
         
         if (!commandName) {
+            if (jidManager.isOwner(msg) && textMsg && textMsg.trim().length > 0) {
+                const ownerDisplay = getDisplayNumber(senderJid);
+                const ownerLocTag = isGroup ? `[${chatId.split('@')[0].substring(0, 10)}]` : '[DM]';
+                const preview = textMsg.length > 60 ? textMsg.substring(0, 60) + '…' : textMsg;
+                UltraCleanLogger.ownerMessage(`${ownerDisplay} ${ownerLocTag} → "${preview}"`);
+            }
             if (isChatbotActiveForChat(chatId)) {
                 if (chatId !== 'status@broadcast' && !msg.key.fromMe) {
                     handleChatbotMessage(sock, msg, commands).catch(() => {});
@@ -5956,7 +5982,11 @@ async function handleIncomingMessage(sock, msg) {
         const prefixDisplay = isPrefixless ? '' : currentPrefix;
         const roleTag = isOwnerUser ? '👑' : (isSudoUser ? '🔑' : '👤');
         const locationTag = isGroup ? `[${chatId.split('@')[0].substring(0, 10)}]` : '[DM]';
-        UltraCleanLogger.command(`${roleTag} ${senderDisplay} ${locationTag} → ${prefixDisplay}${commandName} (${Date.now() - startTime}ms)`);
+        if (isOwnerUser) {
+            UltraCleanLogger.ownerCommand(`${senderDisplay} ${locationTag} → ${prefixDisplay}${commandName} (${Date.now() - startTime}ms)`);
+        } else {
+            UltraCleanLogger.command(`${roleTag} ${senderDisplay} ${locationTag} → ${prefixDisplay}${commandName} (${Date.now() - startTime}ms)`);
+        }
 
         if (!checkBotMode(msg, commandName, isSudoUser)) {
             if (BOT_MODE === 'silent' && !isOwnerUser && !isSudoUser) {

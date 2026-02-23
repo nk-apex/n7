@@ -6,12 +6,15 @@ const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
 const AUDIO_ENDPOINTS = ['song', 'yta', 'dlmp3', 'ytmp3'];
 const VIDEO_ENDPOINTS = ['ytv', 'dlmp4', 'ytmp4'];
 
+const ENDPOINT_TIMEOUT = { song: 3000, default: 15000 };
+
 async function queryAPI(url, endpoints) {
   for (const endpoint of endpoints) {
     try {
       const params = { apikey: 'gifted', url };
       if (endpoint === 'ytmp3') params.quality = '128kbps';
-      const res = await axios.get(`${GIFTED_BASE}/${endpoint}`, { params, timeout: 25000 });
+      const timeout = ENDPOINT_TIMEOUT[endpoint] ?? ENDPOINT_TIMEOUT.default;
+      const res = await axios.get(`${GIFTED_BASE}/${endpoint}`, { params, timeout });
       if (res.data?.success && res.data?.result?.download_url) {
         return { success: true, data: res.data.result, endpoint };
       }
@@ -25,7 +28,7 @@ async function downloadAndValidate(url) {
     url,
     method: 'GET',
     responseType: 'arraybuffer',
-    timeout: 90000,
+    timeout: 60000,
     maxRedirects: 5,
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
     validateStatus: (s) => s >= 200 && s < 400
@@ -148,16 +151,6 @@ export default {
       };
 
       await sock.sendMessage(jid, { audio: audioBuffer, mimetype: 'audio/mpeg', fileName, contextInfo }, { quoted: m });
-
-      await sock.sendMessage(jid, {
-        document: audioBuffer,
-        mimetype: 'audio/mpeg',
-        fileName,
-        contextInfo: {
-          ...contextInfo,
-          externalAdReply: { ...contextInfo.externalAdReply, body: `📄 Document | ${quality} | Downloaded by WOLFBOT` }
-        }
-      }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       console.log(`✅ [PLAY] Success: "${trackTitle}" (${fileSizeMB}MB) via ${endpoint}`);
