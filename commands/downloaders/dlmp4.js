@@ -1,6 +1,23 @@
 import axios from 'axios';
+import yts from 'yt-search';
 
-const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/dlmp4';
+const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
+const VIDEO_ENDPOINTS = ['ytv', 'dlmp4', 'ytmp4'];
+
+async function queryAPI(url, endpoints) {
+  for (const endpoint of endpoints) {
+    try {
+      const res = await axios.get(`${GIFTED_BASE}/${endpoint}`, {
+        params: { apikey: 'gifted', url },
+        timeout: 30000
+      });
+      if (res.data?.success && res.data?.result?.download_url) {
+        return { success: true, data: res.data.result, endpoint };
+      }
+    } catch {}
+  }
+  return { success: false };
+}
 
 async function downloadAndValidate(url, timeout = 120000) {
   const response = await axios({
@@ -24,7 +41,7 @@ async function downloadAndValidate(url, timeout = 120000) {
 export default {
   name: 'dlmp4',
   aliases: ['dlvideo', 'dlvid'],
-  description: 'Download MP4 video via GiftedTech API',
+  description: 'Download MP4 video with fallback APIs',
   category: 'Downloader',
   usage: 'dlmp4 <url or video name>',
 
@@ -36,7 +53,7 @@ export default {
 
     if (!searchQuery) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎬 *DLMP4 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}dlmp4 <video name>*\n│  └⊷ Download video\n├─⊷ *${prefix}dlmp4 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
+        text: `╭─⌈ 🎬 *DLMP4 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}dlmp4 <video name or URL>*\n│  └⊷ Download video\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
       }, { quoted: m });
     }
 
@@ -44,18 +61,33 @@ export default {
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
     try {
-      const apiRes = await axios.get(GIFTED_API, {
-        params: { apikey: 'gifted', url: searchQuery },
-        timeout: 30000
-      });
+      let videoUrl = searchQuery;
+      let thumbnail = '';
 
-      if (!apiRes.data?.success || !apiRes.data?.result?.download_url) {
-        throw new Error('No download link returned');
+      if (!searchQuery.match(/(youtube\.com|youtu\.be)/i)) {
+        try {
+          const { videos } = await yts(searchQuery);
+          if (videos?.length) {
+            videoUrl = videos[0].url;
+            thumbnail = videos[0].thumbnail || '';
+          }
+        } catch {}
       }
 
-      const { title, thumbnail, quality, download_url } = apiRes.data.result;
+      const result = await queryAPI(videoUrl, VIDEO_ENDPOINTS);
 
-      console.log(`🎬 [DLMP4] Found: ${title}`);
+      if (!result.success) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+        return sock.sendMessage(jid, {
+          text: `❌ *Download Failed*\n\nAll video services are currently unavailable. Try again later.`
+        }, { quoted: m });
+      }
+
+      const { data, endpoint } = result;
+      const { title, quality, download_url } = data;
+      const thumbUrl = data.thumbnail || thumbnail;
+
+      console.log(`🎬 [DLMP4] Found via ${endpoint}: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       const videoBuffer = await downloadAndValidate(download_url);
@@ -67,10 +99,10 @@ export default {
       }
 
       let thumbnailBuffer = null;
-      if (thumbnail) {
+      if (thumbUrl) {
         try {
-          const thumbRes = await axios.get(thumbnail, { responseType: 'arraybuffer', timeout: 10000 });
-          if (thumbRes.data.length > 1000) thumbnailBuffer = Buffer.from(thumbRes.data);
+          const tr = await axios.get(thumbUrl, { responseType: 'arraybuffer', timeout: 10000 });
+          if (tr.data.length > 1000) thumbnailBuffer = Buffer.from(tr.data);
         } catch {}
       }
 
@@ -86,13 +118,13 @@ export default {
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      console.log(`✅ [DLMP4] Success: ${title} (${fileSizeMB}MB)`);
+      console.log(`✅ [DLMP4] Success: ${title} (${fileSizeMB}MB) via ${endpoint}`);
 
     } catch (error) {
       console.error('❌ [DLMP4] Error:', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `❌ *DLMP4 Error:* ${error.message}\n\nTry: \`${prefix}ytmp4 ${args.join(' ')}\``
+        text: `❌ *DLMP4 Error:* ${error.message}`
       }, { quoted: m });
     }
   }

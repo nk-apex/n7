@@ -1,13 +1,28 @@
 import axios from 'axios';
 
-const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/yta';
+const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
+const AUDIO_ENDPOINTS = ['yta', 'dlmp3', 'ytmp3'];
+
+async function queryAPI(url, endpoints) {
+  for (const endpoint of endpoints) {
+    try {
+      const params = { apikey: 'gifted', url };
+      if (endpoint === 'ytmp3') params.quality = '128kbps';
+      const res = await axios.get(`${GIFTED_BASE}/${endpoint}`, { params, timeout: 25000 });
+      if (res.data?.success && res.data?.result?.download_url) {
+        return { success: true, data: res.data.result, endpoint };
+      }
+    } catch {}
+  }
+  return { success: false };
+}
 
 async function downloadAndValidate(url) {
   const response = await axios({
     url,
     method: 'GET',
     responseType: 'arraybuffer',
-    timeout: 60000,
+    timeout: 90000,
     maxRedirects: 5,
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
     validateStatus: (s) => s >= 200 && s < 400
@@ -24,7 +39,7 @@ async function downloadAndValidate(url) {
 export default {
   name: 'yta3',
   aliases: ['wolfyta3', 'yta2'],
-  description: 'Download audio via GiftedTech YTA API',
+  description: 'Download audio with fallback APIs',
   category: 'Downloader',
   usage: 'yta3 <url or song name>',
 
@@ -36,7 +51,7 @@ export default {
 
     if (!searchQuery) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎵 *YTA DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}yta3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}yta3 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
+        text: `╭─⌈ 🎵 *YTA DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}yta3 <song name or URL>*\n│  └⊷ Download audio\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
       }, { quoted: m });
     }
 
@@ -44,18 +59,19 @@ export default {
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
     try {
-      const apiRes = await axios.get(GIFTED_API, {
-        params: { apikey: 'gifted', url: searchQuery },
-        timeout: 25000
-      });
+      const result = await queryAPI(searchQuery, AUDIO_ENDPOINTS);
 
-      if (!apiRes.data?.success || !apiRes.data?.result?.download_url) {
-        throw new Error('No download link returned');
+      if (!result.success) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+        return sock.sendMessage(jid, {
+          text: `❌ *Download Failed*\n\nAll audio services are currently unavailable. Try again later.`
+        }, { quoted: m });
       }
 
-      const { title, duration, quality, thumbnail, download_url } = apiRes.data.result;
+      const { data, endpoint } = result;
+      const { title, duration, quality, thumbnail, download_url } = data;
 
-      console.log(`🎵 [YTA3] Found: ${title}`);
+      console.log(`🎵 [YTA3] Found via ${endpoint}: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
       const audioBuffer = await downloadAndValidate(download_url);
@@ -69,8 +85,8 @@ export default {
       let thumbnailBuffer = null;
       if (thumbnail) {
         try {
-          const thumbRes = await axios.get(thumbnail, { responseType: 'arraybuffer', timeout: 10000 });
-          if (thumbRes.data.length > 1000) thumbnailBuffer = Buffer.from(thumbRes.data);
+          const tr = await axios.get(thumbnail, { responseType: 'arraybuffer', timeout: 10000 });
+          if (tr.data.length > 1000) thumbnailBuffer = Buffer.from(tr.data);
         } catch {}
       }
 
@@ -93,13 +109,13 @@ export default {
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      console.log(`✅ [YTA3] Success: ${title} (${fileSizeMB}MB)`);
+      console.log(`✅ [YTA3] Success: ${title} (${fileSizeMB}MB) via ${endpoint}`);
 
     } catch (error) {
       console.error('❌ [YTA3] Error:', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `❌ *YTA Error:* ${error.message}\n\nTry: \`${prefix}ytmp3 ${args.join(' ')}\``
+        text: `❌ *YTA Error:* ${error.message}`
       }, { quoted: m });
     }
   }

@@ -1,14 +1,29 @@
 import axios from 'axios';
 import yts from 'yt-search';
 
-const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/ytmp3';
+const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
+const AUDIO_ENDPOINTS = ['ytmp3', 'yta', 'dlmp3'];
+
+async function queryAPI(url, endpoints) {
+  for (const endpoint of endpoints) {
+    try {
+      const params = { apikey: 'gifted', url };
+      if (endpoint === 'ytmp3') params.quality = '128kbps';
+      const res = await axios.get(`${GIFTED_BASE}/${endpoint}`, { params, timeout: 25000 });
+      if (res.data?.success && res.data?.result?.download_url) {
+        return { success: true, data: res.data.result, endpoint };
+      }
+    } catch {}
+  }
+  return { success: false };
+}
 
 async function downloadAndValidate(url) {
   const response = await axios({
     url,
     method: 'GET',
     responseType: 'arraybuffer',
-    timeout: 60000,
+    timeout: 90000,
     maxRedirects: 5,
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
     validateStatus: (s) => s >= 200 && s < 400
@@ -43,32 +58,45 @@ export default {
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
     try {
-      let youtubeUrl = searchQuery;
+      let videoUrl = searchQuery;
+      let videoTitle = '';
+      let author = '';
+      let duration = '';
+      let videoId = '';
+      let thumbnail = '';
 
       if (!searchQuery.match(/(youtube\.com|youtu\.be)/i)) {
         try {
           const { videos } = await yts(searchQuery);
-          if (videos && videos.length > 0) {
-            youtubeUrl = videos[0].url;
+          if (videos?.length) {
+            const v = videos[0];
+            videoUrl = v.url;
+            videoTitle = v.title;
+            author = v.author?.name || '';
+            duration = v.timestamp || '';
+            videoId = v.videoId;
+            thumbnail = v.thumbnail || '';
           }
         } catch {}
+      } else {
+        videoId = videoUrl.match(/(?:v=|youtu\.be\/)([^&?\/\s]{11})/i)?.[1] || '';
       }
 
-      const apiRes = await axios.get(GIFTED_API, {
-        params: { apikey: 'gifted', url: youtubeUrl, quality: '128kbps' },
-        timeout: 25000
-      });
-
-      if (!apiRes.data?.success || !apiRes.data?.result?.download_url) {
-        throw new Error('No download link returned');
+      const result = await queryAPI(videoUrl, AUDIO_ENDPOINTS);
+      if (!result.success) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+        return sock.sendMessage(jid, { text: `❌ MP3 download failed. All services unavailable. Try again later.` }, { quoted: m });
       }
 
-      const { title, youtube_id, quality, download_url } = apiRes.data.result;
+      const { data, endpoint } = result;
+      const trackTitle = data.title || videoTitle || 'Audio';
+      const quality = data.quality || '128kbps';
+      const thumbUrl = data.thumbnail || thumbnail || (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null);
 
-      console.log(`🎵 [YTMP3] Found: ${title}`);
+      console.log(`🎵 [YTMP3] Found via ${endpoint}: ${trackTitle}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      const audioBuffer = await downloadAndValidate(download_url);
+      const audioBuffer = await downloadAndValidate(data.download_url);
       const fileSizeMB = (audioBuffer.length / (1024 * 1024)).toFixed(1);
 
       if (parseFloat(fileSizeMB) > 50) {
@@ -77,18 +105,14 @@ export default {
       }
 
       let thumbnailBuffer = null;
-      const videoId = youtube_id || youtubeUrl.match(/(?:v=|youtu\.be\/)([^&?\/\s]{11})/)?.[1];
-      if (videoId) {
+      if (thumbUrl) {
         try {
-          const thumbRes = await axios.get(
-            `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-            { responseType: 'arraybuffer', timeout: 10000 }
-          );
-          if (thumbRes.data.length > 1000) thumbnailBuffer = Buffer.from(thumbRes.data);
+          const tr = await axios.get(thumbUrl, { responseType: 'arraybuffer', timeout: 10000 });
+          if (tr.data.length > 1000) thumbnailBuffer = Buffer.from(tr.data);
         } catch {}
       }
 
-      const cleanTitle = (title || 'audio').replace(/[^\w\s.-]/gi, '').substring(0, 50);
+      const cleanTitle = trackTitle.replace(/[^\w\s.-]/gi, '').substring(0, 50);
 
       await sock.sendMessage(jid, {
         audio: audioBuffer,
@@ -97,19 +121,19 @@ export default {
         fileName: `${cleanTitle}.mp3`,
         contextInfo: {
           externalAdReply: {
-            title: (title || 'YouTube Audio').substring(0, 60),
-            body: `🎵 ${quality || '128kbps'} • ${fileSizeMB}MB | Downloaded by WOLFBOT`,
+            title: trackTitle.substring(0, 60),
+            body: `🎵 ${quality} • ${fileSizeMB}MB | Downloaded by WOLFBOT`,
             mediaType: 2,
             thumbnail: thumbnailBuffer,
-            sourceUrl: youtubeUrl,
-            mediaUrl: youtubeUrl,
+            sourceUrl: videoUrl,
+            mediaUrl: videoUrl,
             renderLargerThumbnail: true
           }
         }
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      console.log(`✅ [YTMP3] Success: ${title} (${fileSizeMB}MB)`);
+      console.log(`✅ [YTMP3] Success: ${trackTitle} (${fileSizeMB}MB) via ${endpoint}`);
 
     } catch (error) {
       console.error('❌ [YTMP3] Error:', error.message);
