@@ -1,155 +1,80 @@
 import axios from 'axios';
 
-const WOLF_API = 'https://apis.xwolf.space/download/yta';
-const WOLF_STREAM = 'https://apis.xwolf.space/download/stream/mp3';
-const WOLF_API_2 = 'https://apis.xwolf.space/download/mp3';
-const WOLF_API_3 = 'https://apis.xwolf.space/download/dlmp3';
+const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/yta';
 
-async function downloadAndValidate(downloadUrl) {
+async function downloadAndValidate(url) {
   const response = await axios({
-    url: downloadUrl,
+    url,
     method: 'GET',
     responseType: 'arraybuffer',
     timeout: 60000,
     maxRedirects: 5,
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    },
-    validateStatus: (status) => status >= 200 && status < 400
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    validateStatus: (s) => s >= 200 && s < 400
   });
-
   const buffer = Buffer.from(response.data);
-
-  if (buffer.length < 1000) {
-    throw new Error('File too small, likely not audio');
-  }
-
-  const headerStr = buffer.slice(0, 50).toString('utf8').toLowerCase();
-  if (headerStr.includes('<!doctype') || headerStr.includes('<html') || headerStr.includes('bad gateway')) {
+  if (buffer.length < 1000) throw new Error('File too small, likely not audio');
+  const header = buffer.slice(0, 50).toString('utf8').toLowerCase();
+  if (header.includes('<!doctype') || header.includes('<html') || header.includes('bad gateway')) {
     throw new Error('Received HTML instead of audio');
   }
-
   return buffer;
 }
 
 export default {
   name: 'yta3',
-  description: 'Download audio via WOLF YTA3 API',
+  aliases: ['wolfyta3', 'yta2'],
+  description: 'Download audio via GiftedTech YTA API',
   category: 'Downloader',
-  aliases: ['wolfyta3'],
   usage: 'yta3 <url or song name>',
 
   async execute(sock, m, args, prefix) {
     const jid = m.key.remoteJid;
-    const quoted = m.quoted;
-    const quotedText = quoted?.text?.trim() || (m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation)?.trim() || '';
+    const quotedText = m.quoted?.text?.trim() || m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation?.trim() || '';
+
+    const searchQuery = args.length > 0 ? args.join(' ') : quotedText;
+
+    if (!searchQuery) {
+      return sock.sendMessage(jid, {
+        text: `╭─⌈ 🎵 *YTA DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}yta3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}yta3 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
+      }, { quoted: m });
+    }
+
+    console.log(`🎵 [YTA3] Request: ${searchQuery}`);
+    await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
     try {
-      const searchQuery = args.length > 0 ? args.join(' ') : quotedText;
-      
-      if (!searchQuery) {
-        return sock.sendMessage(jid, {
-          text: `╭─⌈ 🎵 *YTA3 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}yta3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}yta3 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
-        }, { quoted: m });
-      }
-      console.log(`🎵 [YTA3] Request: ${searchQuery}`);
+      const apiRes = await axios.get(GIFTED_API, {
+        params: { apikey: 'gifted', url: searchQuery },
+        timeout: 25000
+      });
 
-      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
-
-      const apiUrl = `${WOLF_API}?url=${encodeURIComponent(searchQuery)}`;
-      let data = null;
-
-      try {
-        const response = await axios.get(apiUrl, { timeout: 20000 });
-        if (response.data) data = response.data;
-      } catch (err) {
-        console.log(`🎵 [YTA3] Wolf API request failed: ${err.message}`);
+      if (!apiRes.data?.success || !apiRes.data?.result?.download_url) {
+        throw new Error('No download link returned');
       }
 
-      const title = data?.title || data?.searchResult?.title || 'Unknown Track';
-      const duration = data?.searchResult?.duration || '';
-      const videoId = data?.videoId || '';
-      const youtubeUrl = data?.youtubeUrl || searchQuery;
-      const fileSize = data?.fileSize || '';
-      const streamUrl = data?.streamUrl ? data.streamUrl.replace('http://', 'https://') : null;
-      const downloadUrl = data?.downloadUrl;
+      const { title, duration, quality, thumbnail, download_url } = apiRes.data.result;
 
       console.log(`🎵 [YTA3] Found: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      const downloadSources = [];
-
-      if (downloadUrl && downloadUrl !== 'In Processing...' && downloadUrl.startsWith('http')) {
-        downloadSources.push({ url: downloadUrl, label: 'WOLF Direct' });
-      }
-
-      if (streamUrl) {
-        downloadSources.push({ url: streamUrl, label: 'WOLF Stream' });
-      }
-
-      downloadSources.push({ url: `${WOLF_STREAM}?url=${encodeURIComponent(youtubeUrl)}`, label: 'WOLF Stream URL' });
-
-      let audioBuffer = null;
-      let sourceUsed = '';
-
-      for (const source of downloadSources) {
-        try {
-          console.log(`🎵 [YTA3] Trying: ${source.label}`);
-          audioBuffer = await downloadAndValidate(source.url);
-          sourceUsed = source.label;
-          break;
-        } catch (err) {
-          console.log(`🎵 [YTA3] ${source.label} failed: ${err.message}`);
-          continue;
-        }
-      }
-
-      if (!audioBuffer) {
-        for (const altApi of [WOLF_API_2, WOLF_API_3]) {
-          try {
-            console.log(`🎵 [YTA3] Trying alt Wolf API`);
-            const altRes = await axios.get(`${altApi}?url=${encodeURIComponent(searchQuery)}`, { timeout: 20000 });
-            if (altRes.data?.success && altRes.data?.downloadUrl) {
-              audioBuffer = await downloadAndValidate(altRes.data.downloadUrl);
-              sourceUsed = 'Wolf Alt';
-              break;
-            }
-          } catch (err) {
-            console.log(`🎵 [YTA3] Alt failed: ${err.message}`);
-          }
-        }
-      }
-
-      if (!audioBuffer) {
-        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-        return sock.sendMessage(jid, {
-          text: `❌ *Download failed*\n\n🎵 ${title}\n\nAll download sources failed. Try \`${prefix}ytmp3 ${searchQuery}\``
-        }, { quoted: m });
-      }
-
+      const audioBuffer = await downloadAndValidate(download_url);
       const fileSizeMB = (audioBuffer.length / (1024 * 1024)).toFixed(1);
 
       if (parseFloat(fileSizeMB) > 50) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-        return sock.sendMessage(jid, {
-          text: `❌ File too large: ${fileSizeMB}MB (max 50MB)`
-        }, { quoted: m });
+        return sock.sendMessage(jid, { text: `❌ File too large: ${fileSizeMB}MB (max 50MB)` }, { quoted: m });
       }
 
       let thumbnailBuffer = null;
-      if (videoId) {
+      if (thumbnail) {
         try {
-          const thumbRes = await axios.get(
-            `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-            { responseType: 'arraybuffer', timeout: 10000 }
-          );
-          if (thumbRes.status === 200 && thumbRes.data.length > 1000) {
-            thumbnailBuffer = Buffer.from(thumbRes.data);
-          }
+          const thumbRes = await axios.get(thumbnail, { responseType: 'arraybuffer', timeout: 10000 });
+          if (thumbRes.data.length > 1000) thumbnailBuffer = Buffer.from(thumbRes.data);
         } catch {}
       }
 
-      const cleanTitle = title.replace(/[^\w\s.-]/gi, '').substring(0, 50);
+      const cleanTitle = (title || 'audio').replace(/[^\w\s.-]/gi, '').substring(0, 50);
 
       await sock.sendMessage(jid, {
         audio: audioBuffer,
@@ -158,25 +83,23 @@ export default {
         fileName: `${cleanTitle}.mp3`,
         contextInfo: {
           externalAdReply: {
-            title: title.substring(0, 60),
-            body: `🎵 ${duration ? duration + ' • ' : ''}${fileSize || fileSizeMB + 'MB'} | Downloaded using WOLF API`,
+            title: (title || 'Audio').substring(0, 60),
+            body: `🎵 ${duration ? duration + ' • ' : ''}${quality || '320kbps'} | Downloaded by WOLFBOT`,
             mediaType: 2,
             thumbnail: thumbnailBuffer,
-            sourceUrl: youtubeUrl,
-            mediaUrl: youtubeUrl,
             renderLargerThumbnail: true
           }
         }
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      console.log(`✅ [YTA3] Success: ${title} (${fileSizeMB}MB) [${sourceUsed}]`);
+      console.log(`✅ [YTA3] Success: ${title} (${fileSizeMB}MB)`);
 
     } catch (error) {
       console.error('❌ [YTA3] Error:', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `❌ *YTA3 Error:* ${error.message}\n\nTry: \`${prefix}ytmp3 ${args.join(' ')}\``
+        text: `❌ *YTA Error:* ${error.message}\n\nTry: \`${prefix}ytmp3 ${args.join(' ')}\``
       }, { quoted: m });
     }
   }

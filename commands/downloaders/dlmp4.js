@@ -1,32 +1,32 @@
 import axios from 'axios';
 
-const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/dlmp3';
+const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/dlmp4';
 
-async function downloadAndValidate(url) {
+async function downloadAndValidate(url, timeout = 120000) {
   const response = await axios({
     url,
     method: 'GET',
     responseType: 'arraybuffer',
-    timeout: 60000,
+    timeout,
     maxRedirects: 5,
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
     validateStatus: (s) => s >= 200 && s < 400
   });
   const buffer = Buffer.from(response.data);
-  if (buffer.length < 1000) throw new Error('File too small, likely not audio');
+  if (buffer.length < 5000) throw new Error('File too small, likely not video');
   const header = buffer.slice(0, 50).toString('utf8').toLowerCase();
   if (header.includes('<!doctype') || header.includes('<html') || header.includes('bad gateway')) {
-    throw new Error('Received HTML instead of audio');
+    throw new Error('Received HTML instead of video');
   }
   return buffer;
 }
 
 export default {
-  name: 'dlmp3',
-  aliases: ['wolfmp3', 'wdl'],
-  description: 'Download MP3 audio via GiftedTech API',
+  name: 'dlmp4',
+  aliases: ['dlvideo', 'dlvid'],
+  description: 'Download MP4 video via GiftedTech API',
   category: 'Downloader',
-  usage: 'dlmp3 <url or song name>',
+  usage: 'dlmp4 <url or video name>',
 
   async execute(sock, m, args, prefix) {
     const jid = m.key.remoteJid;
@@ -36,17 +36,17 @@ export default {
 
     if (!searchQuery) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎵 *DLMP3 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}dlmp3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}dlmp3 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
+        text: `╭─⌈ 🎬 *DLMP4 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}dlmp4 <video name>*\n│  └⊷ Download video\n├─⊷ *${prefix}dlmp4 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n╰───`
       }, { quoted: m });
     }
 
-    console.log(`🎵 [DLMP3] Request: ${searchQuery}`);
+    console.log(`🎬 [DLMP4] Request: ${searchQuery}`);
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
     try {
       const apiRes = await axios.get(GIFTED_API, {
         params: { apikey: 'gifted', url: searchQuery },
-        timeout: 25000
+        timeout: 30000
       });
 
       if (!apiRes.data?.success || !apiRes.data?.result?.download_url) {
@@ -55,15 +55,15 @@ export default {
 
       const { title, thumbnail, quality, download_url } = apiRes.data.result;
 
-      console.log(`🎵 [DLMP3] Found: ${title}`);
+      console.log(`🎬 [DLMP4] Found: ${title}`);
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      const audioBuffer = await downloadAndValidate(download_url);
-      const fileSizeMB = (audioBuffer.length / (1024 * 1024)).toFixed(1);
+      const videoBuffer = await downloadAndValidate(download_url);
+      const fileSizeMB = (videoBuffer.length / (1024 * 1024)).toFixed(1);
 
-      if (parseFloat(fileSizeMB) > 50) {
+      if (parseFloat(fileSizeMB) > 99) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-        return sock.sendMessage(jid, { text: `❌ File too large: ${fileSizeMB}MB (max 50MB)` }, { quoted: m });
+        return sock.sendMessage(jid, { text: `❌ Video too large: ${fileSizeMB}MB (max 99MB)` }, { quoted: m });
       }
 
       let thumbnailBuffer = null;
@@ -74,32 +74,25 @@ export default {
         } catch {}
       }
 
-      const cleanTitle = (title || 'audio').replace(/[^\w\s.-]/gi, '').substring(0, 50);
+      const cleanTitle = (title || 'video').replace(/[^\w\s.-]/gi, '').substring(0, 50);
 
       await sock.sendMessage(jid, {
-        audio: audioBuffer,
-        mimetype: 'audio/mpeg',
-        ptt: false,
-        fileName: `${cleanTitle}.mp3`,
-        contextInfo: {
-          externalAdReply: {
-            title: (title || 'Audio').substring(0, 60),
-            body: `🎵 ${quality || '128kbps'} • ${fileSizeMB}MB | Downloaded by WOLFBOT`,
-            mediaType: 2,
-            thumbnail: thumbnailBuffer,
-            renderLargerThumbnail: true
-          }
-        }
+        video: videoBuffer,
+        mimetype: 'video/mp4',
+        caption: `🎬 *${title || 'Video'}*\n📹 *Quality:* ${quality || 'HD'}\n📦 *Size:* ${fileSizeMB}MB\n\n🐺 *Downloaded by WOLFBOT*`,
+        fileName: `${cleanTitle}.mp4`,
+        thumbnail: thumbnailBuffer,
+        gifPlayback: false
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      console.log(`✅ [DLMP3] Success: ${title} (${fileSizeMB}MB)`);
+      console.log(`✅ [DLMP4] Success: ${title} (${fileSizeMB}MB)`);
 
     } catch (error) {
-      console.error('❌ [DLMP3] Error:', error.message);
+      console.error('❌ [DLMP4] Error:', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `❌ *DLMP3 Error:* ${error.message}\n\nTry: \`${prefix}ytmp3 ${args.join(' ')}\``
+        text: `❌ *DLMP4 Error:* ${error.message}\n\nTry: \`${prefix}ytmp4 ${args.join(' ')}\``
       }, { quoted: m });
     }
   }

@@ -1,0 +1,84 @@
+import axios from 'axios';
+
+const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/mediafire';
+
+async function downloadBuffer(url) {
+  const response = await axios({
+    url,
+    method: 'GET',
+    responseType: 'arraybuffer',
+    timeout: 90000,
+    maxRedirects: 5,
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    validateStatus: (s) => s >= 200 && s < 400
+  });
+  return Buffer.from(response.data);
+}
+
+export default {
+  name: 'mediafire',
+  aliases: ['mf', 'mfdl', 'mediafiredl'],
+  description: 'Download files from MediaFire links',
+  category: 'Downloader',
+
+  async execute(sock, m, args, prefix) {
+    const jid = m.key.remoteJid;
+    const quotedText = m.quoted?.text?.trim() || m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation?.trim() || '';
+
+    const url = args.length > 0 ? args.join(' ').trim() : quotedText;
+
+    if (!url || !url.includes('mediafire.com')) {
+      return sock.sendMessage(jid, {
+        text: `╭─⌈ 📁 *MEDIAFIRE DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}mediafire <MediaFire URL>*\n│  └⊷ Download file from MediaFire\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}mediafire https://www.mediafire.com/file/...\n│\n├─⊷ *Aliases:* mf, mfdl, mediafiredl\n│\n╰───────────────\n> *WOLFBOT MEDIAFIRE DOWNLOADER*`
+      }, { quoted: m });
+    }
+
+    console.log(`📁 [MEDIAFIRE] URL: ${url}`);
+    await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
+
+    try {
+      const apiRes = await axios.get(GIFTED_API, {
+        params: { apikey: 'gifted', url },
+        timeout: 20000
+      });
+
+      if (!apiRes.data?.success || !apiRes.data?.result?.downloadUrl) {
+        throw new Error('Could not extract download link');
+      }
+
+      const { fileName, fileSize, fileType, mimeType, downloadUrl, uploadedOn } = apiRes.data.result;
+
+      console.log(`📁 [MEDIAFIRE] Found: ${fileName} (${fileSize})`);
+      await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
+
+      const fileBuffer = await downloadBuffer(downloadUrl);
+      const fileSizeMB = (fileBuffer.length / (1024 * 1024)).toFixed(1);
+
+      if (fileBuffer.length > 100 * 1024 * 1024) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+        return sock.sendMessage(jid, {
+          text: `❌ *File too large (${fileSizeMB}MB)*\n\n📁 *${fileName}*\n📦 *Size:* ${fileSize}\n\n📥 Direct download link:\n${downloadUrl}`
+        }, { quoted: m });
+      }
+
+      const detectedMime = mimeType || 'application/octet-stream';
+
+      await sock.sendMessage(jid, {
+        document: fileBuffer,
+        fileName: fileName || 'mediafire_file',
+        mimetype: detectedMime,
+        caption: `📁 *${fileName}*\n📦 *Size:* ${fileSize || fileSizeMB + 'MB'}\n📂 *Type:* ${fileType || detectedMime}${uploadedOn ? `\n📅 *Uploaded:* ${uploadedOn}` : ''}\n\n🐺 *Downloaded by WOLFBOT*`
+      }, { quoted: m });
+
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+      console.log(`✅ [MEDIAFIRE] Success: ${fileName} (${fileSizeMB}MB)`);
+
+    } catch (error) {
+      console.error('❌ [MEDIAFIRE] Error:', error.message);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+      await sock.sendMessage(jid, {
+        text: `❌ *MediaFire Error:* ${error.message}\n\n💡 Make sure the link is a valid public MediaFire file URL.`
+      }, { quoted: m });
+    }
+  }
+};
