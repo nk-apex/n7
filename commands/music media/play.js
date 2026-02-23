@@ -3,7 +3,7 @@ import yts from 'yt-search';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
 
-const AUDIO_ENDPOINTS = ['yta', 'dlmp3', 'ytmp3'];
+const AUDIO_ENDPOINTS = ['song', 'yta', 'dlmp3', 'ytmp3'];
 const VIDEO_ENDPOINTS = ['ytv', 'dlmp4', 'ytmp4'];
 
 async function queryAPI(url, endpoints) {

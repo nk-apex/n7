@@ -2,7 +2,7 @@ import axios from 'axios';
 import yts from 'yt-search';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
-const VIDEO_ENDPOINTS = ['ytv', 'dlmp4', 'ytmp4'];
+const VIDEO_ENDPOINTS = ['ytmp4', 'dlmp4', 'ytv'];
 
 async function queryAPI(url, endpoints) {
   for (const endpoint of endpoints) {

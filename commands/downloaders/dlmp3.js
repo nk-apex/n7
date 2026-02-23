@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
-const AUDIO_ENDPOINTS = ['dlmp3', 'yta', 'ytmp3'];
+const AUDIO_ENDPOINTS = ['ytmp3', 'dlmp3', 'yta'];
 
 async function queryAPI(url, endpoints) {
   for (const endpoint of endpoints) {
