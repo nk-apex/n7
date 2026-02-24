@@ -551,15 +551,15 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
 
         let mediaCache = statusAntideleteState.mediaCache.get(statusData.id);
 
-        if (statusData.hasMedia && !mediaCache) {
+        if (statusData.hasMedia) {
             try {
-                const cachedEntry = statusAntideleteState.mediaCache.get(statusData.id);
-                if (cachedEntry?.dbPath) {
-                    const dbBuffer = await db.downloadMedia(cachedEntry.dbPath);
+                if (mediaCache?.dbPath) {
+                    const dbBuffer = await db.downloadMedia(mediaCache.dbPath);
                     if (dbBuffer) {
-                        mediaCache = { ...cachedEntry, base64: dbBuffer.toString('base64') };
+                        mediaCache = { ...mediaCache, base64: dbBuffer.toString('base64') };
                     }
-                } else {
+                }
+                if (!mediaCache?.base64) {
                     const ext = statusData.mimetype?.split('/')[1]?.split(';')[0] || 'bin';
                     const possiblePath = `statuses/${statusData.id}.${ext}`;
                     const dbBuffer = await db.downloadMedia(possiblePath);
@@ -567,24 +567,35 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
                         mediaCache = {
                             base64: dbBuffer.toString('base64'),
                             type: statusData.type,
-                            mimetype: statusData.mimetype,
+                            mimetype: statusData.mimetype || 'application/octet-stream',
                             size: dbBuffer.length,
                             isStatus: true,
                             savedAt: Date.now()
                         };
                     }
                 }
-            } catch {}
+                if (!mediaCache?.base64) {
+                    const dbBuffer = await db.downloadMedia(`statuses/${statusData.id}`);
+                    if (dbBuffer) {
+                        mediaCache = {
+                            base64: dbBuffer.toString('base64'),
+                            type: statusData.type,
+                            mimetype: statusData.mimetype || 'application/octet-stream',
+                            size: dbBuffer.length,
+                            isStatus: true,
+                            savedAt: Date.now()
+                        };
+                    }
+                }
+            } catch (fetchErr) {
+                console.error('❌ Status Antidelete: DB media fetch error:', fetchErr.message);
+            }
         }
 
-        if (statusData.hasMedia && mediaCache) {
+        if (statusData.hasMedia && mediaCache?.base64) {
             let mediaSent = false;
             try {
-                let buffer = null;
-                
-                if (mediaCache.base64) {
-                    buffer = Buffer.from(mediaCache.base64, 'base64');
-                }
+                const buffer = Buffer.from(mediaCache.base64, 'base64');
 
                 if (buffer && buffer.length > 0) {
                     const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);

@@ -5,13 +5,14 @@ const publicModeChatCooldowns = new Map();
 const PUBLIC_MODE_COOLDOWN_MS = 5000;
 
 let antieditState = {
-    enabled: true,
-    mode: 'private',
+    gc: { enabled: true, mode: 'private' },
+    pm: { enabled: true, mode: 'private' },
     ownerJid: null,
     sock: null,
     messageHistory: new Map(),
     currentMessages: new Map(),
     mediaCache: new Map(),
+    groupConfigs: new Map(),
     stats: {
         totalMessages: 0,
         editsDetected: 0,
@@ -23,8 +24,9 @@ let antieditState = {
 };
 
 const defaultSettings = {
-    enabled: true,
-    mode: 'private',
+    gc: { enabled: true, mode: 'private' },
+    pm: { enabled: true, mode: 'private' },
+    groupConfigs: {},
     stats: {
         totalMessages: 0,
         editsDetected: 0,
@@ -35,15 +37,41 @@ const defaultSettings = {
     }
 };
 
+function getEffectiveConfig(chatId) {
+    const isGroup = chatId?.endsWith('@g.us');
+    if (isGroup) {
+        const groupConf = antieditState.groupConfigs.get(chatId);
+        if (groupConf && typeof groupConf === 'object' && groupConf.enabled !== undefined) {
+            return groupConf;
+        }
+        return { enabled: antieditState.gc.enabled, mode: antieditState.gc.mode };
+    } else {
+        return { enabled: antieditState.pm.enabled, mode: antieditState.pm.mode };
+    }
+}
+
 async function loadData() {
     try {
         const settings = await db.getConfig('antiedit_settings', defaultSettings);
         if (settings) {
-            if (settings.mode) antieditState.mode = settings.mode;
-            if (settings.enabled !== undefined) antieditState.enabled = settings.enabled;
+            if (settings.gc) antieditState.gc = { ...antieditState.gc, ...settings.gc };
+            if (settings.pm) antieditState.pm = { ...antieditState.pm, ...settings.pm };
+            if (settings.enabled !== undefined && !settings.gc) {
+                antieditState.gc.enabled = settings.enabled;
+                antieditState.pm.enabled = settings.enabled;
+            }
+            if (settings.mode && !settings.gc) {
+                antieditState.gc.mode = settings.mode;
+                antieditState.pm.mode = settings.mode;
+            }
+            if (settings.groupConfigs && typeof settings.groupConfigs === 'object') {
+                for (const [k, v] of Object.entries(settings.groupConfigs)) {
+                    antieditState.groupConfigs.set(k, v);
+                }
+            }
             if (settings.stats) antieditState.stats = { ...antieditState.stats, ...settings.stats };
         }
-        console.log(`✅ Antiedit: Loaded settings from DB (mode: ${antieditState.mode})`);
+        console.log(`✅ Antiedit: Loaded settings from DB (gc: ${antieditState.gc.mode}, pm: ${antieditState.pm.mode})`);
     } catch (error) {
         console.error('❌ Antiedit: Error loading data:', error.message);
     }
@@ -51,9 +79,14 @@ async function loadData() {
 
 async function saveData() {
     try {
+        const groupConfigsObj = {};
+        for (const [k, v] of antieditState.groupConfigs.entries()) {
+            groupConfigsObj[k] = v;
+        }
         const settings = {
-            enabled: antieditState.enabled,
-            mode: antieditState.mode,
+            gc: antieditState.gc,
+            pm: antieditState.pm,
+            groupConfigs: groupConfigsObj,
             stats: antieditState.stats
         };
         await db.setConfig('antiedit_settings', settings);
@@ -177,7 +210,11 @@ function extractMessageContent(message) {
 
 async function storeIncomingMessage(message, isEdit = false, originalMessageData = null) {
     try {
-        if (!antieditState.sock || antieditState.mode === 'off') return null;
+        if (!antieditState.sock) return null;
+        
+        const chatJidCheck = message.key?.remoteJid;
+        const effectiveConf = getEffectiveConfig(chatJidCheck);
+        if (!effectiveConf.enabled) return null;
         
         const msgKey = message.key;
         if (!msgKey || !msgKey.id || msgKey.fromMe) return null;
@@ -241,21 +278,26 @@ async function storeIncomingMessage(message, isEdit = false, originalMessageData
             antieditState.stats.editsDetected++;
             
             setTimeout(async () => {
-                if (antieditState.mode === 'private' && antieditState.ownerJid) {
-                    await sendEditAlertToOwnerDM(originalMessageData, messageData, history);
-                    antieditState.stats.sentToDm++;
-                } else if (antieditState.mode === 'public') {
+                const conf = getEffectiveConfig(chatJid);
+                const notifyMode = conf.mode || 'private';
+
+                if (notifyMode === 'private' || notifyMode === 'both') {
+                    if (antieditState.ownerJid) {
+                        await sendEditAlertToOwnerDM(originalMessageData, messageData, history);
+                        antieditState.stats.sentToDm++;
+                    }
+                }
+                if (notifyMode === 'chat' || notifyMode === 'both') {
                     const lastSend = publicModeChatCooldowns.get(chatJid) || 0;
-                    if (Date.now() - lastSend < PUBLIC_MODE_COOLDOWN_MS) {
-                        return;
+                    if (Date.now() - lastSend >= PUBLIC_MODE_COOLDOWN_MS) {
+                        publicModeChatCooldowns.set(chatJid, Date.now());
+                        if (publicModeChatCooldowns.size > 200) {
+                            const oldest = [...publicModeChatCooldowns.entries()].sort((a, b) => a[1] - b[1]).slice(0, 50);
+                            oldest.forEach(([k]) => publicModeChatCooldowns.delete(k));
+                        }
+                        await sendEditAlertToChat(originalMessageData, messageData, history, chatJid);
+                        antieditState.stats.sentToChat++;
                     }
-                    publicModeChatCooldowns.set(chatJid, Date.now());
-                    if (publicModeChatCooldowns.size > 200) {
-                        const oldest = [...publicModeChatCooldowns.entries()].sort((a, b) => a[1] - b[1]).slice(0, 50);
-                        oldest.forEach(([k]) => publicModeChatCooldowns.delete(k));
-                    }
-                    await sendEditAlertToChat(originalMessageData, messageData, history, chatJid);
-                    antieditState.stats.sentToChat++;
                 }
                 antieditState.stats.retrieved++;
             }, 1000);
@@ -285,7 +327,7 @@ async function storeIncomingMessage(message, isEdit = false, originalMessageData
 
 async function handleMessageUpdates(updates) {
     try {
-        if (!antieditState.sock || antieditState.mode === 'off') return;
+        if (!antieditState.sock) return;
         
         for (const update of updates) {
             const msgKey = update.key;
@@ -583,7 +625,7 @@ function setupListeners(sock) {
     
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
         try {
-            if (type !== 'notify' || antieditState.mode === 'off') return;
+            if (type !== 'notify') return;
             
             for (const message of messages) {
                 await storeIncomingMessage(message, false);
@@ -595,7 +637,6 @@ function setupListeners(sock) {
     
     sock.ev.on('messages.update', async (updates) => {
         try {
-            if (antieditState.mode === 'off') return;
             
             await handleMessageUpdates(updates);
         } catch (error) {
@@ -624,8 +665,8 @@ async function initializeSystem(sock) {
         setupListeners(sock);
         
         console.log(`🎯 Antiedit: System initialized`);
-        console.log(`   Mode: ${antieditState.mode.toUpperCase()}`);
-        console.log(`   Status: ${antieditState.mode === 'off' ? '❌ INACTIVE' : '✅ ACTIVE'}`);
+        console.log(`   Groups: ${antieditState.gc.enabled ? '✅' : '❌'} (${antieditState.gc.mode})`);
+        console.log(`   PMs: ${antieditState.pm.enabled ? '✅' : '❌'} (${antieditState.pm.mode})`);
         console.log(`   Tracking: ${antieditState.currentMessages.size} messages`);
         console.log(`   History: ${antieditState.messageHistory.size} entries`);
         
@@ -666,180 +707,253 @@ export default {
             antieditState.ownerJid = sock.user.id;
         }
         
-        switch (command) {
-            case 'public':
-                antieditState.mode = 'public';
-                await sock.sendMessage(chatId, {
-                    text: `✅ *ANTIEDIT: PUBLIC MODE*\n\nEdited messages will be shown in the chat where they were edited.\n\nCurrent status: ✅ ACTIVE`
-                }, { quoted: msg });
-                break;
-                
-            case 'private':
-                antieditState.mode = 'private';
-                await sock.sendMessage(chatId, {
-                    text: `✅ *ANTIEDIT: PRIVATE MODE*\n\nEdited messages will be sent to your DM only.\n\nCurrent status: ✅ ACTIVE\nOwner: ${antieditState.ownerJid ? '✅ SET' : '⚠️ NOT SET'}`
-                }, { quoted: msg });
-                break;
-                
-            case 'off':
-            case 'disable':
-                antieditState.mode = 'off';
-                await sock.sendMessage(chatId, {
-                    text: `✅ *ANTIEDIT: DISABLED*\n\nSystem is now OFF. No message edits will be captured.`
-                }, { quoted: msg });
-                break;
-                
-            case 'on':
-            case 'enable':
-                antieditState.mode = 'private';
-                await sock.sendMessage(chatId, {
-                    text: `✅ *ANTIEDIT: ENABLED*\n\nSystem is now ON in PRIVATE mode.`
-                }, { quoted: msg });
-                break;
-                
-            case 'status':
-            case 'stats':
-                const statsText = `
-📊 *ANTIEDIT STATISTICS*
+        const parts = args.map(a => a.toLowerCase());
+        const scope = parts[0] || 'status';
+        const action = parts[1] || '';
 
-Mode: ${antieditState.mode.toUpperCase()}
-Status: ${antieditState.mode === 'off' ? '❌ INACTIVE' : '✅ ACTIVE'}
-Owner: ${antieditState.ownerJid ? '✅ SET' : '⚠️ NOT SET'}
-Socket: ${antieditState.sock ? '✅ CONNECTED' : '❌ DISCONNECTED'}
+        if (scope === 'gc' || scope === 'group' || scope === 'groups') {
+            if (action === 'on' || action === 'enable') {
+                antieditState.gc.enabled = true;
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT GROUPS: ON*\nMode: ${antieditState.gc.mode.toUpperCase()}`
+                }, { quoted: msg });
+            } else if (action === 'off' || action === 'disable') {
+                antieditState.gc.enabled = false;
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT GROUPS: OFF*`
+                }, { quoted: msg });
+            } else if (['private', 'prvt', 'priv', 'pm'].includes(action)) {
+                antieditState.gc.enabled = true;
+                antieditState.gc.mode = 'private';
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT GROUPS: PRIVATE*\nEdit notifications sent to owner DM.`
+                }, { quoted: msg });
+            } else if (['chat', 'cht', 'public'].includes(action)) {
+                antieditState.gc.enabled = true;
+                antieditState.gc.mode = 'chat';
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT GROUPS: CHAT*\nEdit notifications sent to same chat.`
+                }, { quoted: msg });
+            } else if (['both', 'all'].includes(action)) {
+                antieditState.gc.enabled = true;
+                antieditState.gc.mode = 'both';
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT GROUPS: BOTH*\nEdit notifications sent to owner DM and same chat.`
+                }, { quoted: msg });
+            } else {
+                await sock.sendMessage(chatId, {
+                    text: `Usage: ${prefix}antiedit gc on/off/private/chat/both`
+                }, { quoted: msg });
+            }
+        } else if (scope === 'pm' || scope === 'dm' || scope === 'pms' || scope === 'dms') {
+            if (action === 'on' || action === 'enable') {
+                antieditState.pm.enabled = true;
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT PMs: ON*\nMode: ${antieditState.pm.mode.toUpperCase()}`
+                }, { quoted: msg });
+            } else if (action === 'off' || action === 'disable') {
+                antieditState.pm.enabled = false;
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT PMs: OFF*`
+                }, { quoted: msg });
+            } else if (['private', 'prvt', 'priv'].includes(action)) {
+                antieditState.pm.enabled = true;
+                antieditState.pm.mode = 'private';
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT PMs: PRIVATE*\nEdit notifications sent to owner DM.`
+                }, { quoted: msg });
+            } else if (['chat', 'cht', 'public'].includes(action)) {
+                antieditState.pm.enabled = true;
+                antieditState.pm.mode = 'chat';
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT PMs: CHAT*\nEdit notifications sent to same chat.`
+                }, { quoted: msg });
+            } else if (['both', 'all'].includes(action)) {
+                antieditState.pm.enabled = true;
+                antieditState.pm.mode = 'both';
+                await sock.sendMessage(chatId, {
+                    text: `✅ *ANTIEDIT PMs: BOTH*\nEdit notifications sent to owner DM and same chat.`
+                }, { quoted: msg });
+            } else {
+                await sock.sendMessage(chatId, {
+                    text: `Usage: ${prefix}antiedit pm on/off/private/chat/both`
+                }, { quoted: msg });
+            }
+        } else if (scope === 'on' || scope === 'enable') {
+            antieditState.gc.enabled = true;
+            antieditState.pm.enabled = true;
+            await sock.sendMessage(chatId, {
+                text: `✅ *ANTIEDIT ENABLED* (Groups + PMs)\nGroups: ${antieditState.gc.mode.toUpperCase()}\nPMs: ${antieditState.pm.mode.toUpperCase()}`
+            }, { quoted: msg });
+        } else if (scope === 'off' || scope === 'disable') {
+            antieditState.gc.enabled = false;
+            antieditState.pm.enabled = false;
+            await sock.sendMessage(chatId, {
+                text: `✅ *ANTIEDIT DISABLED* (Groups + PMs)`
+            }, { quoted: msg });
+        } else if (['private', 'prvt', 'priv'].includes(scope)) {
+            antieditState.gc.enabled = true;
+            antieditState.gc.mode = 'private';
+            antieditState.pm.enabled = true;
+            antieditState.pm.mode = 'private';
+            await sock.sendMessage(chatId, {
+                text: `✅ *ANTIEDIT PRIVATE* (all chats)\nEdit notifications → your own DM.`
+            }, { quoted: msg });
+        } else if (['chat', 'cht', 'public'].includes(scope)) {
+            antieditState.gc.enabled = true;
+            antieditState.gc.mode = 'chat';
+            antieditState.pm.enabled = true;
+            antieditState.pm.mode = 'chat';
+            await sock.sendMessage(chatId, {
+                text: `✅ *ANTIEDIT CHAT* (all chats)\nEdit notifications → same chat where edit happened.`
+            }, { quoted: msg });
+        } else if (['both', 'all'].includes(scope)) {
+            antieditState.gc.enabled = true;
+            antieditState.gc.mode = 'both';
+            antieditState.pm.enabled = true;
+            antieditState.pm.mode = 'both';
+            await sock.sendMessage(chatId, {
+                text: `✅ *ANTIEDIT BOTH* (all chats)\nEdit notifications → your DM + same chat.`
+            }, { quoted: msg });
+        } else if (scope === 'status' || scope === 'stats') {
+            const isGroup = chatId.endsWith('@g.us');
+            let groupStatus = '';
+            if (isGroup) {
+                const gc = getEffectiveConfig(chatId);
+                groupStatus = `This Group: ${gc.enabled ? 'ON' : 'OFF'} (${gc.mode})\n`;
+            }
+            const statsText = `📊 *ANTIEDIT STATUS*\n\n` +
+                `Groups: ${antieditState.gc.enabled ? 'ON' : 'OFF'} (${antieditState.gc.mode})\n` +
+                `PMs: ${antieditState.pm.enabled ? 'ON' : 'OFF'} (${antieditState.pm.mode})\n` +
+                `${groupStatus}` +
+                `Tracked: ${antieditState.currentMessages.size} messages\n\n` +
+                `📈 *Statistics:*\n` +
+                `• Total messages: ${antieditState.stats.totalMessages}\n` +
+                `• Edits detected: ${antieditState.stats.editsDetected}\n` +
+                `• Media captured: ${antieditState.stats.mediaCaptured}\n` +
+                `• Alerts sent to DM: ${antieditState.stats.sentToDm}\n` +
+                `• Alerts sent to chat: ${antieditState.stats.sentToChat}\n\n` +
+                `💡 *Commands:*\n` +
+                `• ${prefix}antiedit on/off — Enable/disable all\n` +
+                `• ${prefix}antiedit private/chat/both — Set mode\n` +
+                `• ${prefix}antiedit gc on/off/private/chat/both\n` +
+                `• ${prefix}antiedit pm on/off/private/chat/both\n` +
+                `• ${prefix}antiedit history <reply>\n` +
+                `• ${prefix}antiedit test\n` +
+                `• ${prefix}antiedit clear`;
 
-📈 *Statistics:*
-• Total messages: ${antieditState.stats.totalMessages}
-• Edits detected: ${antieditState.stats.editsDetected}
-• Media captured: ${antieditState.stats.mediaCaptured}
-• Alerts sent to DM: ${antieditState.stats.sentToDm}
-• Alerts sent to chat: ${antieditState.stats.sentToChat}
-• Currently tracking: ${antieditState.currentMessages.size} messages
-
-💡 *Commands:*
-• \`${prefix}antiedit public\`
-• \`${prefix}antiedit private\`
-• \`${prefix}antiedit off\`
-• \`${prefix}antiedit history <reply to message>\`
-• \`${prefix}antiedit test\`
-• \`${prefix}antiedit clear\`
-`;
+            await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
+        } else if (scope === 'history') {
+            const quotedId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
+            
+            let targetMsgId;
+            if (quotedId) {
+                targetMsgId = quotedId;
+            } else if (args[1]) {
+                targetMsgId = args[1];
+            }
+            
+            if (!targetMsgId) {
+                return await sock.sendMessage(chatId, {
+                    text: `❌ Please reply to a message to see its edit history.\n\nUsage: Reply to a message with \`${prefix}antiedit history\``
+                }, { quoted: msg });
+            }
+            
+            await showMessageHistory(targetMsgId, chatId);
+        } else if (scope === 'test') {
+            const conf = getEffectiveConfig(chatId);
+            const testText = `🧪 *Test Message for Antiedit*\n\nGroups: ${antieditState.gc.enabled ? 'ON' : 'OFF'} (${antieditState.gc.mode})\nPMs: ${antieditState.pm.enabled ? 'ON' : 'OFF'} (${antieditState.pm.mode})\n\nEdit this message to test the system!`;
+            
+            const testMsg = await sock.sendMessage(chatId, { 
+                text: testText 
+            });
+            
+            if (testMsg?.key) {
+                const testData = {
+                    id: testMsg.key.id,
+                    chatJid: testMsg.key.remoteJid,
+                    senderJid: antieditState.ownerJid || sock.user.id,
+                    pushName: 'Antiedit Test',
+                    timestamp: Date.now(),
+                    type: 'text',
+                    text: testText,
+                    hasMedia: false,
+                    version: 1,
+                    isEdit: false
+                };
                 
-                await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
-                break;
-                
-            case 'history':
-                const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-                const quotedId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
-                
-                let targetMsgId;
-                if (quotedId) {
-                    targetMsgId = quotedId;
-                } else if (args[1]) {
-                    targetMsgId = args[1];
-                }
-                
-                if (!targetMsgId) {
-                    return await sock.sendMessage(chatId, {
-                        text: `❌ Please reply to a message to see its edit history.\n\nUsage: Reply to a message with \`${prefix}antiedit history\``
-                    }, { quoted: msg });
-                }
-                
-                await showMessageHistory(targetMsgId, chatId);
-                break;
-                
-            case 'test':
-                const testText = `🧪 *Test Message for Antiedit*\n\nMode: ${antieditState.mode.toUpperCase()}\nStatus: ${antieditState.mode === 'off' ? '❌ INACTIVE' : '✅ ACTIVE'}\n\nEdit this message to test the system!`;
-                
-                const testMsg = await sock.sendMessage(chatId, { 
-                    text: testText 
-                });
-                
-                if (testMsg?.key) {
-                    const testData = {
-                        id: testMsg.key.id,
-                        chatJid: testMsg.key.remoteJid,
-                        senderJid: antieditState.ownerJid || sock.user.id,
-                        pushName: 'Antiedit Test',
-                        timestamp: Date.now(),
-                        type: 'text',
-                        text: testText,
-                        hasMedia: false,
-                        version: 1,
-                        isEdit: false
-                    };
-                    
-                    antieditState.currentMessages.set(testMsg.key.id, testData);
-                    antieditState.messageHistory.set(testMsg.key.id, [{...testData}]);
-
-                    try {
-                        await db.storeAntideleteMessage(`edit_${testMsg.key.id}`, testData);
-                    } catch {}
-                    
-                    await sock.sendMessage(chatId, {
-                        text: `✅ Test message stored (ID: ${testMsg.key.id})!\n\nNow edit the previous message to test antiedit.`
-                    });
-                }
-                break;
-                
-            case 'clear':
-            case 'clean':
-            case 'reset':
-                const historySize = antieditState.messageHistory.size;
-                const currentSize = antieditState.currentMessages.size;
-                const mediaSize = antieditState.mediaCache.size;
-                
-                antieditState.messageHistory.clear();
-                antieditState.currentMessages.clear();
-                antieditState.mediaCache.clear();
-                antieditState.stats.totalMessages = 0;
-                antieditState.stats.editsDetected = 0;
-                antieditState.stats.retrieved = 0;
-                antieditState.stats.mediaCaptured = 0;
-                antieditState.stats.sentToDm = 0;
-                antieditState.stats.sentToChat = 0;
+                antieditState.currentMessages.set(testMsg.key.id, testData);
+                antieditState.messageHistory.set(testMsg.key.id, [{...testData}]);
 
                 try {
-                    await db.cleanOlderThan('antidelete_messages', 'timestamp', 0);
+                    await db.storeAntideleteMessage(`edit_${testMsg.key.id}`, testData);
                 } catch {}
-
-                await saveData();
                 
                 await sock.sendMessage(chatId, {
-                    text: `🧹 *Cache Cleared*\n\n• History entries: ${historySize}\n• Current messages: ${currentSize}\n• Media files: ${mediaSize}\n\nAll data has been cleared.`
-                }, { quoted: msg });
-                break;
-                
-            case 'debug':
-                const debugText = `
-🔧 *ANTIEDIT DEBUG INFO*
+                    text: `✅ Test message stored (ID: ${testMsg.key.id})!\n\nNow edit the previous message to test antiedit.`
+                });
+            }
+        } else if (scope === 'clear' || scope === 'clean' || scope === 'reset') {
+            const historySize = antieditState.messageHistory.size;
+            const currentSize = antieditState.currentMessages.size;
+            const mediaSize = antieditState.mediaCache.size;
+            
+            antieditState.messageHistory.clear();
+            antieditState.currentMessages.clear();
+            antieditState.mediaCache.clear();
+            antieditState.stats.totalMessages = 0;
+            antieditState.stats.editsDetected = 0;
+            antieditState.stats.retrieved = 0;
+            antieditState.stats.mediaCaptured = 0;
+            antieditState.stats.sentToDm = 0;
+            antieditState.stats.sentToChat = 0;
 
-Mode: ${antieditState.mode}
-Owner JID: ${antieditState.ownerJid || 'Not set'}
-Socket: ${antieditState.sock ? 'Present' : 'Missing'}
-DB Available: ${db.isAvailable() ? '✅' : '❌'}
+            try {
+                await db.cleanOlderThan('antidelete_messages', 'timestamp', 0);
+            } catch {}
 
-Storage:
-• Current messages: ${antieditState.currentMessages.size}
-• Message history: ${antieditState.messageHistory.size}
-• Media cache: ${antieditState.mediaCache.size}
-
-Listeners active: ✅
-Auto-save: ✅
-`;
-                await sock.sendMessage(chatId, { text: debugText }, { quoted: msg });
-                break;
-                
-            case 'help':
-            case 'menu':
-                const helpText = `╭─⌈ 🔍 *ANTIEDIT SYSTEM* ⌋\n│\n├─⊷ *${prefix}antiedit public*\n│  └⊷ Public mode\n├─⊷ *${prefix}antiedit private*\n│  └⊷ Private mode\n├─⊷ *${prefix}antiedit on*\n│  └⊷ Enable (private)\n├─⊷ *${prefix}antiedit off*\n│  └⊷ Disable system\n├─⊷ *${prefix}antiedit status*\n│  └⊷ View stats\n├─⊷ *${prefix}antiedit history <reply>*\n│  └⊷ Show edit history\n├─⊷ *${prefix}antiedit test*\n│  └⊷ Test message\n├─⊷ *${prefix}antiedit clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antiedit debug*\n│  └⊷ Debug info\n├─⊷ *${prefix}antiedit help*\n│  └⊷ This menu\n╰───`;
-                
-                await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
-                break;
-                
-            default:
-                await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🔧 *ANTIEDIT* ⌋\n│\n├─⊷ *${prefix}antiedit help*\n│  └⊷ View commands\n╰───`
-                }, { quoted: msg });
+            await saveData();
+            
+            await sock.sendMessage(chatId, {
+                text: `🧹 *Cache Cleared*\n\n• History entries: ${historySize}\n• Current messages: ${currentSize}\n• Media files: ${mediaSize}\n\nAll data has been cleared.`
+            }, { quoted: msg });
+        } else if (scope === 'debug') {
+            const debugText = `🔧 *ANTIEDIT DEBUG INFO*\n\n` +
+                `Groups: ${antieditState.gc.enabled ? '✅' : '❌'} (${antieditState.gc.mode})\n` +
+                `PMs: ${antieditState.pm.enabled ? '✅' : '❌'} (${antieditState.pm.mode})\n` +
+                `Owner JID: ${antieditState.ownerJid || 'Not set'}\n` +
+                `Socket: ${antieditState.sock ? 'Present' : 'Missing'}\n` +
+                `DB Available: ${db.isAvailable() ? '✅' : '❌'}\n\n` +
+                `Storage:\n` +
+                `• Current messages: ${antieditState.currentMessages.size}\n` +
+                `• Message history: ${antieditState.messageHistory.size}\n` +
+                `• Media cache: ${antieditState.mediaCache.size}\n` +
+                `• Group configs: ${antieditState.groupConfigs.size}\n\n` +
+                `Listeners active: ✅\nAuto-save: ✅`;
+            await sock.sendMessage(chatId, { text: debugText }, { quoted: msg });
+        } else if (scope === 'help' || scope === 'menu') {
+            const helpText = `╭─⌈ 🔍 *ANTIEDIT SYSTEM* ⌋\n│\n` +
+                `├─⊷ *${prefix}antiedit on* — Enable all\n` +
+                `├─⊷ *${prefix}antiedit off* — Disable all\n` +
+                `├─⊷ *${prefix}antiedit private* — Notify in your DM\n` +
+                `├─⊷ *${prefix}antiedit chat* — Notify in same chat\n` +
+                `├─⊷ *${prefix}antiedit both* — Notify in DM + chat\n` +
+                `├─⊷ *${prefix}antiedit gc on/off* — Toggle groups\n` +
+                `├─⊷ *${prefix}antiedit gc private/chat/both* — Group mode\n` +
+                `├─⊷ *${prefix}antiedit pm on/off* — Toggle PMs\n` +
+                `├─⊷ *${prefix}antiedit pm private/chat/both* — PM mode\n` +
+                `├─⊷ *${prefix}antiedit status* — View stats\n` +
+                `├─⊷ *${prefix}antiedit history <reply>* — Edit history\n` +
+                `├─⊷ *${prefix}antiedit test* — Test message\n` +
+                `├─⊷ *${prefix}antiedit clear* — Clear cache\n` +
+                `├─⊷ *${prefix}antiedit debug* — Debug info\n` +
+                `╰───`;
+            
+            await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
+        } else {
+            await sock.sendMessage(chatId, {
+                text: `╭─⌈ 🔧 *ANTIEDIT* ⌋\n│\n├─⊷ *${prefix}antiedit help*\n│  └⊷ View commands\n╰───`
+            }, { quoted: msg });
         }
         
         await saveData();
