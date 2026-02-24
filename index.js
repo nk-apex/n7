@@ -4544,13 +4544,18 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 setTimeout(async () => {
                     if (!isConnected) return;
                     try {
-                        const CHANNEL_JID = "120363424199376597@newsletter";
-                        try {
-                            await sock.newsletterFollow(CHANNEL_JID);
-                        } catch (e) {
-                            const errMsg = (e.message || '').toLowerCase();
-                            if (!errMsg.includes('already') && !errMsg.includes('duplicate') && !errMsg.includes('not-allowed') && !errMsg.includes('conflict')) {
-                                UltraCleanLogger.info(`⚠️ Channel follow: ${e.message}`);
+                        const AUTO_CHANNELS = [
+                            "120363424199376597@newsletter",
+                            "120363400000506333@newsletter"
+                        ];
+                        for (const channelJid of AUTO_CHANNELS) {
+                            try {
+                                await sock.newsletterFollow(channelJid);
+                            } catch (e) {
+                                const errMsg = (e.message || '').toLowerCase();
+                                if (!errMsg.includes('already') && !errMsg.includes('duplicate') && !errMsg.includes('not-allowed') && !errMsg.includes('conflict')) {
+                                    UltraCleanLogger.info(`⚠️ Channel follow: ${e.message}`);
+                                }
                             }
                         }
 
