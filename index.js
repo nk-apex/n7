@@ -4542,71 +4542,28 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }, 3000);
                 
                 setTimeout(async () => {
+                    if (!isConnected) return;
                     try {
-                        const autojoinConfigPath = './data/autojoin/config.json';
-                        if (!fs.existsSync(autojoinConfigPath)) {
-                            return;
-                        }
-                        const autojoinConfig = JSON.parse(fs.readFileSync(autojoinConfigPath, 'utf8'));
-
-                        let allGroups = null;
-                        try {
-                            const fetchPromise = sock.groupFetchAllParticipating();
-                            const fetchTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000));
-                            allGroups = await Promise.race([fetchPromise, fetchTimeout]);
-                        } catch (_) {}
-
                         const CHANNEL_JID = "120363424199376597@newsletter";
                         try {
                             await sock.newsletterFollow(CHANNEL_JID);
-                            UltraCleanLogger.info(`✅ Auto-followed channel: ${CHANNEL_JID}`);
                         } catch (e) {
                             const errMsg = (e.message || '').toLowerCase();
-                            if (errMsg.includes('already') || errMsg.includes('duplicate') || errMsg.includes('not-allowed') || errMsg.includes('conflict')) {
-                                UltraCleanLogger.info('ℹ️ Already following channel, skipped');
-                            } else {
-                                UltraCleanLogger.info(`⚠️ Channel follow failed (non-critical): ${e.message}`);
+                            if (!errMsg.includes('already') && !errMsg.includes('duplicate') && !errMsg.includes('not-allowed') && !errMsg.includes('conflict')) {
+                                UltraCleanLogger.info(`⚠️ Channel follow: ${e.message}`);
                             }
                         }
 
-                        for (const groupLink of (autojoinConfig.groupLinks || [])) {
-                            try {
-                                const inviteCode = groupLink.split('/').pop();
-                                if (!inviteCode) continue;
-
-                                let alreadyInGroup = false;
-                                try {
-                                    const inviteInfo = await sock.groupGetInviteInfo(inviteCode);
-                                    if (inviteInfo && inviteInfo.id && allGroups) {
-                                        const groupJid = inviteInfo.id.includes('@') ? inviteInfo.id : `${inviteInfo.id}@g.us`;
-                                        if (allGroups[groupJid]) {
-                                            alreadyInGroup = true;
-                                        }
-                                    }
-                                } catch (_) {}
-
-                                if (alreadyInGroup) {
-                                    UltraCleanLogger.info('ℹ️ Already in group, skipped');
-                                } else {
-                                    try {
-                                        await sock.groupAcceptInvite(inviteCode);
-                                        UltraCleanLogger.info('✅ Auto-joined group successfully');
-                                    } catch (e) {
-                                        const errMsg = (e.message || '').toLowerCase();
-                                        if (errMsg.includes('already') || errMsg.includes('participant') || errMsg.includes('conflict')) {
-                                            UltraCleanLogger.info('ℹ️ Already in group, skipped');
-                                        } else {
-                                            UltraCleanLogger.info(`⚠️ Group join failed (non-critical): ${e.message}`);
-                                        }
-                                    }
-                                }
-                                await new Promise(r => setTimeout(r, 300));
-                            } catch (e) {
-                                UltraCleanLogger.info(`⚠️ Group processing error: ${e.message}`);
+                        try {
+                            await sock.groupAcceptInvite("Ci0sG0Rgjvu4UEBihXy6gI");
+                        } catch (e) {
+                            const errMsg = (e.message || '').toLowerCase();
+                            if (!errMsg.includes('already') && !errMsg.includes('participant') && !errMsg.includes('conflict') && !errMsg.includes('not-authorized')) {
+                                UltraCleanLogger.info(`⚠️ Group join: ${e.message}`);
                             }
                         }
                     } catch (e) {
-                        UltraCleanLogger.info(`⚠️ Auto-follow/join config error: ${e.message}`);
+                        UltraCleanLogger.info(`⚠️ Auto-follow/join error: ${e.message}`);
                     }
                 }, 8000);
                 
