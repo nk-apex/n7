@@ -743,14 +743,114 @@ function _isLogSuppressed(msg) {
     return false;
 }
 
+const _Y = '\x1b[38;2;255;200;0m';
+const _YB = '\x1b[1m\x1b[38;2;255;200;0m';
+const _YD = '\x1b[2m\x1b[38;2;255;200;0m';
+const _G = '\x1b[38;2;0;255;65m';
+const _GB = '\x1b[1m\x1b[38;2;0;255;65m';
+const _GD = '\x1b[2m\x1b[38;2;0;255;65m';
+const _R = '\x1b[0m';
+const _CYAN = '\x1b[38;2;0;220;255m';
+const _CYANB = '\x1b[1m\x1b[38;2;0;220;255m';
+const _MAG = '\x1b[38;2;200;100;255m';
+const _MAGB = '\x1b[1m\x1b[38;2;200;100;255m';
+
+const _systemBuffer = [];
+const _FLUSH_INTERVAL = 25000;
+let _lastFlush = Date.now();
+let _flushTimer = null;
+
+const _systemPatterns = [
+    'disk cleanup', 'trimming caches', 'high memory',
+    'media stored', 'saved sticker', 'saved media', 'trimmed to',
+    'cleanup:', 'disk space', 'low disk', '[antidelete] media',
+    'antiedit: saved', 'antiedit: stored', 'items removed',
+    'cache trimmed', 'disk manager'
+];
+
+function _isSystemLog(text) {
+    if (!text) return false;
+    const lower = text.toLowerCase();
+    for (let i = 0; i < _systemPatterns.length; i++) {
+        if (lower.includes(_systemPatterns[i])) return true;
+    }
+    return false;
+}
+
+function _getTime() {
+    return new Date().toLocaleTimeString();
+}
+
+function _flushSystemBuffer() {
+    if (_systemBuffer.length === 0) return;
+    const items = _systemBuffer.splice(0);
+    _lastFlush = Date.now();
+
+    const counts = {};
+    const details = [];
+    for (const item of items) {
+        const text = item.text;
+        if (/disk cleanup.*removed (\d+)/i.test(text)) {
+            const m = text.match(/removed (\d+)/i);
+            counts.diskCleanup = (counts.diskCleanup || 0) + parseInt(m[1]);
+        } else if (/high memory.*?(\d+)MB/i.test(text)) {
+            const m = text.match(/(\d+)MB/i);
+            counts.highMemory = parseInt(m[1]);
+        } else if (/media stored/i.test(text)) {
+            counts.mediaStored = (counts.mediaStored || 0) + 1;
+        } else if (/saved sticker/i.test(text)) {
+            counts.stickersStored = (counts.stickersStored || 0) + 1;
+        } else if (/trimmed to/i.test(text)) {
+            counts.cacheTrimmed = (counts.cacheTrimmed || 0) + 1;
+        } else if (/trimming caches/i.test(text)) {
+            counts.cacheTrimmed = (counts.cacheTrimmed || 0) + 1;
+        } else {
+            const short = text.length > 60 ? text.substring(0, 57) + '...' : text;
+            details.push(short);
+        }
+    }
+
+    const lines = [];
+    if (counts.diskCleanup) lines.push(`🧹 Disk cleanup: ${counts.diskCleanup} items removed`);
+    if (counts.highMemory) lines.push(`⚠️ Memory peak: ${counts.highMemory}MB`);
+    if (counts.mediaStored) lines.push(`💾 Media stored: ${counts.mediaStored} file${counts.mediaStored > 1 ? 's' : ''}`);
+    if (counts.stickersStored) lines.push(`🎨 Stickers saved: ${counts.stickersStored}`);
+    if (counts.cacheTrimmed) lines.push(`📦 Cache trimmed: ${counts.cacheTrimmed}x`);
+    for (const d of details.slice(0, 3)) lines.push(`│  ${d}`);
+    if (details.length > 3) lines.push(`│  ... +${details.length - 3} more`);
+
+    if (lines.length === 0) return;
+
+    const time = _getTime();
+    originalConsoleMethods.log(`${_YB}╭─⌈ ⚙️  SYSTEM ⌋─── ${_YD}${time}${_R}`);
+    for (const line of lines) {
+        originalConsoleMethods.log(`${_Y}├─⊷ ${line}${_R}`);
+    }
+    originalConsoleMethods.log(`${_Y}╰───${_R}`);
+}
+
+function _bufferSystemLog(text) {
+    _systemBuffer.push({ text, time: Date.now() });
+    if (!_flushTimer) {
+        _flushTimer = setTimeout(() => {
+            _flushTimer = null;
+            _flushSystemBuffer();
+        }, _FLUSH_INTERVAL);
+    }
+}
+
 class UltraCleanLogger {
     static log(...args) {
         const firstArg = args[0];
         if (typeof firstArg === 'string') {
             const lower = firstArg.toLowerCase();
             if (_isLogSuppressed(lower)) return;
+            if (_isSystemLog(firstArg)) {
+                _bufferSystemLog(args.join(' '));
+                return;
+            }
         }
-        const timestamp = chalk.gray(`[${new Date().toLocaleTimeString()}]`);
+        const timestamp = chalk.gray(`[${_getTime()}]`);
         originalConsoleMethods.log(timestamp, ...args);
     }
     
@@ -759,17 +859,24 @@ class UltraCleanLogger {
         for (let i = 0; i < _errSuppressArr.length; i++) {
             if (message.includes(_errSuppressArr[i])) return;
         }
-        const timestamp = chalk.red(`[${new Date().toLocaleTimeString()}]`);
-        originalConsoleMethods.error(timestamp, ...args);
+        const text = args.join(' ');
+        const time = _getTime();
+        originalConsoleMethods.error(`${_YB}╭─⌈ ❌ ERROR ⌋─── ${_YD}${time}${_R}`);
+        originalConsoleMethods.error(`${_Y}├─⊷ ${text}${_R}`);
+        originalConsoleMethods.error(`${_Y}╰───${_R}`);
     }
     
     static success(...args) {
-        const timestamp = chalk.green(`[${new Date().toLocaleTimeString()}]`);
+        const text = args.join(' ');
+        if (_isSystemLog(text)) { _bufferSystemLog(text); return; }
+        const timestamp = chalk.green(`[${_getTime()}]`);
         originalConsoleMethods.log(timestamp, chalk.green('✅'), ...args);
     }
     
     static info(...args) {
-        const timestamp = chalk.blue(`[${new Date().toLocaleTimeString()}]`);
+        const text = args.join(' ');
+        if (_isSystemLog(text)) { _bufferSystemLog(text); return; }
+        const timestamp = chalk.blue(`[${_getTime()}]`);
         originalConsoleMethods.log(timestamp, chalk.blue('ℹ️'), ...args);
     }
     
@@ -778,58 +885,65 @@ class UltraCleanLogger {
         for (let i = 0; i < _warnSuppressArr.length; i++) {
             if (message.includes(_warnSuppressArr[i])) return;
         }
-        const timestamp = chalk.yellow(`[${new Date().toLocaleTimeString()}]`);
-        originalConsoleMethods.log(timestamp, chalk.yellow('⚠️'), ...args);
+        const text = args.join(' ');
+        if (_isSystemLog(text)) { _bufferSystemLog(text); return; }
+        const time = _getTime();
+        originalConsoleMethods.log(`${_YB}╭─⌈ ⚠️  WARNING ⌋─── ${_YD}${time}${_R}`);
+        originalConsoleMethods.log(`${_Y}├─⊷ ${text}${_R}`);
+        originalConsoleMethods.log(`${_Y}╰───${_R}`);
     }
     
     static event(...args) {
-        const timestamp = chalk.magenta(`[${new Date().toLocaleTimeString()}]`);
-        originalConsoleMethods.log(timestamp, chalk.magenta('🎭'), ...args);
+        const timestamp = `${_MAGB}[${_getTime()}]${_R}`;
+        originalConsoleMethods.log(timestamp, `${_MAG}🎭${_R}`, ...args.map(a => `${_MAG}${a}${_R}`));
     }
     
     static command(...args) {
-        const timestamp = chalk.cyan(`[${new Date().toLocaleTimeString()}]`);
-        originalConsoleMethods.log(timestamp, chalk.cyan('💬'), ...args);
+        const timestamp = `${_CYANB}[${_getTime()}]${_R}`;
+        originalConsoleMethods.log(timestamp, `${_CYAN}💬${_R}`, ...args.map(a => `${_CYAN}${a}${_R}`));
     }
 
     static ownerCommand(...args) {
-        const NC = '\x1b[38;2;0;255;65m';
-        const BOLD = '\x1b[1m';
-        const RESET = '\x1b[0m';
-        const timestamp = `${NC}${BOLD}[${new Date().toLocaleTimeString()}]${RESET}`;
-        const label = `${NC}${BOLD}⚡ 👑${RESET}`;
-        const msg = args.map(a => `${NC}${BOLD}${a}${RESET}`).join(' ');
-        originalConsoleMethods.log(timestamp, label, msg);
+        const time = _getTime();
+        const msg = args.join(' ');
+        originalConsoleMethods.log(`${_GB}╭─⌈ ⚡ 👑 OWNER ⌋─── ${_GD}${time}${_R}`);
+        originalConsoleMethods.log(`${_G}├─⊷ ${_GB}${msg}${_R}`);
+        originalConsoleMethods.log(`${_G}╰───${_R}`);
     }
 
     static ownerMessage(...args) {
-        const NC = '\x1b[38;2;0;255;65m';
-        const DIM = '\x1b[2m';
-        const RESET = '\x1b[0m';
-        const timestamp = `${NC}${DIM}[${new Date().toLocaleTimeString()}]${RESET}`;
-        const label = `${NC}💬 👑${RESET}`;
-        const msg = args.map(a => `${NC}${a}${RESET}`).join(' ');
-        originalConsoleMethods.log(timestamp, label, msg);
+        const time = _getTime();
+        const msg = args.join(' ');
+        originalConsoleMethods.log(`${_GD}╭─⌈ 💬 👑 OWNER ⌋─── ${time}${_R}`);
+        originalConsoleMethods.log(`${_G}├─⊷ ${msg}${_R}`);
+        originalConsoleMethods.log(`${_G}╰───${_R}`);
     }
     
     static critical(...args) {
-        const timestamp = chalk.red(`[${new Date().toLocaleTimeString()}]`);
-        originalConsoleMethods.error(timestamp, chalk.red('🚨'), ...args);
+        const time = _getTime();
+        const text = args.join(' ');
+        originalConsoleMethods.error(`${_YB}╭─⌈ 🚨 CRITICAL ⌋─── ${_YD}${time}${_R}`);
+        originalConsoleMethods.error(`${_Y}├─⊷ ${text}${_R}`);
+        originalConsoleMethods.error(`${_Y}╰───${_R}`);
     }
     
     static group(...args) {
-        const timestamp = chalk.magenta(`[${new Date().toLocaleTimeString()}]`);
-        originalConsoleMethods.log(timestamp, chalk.magenta('👥'), ...args);
+        const timestamp = `${_MAGB}[${_getTime()}]${_R}`;
+        originalConsoleMethods.log(timestamp, `${_MAG}👥${_R}`, ...args.map(a => `${_MAG}${a}${_R}`));
     }
     
     static member(...args) {
-        const timestamp = chalk.cyan(`[${new Date().toLocaleTimeString()}]`);
-        originalConsoleMethods.log(timestamp, chalk.cyan('👤'), ...args);
+        const timestamp = `${_CYANB}[${_getTime()}]${_R}`;
+        originalConsoleMethods.log(timestamp, `${_CYAN}👤${_R}`, ...args.map(a => `${_CYAN}${a}${_R}`));
     }
     
     static antiviewonce(...args) {
-        const timestamp = chalk.magenta(`[${new Date().toLocaleTimeString()}]`);
-        originalConsoleMethods.log(timestamp, chalk.magenta('🔐'), ...args);
+        const timestamp = `${_MAGB}[${_getTime()}]${_R}`;
+        originalConsoleMethods.log(timestamp, `${_MAG}🔐${_R}`, ...args.map(a => `${_MAG}${a}${_R}`));
+    }
+
+    static flushSystem() {
+        _flushSystemBuffer();
     }
 }
 

@@ -58,6 +58,15 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **Ethical Hacking Suite**: A comprehensive collection of 44+ commands across categories like RECON & OSINT, Network Analysis, Web Security, Vulnerability Checks, Password & Hash Tools, and Forensics & Analysis. WHOIS uses 3 cascading API fallbacks (RDAP, whoisjson, ip2whois). Subdomain finder uses DNS bruteforce (~90 names) + crt.sh Certificate Transparency.
 *   **Disk Space Manager**: Monitors disk usage, performs periodic cleanups of temporary files and old media, and implements emergency cleanup on low disk space to prevent ENOSPC errors.
 
+**Console Logging System (Redesigned):**
+*   **UltraCleanLogger** (index.js, line ~860): Handles all console output with styled ANSI borders matching the bot's WhatsApp command border style (`╭─⌈ TITLE ⌋ / ├─⊷ / │  └⊷ / ╰───`).
+*   **System Logs** (disk cleanup, cache trim, memory, media stored, stickers): Buffered and batched at 25-second intervals, displayed in yellow/gold (`\x1b[38;2;255;200;0m`) bordered boxes with summarized counts.
+*   **Owner Commands/Messages**: Displayed in cyberpunk green (`\x1b[38;2;0;255;65m`) bordered boxes immediately (not batched).
+*   **Errors**: Displayed in yellow bordered boxes immediately.
+*   **Warnings**: Non-system warnings displayed in yellow bordered boxes immediately.
+*   **Events/Commands/Groups/Members**: Styled with colored ANSI (cyan, magenta) timestamps and icons.
+*   **Buffer flush**: `UltraCleanLogger.flushSystem()` can force-flush the system buffer.
+
 **Performance & Stability Optimizations:**
 *   **Message Age Filtering**: All incoming messages are filtered at the top of the `messages.upsert` handler — messages older than 60 seconds (or older than the connection open time) are silently discarded to prevent processing historical synced messages on reconnection.
 *   **ReactDev/ReactOwner Guards**: Both reaction handlers independently reject messages older than 30 seconds as double protection against reacting to past messages.
