@@ -52,6 +52,8 @@ async function loadStatusData() {
         if (savedSettings) {
             statusAntideleteState.settings = { ...statusAntideleteState.settings, ...savedSettings };
         }
+        const savedEnabled = await db.getConfig('antidelete_status_enabled', true);
+        statusAntideleteState.enabled = savedEnabled;
     } catch (error) {
         console.error('❌ Status Antidelete: Error loading settings from DB:', error.message);
     }
@@ -60,6 +62,7 @@ async function loadStatusData() {
 async function saveStatusData() {
     try {
         await db.setConfig('antidelete_status_settings', statusAntideleteState.settings);
+        await db.setConfig('antidelete_status_enabled', statusAntideleteState.enabled);
     } catch (error) {
         console.error('❌ Status Antidelete: Error saving settings to DB:', error.message);
     }
@@ -367,6 +370,7 @@ function extractStatusInfo(message) {
 export async function statusAntideleteStoreMessage(message) {
     try {
         if (!statusAntideleteState.sock) return;
+        if (!statusAntideleteState.enabled) return;
 
         if (!isStatusMessage(message)) return;
 
@@ -424,6 +428,7 @@ const recentlyProcessedStatusDeletions = new Map();
 export async function statusAntideleteHandleUpdate(update) {
     try {
         if (!statusAntideleteState.sock) return;
+        if (!statusAntideleteState.enabled) return;
 
         const msgKey = update.key;
         if (!msgKey || !msgKey.id) return;
@@ -665,7 +670,6 @@ export async function initStatusAntidelete(sock) {
 
         statusAntideleteState.sock = sock;
         statusAntideleteState.mode = 'private';
-        statusAntideleteState.enabled = true;
 
         if (statusAntideleteState.settings.autoCleanEnabled) {
             startAutoClean();
@@ -674,7 +678,7 @@ export async function initStatusAntidelete(sock) {
         statusAntideleteState.settings.initialized = true;
         await saveStatusData();
 
-        console.log(`   Mode: PRIVATE (always active)`);
+        console.log(`   Status Antidelete: ${statusAntideleteState.enabled ? 'ON' : 'OFF'} (PRIVATE)`);
 
     } catch (error) {
         console.error('❌ Status Antidelete: Initialization error:', error.message);
@@ -718,9 +722,34 @@ export default {
         }
 
         switch (command) {
+            case 'on':
+            case 'enable': {
+                statusAntideleteState.enabled = true;
+                await saveStatusData();
+                await sock.sendMessage(chatId, {
+                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: ON* ⌋\n╰───`
+                }, { quoted: msg });
+                break;
+            }
+
+            case 'off':
+            case 'disable': {
+                statusAntideleteState.enabled = false;
+                await saveStatusData();
+                await sock.sendMessage(chatId, {
+                    text: `╭─⌈ ❌ *STATUS ANTIDELETE: OFF* ⌋\n╰───`
+                }, { quoted: msg });
+                break;
+            }
+
             case 'status':
             case 'stats': {
-                const statsText = `╭─⌈ 📊 *STATUS ANTIDELETE STATS* ⌋\n│\n├─⊷ *${prefix}antideletestatus stats*\n│  └⊷ View stats\n├─⊷ *${prefix}antideletestatus list*\n│  └⊷ Recent statuses\n├─⊷ *${prefix}antideletestatus clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}antideletestatus settings*\n│  └⊷ Configure\n├─⊷ *${prefix}antideletestatus help*\n│  └⊷ Full help\n╰───`;
+                const statsText = `╭─⌈ 📊 *STATUS ANTIDELETE* ⌋\n` +
+                    `├─⊷ Status: ${statusAntideleteState.enabled ? 'ON' : 'OFF'}\n` +
+                    `├─⊷ Tracked: ${statusAntideleteState.statusCache.size}\n` +
+                    `├─⊷ Deleted: ${statusAntideleteState.stats.deletedDetected}\n` +
+                    `├─⊷ Media: ${statusAntideleteState.stats.mediaCaptured}\n` +
+                    `├─⊷ Sent: ${statusAntideleteState.stats.sentToDm}\n╰───`;
 
                 await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
                 break;
@@ -865,7 +894,12 @@ export default {
             }
 
             case 'help': {
-                const helpText = `╭─⌈ 🔍 *STATUS ANTIDELETE SYSTEM* ⌋\n│\n├─⊷ *${prefix}ads stats*\n│  └⊷ View stats\n├─⊷ *${prefix}ads list*\n│  └⊷ Recent statuses\n├─⊷ *${prefix}ads clear*\n│  └⊷ Clear cache\n├─⊷ *${prefix}ads settings*\n│  └⊷ Configure\n├─⊷ *${prefix}ads help*\n│  └⊷ This menu\n╰───`;
+                const helpText = `╭─⌈ 🔍 *STATUS ANTIDELETE* ⌋\n` +
+                    `├─⊷ *${prefix}ads on/off*\n` +
+                    `├─⊷ *${prefix}ads stats*\n` +
+                    `├─⊷ *${prefix}ads list*\n` +
+                    `├─⊷ *${prefix}ads clear*\n` +
+                    `├─⊷ *${prefix}ads settings*\n╰───`;
 
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
@@ -873,7 +907,7 @@ export default {
 
             default:
                 await sock.sendMessage(chatId, {
-                    text: `❌ Unknown command. Use \`${prefix}ads help\` for options.`
+                    text: `╭─⌈ 🔍 *STATUS ANTIDELETE* ⌋\n├─⊷ *${prefix}ads help*\n╰───`
                 }, { quoted: msg });
         }
     }
