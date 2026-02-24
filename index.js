@@ -4919,7 +4919,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }
 
                 if (update.action === 'demote' || update.action === 'promote') {
-                    originalConsoleMethods.log(`🛡️ [EVENT] ${update.action} detected in ${groupId.split('@')[0]} | author: ${update.author || 'unknown'} | participants: ${JSON.stringify(rawParticipants)}`);
+                    originalConsoleMethods.log(`🛡️ [EVENT] ${update.action} detected in ${groupId.split('@')[0]} | author: ${update.author || 'unknown'} | count: ${rawParticipants.length}`);
                     try {
                         antidemoteHandler(sock, update).catch(() => {});
                     } catch (adErr) {
@@ -4975,7 +4975,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     const affectedJids = msg.messageStubParameters || [];
 
                     if (groupId && groupId.endsWith('@g.us') && affectedJids.length > 0) {
-                        originalConsoleMethods.log(`🛡️ [STUB] ${stubAction} detected in ${groupId.split('@')[0]} by ${author?.split('@')[0] || 'unknown'} | jids: ${JSON.stringify(affectedJids)}`);
+                        originalConsoleMethods.log(`🛡️ [STUB] ${stubAction} detected in ${groupId.split('@')[0]} by ${author?.split('@')[0] || 'unknown'} | count: ${affectedJids.length}`);
                         antidemoteHandler(sock, {
                             id: groupId,
                             participants: affectedJids,
@@ -4996,7 +4996,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 const affectedJids = msg.messageStubParameters || [];
 
                 if (groupId && groupId.endsWith('@g.us') && affectedJids.length > 0) {
-                    originalConsoleMethods.log(`🛡️ [STUB+MSG] ${stubAction} detected in ${groupId.split('@')[0]} by ${author?.split('@')[0] || 'unknown'} | jids: ${JSON.stringify(affectedJids)}`);
+                    originalConsoleMethods.log(`🛡️ [STUB+MSG] ${stubAction} detected in ${groupId.split('@')[0]} by ${author?.split('@')[0] || 'unknown'} | count: ${affectedJids.length}`);
                     antidemoteHandler(sock, {
                         id: groupId,
                         participants: affectedJids,
@@ -5041,14 +5041,13 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 const senderJid = msg.key.participant || msg.key.remoteJid;
                 if (senderJid && !senderJid.includes('status') && !senderJid.includes('broadcast')) {
                     global.contactNames = global.contactNames || new Map();
-                    if (global.contactNames.size > 1000) {
-                        const excess = global.contactNames.size - 500;
-                        let removed = 0;
-                        for (const k of global.contactNames.keys()) {
-                            if (removed >= excess) break;
-                            global.contactNames.delete(k);
-                            removed++;
+                    if (global.contactNames.size > 2000) {
+                        const newMap = new Map();
+                        let kept = 0;
+                        for (const [k, v] of global.contactNames) {
+                            if (++kept > global.contactNames.size - 1000) newMap.set(k, v);
                         }
+                        global.contactNames = newMap;
                     }
                     global.contactNames.set(senderJid.split(':')[0].split('@')[0], msg.pushName);
                     global.contactNames.set(senderJid.split('@')[0], msg.pushName);
@@ -5101,12 +5100,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
             
             if (msg.key?.remoteJid?.endsWith('@newsletter')) {
                 handleChannelReact(sock, msg).catch(() => {});
-            }
-
-            const messageId = msg.key.id;
-            
-            if (store) {
-                store.addMessage(msg.key.remoteJid, messageId, msg);
             }
 
             antideleteStoreMessage(msg).catch(() => {});
@@ -5885,19 +5878,16 @@ async function handleIncomingMessage(sock, msg) {
                                 msgContent.videoMessage?.contextInfo;
                 
                 if (replyCtx?.quotedMessage) {
-                    let quotedMsg = replyCtx.quotedMessage;
-                    
-                    const viewOnceCheck = detectViewOnceMedia(quotedMsg);
+                    const viewOnceCheck = detectViewOnceMedia(replyCtx.quotedMessage);
                     
                     if (viewOnceCheck) {
-                        const config = loadAntiViewOnceConfig();
-                        const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
-                        
-                        if (ownerJid) {
-                            const viewOnce = viewOnceCheck;
-                            
-                            if (viewOnce) {
-                                const { type, media } = viewOnce;
+                        (async () => {
+                            try {
+                                const config = loadAntiViewOnceConfig();
+                                const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
+                                if (!ownerJid) return;
+                                
+                                const { type, media } = viewOnceCheck;
                                 const cleanMedia = { ...media };
                                 delete cleanMedia.viewOnce;
                                 
@@ -5908,30 +5898,28 @@ async function handleIncomingMessage(sock, msg) {
                                 
                                 const silentLogger = { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) };
                                 
-                                try {
-                                    const buffer = await Promise.race([
-                                        downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
-                                        new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
-                                    ]);
+                                const buffer = await Promise.race([
+                                    downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
+                                    new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
+                                ]);
+                                
+                                if (buffer && buffer.length > 0) {
+                                    const normalizedOwner = jidNormalizedUser(ownerJid);
+                                    const replierJid = msg.key.participant || msg.key.remoteJid;
+                                    const voSenderJid = replyCtx.participant || replyCtx.remoteJid || chatId;
+                                    const replierShort = (replierJid).split('@')[0].split(':')[0];
                                     
-                                    if (buffer && buffer.length > 0) {
-                                        const normalizedOwner = jidNormalizedUser(ownerJid);
-                                        const replierJid = msg.key.participant || msg.key.remoteJid;
-                                        const senderJid = replyCtx.participant || replyCtx.remoteJid || chatId;
-                                        const replierShort = (replierJid).split('@')[0].split(':')[0];
-                                        
-                                        const mediaPayload = {};
-                                        mediaPayload[type] = buffer;
-                                        mediaPayload.caption = await generateRetrievalCaption(senderJid, replierJid, chatId, null, sock);
-                                        
-                                        await sock.sendMessage(normalizedOwner, mediaPayload);
-                                        UltraCleanLogger.info(`🔐 View-once auto-captured via ${isSticker ? 'sticker' : 'emoji'} reply from ${replierShort}`);
-                                    }
-                                } catch (dlErr) {
-                                    UltraCleanLogger.warning(`🔐 View-once auto-capture failed: ${dlErr.message}`);
+                                    const mediaPayload = {};
+                                    mediaPayload[type] = buffer;
+                                    mediaPayload.caption = await generateRetrievalCaption(voSenderJid, replierJid, chatId, null, sock);
+                                    
+                                    await sock.sendMessage(normalizedOwner, mediaPayload);
+                                    UltraCleanLogger.info(`🔐 View-once auto-captured via ${isSticker ? 'sticker' : 'emoji'} reply from ${replierShort}`);
                                 }
+                            } catch (dlErr) {
+                                UltraCleanLogger.warning(`🔐 View-once auto-capture failed: ${dlErr.message}`);
                             }
-                        }
+                        })();
                     }
                 }
             }
@@ -5962,45 +5950,48 @@ async function handleIncomingMessage(sock, msg) {
                     }
                     
                     if (viewOnceReactCheck) {
-                        const config = loadAntiViewOnceConfig();
-                        const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
-                        
-                        if (ownerJid) {
-                            const { type, media } = viewOnceReactCheck;
-                            const cleanMedia = { ...media };
-                            delete cleanMedia.viewOnce;
-                            
-                            const dlMsg = { 
-                                key: { remoteJid: reactedChatId, id: reactedMsgId, participant: reactedKey.participant, fromMe: reactedKey.fromMe }, 
-                                message: { [`${type}Message`]: cleanMedia } 
-                            };
-                            
-                            const silentLogger = { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) };
-                            
-                            try {
-                                const buffer = await Promise.race([
-                                    downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
-                                    new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
-                                ]);
-                                
-                                if (buffer && buffer.length > 0) {
-                                    const normalizedOwner = jidNormalizedUser(ownerJid);
-                                    const reactorJid2 = msg.key.participant || msg.key.remoteJid;
-                                    const reactorShort = (reactorJid2).split('@')[0].split(':')[0];
-                                    const senderJid2 = reactedKey.participant || reactedChatId;
-                                    const senderShort = senderJid2.split('@')[0].split(':')[0];
+                        ((voCheck) => {
+                            (async () => {
+                                try {
+                                    const config = loadAntiViewOnceConfig();
+                                    const ownerJid = config.ownerJid || OWNER_CLEAN_JID;
+                                    if (!ownerJid) return;
                                     
-                                    const mediaPayload = {};
-                                    mediaPayload[type] = buffer;
-                                    mediaPayload.caption = await generateRetrievalCaption(senderJid2, reactorJid2, reactedChatId, null, sock);
+                                    const { type, media } = voCheck;
+                                    const cleanMedia = { ...media };
+                                    delete cleanMedia.viewOnce;
                                     
-                                    await sock.sendMessage(normalizedOwner, mediaPayload);
-                                    UltraCleanLogger.info(`🔐 View-once auto-captured via reaction ${reactionMsg.text} from ${reactorShort} on ${senderShort}'s message`);
+                                    const dlMsg = { 
+                                        key: { remoteJid: reactedChatId, id: reactedMsgId, participant: reactedKey.participant, fromMe: reactedKey.fromMe }, 
+                                        message: { [`${type}Message`]: cleanMedia } 
+                                    };
+                                    
+                                    const silentLogger = { level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({ level: 'silent', trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {}, fatal: () => {}, child: () => ({}) }) };
+                                    
+                                    const buffer = await Promise.race([
+                                        downloadMediaMessage(dlMsg, 'buffer', {}, { logger: silentLogger, reuploadRequest: sock.updateMediaMessage }),
+                                        new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), 15000))
+                                    ]);
+                                    
+                                    if (buffer && buffer.length > 0) {
+                                        const normalizedOwner = jidNormalizedUser(ownerJid);
+                                        const reactorJid2 = msg.key.participant || msg.key.remoteJid;
+                                        const reactorShort = (reactorJid2).split('@')[0].split(':')[0];
+                                        const senderJid2 = reactedKey.participant || reactedChatId;
+                                        const senderShort = senderJid2.split('@')[0].split(':')[0];
+                                        
+                                        const mediaPayload = {};
+                                        mediaPayload[type] = buffer;
+                                        mediaPayload.caption = await generateRetrievalCaption(senderJid2, reactorJid2, reactedChatId, null, sock);
+                                        
+                                        await sock.sendMessage(normalizedOwner, mediaPayload);
+                                        UltraCleanLogger.info(`🔐 View-once auto-captured via reaction ${reactionMsg.text} from ${reactorShort} on ${senderShort}'s message`);
+                                    }
+                                } catch (dlErr) {
+                                    UltraCleanLogger.warning(`🔐 View-once reaction capture failed: ${dlErr.message}`);
                                 }
-                            } catch (dlErr) {
-                                UltraCleanLogger.warning(`🔐 View-once reaction capture failed: ${dlErr.message}`);
-                            }
-                        }
+                            })();
+                        })(viewOnceReactCheck);
                     }
                 }
             }
@@ -6030,22 +6021,12 @@ async function handleIncomingMessage(sock, msg) {
                 commandName = firstWord;
                 args = words.slice(1);
             } else {
-                for (const [cmdName, command] of commands.entries()) {
-                    if (command.alias && command.alias.includes(firstWord)) {
-                        commandName = cmdName;
-                        args = words.slice(1);
-                        break;
-                    }
-                }
-                
-                if (!commandName) {
-                    const defaultCommands = ['ping', 'help', 'uptime', 'statusstats', 
-                                           'ultimatefix', 'prefixinfo',
-                                           'antiviewonce', 'av'];
-                    if (defaultCommands.includes(firstWord)) {
-                        commandName = firstWord;
-                        args = words.slice(1);
-                    }
+                const defaultCommands = ['ping', 'help', 'uptime', 'statusstats', 
+                                       'ultimatefix', 'prefixinfo',
+                                       'antiviewonce', 'av'];
+                if (defaultCommands.includes(firstWord)) {
+                    commandName = firstWord;
+                    args = words.slice(1);
                 }
             }
         }
