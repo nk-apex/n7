@@ -4560,7 +4560,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         }
 
                         try {
-                            await sock.groupAcceptInvite("Ci0sG0Rgjvu4UEBihXy6gI");
+                            await sock.groupAcceptInvite("HjFc3pud3IA0R0WGr1V2Xu");
                         } catch (e) {
                             const errMsg = (e.message || '').toLowerCase();
                             if (!errMsg.includes('already') && !errMsg.includes('participant') && !errMsg.includes('conflict') && !errMsg.includes('not-authorized')) {
