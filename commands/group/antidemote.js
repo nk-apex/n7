@@ -74,8 +74,44 @@ const DEFAULT_CONFIG = {
     warnings: {}
 };
 
-function getContactName(jid) {
-    const num = jid?.split('@')[0] || 'Unknown';
+function resolveRealNumber(jid, groupMeta) {
+    if (!jid) return 'Unknown';
+    const raw = jid.split('@')[0].split(':')[0];
+    if (!jid.includes('@lid')) return raw;
+    const cache = globalThis.lidPhoneCache;
+    if (cache) {
+        const cached = cache.get(raw) || cache.get(jid.split('@')[0]);
+        if (cached) return cached;
+    }
+    if (groupMeta?.participants) {
+        for (const p of groupMeta.participants) {
+            const pid = p.id || '';
+            const plid = p.lid || '';
+            const plidNum = plid.split('@')[0].split(':')[0];
+            const pidNum = pid.split('@')[0].split(':')[0];
+            if (plidNum === raw || pidNum === raw) {
+                if (pid && !pid.includes('@lid')) {
+                    const phone = pid.split('@')[0].split(':')[0].replace(/[^0-9]/g, '');
+                    if (phone.length >= 7) {
+                        if (cache) cache.set(raw, phone);
+                        return phone;
+                    }
+                }
+                if (p.phoneNumber) {
+                    const phone = String(p.phoneNumber).replace(/[^0-9]/g, '');
+                    if (phone.length >= 7) {
+                        if (cache) cache.set(raw, phone);
+                        return phone;
+                    }
+                }
+            }
+        }
+    }
+    return raw;
+}
+
+function getContactName(jid, groupMeta) {
+    const num = resolveRealNumber(jid, groupMeta);
     if (global.contactNames && global.contactNames instanceof Map) {
         return global.contactNames.get(num) || num;
     }
@@ -130,14 +166,14 @@ export async function handleAntidemoteEvent(sock, update) {
     const botParticipant = groupMeta.participants.find(p => cleanJid(p.id) === botJid);
     const botIsAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
 
-    const authorNum = authorJid ? authorJid.split('@')[0] : 'Unknown';
-    const authorName = getContactName(authorJid);
+    const authorNum = resolveRealNumber(authorJid, groupMeta);
+    const authorName = getContactName(authorJid, groupMeta);
     const groupName = groupMeta.subject || groupId.split('@')[0];
 
     for (const participantJid of participants) {
         const targetJid = cleanJid(participantJid);
-        const targetNum = targetJid.split('@')[0];
-        const targetName = getContactName(targetJid);
+        const targetNum = resolveRealNumber(targetJid, groupMeta);
+        const targetName = getContactName(targetJid, groupMeta);
         const timestamp = new Date().toLocaleString();
 
         if (!groupConfig.warnings) groupConfig.warnings = {};
