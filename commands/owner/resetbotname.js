@@ -1,6 +1,6 @@
 // File: ./commands/owner/resetbotname.js
 import { writeFileSync, readFileSync, existsSync, unlinkSync } from 'fs';
-import { getBotName } from '../../lib/botname.js';
+import { getBotName, clearBotNameCache, saveBotNameToDB } from '../../lib/botname.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -78,14 +78,14 @@ export default {
                     }
                 }
                 
-                // Update global variables
                 if (typeof global !== 'undefined') {
                     global.BOT_NAME = DEFAULT_NAME;
                     global.BOT_SETTINGS = defaultSettings;
                 }
                 
-                // Update environment
                 process.env.BOT_NAME = DEFAULT_NAME;
+                clearBotNameCache();
+                try { await saveBotNameToDB(DEFAULT_NAME); } catch {}
                 
                 let successMsg = `✅ *Bot Name Reset Successfully!*\n`;
                 successMsg += `📝 Previous Name: *${oldName}*\n`;
@@ -119,14 +119,14 @@ export default {
                     }
                 }
                 
-                // Clear global variables
                 if (typeof global !== 'undefined') {
                     delete global.BOT_NAME;
                     delete global.BOT_SETTINGS;
                 }
                 
-                // Clear environment
                 delete process.env.BOT_NAME;
+                clearBotNameCache();
+                try { await saveBotNameToDB('WOLFBOT'); } catch {}
                 
                 let successMsg = `🗑️ *Bot Name Files Deleted!*\n\n`;
                 successMsg += `📝 Previous Name: *${oldName}*\n`;

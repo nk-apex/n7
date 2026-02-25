@@ -3,7 +3,7 @@
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getBotName } from '../../lib/botname.js';
+import { getBotName, clearBotNameCache, saveBotNameToDB } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,9 +94,12 @@ export default {
 
             process.env.BOT_NAME = newBotName;
 
+            clearBotNameCache();
+
             try {
-                const { clearBotNameCache } = await import('../../lib/botname.js');
-                clearBotNameCache();
+                const dbSaved = await saveBotNameToDB(newBotName);
+                if (dbSaved) console.log(`✅ Bot name saved to Supabase database`);
+                else console.log(`⚠️ Bot name not saved to database (Supabase unavailable)`);
             } catch {}
             
             // Success message
