@@ -662,6 +662,7 @@ const __dirname = dirname(__filename);
 // ====== CONFIGURATION ======
 const SESSION_DIR = './session';
 let BOT_NAME = process.env.BOT_NAME || _getBotName();
+global.BOT_NAME = BOT_NAME;
 function getCurrentBotName() { return global.BOT_NAME || BOT_NAME || _getBotName(); }
 const VERSION = '1.1.5';
 global.VERSION = VERSION;
