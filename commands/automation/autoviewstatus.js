@@ -56,9 +56,7 @@ class AutoViewManager {
         this.config = this.loadConfig();
         this.viewQueue = [];
         this.lastViewTime = 0;
-        
-        // Log initialization
-        
+        this._draining = false;
     }
     
     loadConfig() {
@@ -175,60 +173,61 @@ class AutoViewManager {
     shouldView(sender) {
         if (!this.config.enabled) return false;
         if (!this.config.settings.markAsSeen) return false;
-        
-        // Check rate limiting
-        const now = Date.now();
-        if (now - this.lastViewTime < this.config.settings.rateLimitDelay) {
-            return false;
-        }
-        
-        // Check if we should view consecutive statuses
-        if (!this.config.settings.ignoreConsecutiveLimit && 
-            this.config.lastSender === sender && 
-            this.config.consecutiveViews >= 3) {
-            return false;
-        }
-        
         return true;
     }
     
     async viewStatus(sock, statusKey) {
         try {
             const sender = statusKey.participant || statusKey.remoteJid;
+            if (!sender || statusKey.fromMe) return false;
             const cleanSender = sender.split('@')[0];
             
             if (!this.shouldView(sender)) {
                 return false;
             }
             
-            try {
-                await sock.readMessages([statusKey]);
-            } catch {
+            this.viewQueue.push({ key: statusKey, sender: cleanSender });
+            this._drainQueue(sock);
+            
+            return true;
+        } catch {
+            return false;
+        }
+    }
+    
+    _drainQueue(sock) {
+        if (this._draining) return;
+        this._draining = true;
+        
+        const processNext = async () => {
+            while (this.viewQueue.length > 0) {
+                const { key, sender } = this.viewQueue.shift();
+                
+                const now = Date.now();
+                const wait = this.config.settings.rateLimitDelay - (now - this.lastViewTime);
+                if (wait > 0) {
+                    await new Promise(r => setTimeout(r, wait));
+                }
+                
                 try {
-                    const participant = statusKey.participant || sender;
-                    await sock.sendReceipt(statusKey.remoteJid, participant, [statusKey.id], 'read');
-                } catch {
-                    return false;
+                    const participant = key.participant || key.remoteJid;
+                    await sock.sendReceipt(key.remoteJid, participant, [key.id], 'read');
+                    this.lastViewTime = Date.now();
+                    this.addLog(sender, 'viewed');
+                } catch (err) {
+                    try {
+                        await sock.readMessages([key]);
+                        this.lastViewTime = Date.now();
+                        this.addLog(sender, 'viewed');
+                    } catch {
+                    }
                 }
             }
             
-            this.lastViewTime = Date.now();
-            
-            this.addLog(cleanSender, 'viewed');
-            
-            return true;
-            
-        } catch (error) {
-            if (error.message?.includes('rate-overlimit')) {
-                this.config.settings.rateLimitDelay = Math.min(
-                    this.config.settings.rateLimitDelay * 2,
-                    5000
-                );
-                this.saveConfig();
-            }
-            
-            return false;
-        }
+            this._draining = false;
+        };
+        
+        processNext().catch(() => { this._draining = false; });
     }
     
     // Update settings
