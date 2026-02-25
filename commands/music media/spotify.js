@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/spotifydl';
 
@@ -35,7 +36,7 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎵 *SPOTIFY DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}spotify <Spotify URL>*\n│  └⊷ Download from Spotify link\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}spotify https://open.spotify.com/track/...\n│\n├─⊷ *Aliases:* spot, spdl, spotifydl\n│\n╰───────────────\n> *WOLFBOT SPOTIFY*`
+        text: `╭─⌈ 🎵 *SPOTIFY DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}spotify <Spotify URL>*\n│  └⊷ Download from Spotify link\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}spotify https://open.spotify.com/track/...\n│\n├─⊷ *Aliases:* spot, spdl, spotifydl\n│\n╰───────────────\n> *${getBotName()} SPOTIFY*`
       }, { quoted: m });
     }
 
@@ -79,7 +80,7 @@ export default {
       const contextInfo = {
         externalAdReply: {
           title: (title || 'Spotify Track').substring(0, 60),
-          body: `🎵 ${duration ? '⏱️ ' + duration + ' | ' : ''}${fileSizeMB}MB | Downloaded by WOLFBOT`,
+          body: `🎵 ${duration ? '⏱️ ' + duration + ' | ' : ''}${fileSizeMB}MB | Downloaded by ${getBotName()}`,
           mediaType: 2,
           thumbnail: thumbnailBuffer,
           sourceUrl: query.startsWith('http') ? query : 'https://open.spotify.com',
@@ -100,7 +101,7 @@ export default {
           document: audioBuffer,
           mimetype: 'audio/mpeg',
           fileName,
-          caption: `📄 *${title || 'Spotify Track'}*\n⏱️ ${duration || 'N/A'}\n📦 ${fileSizeMB}MB\n\n🐺 *Downloaded by WOLFBOT*`
+          caption: `📄 *${title || 'Spotify Track'}*\n⏱️ ${duration || 'N/A'}\n📦 ${fileSizeMB}MB\n\n🐺 *Downloaded by ${getBotName()}*`
         }, { quoted: m });
       }
 

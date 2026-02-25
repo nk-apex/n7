@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'urlscan',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔍 *URL SCANNER* ⌋\n│\n├─⊷ *${PREFIX}urlscan <domain>*\n│  └⊷ Scan domain using urlscan.io\n│     Shows scans, verdicts, IPs,\n│     technologies and more\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔍 *URL SCANNER* ⌋\n│\n├─⊷ *${PREFIX}urlscan <domain>*\n│  └⊷ Scan domain using urlscan.io\n│     Shows scans, verdicts, IPs,\n│     technologies and more\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -88,7 +89,7 @@ export default {
 
       result += `│\n├─⊷ *Full Report:*\n`;
       result += `│  └⊷ https://urlscan.io/domain/${domain}\n`;
-      result += `│\n╰───────────────\n> *WOLFBOT*`;
+      result += `│\n╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

@@ -424,15 +424,16 @@
 import axios from 'axios';
 import { createWriteStream, existsSync, readFileSync } from 'fs';
 import fs from 'fs';
+import { getBotName } from '../../lib/botname.js';
 
 let getUserCaption;
 
 async function initializeCaptionSystem() {
   try {
     const tiktokModule = await import('./tiktok.js');
-    getUserCaption = tiktokModule.getUserCaption || ((userId) => "Created by WOLFBOT");
+    getUserCaption = tiktokModule.getUserCaption || ((userId) => `Created by ${getBotName()}`);
   } catch (error) {
-    getUserCaption = (userId) => "Created by WOLFBOT";
+    getUserCaption = (userId) => `Created by ${getBotName()}`;
   }
 }
 

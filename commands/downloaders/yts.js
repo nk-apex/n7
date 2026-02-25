@@ -189,6 +189,7 @@
 
 import axios from 'axios';
 import yts from 'yt-search';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'yts',
@@ -216,7 +217,7 @@ export default {
       }
 
       // Format results in WOLFBOT style
-      let resultText = `🅦🅞🅛🅕🅑🅞🅣 "${query}"\n\n`;
+      let resultText = `${getBotName()} "${query}"\n\n`;
       
       // Add quality/format information header
       //resultText += `*📺 Available Qualities:* 144p • 240p • 360p • 480p • 720p • 1080p\n`;
@@ -244,7 +245,7 @@ export default {
       
       // WOLFBOT footer with commands
       resultText += `┌───────────────────\n`;
-      resultText += `│ 🅦🅞🅛🅕🅑🅞🅣 DOWNLOAD TIPS\n`;
+      resultText += `│ ${getBotName()} DOWNLOAD TIPS\n`;
       resultText += `├───────────────────\n`;
       resultText += `│ • Use *.ytplay <url>* for audio (MP3)\n`;
       resultText += `│ • Use *.ytv <url>* for video\n`;

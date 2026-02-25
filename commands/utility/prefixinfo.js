@@ -1,3 +1,5 @@
+import { getBotName } from '../../lib/botname.js';
+
 export default {
     name: 'prefixinfo',
     alias: ['prefix', 'myprefix', 'botprefix'],
@@ -17,7 +19,7 @@ export default {
         const text = `╭─⌈ 🐺 *BOT PREFIX* ⌋\n` +
                      `├─⊷ Your prefix: *${currentPrefix}*\n` +
                      `╰───────────────\n` +
-                     `> *WOLFBOT*`;
+                     `> *${getBotName()}*`;
 
         await sock.sendMessage(remoteJid, { text }, { quoted: msg });
     }

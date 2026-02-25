@@ -123,7 +123,7 @@
 //         // Send as image
 //         await sock.sendMessage(jid, {
 //           image: buffer,
-//           caption: `🎭 *Emoji Mix:* ${emoji1} + ${emoji2}\n\n✨ Created with WolfBot`
+//           caption: `🎭 *Emoji Mix:* ${emoji1} + ${emoji2}\n\n✨ Created with ${getBotName()}`
 //         });
         
 //         // Update status message
@@ -194,13 +194,14 @@
 
 
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 import sharp from 'sharp';
 import webp from 'node-webpmux';
 import crypto from 'crypto';
 
 export default {
   name: 'emojimix',
-  description: 'Mix two emojis together or create stickers with WolfBot metadata',
+  description: 'Mix two emojis together or create stickers with dynamic bot metadata',
   category: 'fun',
   aliases: ['mixemoji', 'emojifuse', 'emojisticker', 'emix'],
   usage: 'emojimix [emoji1] [emoji2] or emojimix sticker [emoji1] [emoji2]',
@@ -210,7 +211,7 @@ export default {
     
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `╭─⌈ 🎭 *WOLFBOT EMOJI MIX* ⌋\n│\n├─⊷ *${PREFIX}emojimix 😂 😭*\n│  └⊷ Get mixed emoji image\n│\n├─⊷ *${PREFIX}emojimix sticker ❤️ ⭐*\n│  └⊷ Get as WolfBot sticker\n│\n├─⊷ *${PREFIX}emojimix 🐱 🐶*\n│  └⊷ Get image\n│\n├─⊷ *${PREFIX}emix -s 🍕 🍔*\n│  └⊷ Sticker with flag\n│\n╰───`;
+      const helpText = `╭─⌈ 🎭 *${getBotName()} EMOJI MIX* ⌋\n│\n├─⊷ *${PREFIX}emojimix 😂 😭*\n│  └⊷ Get mixed emoji image\n│\n├─⊷ *${PREFIX}emojimix sticker ❤️ ⭐*\n│  └⊷ Get as bot sticker\n│\n├─⊷ *${PREFIX}emojimix 🐱 🐶*\n│  └⊷ Get image\n│\n├─⊷ *${PREFIX}emix -s 🍕 🍔*\n│  └⊷ Sticker with flag\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
@@ -259,7 +260,7 @@ export default {
 
     try {
       // ====== PROCESSING MESSAGE ======
-      const modeText = makeSticker ? 'WolfBot Sticker' : 'Image';
+      const modeText = makeSticker ? `${getBotName()} Sticker` : 'Image';
       const statusText = `🎭 *Creating ${modeText}...*\n\n` +
                         `🔤 *Emojis:* ${emoji1} + ${emoji2}\n` +
                         (comboInfo ? `📝 *${comboInfo}*\n\n` : '\n') +
@@ -340,8 +341,8 @@ export default {
           
           // Create combined emoji for sticker pack
           const combinedEmoji = getCombinedEmoji(emoji1, emoji2);
-          const packName = 'WolfBot Emojis';
-          const authorName = m.pushName || 'WolfBot User';
+          const packName = `${getBotName()} Emojis`;
+          const authorName = m.pushName || `${getBotName()} User`;
           
           const finalSticker = await addStickerMetadata(webpBuffer, {
             packName: packName,
@@ -392,7 +393,7 @@ export default {
         const caption = `🎭 *Emoji Mix Result*\n\n` +
                        `🔤 *Combination:* ${emoji1} + ${emoji2}\n` +
                        (comboInfo ? `📝 *${comboInfo}*\n\n` : '\n') +
-                       `✨ *Created with WolfBot*\n` +
+                       `✨ *Created with ${getBotName()}*\n` +
                        `⚡ *Use \`${PREFIX}emojimix sticker ${emoji1} ${emoji2}\` for sticker`;
         
         await sock.sendMessage(jid, {

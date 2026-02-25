@@ -1,4 +1,5 @@
 import dns from 'dns';
+import { getBotName } from '../../lib/botname.js';
 import { promisify } from 'util';
 
 const resolve4 = promisify(dns.resolve4);
@@ -16,7 +17,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🌐 *DNS LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}dnslookup <domain>*\n│  └⊷ Get DNS records (A, MX, NS, TXT, CNAME)\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}dnslookup google.com\n│\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🌐 *DNS LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}dnslookup <domain>*\n│  └⊷ Get DNS records (A, MX, NS, TXT, CNAME)\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}dnslookup google.com\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -72,7 +73,7 @@ export default {
         result += `│  └⊷ None found\n`;
       }
 
-      result += `│\n╰───────────────\n> *WOLFBOT*`;
+      result += `│\n╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

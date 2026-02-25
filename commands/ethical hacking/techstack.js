@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'techstack',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ ⚙️ *TECH STACK DETECTOR* ⌋\n│\n├─⊷ *${PREFIX}techstack <url>*\n│  └⊷ Detect website technology stack\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}techstack github.com\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ ⚙️ *TECH STACK DETECTOR* ⌋\n│\n├─⊷ *${PREFIX}techstack <url>*\n│  └⊷ Detect website technology stack\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}techstack github.com\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -116,7 +117,7 @@ export default {
       const totalDetected = detectedLibs.length + detectedAnalytics.length + detectedCDNs.length + serverInfo.length;
       output += `├─⊷ 📦 *Total Technologies:* ${totalDetected}\n│\n`;
 
-      output += `╰───────────────\n> *WOLFBOT*`;
+      output += `╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: output }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

@@ -1,4 +1,5 @@
 import { exec } from "child_process";
+import { getBotName } from '../../lib/botname.js';
 import { promisify } from "util";
 import fs from "fs";
 import fsPromises from "fs/promises";
@@ -69,7 +70,7 @@ export default {
     let statusMessage;
     try {
       statusMessage = await sock.sendMessage(jid, {
-        text: '🚀 **WolfBot Start v1.1.5**\nStarting bot with latest updates...'
+        text: '🚀 **${getBotName()} Start v1.1.5**\nStarting bot with latest updates...'
       }, { quoted: m });
 
       const editStatus = async (text) => {

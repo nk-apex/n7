@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import webp from 'node-webpmux';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'stickertext',
@@ -151,7 +152,7 @@ export default {
 
       try {
         finalBuffer = await addStickerMetadata(finalBuffer, {
-          packName: 'WolfBot',
+          packName: getBotName(),
           authorName: m.pushName || 'User',
           emoji: '✏️'
         });

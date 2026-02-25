@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'geoip',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 📍 *GEOIP LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}geoip <ip or domain>*\n│  └⊷ Get geographic location of an IP\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}geoip 8.8.8.8\n│  └⊷ ${PREFIX}geoip google.com\n│\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 📍 *GEOIP LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}geoip <ip or domain>*\n│  └⊷ Get geographic location of an IP\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}geoip 8.8.8.8\n│  └⊷ ${PREFIX}geoip google.com\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -33,7 +34,7 @@ export default {
       result += `├─⊷ *Organization:* ${data.org}\n`;
       result += `├─⊷ *AS:* ${data.as}\n`;
       result += `│\n├─⊷ *Map:* https://www.google.com/maps?q=${data.lat},${data.lon}\n`;
-      result += `│\n╰───────────────\n> *WOLFBOT*`;
+      result += `│\n╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

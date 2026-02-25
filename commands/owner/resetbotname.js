@@ -1,5 +1,6 @@
 // File: ./commands/owner/resetbotname.js
 import { writeFileSync, readFileSync, existsSync, unlinkSync } from 'fs';
+import { getBotName } from '../../lib/botname.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 

@@ -1,4 +1,5 @@
 import net from 'net';
+import { getBotName } from '../../lib/botname.js';
 import dns from 'dns';
 import { promisify } from 'util';
 
@@ -43,7 +44,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🚪 *EXTENDED PORT SCANNER* ⌋\n│\n├─⊷ *${PREFIX}openports <host>*\n│  └⊷ Scan common + high ports\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}openports google.com\n│  └⊷ ${PREFIX}openports 93.184.216.34\n│\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🚪 *EXTENDED PORT SCANNER* ⌋\n│\n├─⊷ *${PREFIX}openports <host>*\n│  └⊷ Scan common + high ports\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}openports google.com\n│  └⊷ ${PREFIX}openports 93.184.216.34\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -85,7 +86,7 @@ export default {
         portList = '├─⊷ No open ports found';
       }
 
-      const result = `╭─⌈ 🚪 *EXTENDED PORT SCAN RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *IP:* ${ip}\n├─⊷ *Ports Scanned:* ${commonPorts.length}\n├─⊷ *Open Ports:* ${openPorts.length}\n├─⊷ *Scan Time:* ${scanTime}s\n│\n├─⊷ *── Open Ports ──*\n${portList}\n│\n╰───────────────\n> *WOLFBOT*`;
+      const result = `╭─⌈ 🚪 *EXTENDED PORT SCAN RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *IP:* ${ip}\n├─⊷ *Ports Scanned:* ${commonPorts.length}\n├─⊷ *Open Ports:* ${openPorts.length}\n├─⊷ *Scan Time:* ${scanTime}s\n│\n├─⊷ *── Open Ports ──*\n${portList}\n│\n╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

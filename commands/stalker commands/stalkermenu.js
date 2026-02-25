@@ -1,3 +1,4 @@
+import { getBotName } from '../../lib/botname.js';
 export default {
   name: 'stalkermenu',
   aliases: ['smenu', 'stalkermenu', 'stalkercmds'],
@@ -38,7 +39,7 @@ export default {
 │  └⊷ Stalk a GitHub profile
 │
 ╰───────────────
-> 🐺 *WOLFBOT STALKER COMMANDS*`;
+> 🐺 *${getBotName()} STALKER COMMANDS*`;
 
     await sock.sendMessage(jid, { text: menu }, { quoted: m });
   }

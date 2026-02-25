@@ -3,6 +3,7 @@ import { createWriteStream, existsSync } from 'fs';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import fs from 'fs';
+import { getBotName } from '../../lib/botname.js';
 
 const execAsync = promisify(exec);
 
@@ -44,7 +45,7 @@ export default {
 
       const { videoPath } = result;
 
-      const userCaption = globalUserCaptions.get(userId) || "WolfBot is the Alpha";
+      const userCaption = globalUserCaptions.get(userId) || `${getBotName()} is the Alpha`;
 
       await sock.sendMessage(jid, {
         video: fs.readFileSync(videoPath),
@@ -63,7 +64,7 @@ export default {
 };
 
 export function getUserCaption(userId) {
-  return globalUserCaptions.get(userId) || "WolfBot is the Alpha";
+  return globalUserCaptions.get(userId) || `${getBotName()} is the Alpha`;
 }
 
 export function setUserCaption(userId, caption) {

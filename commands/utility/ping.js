@@ -1,5 +1,6 @@
 import axios from 'axios';
 import moment from 'moment-timezone';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'ping',
@@ -19,13 +20,13 @@ export default {
             participant: "0@s.whatsapp.net",
             remoteJid: "status@broadcast",
             fromMe: false,
-            id: "WOLFBOT"
+            id: getBotName()
           },
           messageTimestamp: moment().unix(),
-          pushName: "WolfBot",
+          pushName: getBotName(),
           message: {
             contactMessage: {
-              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLFBOT\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${getBotName()}\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
             }
           },
           participant: "0@s.whatsapp.net"
@@ -80,7 +81,7 @@ export default {
 
       // Create response message with fake contact reply
       const pingText = `
-╭━「 *WOLFBOT PONG* 」━╮
+╭━「 *${getBotName()} PONG* 」━╮
 │  ⚡ *Latency:* ${realisticLatency}ms
 │  [${bar}] ${percentage}%
 ╰━━━━━━━━━━━━━╯
@@ -107,7 +108,7 @@ _🌕 The Moon Watches..._
       const latency = Date.now() - start;
       
       await sock.sendMessage(m.key.remoteJid, {
-        text: `🏓 Pong! ${latency}ms\n🐺 WolfBot is online!`,
+        text: `🏓 Pong! ${latency}ms\n🐺 ${getBotName()} is online!`,
         quoted: createFakeContact(m)
       });
     }

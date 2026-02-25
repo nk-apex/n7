@@ -45,7 +45,7 @@ ${threeDEffects.join('\n')}
 ╭─⊷ *📋 HOW TO USE*
 │
 │  Type: ${PREFIX}<effect> <your text>
-│  Example: ${PREFIX}neon WolfBot
+│  Example: ${PREFIX}neon ${getBotName()}
 │  Example: ${PREFIX}wooden3d MyName
 │
 ╰─⊷`;

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const API_BASE = 'https://apis.xcasper.space/api/sports';
 
@@ -98,7 +99,7 @@ export default {
         }
       }
 
-      text += `╰───\n\n⚡ *Powered by WOLFBOT*`;
+      text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
       await sock.sendMessage(jid, { text }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       console.log(`📊 [MATCHSTATS] Stats for match ${matchId} fetched`);

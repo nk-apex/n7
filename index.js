@@ -220,6 +220,7 @@ import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessa
 import NodeCache from 'node-cache';
 import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList } from './lib/sudo-store.js';
 import supabaseDb, { setConfigBotId } from './lib/supabase.js';
+import { getBotName as _getBotName, clearBotNameCache } from './lib/botname.js';
 import { migrateSudoToSupabase, initSudo, setBotId } from './lib/sudo-store.js';
 import { migrateWarningsToSupabase } from './lib/warnings-store.js';
 
@@ -660,7 +661,8 @@ const __dirname = dirname(__filename);
 
 // ====== CONFIGURATION ======
 const SESSION_DIR = './session';
-const BOT_NAME = process.env.BOT_NAME || 'WOLFBOT';
+let BOT_NAME = process.env.BOT_NAME || _getBotName();
+function getCurrentBotName() { return global.BOT_NAME || BOT_NAME || _getBotName(); }
 const VERSION = '1.1.5';
 global.VERSION = VERSION;
 const DEFAULT_PREFIX = process.env.PREFIX || '.';
@@ -6341,7 +6343,7 @@ async function handleIncomingMessage(sock, msg) {
                     OWNER_NUMBER: OWNER_CLEAN_NUMBER,
                     OWNER_JID: OWNER_CLEAN_JID,
                     OWNER_LID: OWNER_LID,
-                    BOT_NAME,
+                    BOT_NAME: getCurrentBotName(),
                     VERSION,
                     isOwner: () => jidManager.isOwner(msg),
                     isSudo: () => isSudoUser || jidManager.isSudo(msg),

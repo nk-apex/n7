@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'cmsdetect',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔎 *CMS DETECTOR* ⌋\n│\n├─⊷ *${PREFIX}cmsdetect <url>*\n│  └⊷ Detect website CMS\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}cmsdetect wordpress.org\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔎 *CMS DETECTOR* ⌋\n│\n├─⊷ *${PREFIX}cmsdetect <url>*\n│  └⊷ Detect website CMS\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}cmsdetect wordpress.org\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -76,7 +77,7 @@ export default {
       if (h['server']) output += `├─⊷ *Server:* ${h['server']}\n│\n`;
       if (h['x-powered-by']) output += `├─⊷ *X-Powered-By:* ${h['x-powered-by']}\n│\n`;
 
-      output += `╰───────────────\n> *WOLFBOT*`;
+      output += `╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: output }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import { getBotName } from '../../lib/botname.js';
 
 export default {
     name: "videogen",
@@ -37,7 +38,7 @@ export default {
             // Send video to WhatsApp
             await sock.sendMessage(jid, {
                 video: { url: video.video_files[0].link },
-                caption: `🎬 Video result for: "${query}"\n🐺 WolfBot Video`
+                caption: `🎬 Video result for: "${query}"\n🐺 ${getBotName()} Video`
             }, { quoted: m });
 
         } catch (err) {

@@ -1011,6 +1011,7 @@
 import axios from 'axios';
 import fs from 'fs';
 import { promisify } from 'util';
+import { getBotName } from '../../lib/botname.js';
 
 const writeFileAsync = promisify(fs.writeFile);
 const unlinkAsync = promisify(fs.unlink);
@@ -1561,7 +1562,7 @@ function generateDetailedReport(result, originalText) {
   // Footer
   report += `\n` + `━`.repeat(28) + `\n`;
   report += `⏰ Analyzed: ${new Date().toLocaleTimeString()}\n`;
-  report += `⚡ WolfBot Advanced AI Detector v2.0`;
+  report += `⚡ ${getBotName()} Advanced AI Detector v2.0`;
   
   return report;
 }

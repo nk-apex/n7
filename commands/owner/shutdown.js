@@ -1,4 +1,5 @@
 import { exec } from "child_process";
+import { getBotName } from '../../lib/botname.js';
 import { promisify } from "util";
 import fs from "fs";
 import path from "path";
@@ -477,7 +478,7 @@ export default {
     
     // Send initial message
     const initialMessage = await sock.sendMessage(jid, { 
-      text: "🔒 WolfBot Shutdown System\nInitializing shutdown process..."
+      text: "🔒 ${getBotName()} Shutdown System\nInitializing shutdown process..."
     }, { quoted: m });
     
     let messageKey = initialMessage.key;

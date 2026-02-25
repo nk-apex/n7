@@ -430,6 +430,7 @@ import yts from "yt-search";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getBotName } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -874,13 +875,13 @@ export default {
         // Send the video as VIDEO (not document)
         await sock.sendMessage(jid, {
           video: fs.readFileSync(tempFile),
-          caption: `🎬 *${videoTitle}*\n📹 ${videoResult.quality} • ${fileSizeMB}MB\n⚡ Source: ${videoResult.source}\n\n> WolfBot`,
+          caption: `🎬 *${videoTitle}*\n📹 ${videoResult.quality} • ${fileSizeMB}MB\n⚡ Source: ${videoResult.source}\n\n> ${getBotName()}`,
           mimetype: 'video/mp4',
           fileName: `${videoTitle.substring(0, 50)}.mp4`.replace(/[^\w\s.-]/gi, ''),
           contextInfo: {
             externalAdReply: {
               title: videoTitle.substring(0, 70),
-              body: 'YouTube Video • WolfBot',
+              body: `YouTube Video • ${getBotName()}`,
               mediaType: 2,
               thumbnailUrl: videoThumbnail,
               mediaUrl: videoUrl,

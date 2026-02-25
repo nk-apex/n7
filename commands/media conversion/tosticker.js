@@ -20,6 +20,7 @@ import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 import sharp from 'sharp';
 import webp from 'node-webpmux';
 import crypto from 'crypto';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'tosticker',
@@ -69,7 +70,7 @@ export default {
 
       // Get emoji from args (first arg) or use default
       const emoji = args[0] || '🤖';
-      const packName = 'WolfBot'; // Always use WolfBot as pack name
+      const packName = getBotName();
       const authorName = m.pushName || 'User'; // Use sender's name as author
       
     //   await sock.sendMessage(jid, { 

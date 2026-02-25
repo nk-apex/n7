@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'summarize',
@@ -141,7 +142,7 @@ export default {
       const summaryWords = summary.split(/\s+/).length;
       const reduction = Math.round((1 - (summaryWords / originalWords)) * 100);
       
-      let resultText = `📝 *WOLFBOT SUMMARIZER*\n\n`;
+      let resultText = `📝 *${getBotName()} SUMMARIZER*\n\n`;
       
       // Original text preview
       const preview = cleanText.length > 100 
@@ -167,7 +168,7 @@ export default {
       resultText += `• Add \`paragraph:\` for paragraph format\n`;
       resultText += `• Reply to a message to summarize it\n\n`;
       
-      resultText += `⚡ *Powered by WOLFTECH*`;
+      resultText += `⚡ *Powered by ${getBotName()}TECH*`;
 
       // ====== SEND FINAL ANSWER ======
       await sock.sendMessage(jid, { text: resultText }, { quoted: m });

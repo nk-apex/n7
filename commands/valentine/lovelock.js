@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const API_BASE = 'https://apiskeith.vercel.app';
 
@@ -32,7 +33,7 @@ export default {
 
             await sock.sendMessage(chatId, {
                 image: Buffer.from(imgRes.data),
-                caption: `🔒 *Love Lock*\nText: ${text}\n\n_Created by WOLFBOT_`
+                caption: `🔒 *Love Lock*\nText: ${text}\n\n_Created by ${getBotName()}_`
             }, { quoted: msg });
         } catch (err) {
             await sock.sendMessage(chatId, {

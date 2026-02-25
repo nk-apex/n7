@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
 const AUDIO_ENDPOINTS = ['song', 'yta', 'dlmp3', 'ytmp3'];
@@ -102,7 +103,7 @@ export default {
         contextInfo: {
           externalAdReply: {
             title: (title || 'Audio').substring(0, 60),
-            body: `🎵 ${duration ? duration + ' • ' : ''}${quality || '320kbps'} | Downloaded by WOLFBOT`,
+            body: `🎵 ${duration ? duration + ' • ' : ''}${quality || '320kbps'} | Downloaded by ${getBotName()}`,
             mediaType: 2,
             thumbnail: thumbnailBuffer,
             renderLargerThumbnail: true

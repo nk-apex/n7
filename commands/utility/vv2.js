@@ -738,6 +738,7 @@
 import fs from 'fs';
 import path from 'path';
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
+import { getBotName } from '../../lib/botname.js';
 
 // Configuration
 const CONFIG = {
@@ -1143,7 +1144,7 @@ async function downloadAndSendToOwner(sock, message, mediaInfo, originalChatId, 
         const chatName = chatInfo.name;
         const isGroup = chatInfo.isGroup;
         
-        const ownerCaption = `Retrieved by \`WOLFBOT\``;
+        const ownerCaption = `Retrieved by \`${getBotName()}\``;
         
         // Read file
         const fileBuffer = fs.readFileSync(filepath);

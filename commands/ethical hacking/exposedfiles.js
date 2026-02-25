@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const SENSITIVE_FILES = [
   { path: '/.env', desc: 'Environment variables (secrets, API keys)' },
@@ -27,7 +28,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *EXPOSED FILES CHECKER* ⌋\n│\n├─⊷ *${PREFIX}exposedfiles <url>*\n│  └⊷ Check for exposed sensitive files\n│\n├─⊷ *Checks ${SENSITIVE_FILES.length} files including:*\n│  ├⊷ .env, .git/config, .htaccess\n│  ├⊷ wp-config.php, package.json\n│  ├⊷ Dockerfile, docker-compose.yml\n│  └⊷ IDE configs, server info\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *EXPOSED FILES CHECKER* ⌋\n│\n├─⊷ *${PREFIX}exposedfiles <url>*\n│  └⊷ Check for exposed sensitive files\n│\n├─⊷ *Checks ${SENSITIVE_FILES.length} files including:*\n│  ├⊷ .env, .git/config, .htaccess\n│  ├⊷ wp-config.php, package.json\n│  ├⊷ Dockerfile, docker-compose.yml\n│  └⊷ IDE configs, server info\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
 
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
@@ -121,7 +122,7 @@ export default {
       } else {
         result += `├─⊷ Good! No sensitive files exposed\n`;
       }
-      result += `│\n╰───────────────\n> *WOLFBOT*`;
+      result += `│\n╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

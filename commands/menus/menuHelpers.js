@@ -2,46 +2,12 @@ import os from "os";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getBotName } from '../../lib/botname.js';
+
+export { getBotName };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-export const getBotName = () => {
-  try {
-    const possiblePaths = [
-      './bot_settings.json',
-      path.join(__dirname, 'bot_settings.json'),
-      path.join(__dirname, '../bot_settings.json'),
-      path.join(__dirname, '../../bot_settings.json'),
-      path.join(__dirname, '../../../bot_settings.json'),
-      path.join(__dirname, '../commands/owner/bot_settings.json'),
-    ];
-
-    for (const settingsPath of possiblePaths) {
-      if (fs.existsSync(settingsPath)) {
-        try {
-          const settingsData = fs.readFileSync(settingsPath, 'utf8');
-          const settings = JSON.parse(settingsData);
-
-          if (settings.botName && settings.botName.trim() !== '') {
-            return settings.botName.trim();
-          }
-        } catch (parseError) {}
-      }
-    }
-
-    if (global.BOT_NAME) {
-      return global.BOT_NAME;
-    }
-
-    if (process.env.BOT_NAME) {
-      return process.env.BOT_NAME;
-    }
-
-  } catch (error) {}
-
-  return 'WOLFBOT';
-};
 
 export const getBotMode = () => {
   try {
@@ -456,8 +422,8 @@ export const createFakeContact = (message) => {
     },
     message: {
       contactMessage: {
-        displayName: "WOLF BOT",
-        vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLF BOT\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+        displayName: getBotName(),
+        vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${getBotName()}\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
       }
     },
     participant: "0@s.whatsapp.net"

@@ -59,6 +59,7 @@
 
 
 import fs from 'fs';
+import { getBotName } from '../../lib/botname.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -172,8 +173,8 @@ class AutoGroupJoinSystem {
     
     try {
       await sock.sendMessage(userJid, {
-        text: `🎉 *WELCOME TO WOLFBOT!*\n\n` +
-              `Thank you for connecting with WolfBot! 🤖\n\n` +
+        text: `🎉 *WELCOME TO ${getBotName()}!*\n\n` +
+              `Thank you for connecting with ${getBotName()}! 🤖\n\n` +
               `✨ *Features Available:*\n` +
               `• Multiple command categories\n` +
               `• Group management tools\n` +

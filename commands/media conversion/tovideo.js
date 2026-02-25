@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import { getBotName } from '../../lib/botname.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -89,7 +90,7 @@ export default {
 
       await sock.sendMessage(jid, {
         video: videoBuffer,
-        caption: `╭⌈ 🎬 *STICKER TO VIDEO* ⌋\n├⊷ 📦 *Size:* ${fileSizeKB}KB\n╰⊷ 🎞️ *Format:* MP4\n> _Converted by WOLFBOT_`,
+        caption: `╭⌈ 🎬 *STICKER TO VIDEO* ⌋\n├⊷ 📦 *Size:* ${fileSizeKB}KB\n╰⊷ 🎞️ *Format:* MP4\n> _Converted by ${getBotName()}_`,
         mimetype: 'video/mp4'
       }, { quoted: m });
 

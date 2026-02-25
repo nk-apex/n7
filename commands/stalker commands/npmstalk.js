@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/stalk/npmstalk';
 
@@ -13,7 +14,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔍 *NPM PACKAGE STALKER* ⌋\n│\n├─⊷ *${prefix}npmstalk <package name>*\n│  └⊷ Look up an NPM package\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}npmstalk express\n│  └⊷ ${prefix}npmstalk gifted-btns\n│\n╰───────────────\n> *WOLFBOT STALKER*`
+        text: `╭─⌈ 🔍 *NPM PACKAGE STALKER* ⌋\n│\n├─⊷ *${prefix}npmstalk <package name>*\n│  └⊷ Look up an NPM package\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}npmstalk express\n│  └⊷ ${prefix}npmstalk gifted-btns\n│\n╰───────────────\n> *${getBotName()} STALKER*`
       }, { quoted: m });
     }
 
@@ -43,7 +44,7 @@ export default {
       const created = d.created || d.time?.created ? new Date(d.created || d.time.created).toLocaleDateString() : 'N/A';
       const modified = d.modified || d.time?.modified ? new Date(d.modified || d.time?.modified).toLocaleDateString() : 'N/A';
 
-      const caption = `╭─⌈ 📦 *NPM PACKAGE INFO* ⌋\n│\n├─⊷ *📦 Package:* ${name}\n├─⊷ *🔢 Version:* ${version}\n├─⊷ *📝 Description:* ${description}\n├─⊷ *👤 Author:* ${author}\n├─⊷ *📄 License:* ${license}\n├─⊷ *🏷️ Keywords:* ${keywords}${downloads !== 'N/A' ? `\n├─⊷ *📊 Downloads:* ${downloads}` : ''}\n├─⊷ *📅 Created:* ${created}\n├─⊷ *🔄 Updated:* ${modified}\n├─⊷ *🌐 Homepage:* ${homepage}\n│\n╰───────────────\n> 🐺 *WOLFBOT STALKER*`;
+      const caption = `╭─⌈ 📦 *NPM PACKAGE INFO* ⌋\n│\n├─⊷ *📦 Package:* ${name}\n├─⊷ *🔢 Version:* ${version}\n├─⊷ *📝 Description:* ${description}\n├─⊷ *👤 Author:* ${author}\n├─⊷ *📄 License:* ${license}\n├─⊷ *🏷️ Keywords:* ${keywords}${downloads !== 'N/A' ? `\n├─⊷ *📊 Downloads:* ${downloads}` : ''}\n├─⊷ *📅 Created:* ${created}\n├─⊷ *🔄 Updated:* ${modified}\n├─⊷ *🌐 Homepage:* ${homepage}\n│\n╰───────────────\n> 🐺 *${getBotName()} STALKER*`;
 
       await sock.sendMessage(jid, { text: caption }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

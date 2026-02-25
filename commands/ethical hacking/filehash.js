@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 import crypto from 'crypto';
 
 export default {
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔍 *FILE HASH GENERATOR* ⌋\n│\n├─⊷ *${PREFIX}filehash <url>*\n│  └⊷ Download file and compute\n│     MD5, SHA1, SHA256 hashes\n│\n├─⊷ *Max download:* 5MB\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔍 *FILE HASH GENERATOR* ⌋\n│\n├─⊷ *${PREFIX}filehash <url>*\n│  └⊷ Download file and compute\n│     MD5, SHA1, SHA256 hashes\n│\n├─⊷ *Max download:* 5MB\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -71,7 +72,7 @@ export default {
       result += `│  ├⊷ Verify file integrity\n`;
       result += `│  ├⊷ Check against VirusTotal\n`;
       result += `│  └⊷ Compare with official checksums\n`;
-      result += `│\n╰───────────────\n> *WOLFBOT*`;
+      result += `│\n╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

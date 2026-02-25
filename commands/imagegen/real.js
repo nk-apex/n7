@@ -1,16 +1,16 @@
 import axios from 'axios';
 import { createWriteStream, existsSync, readFileSync } from 'fs';
 import fs from 'fs';
+import { getBotName } from '../../lib/botname.js';
 
-// Import caption system
 let getUserCaption;
 
 async function initializeCaptionSystem() {
   try {
     const tiktokModule = await import('./tiktok.js');
-    getUserCaption = tiktokModule.getUserCaption || ((userId) => "WolfBot is the Alpha");
+    getUserCaption = tiktokModule.getUserCaption || ((userId) => `${getBotName()} is the Alpha`);
   } catch (error) {
-    getUserCaption = (userId) => "WolfBot is the Alpha";
+    getUserCaption = (userId) => `${getBotName()} is the Alpha`;
   }
 }
 
@@ -20,7 +20,7 @@ function getCaption(userId) {
   if (typeof getUserCaption === 'function') {
     return getUserCaption(userId);
   }
-  return "WolfBot is the Alpha";
+  return `${getBotName()} is the Alpha`;
 }
 
 export default {

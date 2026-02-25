@@ -1,4 +1,5 @@
 import db from '../../lib/supabase.js';
+import { getBotName } from '../../lib/botname.js';
 
 let prefsCache = null;
 let cacheLoaded = false;
@@ -32,7 +33,7 @@ export default {
         if (!args[0]) {
             const prefs = await loadPreferences();
             const existing = prefs.find(p => p.chatId === chatId);
-            const current = existing?.customCaption || 'Retrieved by WOLFBOT';
+            const current = existing?.customCaption || `Retrieved by ${getBotName()}`;
 
             return sock.sendMessage(chatId, {
                 text: `╭─⌈ 📝 *VIEW-ONCE CAPTION* ⌋\n│\n│  Current: "${current}"\n│\n├─⊷ *${PREFIX}setvvcaption <text>*\n│  └⊷ Set custom caption\n│\n├─⊷ *${PREFIX}setvvcaption reset*\n│  └⊷ Reset to default\n│\n├─⊷ *${PREFIX}setvvcaption none*\n│  └⊷ Disable caption\n│\n╰───`
@@ -47,8 +48,8 @@ export default {
         let displayText = '';
 
         if (newCaption.toLowerCase() === 'reset') {
-            captionValue = 'Retrieved by WOLFBOT';
-            displayText = 'Reset to default: "Retrieved by WOLFBOT"';
+            captionValue = `Retrieved by ${getBotName()}`;
+            displayText = `Reset to default: "Retrieved by ${getBotName()}"`;
         } else if (newCaption.toLowerCase() === 'none') {
             captionValue = '';
             displayText = 'Caption disabled';

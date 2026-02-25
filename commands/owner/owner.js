@@ -1,3 +1,4 @@
+import { getBotName } from '../../lib/botname.js';
 export default {
   name: 'owner',
   alias: ['creator', 'dev', 'developer'],
@@ -27,8 +28,8 @@ export default {
       const { sendInteractiveMessage } = require('gifted-btns');
 
       await sendInteractiveMessage(sock, jid, {
-        text: `👑 *WOLFBOT OWNER*\n\n📱 *+${ownerNumber}*`,
-        footer: '🐺WolfBot',
+        text: `👑 *${getBotName()} OWNER*\n\n📱 *+${ownerNumber}*`,
+        footer: `🐺${getBotName()}`,
         interactiveButtons: [
           {
             name: 'cta_copy',

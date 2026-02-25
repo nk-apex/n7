@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
 const VIDEO_ENDPOINTS = ['ytv', 'dlmp4', 'ytmp4'];
@@ -96,7 +97,7 @@ export default {
       await sock.sendMessage(jid, {
         video: videoBuffer,
         mimetype: 'video/mp4',
-        caption: `🎬 *${title || 'Video'}*\n📹 *Quality:* ${quality || 'HD'}\n📦 *Size:* ${fileSizeMB}MB\n\n🐺 *Downloaded by WOLFBOT*`,
+        caption: `🎬 *${title || 'Video'}*\n📹 *Quality:* ${quality || 'HD'}\n📦 *Size:* ${fileSizeMB}MB\n\n🐺 *Downloaded by ${getBotName()}*`,
         fileName: `${cleanTitle}.mp4`,
         thumbnail: thumbnailBuffer,
         gifPlayback: false

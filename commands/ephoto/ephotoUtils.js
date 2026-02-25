@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const EPHOTO_EFFECTS = {
   neon: { id: 68, name: 'Neon Text', url: 'https://en.ephoto360.com/tao-hieu-ung-chu-neon-dep-68.html', emoji: '💡' },
@@ -136,7 +137,7 @@ function createEphotoCommand(effectKey) {
 
       if (!text) {
         return await sock.sendMessage(chatId, {
-          text: `╭─⌈ ${effect.emoji} *${effect.name.toUpperCase()}* ⌋\n│\n├─⊷ *Usage:* ${PREFIX}${effectKey} <text>\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}${effectKey} WolfBot\n│\n├─⊷ *Aliases:* ephoto${effect.id}, ep${effect.id}\n│\n╰───────────────\n> *WOLFBOT EPHOTO*`
+          text: `╭─⌈ ${effect.emoji} *${effect.name.toUpperCase()}* ⌋\n│\n├─⊷ *Usage:* ${PREFIX}${effectKey} <text>\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}${effectKey} ${getBotName()}\n│\n├─⊷ *Aliases:* ephoto${effect.id}, ep${effect.id}\n│\n╰───────────────\n> *${getBotName()} EPHOTO*`
         }, { quoted: msg });
       }
 
@@ -157,7 +158,7 @@ function createEphotoCommand(effectKey) {
 
         await sock.sendMessage(chatId, {
           image: imageBuffer,
-          caption: `${effect.emoji} *${effect.name}*\n📝 Text: ${text}\n\n🐺 *Created by WOLFBOT*`
+          caption: `${effect.emoji} *${effect.name}*\n📝 Text: ${text}\n\n🐺 *Created by ${getBotName()}*`
         }, { quoted: msg });
 
         await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });

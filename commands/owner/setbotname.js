@@ -3,6 +3,7 @@
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getBotName } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,7 +28,7 @@ export default {
         
         // Show current bot name if no args
         if (!args[0]) {
-            const currentName = this.getCurrentBotName();
+            const currentName = getBotName();
             
             return sock.sendMessage(chatId, {
                 text: `╭─⌈ 🤖 *SET BOT NAME* ⌋\n│\n│ 📝 Current: *${currentName}*\n├─⊷ *${PREFIX}setbotname <new_name>*\n│  └⊷ Change bot name\n╰───`
@@ -86,14 +87,17 @@ export default {
                 }
             }
             
-            // Update global variable for immediate effect
             if (typeof global !== 'undefined') {
                 global.BOT_NAME = newBotName;
                 global.BOT_SETTINGS = settings;
             }
-            
-            // Update process environment
+
             process.env.BOT_NAME = newBotName;
+
+            try {
+                const { clearBotNameCache } = await import('../../lib/botname.js');
+                clearBotNameCache();
+            } catch {}
             
             // Success message
             let successMsg = `✅ *Bot Name Updated Successfully!*\n`;

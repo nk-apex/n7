@@ -670,7 +670,7 @@
 //     try {
 //       // Send initial message
 //       statusMessage = await sock.sendMessage(jid, {
-//         text: '🔄 **WolfBot Update (Size-Controlled)**\nStarting update process...'
+//         text: '🔄 **${getBotName()} Update (Size-Controlled)**\nStarting update process...'
 //       }, { quoted: m });
       
 //       const editStatus = async (text) => {
@@ -872,6 +872,7 @@
 
 
 import { exec } from "child_process";
+import { getBotName } from '../../lib/botname.js';
 import { promisify } from "util";
 import fs from "fs";
 import fsPromises from "fs/promises";
@@ -1863,7 +1864,7 @@ export default {
     let statusMessage;
     try {
       statusMessage = await sock.sendMessage(jid, {
-        text: '🔄 **WolfBot Update v1.1.5**\nWith automatic history cleaning\nStarting update process...'
+        text: '🔄 **${getBotName()} Update v1.1.5**\nWith automatic history cleaning\nStarting update process...'
       }, { quoted: m });
       
       const editStatus = async (text) => {

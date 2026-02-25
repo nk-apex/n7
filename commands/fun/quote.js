@@ -1,3 +1,4 @@
+import { getBotName } from '../../lib/botname.js';
 export default {
   name: "quote",
   alias: ["wolfquote", "howl"],
@@ -82,7 +83,7 @@ export default {
     } catch (error) {
       console.error("❌ WolfQuote Error:", error.message);
       await client.sendMessage(msg.key.remoteJid, {
-        text: `❌ *WolfBot growls:* Something interfered with my instincts.\nError: ${error.message}`,
+        text: `❌ *${getBotName()} growls:* Something interfered with my instincts.\nError: ${error.message}`,
       });
     }
   },

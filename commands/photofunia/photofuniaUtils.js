@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
@@ -431,14 +432,14 @@ function createPhotofuniaCommand(effectKey) {
         const imgResult = await getImageUrl(msg, sock, textArgs);
         if (!imgResult) {
           return await sock.sendMessage(chatId, {
-            text: `*${effectData.name.toUpperCase()}*\n\nThis effect requires an image.\n\nReply to an image:\n${PREFIX}${cmdName}\n\nOr use a direct link:\n${PREFIX}${cmdName} https://example.com/photo.jpg\n\n> WOLFBOT PHOTOFUNIA`
+            text: `*${effectData.name.toUpperCase()}*\n\nThis effect requires an image.\n\nReply to an image:\n${PREFIX}${cmdName}\n\nOr use a direct link:\n${PREFIX}${cmdName} https://example.com/photo.jpg\n\n> ${getBotName()} PHOTOFUNIA`
           }, { quoted: msg });
         }
 
         await sock.sendMessage(chatId, { react: { text: '⏳', key: msg.key } });
         try {
           const result = await generatePhotofunia(effectData.effect, { imageUrl: imgResult.url });
-          await sendPhotofuniaResult(sock, chatId, result, `*${effectData.name}*\n\nCreated by WOLFBOT`, msg);
+          await sendPhotofuniaResult(sock, chatId, result, `*${effectData.name}*\n\nCreated by ${getBotName()}`, msg);
         } catch (error) {
           console.log(`[PHOTOFUNIA] ${cmdName} error:`, error.message);
           await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
@@ -449,7 +450,7 @@ function createPhotofuniaCommand(effectKey) {
         if (!textArgs) {
           const multiHint = effectData.textParams ? `\nUse | to separate: ${effectData.textParams.join(', ')}` : '';
           return await sock.sendMessage(chatId, {
-            text: `*${effectData.name.toUpperCase()}*\n\nUsage: ${PREFIX}${cmdName} <text>${multiHint}\n\nExample:\n${PREFIX}${cmdName} WolfBot\n\n> WOLFBOT PHOTOFUNIA`
+            text: `*${effectData.name.toUpperCase()}*\n\nUsage: ${PREFIX}${cmdName} <text>${multiHint}\n\nExample:\n${PREFIX}${cmdName} ${getBotName()}\n\n> ${getBotName()} PHOTOFUNIA`
           }, { quoted: msg });
         }
 
@@ -465,7 +466,7 @@ function createPhotofuniaCommand(effectKey) {
             options.text = textArgs;
           }
           const result = await generatePhotofunia(effectData.effect, options);
-          await sendPhotofuniaResult(sock, chatId, result, `*${effectData.name}*\nText: ${textArgs}\n\nCreated by WOLFBOT`, msg);
+          await sendPhotofuniaResult(sock, chatId, result, `*${effectData.name}*\nText: ${textArgs}\n\nCreated by ${getBotName()}`, msg);
         } catch (error) {
           console.log(`[PHOTOFUNIA] ${cmdName} error:`, error.message);
           await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });
@@ -480,7 +481,7 @@ function createPhotofuniaCommand(effectKey) {
         if (!imgResult) {
           const multiHint = effectData.textParams ? `\nUse | to separate: ${effectData.textParams.join(', ')}` : '';
           return await sock.sendMessage(chatId, {
-            text: `*${effectData.name.toUpperCase()}*\n\nThis effect requires text + image.\n\nReply to an image:\n${PREFIX}${cmdName} <your text>${multiHint}\n\nOr use a direct link:\n${PREFIX}${cmdName} <text> https://example.com/photo.jpg\n\n> WOLFBOT PHOTOFUNIA`
+            text: `*${effectData.name.toUpperCase()}*\n\nThis effect requires text + image.\n\nReply to an image:\n${PREFIX}${cmdName} <your text>${multiHint}\n\nOr use a direct link:\n${PREFIX}${cmdName} <text> https://example.com/photo.jpg\n\n> ${getBotName()} PHOTOFUNIA`
           }, { quoted: msg });
         }
 
@@ -488,7 +489,7 @@ function createPhotofuniaCommand(effectKey) {
         if (!actualText) {
           const multiHint = effectData.textParams ? `\nUse | to separate: ${effectData.textParams.join(', ')}` : '';
           return await sock.sendMessage(chatId, {
-            text: `*${effectData.name.toUpperCase()}*\n\nThis effect requires text + image.\n\nReply to an image:\n${PREFIX}${cmdName} <your text>${multiHint}\n\nOr use a direct link:\n${PREFIX}${cmdName} <text> https://example.com/photo.jpg\n\n> WOLFBOT PHOTOFUNIA`
+            text: `*${effectData.name.toUpperCase()}*\n\nThis effect requires text + image.\n\nReply to an image:\n${PREFIX}${cmdName} <your text>${multiHint}\n\nOr use a direct link:\n${PREFIX}${cmdName} <text> https://example.com/photo.jpg\n\n> ${getBotName()} PHOTOFUNIA`
           }, { quoted: msg });
         }
 
@@ -504,7 +505,7 @@ function createPhotofuniaCommand(effectKey) {
             options.text = actualText;
           }
           const result = await generatePhotofunia(effectData.effect, options);
-          await sendPhotofuniaResult(sock, chatId, result, `*${effectData.name}*\nText: ${actualText}\n\nCreated by WOLFBOT`, msg);
+          await sendPhotofuniaResult(sock, chatId, result, `*${effectData.name}*\nText: ${actualText}\n\nCreated by ${getBotName()}`, msg);
         } catch (error) {
           console.log(`[PHOTOFUNIA] ${cmdName} error:`, error.message);
           await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } });

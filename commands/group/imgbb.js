@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getBotName } from '../../lib/botname.js';
 import { downloadMediaMessage } from "@whiskeysockets/baileys";
 import crypto from "crypto";
 
@@ -86,7 +87,7 @@ export default {
         `├─⊷ *Status:* Uploaded ✅\n` +
         `├─⊷ *Size:* ${result.width || '?'} × ${result.height || '?'} • ${fileSizeMB.toFixed(2)} MB\n` +
         `├─⊷ *URL:* ${result.url}\n` +
-        `╰─── *WOLFBOT* ───`;
+        `╰─── *${getBotName()}* ───`;
 
       try {
         const { createRequire } = await import('module');
@@ -95,7 +96,7 @@ export default {
         await sendInteractiveMessage(sock, jid, {
           image: { url: result.thumb || result.url },
           text: successText,
-          footer: 'WOLFBOT',
+          footer: `${getBotName()}`,
           interactiveButtons: [
             {
               name: 'cta_copy',

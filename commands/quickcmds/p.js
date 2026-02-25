@@ -23,11 +23,11 @@
 //             participants: "0@s.whatsapp.net",
 //             remoteJid: "status@broadcast",
 //             fromMe: false,
-//             id: "WOLFBOT"
+//             id: getBotName()
 //           },
 //           message: {
 //             contactMessage: {
-//               vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLFBOT\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+//               vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${getBotName()}\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
 //             }
 //           },
 //           participant: "0@s.whatsapp.net"
@@ -108,7 +108,7 @@
 
 //       // Prepare text with all stats - WITH BORDERS
 //       const text = `
-// ╭━ *WOLFBOT STATUS* 🤖━╮
+// ╭━ *${getBotName()} STATUS* 🤖━╮
 // ┃
 // ┃  📡 *Performance Metrics:*
 // ┃  ⏱️ *Response Time:* ${pingTime}ms
@@ -126,7 +126,7 @@
 //           contextInfo: {
 //             mentionedJid: ownerInfo.jid ? [ownerInfo.jid] : [],
 //             externalAdReply: {
-//               title: "🐺 WolfBot Status",
+//               title: `🐺 ${getBotName()} Status`,
 //               body: `Ping: ${pingTime}ms • Uptime: ${hours}h ${minutes}m`,
 //               mediaType: 1,
 //               thumbnailUrl: githubData.avatar_url,
@@ -165,7 +165,7 @@
 //             text: fallbackText,
 //             contextInfo: {
 //               externalAdReply: {
-//                 title: "WolfBot Status",
+//                 title: `${getBotName()} Status`,
 //                 body: "Bot is online • Basic metrics",
 //                 mediaType: 1,
 //                 thumbnailUrl: "https://avatars.githubusercontent.com/u/10639145",
@@ -189,6 +189,7 @@
 
 
 import axios from "axios";
+import { getBotName } from '../../lib/botname.js';
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -213,11 +214,11 @@ export default {
             participants: "0@s.whatsapp.net",
             remoteJid: "status@broadcast",
             fromMe: false,
-            id: "WOLFBOT"
+            id: getBotName()
           },
           message: {
             contactMessage: {
-              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLFBOT\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${getBotName()}\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
             }
           },
           participant: "0@s.whatsapp.net"
@@ -296,8 +297,16 @@ export default {
       else if (pingTime < 3000) responseQuality = "🐢 Moderate";
       else responseQuality = "🐌 Slow";
 
-      // Prepare text with all stats - WITH BORDERS
       const text = `
+╭━ *${getBotName()} STATUS* 🤖━╮
+┃
+┃  📡 *Performance Metrics:*
+┃  ⏱️ *Response Time:* ${pingTime}ms
+┃  ⚡ *Quality:* ${responseQuality}
+┃  🐺 *Maintained by:* ${ownerInfo.name}
+┃  📁 *GitHub:* ${githubOwner}
+┃  🚀 *Bot Status:* Operational
+╰━━━━━━━━━━━━━━╯
 `.trim();
 
       await sock.sendMessage(
@@ -307,7 +316,7 @@ export default {
           contextInfo: {
             mentionedJid: ownerInfo.jid ? [ownerInfo.jid] : [],
             externalAdReply: {
-              title: "🐺 WolfBot Status",
+              title: `🐺 ${getBotName()} Status`,
               body: `Ping: ${pingTime}ms • Uptime: ${hours}h ${minutes}m`,
               mediaType: 1,
               thumbnailUrl: githubData.avatar_url,
@@ -346,7 +355,7 @@ export default {
             text: fallbackText,
             contextInfo: {
               externalAdReply: {
-                title: "WolfBot Status",
+                title: `${getBotName()} Status`,
                 body: "Bot is online • Basic metrics",
                 mediaType: 1,
                 thumbnailUrl: "https://avatars.githubusercontent.com/u/10639145",

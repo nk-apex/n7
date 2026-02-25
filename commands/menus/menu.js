@@ -24,6 +24,7 @@ import { fileURLToPath } from "url";
 import { execSync } from "child_process";
 import { getCurrentMenuStyle } from "./menustyle.js";
 import { setLastMenu, getAllFieldsStatus } from "../menus/menuToggles.js";
+import { getBotName as _getBotName } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -977,46 +978,7 @@ export default {
 // }
 
 case 1: {
-  // First, get the bot name BEFORE showing loading message
-  const getBotName = () => {
-    try {
-      const possiblePaths = [
-        './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
-        path.join(__dirname, '../../bot_settings.json'),
-        path.join(__dirname, '../../../bot_settings.json'),
-        path.join(__dirname, '../commands/owner/bot_settings.json'),
-      ];
-      
-      for (const settingsPath of possiblePaths) {
-        if (fs.existsSync(settingsPath)) {
-          try {
-            const settingsData = fs.readFileSync(settingsPath, 'utf8');
-            const settings = JSON.parse(settingsData);
-            
-            if (settings.botName && settings.botName.trim() !== '') {
-              return settings.botName.trim();
-            }
-          } catch (parseError) {}
-        }
-      }
-      
-      if (global.BOT_NAME) {
-        return global.BOT_NAME;
-      }
-      
-      if (process.env.BOT_NAME) {
-        return process.env.BOT_NAME;
-      }
-      
-    } catch (error) {}
-    
-    return 'WOLFBOT';
-  };
-  
-  // Get the current bot name
-  const currentBotName = getBotName();
+  const currentBotName = _getBotName();
   
   // ========== CREATE FAKE CONTACT FUNCTION ==========
   const createFakeContact = (message) => {
@@ -1029,8 +991,8 @@ case 1: {
       },
       message: {
         contactMessage: {
-          displayName: "WOLF BOT",
-          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLF BOT\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+          displayName: currentBotName,
+          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${currentBotName}\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
         }
       },
       participant: "0@s.whatsapp.net"
@@ -2399,52 +2361,8 @@ case 2: {
     return '🌍 Public'; // Default fallback
   };
   
-  const getBotName = () => {
-    try {
-      // Check multiple possible locations with priority order
-      const possiblePaths = [
-        './bot_settings.json',  // Root directory (most likely)
-        path.join(__dirname, 'bot_settings.json'),  // Same directory as menu
-        path.join(__dirname, '../bot_settings.json'),  // Parent directory
-        path.join(__dirname, '../../bot_settings.json'),  // 2 levels up
-        path.join(__dirname, '../../../bot_settings.json'),  // 3 levels up
-        path.join(__dirname, '../commands/owner/bot_settings.json'),  // Owner commands directory
-      ];
-      
-      for (const settingsPath of possiblePaths) {
-        if (fs.existsSync(settingsPath)) {
-          try {
-            const settingsData = fs.readFileSync(settingsPath, 'utf8');
-            const settings = JSON.parse(settingsData);
-            
-            if (settings.botName && settings.botName.trim() !== '') {
-              return settings.botName.trim();
-            }
-          } catch (parseError) {
-            // Continue to next path
-          }
-        }
-      }
-      
-      // Fallback to global variables
-      if (global.BOT_NAME) {
-        return global.BOT_NAME;
-      }
-      
-      // Fallback to environment variable
-      if (process.env.BOT_NAME) {
-        return process.env.BOT_NAME;
-      }
-      
-    } catch (error) {
-      // Error handling
-    }
-    
-    return 'WOLFBOT'; // Default fallback
-  };
-
   // Load bot name and mode
-  const botName = getBotName();
+  const botName = _getBotName();
   const botMode = getBotMode();
   
   // 📝 Text Only
@@ -2670,46 +2588,7 @@ case 2: {
 
 
 case 3: {
-  // First, get the bot name BEFORE showing loading message
-  const getBotName = () => {
-    try {
-      const possiblePaths = [
-        './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
-        path.join(__dirname, '../../bot_settings.json'),
-        path.join(__dirname, '../../../bot_settings.json'),
-        path.join(__dirname, '../commands/owner/bot_settings.json'),
-      ];
-      
-      for (const settingsPath of possiblePaths) {
-        if (fs.existsSync(settingsPath)) {
-          try {
-            const settingsData = fs.readFileSync(settingsPath, 'utf8');
-            const settings = JSON.parse(settingsData);
-            
-            if (settings.botName && settings.botName.trim() !== '') {
-              return settings.botName.trim();
-            }
-          } catch (parseError) {}
-        }
-      }
-      
-      if (global.BOT_NAME) {
-        return global.BOT_NAME;
-      }
-      
-      if (process.env.BOT_NAME) {
-        return process.env.BOT_NAME;
-      }
-      
-    } catch (error) {}
-    
-    return 'WOLFBOT';
-  };
-  
-  // Get the current bot name
-  const currentBotName = getBotName();
+  const currentBotName = _getBotName();
   
   // ========== CREATE FAKE CONTACT FUNCTION ==========
   const createFakeContact = (message) => {
@@ -2722,8 +2601,8 @@ case 3: {
       },
       message: {
         contactMessage: {
-          displayName: "WOLF BOT",
-          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLF BOT\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+          displayName: currentBotName,
+          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${currentBotName}\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
         }
       },
       participant: "0@s.whatsapp.net"
@@ -3823,46 +3702,7 @@ case 3: {
 
 
 case 4: {
-  // First, get the bot name BEFORE showing loading message
-  const getBotName = () => {
-    try {
-      const possiblePaths = [
-        './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
-        path.join(__dirname, '../../bot_settings.json'),
-        path.join(__dirname, '../../../bot_settings.json'),
-        path.join(__dirname, '../commands/owner/bot_settings.json'),
-      ];
-      
-      for (const settingsPath of possiblePaths) {
-        if (fs.existsSync(settingsPath)) {
-          try {
-            const settingsData = fs.readFileSync(settingsPath, 'utf8');
-            const settings = JSON.parse(settingsData);
-            
-            if (settings.botName && settings.botName.trim() !== '') {
-              return settings.botName.trim();
-            }
-          } catch (parseError) {}
-        }
-      }
-      
-      if (global.BOT_NAME) {
-        return global.BOT_NAME;
-      }
-      
-      if (process.env.BOT_NAME) {
-        return process.env.BOT_NAME;
-      }
-      
-    } catch (error) {}
-    
-    return 'WOLFBOT';
-  };
-  
-  // Get the current bot name
-  const currentBotName = getBotName();
+  const currentBotName = _getBotName();
   
   // ========== CREATE FAKE CONTACT FUNCTION ==========
   const createFakeContact = (message) => {
@@ -3875,8 +3715,8 @@ case 4: {
       },
       message: {
         contactMessage: {
-          displayName: "WOLF BOT",
-          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLF BOT\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+          displayName: currentBotName,
+          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${currentBotName}\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
         }
       },
       participant: "0@s.whatsapp.net"
@@ -5566,46 +5406,7 @@ case 4: {
 
 
 case 5: {
-  // First, get the bot name BEFORE showing loading message
-  const getBotName = () => {
-    try {
-      const possiblePaths = [
-        './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
-        path.join(__dirname, '../../bot_settings.json'),
-        path.join(__dirname, '../../../bot_settings.json'),
-        path.join(__dirname, '../commands/owner/bot_settings.json'),
-      ];
-      
-      for (const settingsPath of possiblePaths) {
-        if (fs.existsSync(settingsPath)) {
-          try {
-            const settingsData = fs.readFileSync(settingsPath, 'utf8');
-            const settings = JSON.parse(settingsData);
-            
-            if (settings.botName && settings.botName.trim() !== '') {
-              return settings.botName.trim();
-            }
-          } catch (parseError) {}
-        }
-      }
-      
-      if (global.BOT_NAME) {
-        return global.BOT_NAME;
-      }
-      
-      if (process.env.BOT_NAME) {
-        return process.env.BOT_NAME;
-      }
-      
-    } catch (error) {}
-    
-    return 'WOLFBOT';
-  };
-  
-  // Get the current bot name
-  const currentBotName = getBotName();
+  const currentBotName = _getBotName();
   
   // ========== CREATE FAKE CONTACT FUNCTION ==========
   const createFakeContact = (message) => {
@@ -5618,8 +5419,8 @@ case 5: {
       },
       message: {
         contactMessage: {
-          displayName: "WOLF BOT",
-          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLF BOT\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+          displayName: currentBotName,
+          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${currentBotName}\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
         }
       },
       participant: "0@s.whatsapp.net"
@@ -6903,46 +6704,7 @@ case 5: {
 
 
 case 6: {
-  // First, get the bot name BEFORE showing loading message
-  const getBotName = () => {
-    try {
-      const possiblePaths = [
-        './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
-        path.join(__dirname, '../../bot_settings.json'),
-        path.join(__dirname, '../../../bot_settings.json'),
-        path.join(__dirname, '../commands/owner/bot_settings.json'),
-      ];
-      
-      for (const settingsPath of possiblePaths) {
-        if (fs.existsSync(settingsPath)) {
-          try {
-            const settingsData = fs.readFileSync(settingsPath, 'utf8');
-            const settings = JSON.parse(settingsData);
-            
-            if (settings.botName && settings.botName.trim() !== '') {
-              return settings.botName.trim();
-            }
-          } catch (parseError) {}
-        }
-      }
-      
-      if (global.BOT_NAME) {
-        return global.BOT_NAME;
-      }
-      
-      if (process.env.BOT_NAME) {
-        return process.env.BOT_NAME;
-      }
-      
-    } catch (error) {}
-    
-    return 'WOLFBOT';
-  };
-  
-  // Get the current bot name
-  const currentBotName = getBotName();
+  const currentBotName = _getBotName();
   
   // ========== LOADING MESSAGE ==========
   const loadingMessage = `⚡ ${currentBotName} menu loading...`;
@@ -8433,46 +8195,7 @@ case 6: {
 
 
 case 7: {
-  // First, get the bot name BEFORE showing loading message
-  const getBotName = () => {
-    try {
-      const possiblePaths = [
-        './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
-        path.join(__dirname, '../../bot_settings.json'),
-        path.join(__dirname, '../../../bot_settings.json'),
-        path.join(__dirname, '../commands/owner/bot_settings.json'),
-      ];
-      
-      for (const settingsPath of possiblePaths) {
-        if (fs.existsSync(settingsPath)) {
-          try {
-            const settingsData = fs.readFileSync(settingsPath, 'utf8');
-            const settings = JSON.parse(settingsData);
-            
-            if (settings.botName && settings.botName.trim() !== '') {
-              return settings.botName.trim();
-            }
-          } catch (parseError) {}
-        }
-      }
-      
-      if (global.BOT_NAME) {
-        return global.BOT_NAME;
-      }
-      
-      if (process.env.BOT_NAME) {
-        return process.env.BOT_NAME;
-      }
-      
-    } catch (error) {}
-    
-    return 'WOLFBOT';
-  };
-  
-  // Get the current bot name
-  const currentBotName = getBotName();
+  const currentBotName = _getBotName();
   
   // ========== LOADING MESSAGE ==========
   const loadingMessage = `⚡ ${currentBotName} menu loading...`;

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'cvecheck',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *CVE VULNERABILITY LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}cvecheck <CVE-ID>*\n│  └⊷ Look up a specific CVE (e.g., CVE-2021-44228)\n│\n├─⊷ *${PREFIX}cvecheck <keyword>*\n│  └⊷ Search CVEs by keyword (e.g., log4j, apache)\n│\n├─⊷ *Sources:*\n│  ├⊷ MITRE CVE Database\n│  └⊷ NVD (NIST) Database\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *CVE VULNERABILITY LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}cvecheck <CVE-ID>*\n│  └⊷ Look up a specific CVE (e.g., CVE-2021-44228)\n│\n├─⊷ *${PREFIX}cvecheck <keyword>*\n│  └⊷ Search CVEs by keyword (e.g., log4j, apache)\n│\n├─⊷ *Sources:*\n│  ├⊷ MITRE CVE Database\n│  └⊷ NVD (NIST) Database\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
 
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
@@ -91,7 +92,7 @@ export default {
           result += `│\n`;
         }
 
-        result += `╰───────────────\n> *WOLFBOT*`;
+        result += `╰───────────────\n> *${getBotName()}*`;
 
         await sock.sendMessage(jid, { text: result }, { quoted: m });
         await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
@@ -112,7 +113,7 @@ export default {
         const vulnerabilities = data.vulnerabilities || [];
 
         if (totalResults === 0) {
-          await sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *CVE SEARCH* ⌋\n│\n├─⊷ *Query:* ${query}\n├─⊷ *Results:* 0 CVEs found\n│\n├─⊷ Try different keywords\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+          await sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *CVE SEARCH* ⌋\n│\n├─⊷ *Query:* ${query}\n├─⊷ *Results:* 0 CVEs found\n│\n├─⊷ Try different keywords\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
           await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
           return;
         }
@@ -155,7 +156,7 @@ export default {
         }
 
         result += `├─⊷ Use *${PREFIX}cvecheck CVE-XXXX-XXXXX* for full details\n`;
-        result += `╰───────────────\n> *WOLFBOT*`;
+        result += `╰───────────────\n> *${getBotName()}*`;
 
         await sock.sendMessage(jid, { text: result }, { quoted: m });
         await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

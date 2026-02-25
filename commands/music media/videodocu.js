@@ -407,6 +407,7 @@ import yts from "yt-search";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getBotName } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -680,7 +681,7 @@ export default {
           contextInfo: {
             externalAdReply: {
               title: videoTitle.substring(0, 70),
-              body: "YouTube Video • WolfBot",
+              body: `YouTube Video • ${getBotName()}`,
               mediaType: 2,
               thumbnailUrl: videoThumbnail,
               mediaUrl: videoUrl,

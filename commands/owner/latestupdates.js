@@ -1,3 +1,4 @@
+import { getBotName } from '../../lib/botname.js';
 export default {
     name: 'latestupdates',
     alias: ['updates', 'newcommands', 'changelog', 'whatsnew', 'latestcmds'],
@@ -54,7 +55,7 @@ export default {
             }
         ];
 
-        let text = `╭─⌈ 🐺 *WOLFBOT — LATEST UPDATES* ⌋\n│\n`;
+        let text = `╭─⌈ 🐺 *${getBotName()} — LATEST UPDATES* ⌋\n│\n`;
 
         for (const update of updates) {
             text += `├─⌈ 📅 *${update.date}* ⌋\n`;
@@ -72,7 +73,7 @@ export default {
         text += `│ • Menu styles: 6\n`;
         text += `│ • Ethical Hacking tools: 44+\n│\n`;
         text += `╰───────────────\n`;
-        text += `> *WOLFBOT*`;
+        text += `> *${getBotName()}*`;
 
         await sock.sendMessage(chatId, { text }, { quoted: msg });
     }

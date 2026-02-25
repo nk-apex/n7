@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'sitemap',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🗺️ *SITEMAP CHECKER* ⌋\n│\n├─⊷ *${PREFIX}sitemap <url>*\n│  └⊷ Check sitemap.xml of a website\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}sitemap google.com\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🗺️ *SITEMAP CHECKER* ⌋\n│\n├─⊷ *${PREFIX}sitemap <url>*\n│  └⊷ Check sitemap.xml of a website\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}sitemap google.com\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -39,7 +40,7 @@ export default {
       }
 
       if (!sitemapData) {
-        const result = `╭─⌈ 🗺️ *SITEMAP CHECK* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ❌ No sitemap.xml found\n│\n├─⊷ Checked: ${paths.join(', ')}\n╰───────────────\n> *WOLFBOT*`;
+        const result = `╭─⌈ 🗺️ *SITEMAP CHECK* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ❌ No sitemap.xml found\n│\n├─⊷ Checked: ${paths.join(', ')}\n╰───────────────\n> *${getBotName()}*`;
         await sock.sendMessage(jid, { text: result }, { quoted: m });
         await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
         return;
@@ -71,7 +72,7 @@ export default {
       const sizeKB = (Buffer.byteLength(sitemapData, 'utf8') / 1024).toFixed(1);
       output += `├─⊷ 📦 *File Size:* ${sizeKB} KB\n│\n`;
 
-      output += `╰───────────────\n> *WOLFBOT*`;
+      output += `╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: output }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

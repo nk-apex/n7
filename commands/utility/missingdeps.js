@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { getBotName } from '../../lib/botname.js';
 
 const NODE_BUILTINS = new Set([
     'assert', 'async_hooks', 'buffer', 'child_process', 'cluster', 'console',
@@ -104,7 +105,7 @@ export default {
 
         if (subcommand === 'help') {
             return await sock.sendMessage(chatId, {
-                text: `╭─⌈ 🔍 *DEPENDENCY CHECKER* ⌋\n│\n├─⊷ *${PREFIX}missingdeps*\n│  └⊷ Scan for missing packages\n├─⊷ *${PREFIX}missingdeps fix*\n│  └⊷ Auto-install missing packages\n├─⊷ *${PREFIX}missingdeps full*\n│  └⊷ Full report with all details\n│\n├─⊷ *Aliases:* checkdeps, deps\n╰───────────────\n> *WOLFBOT*`
+                text: `╭─⌈ 🔍 *DEPENDENCY CHECKER* ⌋\n│\n├─⊷ *${PREFIX}missingdeps*\n│  └⊷ Scan for missing packages\n├─⊷ *${PREFIX}missingdeps fix*\n│  └⊷ Auto-install missing packages\n├─⊷ *${PREFIX}missingdeps full*\n│  └⊷ Full report with all details\n│\n├─⊷ *Aliases:* checkdeps, deps\n╰───────────────\n> *${getBotName()}*`
             }, { quoted: msg });
         }
 
@@ -305,7 +306,7 @@ export default {
                 report += `│\n`;
             }
 
-            report += `╰───────────────\n> *WOLFBOT*`;
+            report += `╰───────────────\n> *${getBotName()}*`;
 
             await sock.sendMessage(chatId, { react: { text: missing.length > 0 || inPkgNotInstalled.length > 0 ? '⚠️' : '✅', key: msg.key } });
             await sock.sendMessage(chatId, { text: report }, { quoted: msg });

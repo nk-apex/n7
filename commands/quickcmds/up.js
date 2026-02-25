@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getBotName } from '../../lib/botname.js';
 import os from "os";
 
 export default {
@@ -17,11 +18,11 @@ export default {
             participants: "0@s.whatsapp.net",
             remoteJid: "status@broadcast",
             fromMe: false,
-            id: "WOLFBOT"
+            id: getBotName()
           },
           message: {
             contactMessage: {
-              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLFBOT\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${getBotName()}\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
             }
           },
           participant: "0@s.whatsapp.net"
@@ -81,8 +82,17 @@ export default {
         console.log("GitHub API failed, using defaults");
       }
       
-      // UPDATED: Added borders to the text
       const text = `
+╭━━⏱️ *BOT UPTIME* ⏱️━━╮
+┃
+┃  ⏱️ *Uptime:* ${days}d ${hours}h ${minutes}m ${seconds}s
+┃  💾 *Memory:* ${usedMemory.toFixed(1)}/${totalMemory.toFixed(1)} MB (${memoryPercent}%)
+┃  💻 *Platform:* ${platform} (${arch})
+┃  🔧 *CPU:* ${cpuCores} cores
+┃  🕐 *Started:* ${startTimeFormatted}
+┃  🐺 *Developer:* ${githubName}
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯
 `.trim();
 
       await sock.sendMessage(
@@ -120,7 +130,7 @@ export default {
 ╭━━⏱️ *BOT UPTIME* ⏱️━━╮
 ┃
 ┃  ⏱️ Uptime: ${days}d ${hours}h ${minutes}m
-┃  👋 @${sender.split("@")[0]}, bot is running!
+┃  👋 Bot is running!
 ┃
 ╰━━━━━━━━━━━━━━━━━━━━╯
 `.trim();

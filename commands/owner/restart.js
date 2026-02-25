@@ -1,4 +1,5 @@
 import { exec } from "child_process";
+import { getBotName } from '../../lib/botname.js';
 import { promisify } from "util";
 import fs from "fs";
 import fsPromises from "fs/promises";
@@ -39,7 +40,7 @@ export default {
     let statusMessage;
     try {
       statusMessage = await sock.sendMessage(jid, {
-        text: '🔄 **WolfBot Restart v1.1.5**\nStarting restart process...'
+        text: '🔄 **${getBotName()} Restart v1.1.5**\nStarting restart process...'
       }, { quoted: m });
 
       const editStatus = async (text) => {

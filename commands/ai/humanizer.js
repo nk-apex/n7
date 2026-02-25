@@ -1223,6 +1223,7 @@
 
 
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'humanizer',
@@ -1311,7 +1312,7 @@ export default {
           text: `📄 *HUMANIZED TEXT (${style.toUpperCase()}):*\n\n` +
                 `${humanizedText}\n\n` +
                 `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                `✅ Ready to use | ✍️ Humanized by WolfBot`,
+                `✅ Ready to use | ✍️ Humanized by ${getBotName()}`,
           quoted: m
         });
       }, 1000);
@@ -1334,7 +1335,7 @@ export default {
           text: `📄 *HUMANIZED TEXT (${style.toUpperCase()}):*\n\n` +
                 `${humanizedText}\n\n` +
                 `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                `✅ Local Processing | ✍️ Humanized by WolfBot`,
+                `✅ Local Processing | ✍️ Humanized by ${getBotName()}`,
           quoted: m
         });
       }, 1000);
@@ -2352,7 +2353,7 @@ async function generateHumanizationReport(original, humanized, style, analysis) 
   // Footer
   report += `\n` + `━`.repeat(30) + `\n`;
   report += `⏰ Processed at: ${new Date().toLocaleTimeString()}\n`;
-  report += `⚡ WolfBot Humanizer v2.0 | Next-gen AI-to-human conversion`;
+  report += `⚡ ${getBotName()} Humanizer v2.0 | Next-gen AI-to-human conversion`;
   
   return report;
 }
@@ -2387,7 +2388,7 @@ function generateSimpleReport(original, humanized, style) {
   report += `💡 *Tip:* Perfect for emails, social posts, or any content needing a human touch!\n`;
   
   report += `\n` + `━`.repeat(30) + `\n`;
-  report += `⚡ WolfBot Humanizer | Local Processing`;
+  report += `⚡ ${getBotName()} Humanizer | Local Processing`;
   
   return report;
 }

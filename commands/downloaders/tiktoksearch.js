@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import fs from 'fs';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'tiksearch',
@@ -15,7 +16,7 @@ export default {
     try {
       // Show help if no arguments
       if (args.length === 0 || args[0]?.toLowerCase() === 'help') {
-        const helpText = `╭─⌈ 🔍 *WOLFBOT TIKTOK SEARCH* ⌋\n│\n` +
+        const helpText = `╭─⌈ 🔍 *${getBotName()} TIKTOK SEARCH* ⌋\n│\n` +
           `├─⊷ *${PREFIX}tiksearch <search query>*\n│  └⊷ Search TikTok videos by keywords\n│\n` +
           `├─⊷ *${PREFIX}ttsearch <query>*\n│  └⊷ Alias for tiksearch\n│\n` +
           `├─⊷ *Examples:*\n` +
@@ -55,7 +56,7 @@ export default {
       }
 
       // Format results in WOLFBOT style
-      let resultText = `🅦🅞🅛🅕🅑🅞🅣 TIKTOK SEARCH: "${query}"\n\n`;
+      let resultText = `${getBotName()} TIKTOK SEARCH: "${query}"\n\n`;
       
       // Add header information
       resultText += `📈 *Found ${searchResults.length} videos*\n\n`;
@@ -97,7 +98,7 @@ export default {
       
       // Add footer with instructions
       resultText += `┌───────────────────────\n`;
-      resultText += `│ 🅦🅞🅛🅕🅑🅞🅣 TIKTOK DOWNLOAD\n`;
+      resultText += `│ ${getBotName()} TIKTOK DOWNLOAD\n`;
       resultText += `├───────────────────────\n`;
       resultText += `│ • Copy any URL above\n`;
       resultText += `│ • Use: \`${PREFIX}tiktok <url>\`\n`;

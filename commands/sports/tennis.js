@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 
@@ -44,7 +45,7 @@ export default {
           text += `│  └⊷ ${status}\n`;
         }
       });
-      text += `╰───\n\n⚡ *Powered by WOLFBOT*`;
+      text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
 
       await sock.sendMessage(jid, { text }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

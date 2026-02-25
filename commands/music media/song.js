@@ -1,5 +1,6 @@
 import axios from 'axios';
 import yts from 'yt-search';
+import { getBotName } from '../../lib/botname.js';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
 const AUDIO_ENDPOINTS = ['yta', 'dlmp3', 'ytmp3'];
@@ -122,7 +123,7 @@ export default {
         contextInfo: {
           externalAdReply: {
             title: trackTitle.substring(0, 60),
-            body: `🎵 ${author ? author + ' | ' : ''}${duration ? '⏱️ ' + duration + ' | ' : ''}${quality} | Downloaded by WOLFBOT`,
+            body: `🎵 ${author ? author + ' | ' : ''}${duration ? '⏱️ ' + duration + ' | ' : ''}${quality} | Downloaded by ${getBotName()}`,
             mediaType: 2,
             thumbnail: thumbnailBuffer,
             sourceUrl: videoUrl,

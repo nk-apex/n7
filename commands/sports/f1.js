@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 
@@ -34,7 +35,7 @@ export default {
           const short = name.length > 20 ? name.substring(0, 18) + '..' : name;
           text += `├─⊷ *${i + 1}.* ${short} │ ${pts} pts\n`;
         });
-        text += `╰───\n\n⚡ *Powered by WOLFBOT*`;
+        text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
         await sock.sendMessage(jid, { text }, { quoted: m });
       } else {
         const res = await axios.get(`${ESPN_BASE}/racing/f1/scoreboard`, { timeout: 15000 });
@@ -51,7 +52,7 @@ export default {
           if (circuit) text += `│  └⊷ 📍 ${circuit}\n`;
           text += `│  └⊷ ${date} • ${status}\n`;
         });
-        text += `╰───\n\n⚡ *Powered by WOLFBOT*`;
+        text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
         await sock.sendMessage(jid, { text }, { quoted: m });
       }
 

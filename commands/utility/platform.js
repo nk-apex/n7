@@ -1,5 +1,6 @@
 import os from 'os';
 import moment from 'moment-timezone';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'platform',
@@ -17,13 +18,13 @@ export default {
             participant: "0@s.whatsapp.net",
             remoteJid: "status@broadcast",
             fromMe: false,
-            id: "WOLFBOT"
+            id: getBotName()
           },
           messageTimestamp: moment().unix(),
-          pushName: "WolfBot",
+          pushName: getBotName(),
           message: {
             contactMessage: {
-              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLFBOT\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${getBotName()}\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
             }
           },
           participant: "0@s.whatsapp.net"
@@ -145,7 +146,7 @@ export default {
 │
 ╰━━━━━━━━━━━━━━━━━╯
 
-🐺 *POWERED BY WOLF TECH* 🐺`.trim();
+🐺 *POWERED BY ${getBotName()}* 🐺`.trim();
 
       await sock.sendMessage(jid, { text: platformText }, { quoted: fkontak });
       

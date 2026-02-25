@@ -1,9 +1,10 @@
 import moment from 'moment-timezone';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'uptime',
   aliases: ['up', 'runtime', 'online'],
-  description: 'Check how long WolfBot has been running',
+  description: 'Check how long the bot has been running',
   category: 'utility',
 
   async execute(sock, m, args, PREFIX) {
@@ -16,13 +17,13 @@ export default {
             participant: "0@s.whatsapp.net",
             remoteJid: "status@broadcast",
             fromMe: false,
-            id: "WOLFBOT"
+            id: getBotName()
           },
           messageTimestamp: moment().unix(),
-          pushName: "WolfBot",
+          pushName: getBotName(),
           message: {
             contactMessage: {
-              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:WOLFBOT\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${getBotName()}\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
             }
           },
           participant: "0@s.whatsapp.net"
@@ -44,7 +45,7 @@ export default {
       timeString += `${seconds}s`;
 
       const uptimeText = `
-╭━「 *WOLFBOT UPTIME* 」━╮
+╭━「 *${getBotName()} UPTIME* 」━╮
 │  ⏱️ *Running:* ${timeString.trim()}
 │  📅 *Since:* ${new Date(Date.now() - uptime * 1000).toLocaleString()}
 ╰━━━━━━━━━━━━━╯
@@ -69,7 +70,7 @@ _🐺 The Wolf never sleeps..._
       const minutes = Math.floor((uptime % 3600) / 60);
 
       await sock.sendMessage(m.key.remoteJid, {
-        text: `🐺 WolfBot: ${hours}h ${minutes}m`
+        text: `🐺 ${getBotName()}: ${hours}h ${minutes}m`
       }, {
         quoted: m
       });

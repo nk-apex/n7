@@ -1,4 +1,5 @@
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
+import { getBotName } from '../../lib/botname.js';
 import db from '../../lib/supabase.js';
 
 const CACHE_CLEAN_INTERVAL = 1 * 60 * 60 * 1000;
@@ -544,7 +545,7 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
         const senderNumber = statusData.senderNumber || getRealWhatsAppNumber(statusData.senderJid);
         const displayName = statusData.pushName || 'Unknown';
 
-        let detailsText = `\n\n✧ WOLFBOT status antidelete🐺\n`;
+        let detailsText = `\n\n✧ ${getBotName()} status antidelete🐺\n`;
         detailsText += `✧ 𝙿𝚘𝚜𝚝𝚎𝚍 𝙱𝚢 : ${senderNumber} (${displayName})\n`;
         if (deletedByNumber && deletedByNumber !== senderNumber) {
             detailsText += `✧ 𝙳𝚎𝚕𝚎𝚝𝚎𝚍 𝙱𝚢 : ${deletedByNumber}\n`;

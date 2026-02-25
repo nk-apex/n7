@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { getBotName } from '../../lib/botname.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -16,7 +17,7 @@ function getFooter() {
             return JSON.parse(fs.readFileSync(footerFile, 'utf8')).footer;
         }
     } catch {}
-    return 'WOLFBOT is the ALPHA';
+    return `${getBotName()} is the ALPHA`;
 }
 
 function setFooter(text) {
@@ -49,9 +50,9 @@ export default {
         }
 
         if (args[0]?.toLowerCase() === 'reset') {
-            setFooter('WOLFBOT is the ALPHA');
+            setFooter(`${getBotName()} is the ALPHA`);
             return sock.sendMessage(chatId, {
-                text: `✅ *Footer Reset!*\n\n📝 Default: WOLFBOT is the ALPHA`
+                text: `✅ *Footer Reset!*\n\n📝 Default: ${getBotName()} is the ALPHA`
             }, { quoted: msg });
         }
 

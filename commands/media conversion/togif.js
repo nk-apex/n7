@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'togif',
@@ -73,7 +74,7 @@ export default {
         await sock.sendMessage(jid, {
           video: mp4Buffer,
           gifPlayback: true,
-          caption: `🎞️ *Video converted to GIF* (${fileSizeKB}KB)\n> _WOLFBOT_`,
+          caption: `🎞️ *Video converted to GIF* (${fileSizeKB}KB)\n> _${getBotName()}_`,
           mimetype: 'video/mp4'
         }, { quoted: m });
 
@@ -113,7 +114,7 @@ export default {
         await sock.sendMessage(jid, {
           video: mp4Buffer,
           gifPlayback: true,
-          caption: `🎞️ *Converted to GIF* (${fileSizeKB}KB)\n> _WOLFBOT_`,
+          caption: `🎞️ *Converted to GIF* (${fileSizeKB}KB)\n> _${getBotName()}_`,
           mimetype: 'video/mp4'
         }, { quoted: m });
 

@@ -1,6 +1,7 @@
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 import sharp from 'sharp';
 import fs from 'fs';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'toimage',
@@ -59,7 +60,7 @@ export default {
       
       await sock.sendMessage(jid, {
         image: imageBuffer,
-        caption: `╭⌈ 🖼️ *STICKER TO IMAGE* ⌋\n├⊷ 📦 *Size:* ${fileSizeKB}KB\n╰⊷ 🎨 *Format:* PNG\n> _Converted by WOLFBOT_`
+        caption: `╭⌈ 🖼️ *STICKER TO IMAGE* ⌋\n├⊷ 📦 *Size:* ${fileSizeKB}KB\n╰⊷ 🎨 *Format:* PNG\n> _Converted by ${getBotName()}_`
       }, { quoted: m });
       
       console.log(`✅ [TOIMAGE] Image sent successfully`);

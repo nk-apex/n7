@@ -49,7 +49,7 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **Shazam Song Identification**: Identifies songs from audio or text using multiple APIs.
 *   **NGL Attack**: An ethical hacking tool for sending anonymous messages.
 *   **Sudo System**: Manages trusted users (sudos) with elevated command access, bypassing bot mode restrictions.
-*   **Watermarks & Captions**: Adds "Silent Wolf" watermarks and "Created by WOLFBOT" captions to generated content.
+*   **Dynamic Bot Name**: All user-facing captions, footers, headers, and watermarks use the dynamic bot name (configurable via `.setbotname`). Central helper `lib/botname.js` exports `getBotName()` which reads from `global.BOT_NAME` → `process.env.BOT_NAME` → `bot_settings.json` → fallback `'WOLFBOT'`. Commands access via `extra.BOT_NAME` or direct import. Cache cleared automatically when `.setbotname` is used.
 *   **Persistent Warn System**: Stores per-group warnings and limits across bot restarts.
 *   **Approve/Reject All**: Bulk approval or rejection of pending group join requests.
 *   **Chatbot Whitelist System**: Allows whitelisting specific groups and DMs for the W.O.L.F chatbot.

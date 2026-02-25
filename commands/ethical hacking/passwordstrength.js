@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'passwordstrength',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *PASSWORD STRENGTH* ⌋\n│\n├─⊷ *${PREFIX}passwordstrength <password>*\n│  └⊷ Analyze password strength,\n│     entropy, and crack time\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *PASSWORD STRENGTH* ⌋\n│\n├─⊷ *${PREFIX}passwordstrength <password>*\n│  └⊷ Analyze password strength,\n│     entropy, and crack time\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -141,7 +142,7 @@ export default {
         result += `│\n├─⊷ *Warnings:*\n`;
         warnings.forEach(w => { result += `│  └⊷ ${w}\n`; });
       }
-      result += `│\n╰───────────────\n> *WOLFBOT*`;
+      result += `│\n╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

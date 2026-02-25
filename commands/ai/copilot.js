@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'copilot',
@@ -80,7 +81,7 @@ export default {
       aiResponse = aiResponse.trim();
       
       // ====== FORMAT FINAL MESSAGE ======
-      let resultText = `🤖 *WOLFBOT COPILOT*\n\n`;
+      let resultText = `🤖 *${getBotName()} COPILOT*\n\n`;
       
       // Show question (truncated if too long)
       if (query.length > 100) {

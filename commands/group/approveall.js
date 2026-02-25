@@ -1,3 +1,4 @@
+import { getBotName } from '../../lib/botname.js';
 export default {
   name: 'approveall',
   description: 'Approve all pending group join requests.',
@@ -55,7 +56,7 @@ export default {
       resultText += `┃ ❌ *Failed:* ${failedCount}\n`;
     }
     resultText += `╰━━━━━━━━━━━━━╯\n`;
-    resultText += `_🐺 WOLFBOT_`;
+    resultText += `_🐺 _${getBotName()}_`;
 
     await sock.sendMessage(jid, { text: resultText }, { quoted: msg });
   },

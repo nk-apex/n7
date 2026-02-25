@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 
@@ -43,7 +44,7 @@ export default {
             });
           }
         }
-        text += `╰───\n\n⚡ *Powered by WOLFBOT*`;
+        text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
         await sock.sendMessage(jid, { text }, { quoted: m });
       } else {
         const res = await axios.get(`${ESPN_BASE}/baseball/mlb/scoreboard`, { timeout: 15000 });
@@ -60,7 +61,7 @@ export default {
           text += `├─⊷ ${away?.team?.abbreviation || '???'} *${away?.score || '0'}* @ ${home?.team?.abbreviation || '???'} *${home?.score || '0'}*\n`;
           text += `│  └⊷ ${status}\n`;
         });
-        text += `╰───\n\n⚡ *Powered by WOLFBOT*`;
+        text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
         await sock.sendMessage(jid, { text }, { quoted: m });
       }
 

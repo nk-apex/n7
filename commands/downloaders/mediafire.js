@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/mediafire';
 
@@ -29,7 +30,7 @@ export default {
 
     if (!url || !url.includes('mediafire.com')) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 📁 *MEDIAFIRE DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}mediafire <MediaFire URL>*\n│  └⊷ Download file from MediaFire\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}mediafire https://www.mediafire.com/file/...\n│\n├─⊷ *Aliases:* mf, mfdl, mediafiredl\n│\n╰───────────────\n> *WOLFBOT MEDIAFIRE DOWNLOADER*`
+        text: `╭─⌈ 📁 *MEDIAFIRE DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}mediafire <MediaFire URL>*\n│  └⊷ Download file from MediaFire\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}mediafire https://www.mediafire.com/file/...\n│\n├─⊷ *Aliases:* mf, mfdl, mediafiredl\n│\n╰───────────────\n> *${getBotName()} MEDIAFIRE DOWNLOADER*`
       }, { quoted: m });
     }
 
@@ -67,7 +68,7 @@ export default {
         document: fileBuffer,
         fileName: fileName || 'mediafire_file',
         mimetype: detectedMime,
-        caption: `📁 *${fileName}*\n📦 *Size:* ${fileSize || fileSizeMB + 'MB'}\n📂 *Type:* ${fileType || detectedMime}${uploadedOn ? `\n📅 *Uploaded:* ${uploadedOn}` : ''}\n\n🐺 *Downloaded by WOLFBOT*`
+        caption: `📁 *${fileName}*\n📦 *Size:* ${fileSize || fileSizeMB + 'MB'}\n📂 *Type:* ${fileType || detectedMime}${uploadedOn ? `\n📅 *Uploaded:* ${uploadedOn}` : ''}\n\n🐺 *Downloaded by ${getBotName()}*`
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

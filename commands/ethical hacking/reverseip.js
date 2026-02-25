@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'reverseip',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔄 *REVERSE IP LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}reverseip <ip or domain>*\n│  └⊷ Find domains hosted on same IP\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}reverseip 8.8.8.8\n│  └⊷ ${PREFIX}reverseip example.com\n│\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔄 *REVERSE IP LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}reverseip <ip or domain>*\n│  └⊷ Find domains hosted on same IP\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}reverseip 8.8.8.8\n│  └⊷ ${PREFIX}reverseip example.com\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -39,7 +40,7 @@ export default {
         result += `├─⊷ No domains found\n`;
       }
 
-      result += `│\n╰───────────────\n> *WOLFBOT*`;
+      result += `│\n╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

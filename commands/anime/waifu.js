@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import { getBotName } from '../../lib/botname.js';
 
 export default {
     name: "waifu",
@@ -28,7 +29,7 @@ export default {
                 jid,
                 {
                     image: { url: data.url },
-                    caption: "🐺 *WolfBot Waifu* 🐺\nRandom anime waifu for you ✨"
+                    caption: "🐺 *${getBotName()} Waifu* 🐺\nRandom anime waifu for you ✨"
                 },
                 { quoted: m }
             );

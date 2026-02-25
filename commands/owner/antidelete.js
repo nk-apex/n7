@@ -1,4 +1,5 @@
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
+import { getBotName } from '../../lib/botname.js';
 import db from '../../lib/supabase.js';
 
 const CACHE_CLEAN_INTERVAL = 2 * 60 * 60 * 1000;
@@ -641,12 +642,12 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
         
         let detailsText;
         if (messageData.isStatus) {
-            detailsText = `\n\n✧ WOLFBOT status antidelete🐺\n`;
+            detailsText = `\n\n✧ ${getBotName()} status antidelete🐺\n`;
             detailsText += `✧ 𝙿𝚘𝚜𝚝𝚎𝚍 𝙱𝚢 : ${senderNumber} (${messageData.pushName})\n`;
             detailsText += `✧ 𝚃𝚒𝚖𝚎 : ${time}\n`;
             detailsText += `✧ 𝚃𝚢𝚙𝚎 : ${messageData.type.toUpperCase()}\n`;
         } else {
-            detailsText = `\n\n✧ WOLFBOT antidelete🐺\n`;
+            detailsText = `\n\n✧ ${getBotName()} antidelete🐺\n`;
             detailsText += `✧ 𝙳𝚎𝚕𝚎𝚝𝚎𝚍 𝙱𝚢 : ${deletedByNumber}\n`;
             detailsText += `✧ 𝚂𝚎𝚗𝚝 𝚋𝚢 : ${senderNumber} (${messageData.pushName})\n`;
             detailsText += `✧ 𝙲𝚑𝚊𝚝 : ${messageData.chatName}\n`;
@@ -746,7 +747,7 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
         
         const senderNumber = messageData.realNumber || getRealWhatsAppNumber(messageData.senderJid);
         
-        let detailsText = `\n\n✧ WOLFBOT antidelete🐺\n`;
+        let detailsText = `\n\n✧ ${getBotName()} antidelete🐺\n`;
         detailsText += `✧ 𝙳𝚎𝚕𝚎𝚝𝚎𝚍 𝙱𝚢 : ${deletedByNumber}\n`;
         detailsText += `✧ 𝚂𝚎𝚗𝚝 𝚋𝚢 : ${senderNumber} (${messageData.pushName})\n`;
         detailsText += `✧ 𝚃𝚒𝚖𝚎 : ${time}\n`;

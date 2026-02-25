@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import { getBotName } from '../../lib/botname.js';
 
 export default {
     name: "neko",
@@ -28,7 +29,7 @@ export default {
                 jid,
                 {
                     image: { url: data.url },
-                    caption: "🐺 *WolfBot Neko* 🐺\nHere’s a cute neko for you 😺✨"
+                    caption: "🐺 *${getBotName()} Neko* 🐺\nHere’s a cute neko for you 😺✨"
                 },
                 { quoted: m }
             );

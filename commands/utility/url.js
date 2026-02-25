@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
+import { getBotName } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -523,7 +524,7 @@ export default {
                       `├─⊷ *.url <image_url>*\n` +
                       `│  └⊷ Re-upload from URL\n` +
                       `├─⊷ *Supported:* Images, Videos, Docs, Audio\n` +
-                      `╰─── *WOLFBOT* ───`
+                      `╰─── *${getBotName()}* ───`
             }, { quoted: m });
         }
         
@@ -610,7 +611,7 @@ export default {
                 `├─⊷ *Size:* ${width && height ? `${width} × ${height} • ` : ''}${fileSizeMB.toFixed(2)} MB\n` +
                 `├─⊷ *Service:* ${service}\n` +
                 `├─⊷ *URL:* ${url}\n` +
-                `╰─── *WOLFBOT* ───`;
+                `╰─── *${getBotName()}* ───`;
 
             try {
                 const { createRequire } = await import('module');
@@ -618,7 +619,7 @@ export default {
                 const { sendInteractiveMessage } = require('gifted-btns');
                 await sendInteractiveMessage(sock, jid, {
                     text: successCaption,
-                    footer: 'WOLFBOT',
+                    footer: getBotName(),
                     interactiveButtons: [
                         {
                             name: 'cta_copy',

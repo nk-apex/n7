@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/stalk/ipstalk';
 
@@ -13,7 +14,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔍 *IP STALKER* ⌋\n│\n├─⊷ *${prefix}ipstalk <IP address>*\n│  └⊷ Look up IP address info\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}ipstalk 41.90.70.195\n│\n╰───────────────\n> *WOLFBOT STALKER*`
+        text: `╭─⌈ 🔍 *IP STALKER* ⌋\n│\n├─⊷ *${prefix}ipstalk <IP address>*\n│  └⊷ Look up IP address info\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}ipstalk 41.90.70.195\n│\n╰───────────────\n> *${getBotName()} STALKER*`
       }, { quoted: m });
     }
 
@@ -32,7 +33,7 @@ export default {
 
       const d = res.data.result;
 
-      const caption = `╭─⌈ 🌐 *IP ADDRESS INFO* ⌋\n│\n├─⊷ *🔢 IP:* ${address}\n├─⊷ *🌍 Country:* ${d.country || 'N/A'}\n├─⊷ *🗺️ Continent:* ${d.continent || 'N/A'}\n├─⊷ *📌 Country Code:* ${d.countryCode || 'N/A'}\n├─⊷ *📡 ASN:* ${d.asn || 'N/A'}\n├─⊷ *🏢 ISP/AS Name:* ${d.asName || 'N/A'}\n├─⊷ *🌐 AS Domain:* ${d.asDomain || 'N/A'}${d.continentCode ? `\n├─⊷ *🗺️ Continent Code:* ${d.continentCode}` : ''}\n│\n╰───────────────\n> 🐺 *WOLFBOT STALKER*`;
+      const caption = `╭─⌈ 🌐 *IP ADDRESS INFO* ⌋\n│\n├─⊷ *🔢 IP:* ${address}\n├─⊷ *🌍 Country:* ${d.country || 'N/A'}\n├─⊷ *🗺️ Continent:* ${d.continent || 'N/A'}\n├─⊷ *📌 Country Code:* ${d.countryCode || 'N/A'}\n├─⊷ *📡 ASN:* ${d.asn || 'N/A'}\n├─⊷ *🏢 ISP/AS Name:* ${d.asName || 'N/A'}\n├─⊷ *🌐 AS Domain:* ${d.asDomain || 'N/A'}${d.continentCode ? `\n├─⊷ *🗺️ Continent Code:* ${d.continentCode}` : ''}\n│\n╰───────────────\n> 🐺 *${getBotName()} STALKER*`;
 
       await sock.sendMessage(jid, { text: caption }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

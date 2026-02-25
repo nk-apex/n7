@@ -14,7 +14,7 @@
     
 //     // ====== HELP SECTION ======
 //     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-//       const helpText = `🖼️ *WOLFBOT IMAGE ENHANCER*\n\n` +
+//       const helpText = `🖼️ *${getBotName()} IMAGE ENHANCER*\n\n` +
 //         `💡 *Usage:*\n` +
 //         `• \`${PREFIX}remini\` (reply to image)\n` +
 //         `• \`${PREFIX}remini https://image.com/photo.jpg\`\n` +
@@ -375,6 +375,7 @@
 
 
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 import FormData from 'form-data';
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 
@@ -417,7 +418,7 @@ export default {
     
     // ====== SHOW HELP ONLY IF NO IMAGE SOURCE ======
     if (!isReplyingToImage && !hasUrl && args[0] !== 'help') {
-      const helpText = `🖼️ *WOLFBOT IMAGE ENHANCER*\n\n` +
+      const helpText = `🖼️ *${getBotName()} IMAGE ENHANCER*\n\n` +
         `💡 *Usage:*\n` +
         `• \`${PREFIX}remini\` (reply to image)\n` +
         `• \`${PREFIX}remini https://image.com/photo.jpg\`\n` +
@@ -445,7 +446,7 @@ export default {
 
     // ====== SHOW HELP IF EXPLICITLY REQUESTED ======
     if (args[0] === 'help') {
-      const helpText = `🖼️ *WOLFBOT IMAGE ENHANCER*\n\n` +
+      const helpText = `🖼️ *${getBotName()} IMAGE ENHANCER*\n\n` +
         `💡 *Usage:*\n` +
         `• \`${PREFIX}remini\` (reply to image)\n` +
         `• \`${PREFIX}remini https://image.com/photo.jpg\`\n` +

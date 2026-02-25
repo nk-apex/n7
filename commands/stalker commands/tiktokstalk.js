@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/stalk/tiktokstalk';
 
@@ -13,7 +14,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔍 *TIKTOK STALKER* ⌋\n│\n├─⊷ *${prefix}tiktokstalk <username>*\n│  └⊷ Stalk a TikTok profile\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}tiktokstalk giftedtechke\n│\n╰───────────────\n> *WOLFBOT STALKER*`
+        text: `╭─⌈ 🔍 *TIKTOK STALKER* ⌋\n│\n├─⊷ *${prefix}tiktokstalk <username>*\n│  └⊷ Stalk a TikTok profile\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}tiktokstalk giftedtechke\n│\n╰───────────────\n> *${getBotName()} STALKER*`
       }, { quoted: m });
     }
 
@@ -40,7 +41,7 @@ export default {
         } catch {}
       }
 
-      const caption = `╭─⌈ 🎵 *TIKTOK PROFILE* ⌋\n│\n├─⊷ *👤 Name:* ${d.name || 'N/A'}\n├─⊷ *🏷️ Username:* @${d.username || username}\n├─⊷ *📝 Bio:* ${d.bio || 'N/A'}\n├─⊷ *👥 Followers:* ${(d.followers || 0).toLocaleString()}\n├─⊷ *👤 Following:* ${(d.following || 0).toLocaleString()}\n├─⊷ *❤️ Likes:* ${(d.likes || 0).toLocaleString()}\n├─⊷ *✅ Verified:* ${d.verified ? 'Yes' : 'No'}\n├─⊷ *🔒 Private:* ${d.private ? 'Yes' : 'No'}${d.website?.link ? `\n├─⊷ *🌐 Website:* ${d.website.link}` : ''}\n│\n╰───────────────\n> 🐺 *WOLFBOT STALKER*`;
+      const caption = `╭─⌈ 🎵 *TIKTOK PROFILE* ⌋\n│\n├─⊷ *👤 Name:* ${d.name || 'N/A'}\n├─⊷ *🏷️ Username:* @${d.username || username}\n├─⊷ *📝 Bio:* ${d.bio || 'N/A'}\n├─⊷ *👥 Followers:* ${(d.followers || 0).toLocaleString()}\n├─⊷ *👤 Following:* ${(d.following || 0).toLocaleString()}\n├─⊷ *❤️ Likes:* ${(d.likes || 0).toLocaleString()}\n├─⊷ *✅ Verified:* ${d.verified ? 'Yes' : 'No'}\n├─⊷ *🔒 Private:* ${d.private ? 'Yes' : 'No'}${d.website?.link ? `\n├─⊷ *🌐 Website:* ${d.website.link}` : ''}\n│\n╰───────────────\n> 🐺 *${getBotName()} STALKER*`;
 
       if (avatarBuffer) {
         await sock.sendMessage(jid, { image: avatarBuffer, caption }, { quoted: m });

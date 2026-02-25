@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'joke',
@@ -12,7 +13,7 @@ export default {
     
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `╭─⌈ 😂 *WOLFBOT JOKES* ⌋\n│\n├─⊷ *${PREFIX}joke*\n│  └⊷ Random joke\n│\n├─⊷ *${PREFIX}joke daily*\n│  └⊷ Daily joke\n│\n├─⊷ *${PREFIX}joke dark*\n│  └⊷ Dark humor\n│\n├─⊷ *${PREFIX}joke pun*\n│  └⊷ Pun jokes\n│\n├─⊷ *${PREFIX}joke list*\n│  └⊷ Show categories\n│\n╰───`;
+      const helpText = `╭─⌈ 😂 *${getBotName()} JOKES* ⌋\n│\n├─⊷ *${PREFIX}joke*\n│  └⊷ Random joke\n│\n├─⊷ *${PREFIX}joke daily*\n│  └⊷ Daily joke\n│\n├─⊷ *${PREFIX}joke dark*\n│  └⊷ Dark humor\n│\n├─⊷ *${PREFIX}joke pun*\n│  └⊷ Pun jokes\n│\n├─⊷ *${PREFIX}joke list*\n│  └⊷ Show categories\n│\n╰───`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }

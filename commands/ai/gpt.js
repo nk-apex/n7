@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'gpt',
@@ -130,7 +131,7 @@ export default {
       }
 
       // ====== FORMAT FINAL MESSAGE ======
-      let resultText = `🤖 *WOLFBOT GPT-5*\n\n`;
+      let resultText = `🤖 *${getBotName()} GPT-5*\n\n`;
       
       // Mode indicator
       if (mode !== 'general') {
@@ -182,7 +183,7 @@ export default {
       //     resultText += `• Use \`${PREFIX}gpt explain\` for explanations\n`;
       // }
       
-      resultText += `\n⚡ *Powered by WOLFTECH*`;
+      resultText += `\n⚡ *Powered by ${getBotName()}TECH*`;
 
       // ====== SEND FINAL ANSWER ======
       await sock.sendMessage(jid, { text: resultText }, { quoted: m });

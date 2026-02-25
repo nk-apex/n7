@@ -1,6 +1,7 @@
 // commands/ai/deepseek-plus.js
 import fetch from "node-fetch";
 import { downloadMediaMessage } from "@whiskeysockets/baileys";
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: "deepseek+",
@@ -278,7 +279,7 @@ async function callOpenRouterWithFile(query, fileData, apiKey, model = "deepseek
     // Add system message
     messages.push({
       role: "system",
-      content: `You are WolfBot File Analyzer. Analyze files thoroughly and provide helpful insights.
+      content: `You are ${getBotName()} File Analyzer. Analyze files thoroughly and provide helpful insights.
                For images: Describe content, text, objects, colors.
                For documents: Summarize, extract key points.
                For code: Explain, find bugs, suggest improvements.
@@ -432,7 +433,7 @@ function formatAnalysisResponse(reply, query, model, fileName, fileType, usage =
     return `📝 *Code${language}:*\n${code}\n`;
   });
 
-  return `📎 *WolfBot DeepSeek+* 🧠
+  return `📎 *${getBotName()} DeepSeek+* 🧠
 ━━━━━━━━━━━━━━━━
 
 ${fileInfo}*Model:* ${model}
@@ -449,7 +450,7 @@ ${formattedReply.substring(0, 3500)}
 ━━━━━━━━━━━━━━━━
 
 
-🐺 *WolfBot File Analysis*`;
+🐺 *${getBotName()} File Analysis*`;
 }
 
 // ============================================

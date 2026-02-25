@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'bcryptcheck',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *BCRYPT ANALYZER* ⌋\n│\n├─⊷ *${PREFIX}bcryptcheck <hash>*\n│  └⊷ Analyze a bcrypt hash string\n│\n├─⊷ *${PREFIX}bcryptcheck <text>*\n│  └⊷ Show bcrypt structure info\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *BCRYPT ANALYZER* ⌋\n│\n├─⊷ *${PREFIX}bcryptcheck <hash>*\n│  └⊷ Analyze a bcrypt hash string\n│\n├─⊷ *${PREFIX}bcryptcheck <text>*\n│  └⊷ Show bcrypt structure info\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -54,7 +55,7 @@ export default {
         result += `│  └⊷ Min cost factor: 12 for 2024+\n`;
         result += `│  └⊷ Use $2b$ version\n`;
         result += `│  └⊷ Combine with pepper for extra security\n`;
-        result += `│\n╰───────────────\n> *WOLFBOT*`;
+        result += `│\n╰───────────────\n> *${getBotName()}*`;
       } else {
         const inputHash = crypto.createHash('sha256').update(input).digest('hex');
 
@@ -78,7 +79,7 @@ export default {
         result += `│  ├⊷ 14 = 16,384 rounds (slow, more secure)\n`;
         result += `│  └⊷ Each +1 doubles the time\n│\n`;
         result += `├─⊷ *Your text SHA-256:*\n│  └⊷ \`${inputHash}\`\n`;
-        result += `│\n╰───────────────\n> *WOLFBOT*`;
+        result += `│\n╰───────────────\n> *${getBotName()}*`;
       }
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });

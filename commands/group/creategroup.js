@@ -1,4 +1,5 @@
 import fs from "fs";
+import { getBotName } from '../../lib/botname.js';
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -118,7 +119,7 @@ export default {
       
       // If no name collected, use default
       if (!groupName || groupName.trim() === "") {
-        groupName = "WolfBot Group";
+        groupName = `${getBotName()} Group`;
       }
 
       // ====== VALIDATION ======
@@ -263,7 +264,7 @@ export default {
         // ====== SEND WELCOME MESSAGES ======
         // Welcome in new group
         const welcomeText = `👋 *Welcome to ${groupName}!*\n\n` +
-          `This group was created using WolfBot.\n\n` +
+          `This group was created using ${getBotName()}.\n\n` +
           `📌 *Commands:* Use \`${PREFIX}help\`\n` +
           `👤 *Created by:* ${senderJid.split('@')[0]}\n` +
           `🤖 *Bot Prefix:* ${PREFIX}\n\n` +

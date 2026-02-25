@@ -1,3 +1,4 @@
+import { getBotName } from '../../lib/botname.js';
 // import { createCanvas, registerFont } from 'canvas';
 // import axios from "axios";
 
@@ -267,7 +268,7 @@ export default {
 
       await sock.sendMessage(jid, {
         image: logoBuffer,
-        caption: `🔥 *Fire Logo Generated!*\nText: ${text}\n\n_Created by WOLFBOT_`
+        caption: `🔥 *Fire Logo Generated!*\nText: ${text}\n\n_Created by ${getBotName()}_`
       }, { quoted: m });
 
     } catch (err) {

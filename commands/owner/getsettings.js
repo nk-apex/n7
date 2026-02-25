@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { getBotName } from '../../lib/botname.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getWarnLimit as getPerGroupLimit } from '../../lib/warnings-store.js';
@@ -108,7 +109,7 @@ function getGoodbyeStatus() {
 
 function getFooter() {
     const data = safeReadJSON(path.join(__dirname, '../../data/footer.json'));
-    return data?.footer || 'WOLFBOT is the ALPHA';
+    return data?.footer || `${getBotName()} is the ALPHA`;
 }
 
 function getAntideleteState() {
@@ -251,7 +252,7 @@ export default {
             let caption = `⚙️  \`W.O.L.F  𝚂𝙴𝚃𝚃𝙸𝙽𝙶𝚂\`\n\n`;
 
             caption += `┌─── *BASIC CONFIG* ───\n`;
-            caption += `│ ◎ *Bot Name:* WOLFBOT\n`;
+            caption += `│ ◎ *Bot Name:* ${getBotName()}\n`;
             caption += `│ ◎ *Owner:* ${ownerNumber}\n`;
             caption += `│ ◎ *Prefix:* ${prefix}\n`;
             caption += `│ ◎ *Prefixless:* ${isPrefixless ? '✅ ON' : '❌ OFF'}\n`;

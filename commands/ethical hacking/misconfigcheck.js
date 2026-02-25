@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'misconfigcheck',
@@ -9,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *SERVER MISCONFIGURATION CHECKER* ⌋\n│\n├─⊷ *${PREFIX}misconfigcheck <url>*\n│  └⊷ Check for common server misconfigurations\n│\n├─⊷ *Checks:*\n│  ├⊷ Directory listing enabled\n│  ├⊷ Server version disclosure\n│  ├⊷ CORS misconfiguration\n│  ├⊷ HTTPS redirect\n│  └⊷ TRACE method enabled\n╰───────────────\n> *WOLFBOT*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *SERVER MISCONFIGURATION CHECKER* ⌋\n│\n├─⊷ *${PREFIX}misconfigcheck <url>*\n│  └⊷ Check for common server misconfigurations\n│\n├─⊷ *Checks:*\n│  ├⊷ Directory listing enabled\n│  ├⊷ Server version disclosure\n│  ├⊷ CORS misconfiguration\n│  ├⊷ HTTPS redirect\n│  └⊷ TRACE method enabled\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
     }
 
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
@@ -153,7 +154,7 @@ export default {
       result += `├─⊷ Configure restrictive CORS policies\n`;
       result += `├─⊷ Enable HTTPS redirect and HSTS\n`;
       result += `├─⊷ Disable TRACE and unnecessary HTTP methods\n`;
-      result += `│\n╰───────────────\n> *WOLFBOT*`;
+      result += `│\n╰───────────────\n> *${getBotName()}*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

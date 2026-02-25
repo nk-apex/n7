@@ -1,6 +1,7 @@
 import axios from 'axios';
 import https from 'https';
 import FormData from 'form-data';
+import { getBotName } from '../../lib/botname.js';
 
 // Resolution options
 const reso = {
@@ -93,7 +94,7 @@ export default {
       console.log(`[BING] Image generated: ${fileSizeKB} KB`);
 
       // Create caption
-      const caption = `🎨 *AI GENERATED IMAGE*\n\n_Created by WOLFBOT_`;
+      const caption = `🎨 *AI GENERATED IMAGE*\n\n_Created by ${getBotName()}_`;
 
       // Send the generated image
       await sock.sendMessage(jid, {

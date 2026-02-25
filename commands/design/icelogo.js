@@ -1,3 +1,4 @@
+import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
 
@@ -34,7 +35,7 @@ export default {
       
       await sock.sendMessage(jid, {
         image: logoBuffer,
-        caption: `❄️ *Ice Logo Generated!*\nText: ${text}\n\n_Created by WOLFBOT_`
+        caption: `❄️ *Ice Logo Generated!*\nText: ${text}\n\n_Created by ${getBotName()}_`
       }, { quoted: m });
 
     } catch (error) {

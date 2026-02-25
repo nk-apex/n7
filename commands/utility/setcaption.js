@@ -1,3 +1,5 @@
+import { getBotName } from '../../lib/botname.js';
+
 let getUserCaption, setUserCaption;
 
 try {
@@ -6,7 +8,7 @@ try {
     setUserCaption = tiktokModule.setUserCaption;
 } catch {
     const fallbackMap = new Map();
-    getUserCaption = (userId) => fallbackMap.get(userId) || 'WolfBot is the Alpha';
+    getUserCaption = (userId) => fallbackMap.get(userId) || `${getBotName()} is the Alpha`;
     setUserCaption = (userId, caption) => fallbackMap.set(userId, caption);
 }
 

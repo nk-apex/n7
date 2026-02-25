@@ -2,6 +2,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getBotName } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,7 +68,7 @@ export default {
       // Send the generated image
       await sock.sendMessage(jid, {
         image: fs.readFileSync(filePath),
-        caption: `🎨 *FLUX AI Generated Image*\n\n_Created by WOLFBOT_`
+        caption: `🎨 *FLUX AI Generated Image*\n\n_Created by ${getBotName()}_`
       }, { quoted: m });
 
       // Delete the temporary file

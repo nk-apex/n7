@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotName } from '../../lib/botname.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/apkdl';
 
@@ -26,7 +27,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 📱 *APK DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}apk <app name>*\n│  └⊷ Download APK file\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}apk WhatsApp\n│  └⊷ ${prefix}apk Telegram\n│  └⊷ ${prefix}apk Spotify\n│\n╰───────────────\n> *WOLFBOT APK DOWNLOADER*`
+        text: `╭─⌈ 📱 *APK DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}apk <app name>*\n│  └⊷ Download APK file\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}apk WhatsApp\n│  └⊷ ${prefix}apk Telegram\n│  └⊷ ${prefix}apk Spotify\n│\n╰───────────────\n> *${getBotName()} APK DOWNLOADER*`
       }, { quoted: m });
     }
 
@@ -69,7 +70,7 @@ export default {
         document: apkBuffer,
         fileName: `${appname.replace(/[^a-zA-Z0-9]/g, '_')}.apk`,
         mimetype: mimetype || 'application/vnd.android.package-archive',
-        caption: `📱 *${appname}*\n👤 *Developer:* ${developer || 'Unknown'}\n📦 *Size:* ${fileSizeMB}MB\n\n🐺 *Downloaded by WOLFBOT*`,
+        caption: `📱 *${appname}*\n👤 *Developer:* ${developer || 'Unknown'}\n📦 *Size:* ${fileSizeMB}MB\n\n🐺 *Downloaded by ${getBotName()}*`,
         thumbnail: iconBuffer
       }, { quoted: m });
 
