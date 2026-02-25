@@ -663,11 +663,12 @@ const __dirname = dirname(__filename);
 // ====== CONFIGURATION ======
 const SESSION_DIR = './session';
 try {
-    const _bnFile = './bot_name.json';
+    const _bnFile = path.join(__dirname, 'bot_name.json');
     if (fs.existsSync(_bnFile)) {
         const _bnData = JSON.parse(fs.readFileSync(_bnFile, 'utf8'));
         if (_bnData.botName && _bnData.botName.trim()) {
             global.BOT_NAME = _bnData.botName.trim();
+            console.log(`✅ Bot name loaded: "${_bnData.botName.trim()}"`);
         }
     }
 } catch {}

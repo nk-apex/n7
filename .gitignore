@@ -13,6 +13,7 @@ bot_restart.log
 owner.json
 bot_mode.json
 bot_settings.json
+bot_name.json
 prefix_config.json
 lid_mappings.json
 sticker_config.json
