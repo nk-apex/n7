@@ -24,7 +24,7 @@ import { getBotName } from '../../lib/botname.js';
 
 export default {
   name: 'tosticker',
-  description: 'Convert image to sticker with WolfBot metadata',
+  description: `Convert image to sticker with ${getBotName()} metadata`,
   category: 'converter',
 
   async execute(sock, m, args) {
