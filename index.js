@@ -663,8 +663,13 @@ const __dirname = dirname(__filename);
 // ====== CONFIGURATION ======
 const SESSION_DIR = './session';
 try {
-    const { loadBotName: _loadBN } = await import('./lib/botname.js');
-    _loadBN();
+    const _bnFile = './bot_name.json';
+    if (fs.existsSync(_bnFile)) {
+        const _bnData = JSON.parse(fs.readFileSync(_bnFile, 'utf8'));
+        if (_bnData.botName && _bnData.botName.trim()) {
+            global.BOT_NAME = _bnData.botName.trim();
+        }
+    }
 } catch {}
 let BOT_NAME = _getBotName();
 global.BOT_NAME = BOT_NAME;
