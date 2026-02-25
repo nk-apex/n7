@@ -56,6 +56,17 @@ export default {
 │  • humanizer
 │  • speechwriter
 │
+╰─⊷
+
+╭─⊷ *🐺 WOLF AI ASSISTANT*
+│
+│  • wolf on/off — Toggle Wolf AI
+│  • wolf status — Show Wolf AI stats
+│  • wolf clear — Reset conversations
+│  ───────────────
+│  When active, just say "wolf"
+│  followed by anything to chat!
+│
 ╰─⊷`;
 
     await sendSubMenu(sock, jid, '🤖 AI MENU', commandsText, m, PREFIX);

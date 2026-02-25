@@ -221,7 +221,7 @@ import NodeCache from 'node-cache';
 import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList } from './lib/sudo-store.js';
 import supabaseDb, { setConfigBotId } from './lib/supabase.js';
 import { getBotName as _getBotName, clearBotNameCache } from './lib/botname.js';
-import { isWolfTrigger, handleWolfAI } from './lib/wolfai.js';
+import { isWolfTrigger, handleWolfAI, isWolfEnabled } from './lib/wolfai.js';
 import { migrateSudoToSupabase, initSudo, setBotId } from './lib/sudo-store.js';
 import { migrateWarningsToSupabase } from './lib/warnings-store.js';
 
@@ -6207,7 +6207,7 @@ async function handleIncomingMessage(sock, msg) {
         
         if (!textMsg) return;
 
-        if (isWolfTrigger(textMsg) && !msg.key.fromMe) {
+        if (isWolfEnabled() && isWolfTrigger(textMsg) && !msg.key.fromMe) {
             const isOwnerW = jidManager.isOwner(msg);
             let isSudoW = jidManager.isSudo(msg);
             if (isOwnerW || isSudoW) {
