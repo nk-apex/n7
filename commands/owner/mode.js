@@ -92,6 +92,10 @@ export default {
             }
             
             process.env.BOT_MODE = requestedMode;
+
+            if (typeof globalThis.updateBotModeCache === 'function') {
+                globalThis.updateBotModeCache(requestedMode);
+            }
             
             const modeInfo = modes[requestedMode];
             

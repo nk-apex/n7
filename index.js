@@ -698,6 +698,11 @@ function _saveConfigCache(key, value) {
     });
 }
 
+globalThis.updateBotModeCache = function(newMode) {
+    _cache_bot_mode = { mode: newMode };
+    BOT_MODE = newMode;
+    _saveConfigCache('bot_mode', { mode: newMode });
+};
 globalThis.reloadConfigCaches = reloadConfigCaches;
 async function reloadConfigCaches() {
     try {
