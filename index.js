@@ -235,6 +235,8 @@ function cacheLidPhone(lidNum, phoneNum) {
     if (!lidNum || !phoneNum || lidNum === phoneNum) return;
     lidPhoneCache.set(lidNum, phoneNum);
     phoneLidCache.set(phoneNum, lidNum);
+    _capMap(lidPhoneCache, MAX_LID_CACHE);
+    _capMap(phoneLidCache, MAX_LID_CACHE);
     mapLidToPhone(lidNum, phoneNum);
 }
 
@@ -308,8 +310,27 @@ globalThis.phoneLidCache = phoneLidCache;
 globalThis.viewOnceCache_ref = null;
 globalThis.msgRetryCounterCache_ref = null;
 const GROUP_CACHE_TTL = 10 * 60 * 1000;
+const MAX_LID_CACHE = 500;
+const MAX_GROUP_META_CACHE = 50;
+const MAX_GROUP_DIAG = 200;
 const groupDiagDone = new Set();
 const _pendingGroupFetches = new Map();
+
+function _capMap(map, max) {
+    if (map.size <= max) return;
+    const excess = map.size - Math.floor(max * 0.6);
+    let i = 0;
+    for (const k of map.keys()) {
+        if (i++ >= excess) break;
+        map.delete(k);
+    }
+}
+function _capSet(set, max) {
+    if (set.size <= max) return;
+    const arr = [...set];
+    set.clear();
+    for (let i = arr.length - Math.floor(max * 0.6); i < arr.length; i++) set.add(arr[i]);
+}
 
 async function getCachedGroupMetadata(chatId, sock) {
     const cached = groupMetadataCache.get(chatId);
@@ -325,6 +346,7 @@ async function getCachedGroupMetadata(chatId, sock) {
                 new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
             ]);
             groupMetadataCache.set(chatId, { data: metadata, ts: Date.now() });
+            _capMap(groupMetadataCache, MAX_GROUP_META_CACHE);
             return metadata;
         } catch (err) {
             if (cached) return cached.data;
@@ -397,6 +419,7 @@ async function buildLidMapFromGroup(chatId, sock) {
 
     if (!groupDiagDone.has(chatId) && participants.length > 0) {
         groupDiagDone.add(chatId);
+        _capSet(groupDiagDone, MAX_GROUP_DIAG);
         const sample = participants.slice(0, 3).map(p => ({
             id: p.id || 'none',
             lid: p.lid || 'none',
@@ -2803,6 +2826,11 @@ const memoryMonitor = {
                 }
                 if (label) UltraCleanLogger.info(`${label} trimmed to ${map.size} entries`);
             };
+            const now = Date.now();
+            for (const [k, v] of groupMetadataCache) {
+                if (now - v.ts > GROUP_CACHE_TTL) groupMetadataCache.delete(k);
+            }
+            _capSet(groupDiagDone, MAX_GROUP_DIAG);
             const factor = aggressive ? 0.5 : 1;
             trimMap(lidPhoneCache, Math.floor(400 * factor), Math.floor(200 * factor), 'LID cache');
             trimMap(phoneLidCache, Math.floor(400 * factor), Math.floor(200 * factor), null);
@@ -4391,6 +4419,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
             keepAliveIntervalMs: 25000,
             emitOwnEvents: true,
             mobile: false,
+            shouldSyncHistoryMessage: () => false,
+            syncFullHistory: false,
+            fireInitQueries: true,
             msgRetryCounterCache,
             getMessage: async (key) => {
                 const storeMsg = store?.getMessage(key.remoteJid, key.id);
@@ -4428,11 +4459,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }
                 return undefined;
             },
-            defaultQueryTimeoutMs: 30000,
+            defaultQueryTimeoutMs: 15000,
             retryRequestDelayMs: 250,
-            maxRetries: 5,
-            fireInitQueries: true,
-            syncFullHistory: false,
+            maxRetries: 3,
         });
         
         const originalSendMessage = sock.sendMessage.bind(sock);
@@ -4474,9 +4503,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     if (!isConnected) return;
                     const hasAppStateKey = sock.authState?.creds?.myAppStateKeyId;
                     if (!hasAppStateKey) {
-                        UltraCleanLogger.info('🔑 App state keys missing — requesting sync from WhatsApp...');
-                        sock.resyncAppState(['critical_block', 'critical_unblock_to_single', 'regular_high', 'regular_low', 'regular'], true)
-                            .then(() => UltraCleanLogger.info('✅ App state resync requested'))
+                        UltraCleanLogger.info('🔑 App state keys missing — requesting sync...');
+                        sock.resyncAppState(['critical_block', 'critical_unblock_to_single'], true)
+                            .then(() => UltraCleanLogger.info('✅ App state resync done'))
                             .catch(e => UltraCleanLogger.info(`⚠️ App state resync: ${e.message}`));
                     }
                 }, 5000);

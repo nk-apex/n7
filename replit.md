@@ -70,7 +70,11 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 **Performance & Stability Optimizations:**
 *   **Message Age Filtering**: All incoming messages are filtered at the top of the `messages.upsert` handler — messages older than 60 seconds (or older than the connection open time) are silently discarded to prevent processing historical synced messages on reconnection.
 *   **ReactDev/ReactOwner Guards**: Both reaction handlers independently reject messages older than 30 seconds as double protection against reacting to past messages.
-*   **Memory Leak Prevention**: Bounded caches (contactNames: 1000, lidPhoneCache: 400, groupMetadata: 20, viewOnce: 50, messageStore: 150). Memory trimming triggers at 250MB with aggressive mode at 350MB. Antidelete media stored as metadata-only in memory (base64 removed from RAM, fetched from PostgreSQL on demand). Antidelete cache cleanup every 2h (messages) / 1h (statuses). Proper interval cleanup on reconnect to prevent timer leaks.
+*   **History Sync Disabled**: `shouldSyncHistoryMessage: () => false` prevents Baileys from buffering all events (including messages.upsert) for up to 30 seconds during history sync. This is critical for instant message delivery.
+*   **Memory Leak Prevention**: Bounded caches with inline caps — lidPhoneCache/phoneLidCache: 500, groupMetadataCache: 50 (TTL-based eviction + size cap), groupDiagDone: 200, contactNames: 2000. `_capMap()`/`_capSet()` helpers enforce limits at write-time, not just during periodic trims. Memory trimming triggers at 250MB with aggressive mode at 350MB. Periodic trim every 5 minutes also evicts expired groupMetadataCache entries.
+*   **Reduced Query Timeouts**: `defaultQueryTimeoutMs: 15000` (down from 30s), `maxRetries: 3` (down from 5) to prevent internal Baileys operations from blocking the event pipeline.
+*   **App State Resync**: Limited to `critical_block` + `critical_unblock_to_single` only (was syncing all 5 types including regular_high/low/regular which cause heavy event buffering).
+*   **Event Loop Lag Monitor**: 5-second interval check logs warnings when event loop lag exceeds 1000ms.
 *   **Authentication Backoff**: Exponential backoff for 401/403 authentication failures prevents reconnection loops. Delay doubles each attempt up to 5-minute maximum.
 *   **Optimized Socket Config**: `generateHighQualityLinkPreview: false`, `keepAliveIntervalMs: 25000`, `MessageStore: 150` for balanced performance.
 
