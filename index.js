@@ -4048,7 +4048,7 @@ function setupHerokuHealthCheck() {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({
                         status: 'ok',
-                        bot: BOT_NAME,
+                        bot: getCurrentBotName(),
                         version: VERSION,
                         uptime: process.uptime(),
                         platform: 'Heroku',
@@ -4056,7 +4056,7 @@ function setupHerokuHealthCheck() {
                     }));
                 } else {
                     res.writeHead(200);
-                    res.end(`${BOT_NAME} is running on Heroku`);
+                    res.end(`${getCurrentBotName()} is running on Heroku`);
                 }
             });
             
@@ -4767,7 +4767,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                             console.clear();
                             console.log(chalk.greenBright(`
 ╔══════════════════════════════════════════════════════════════════════╗
-║                    🔗 PAIRING CODE - ${BOT_NAME}                    ║
+║                    🔗 PAIRING CODE - ${getCurrentBotName()}                    ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║ 📞 Phone  : ${chalk.cyan(loginData.padEnd(40))}║
 ║ 🔑 Code   : ${chalk.yellow.bold(formattedCode.padEnd(39))}║
@@ -5480,7 +5480,7 @@ async function triggerRestartAutoFix(sock) {
                 const currentPrefix = getCurrentPrefix();
                 const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
                 const restartMsg = `🔄 *BOT RESTARTED SUCCESSFULLY!*\n\n` +
-                                 `✅ *${BOT_NAME} v${VERSION}* is now online\n` +
+                                 `✅ *${getCurrentBotName()} v${VERSION}* is now online\n` +
                                  `👑 Owner: +${cleaned.cleanNumber}\n` +
                                  `💬 Prefix: ${prefixDisplay}\n` +
                                  `👁️ Status Detector: ✅ ACTIVE\n` +
@@ -5575,7 +5575,7 @@ console.log(chalk.greenBright(`
 ║  👑 Owner : +${ownerInfo.ownerNumber}
 ║  🔧 Clean JID : ${ownerInfo.ownerJid}
 ║  🔗 LID : ${ownerInfo.ownerLid || 'Not set'}
-║  📱 Device : ${chalk.cyan(`${BOT_NAME} - Chrome`)}       
+║  📱 Device : ${chalk.cyan(`${getCurrentBotName()} - Chrome`)}       
 ║  🕒 Time   : ${chalk.yellow(currentTime)}                 
 ║  🔥 Status : ${chalk.redBright('24/7 Ready!')}         
 ║  💬 Prefix : ${prefixDisplay}
@@ -5605,7 +5605,7 @@ console.log(chalk.greenBright(`
             const cleaned = jidManager.cleanJid(OWNER_JID);
             
             const loadingMessage = await sock.sendMessage(OWNER_JID, {
-                text: `🐺 *${BOT_NAME}* is starting up... █▒▒▒▒▒▒▒▒▒`
+                text: `🐺 *${getCurrentBotName()}* is starting up... █▒▒▒▒▒▒▒▒▒`
             });
 
             const latency = Date.now() - start;
@@ -5972,7 +5972,7 @@ async function handleConnectCommand(sock, msg, args, cleaned) {
         const platform = detectPlatform();
         
         const loadingMessage = await sock.sendMessage(chatJid, {
-            text: `🐺 *${BOT_NAME}* is checking connection... █▒▒▒▒▒▒▒▒▒`
+            text: `🐺 *${getCurrentBotName()}* is checking connection... █▒▒▒▒▒▒▒▒▒`
         }, { quoted: msg });
 
         const latency = Date.now() - start;
@@ -6563,7 +6563,7 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                 break;
                 
             case 'help':
-                let helpText = `🐺 *${BOT_NAME} HELP*\n\n`;
+                let helpText = `🐺 *${getCurrentBotName()} HELP*\n\n`;
                 helpText += `Prefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\n`;
                 helpText += `Mode: ${BOT_MODE}\n`;
                 helpText += `Commands: ${commands.size}\n\n`;
@@ -6782,7 +6782,7 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
 // // ====== MAIN APPLICATION ======
 // async function main() {
 //     try {
-//         UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
+//         UltraCleanLogger.success(`🚀 Starting ${getCurrentBotName()} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
 //         UltraCleanLogger.info(`Loaded prefix: "${isPrefixless ? 'none (prefixless)' : getCurrentPrefix()}"`);
 //         UltraCleanLogger.info(`Prefixless mode: ${isPrefixless ? '✅ ENABLED' : '❌ DISABLED'}`);
 //         UltraCleanLogger.info(`Auto-connect on link: ${AUTO_CONNECT_ON_LINK ? '✅' : '❌'}`);
@@ -6884,7 +6884,7 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
 // ====== MAIN APPLICATION ======
 async function main() {
     try {
-        UltraCleanLogger.success(`🚀 Starting ${BOT_NAME} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
+        UltraCleanLogger.success(`🚀 Starting ${getCurrentBotName()} v${VERSION} (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)`);
         
         // ====== HEROKU INITIALIZATION ======
         UltraCleanLogger.info(`🌐 Environment: ${process.env.NODE_ENV || 'production'}`);
