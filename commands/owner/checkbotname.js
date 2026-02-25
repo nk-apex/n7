@@ -2,6 +2,7 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getBotName } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,7 +72,7 @@ export default {
                 }
             }
             
-            return global.BOT_NAME || 'WOLFBOT';
+            return global.BOT_NAME || getBotName();
             
         } catch (error) {
             return 'Error loading';
