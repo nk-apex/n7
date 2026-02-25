@@ -1543,7 +1543,9 @@ async function preserveEssentialFiles() {
     '.env',
     'baileys_store.json',
     '.env.example',
-    'package.json'
+    'package.json',
+    'bot_name.json',
+    'bot_settings.json'
   ];
   
   const essentialDirs = [
@@ -1736,6 +1738,8 @@ async function copyEssentialFiles(src, dest) {
     /^settings\.js$/,
     /^config\.json$/,
     /^baileys_store\.json$/,
+    /^bot_name\.json$/,
+    /^bot_settings\.json$/,
     /package-lock\.json$/,
     /yarn\.lock$/,
     /\.log$/,

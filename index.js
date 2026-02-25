@@ -4301,8 +4301,8 @@ async function initDatabase() {
         if (ready && supabaseDb.isAvailable()) {
             UltraCleanLogger.success('💾 Database: PostgreSQL connected & tables ready');
             try {
-                const { loadBotNameFromDB } = await import('./lib/botname.js');
-                await loadBotNameFromDB();
+                const { loadBotName } = await import('./lib/botname.js');
+                loadBotName();
             } catch {}
             await runDataMigrations();
             return true;
