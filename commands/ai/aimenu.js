@@ -58,6 +58,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🤖 AI MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🤖 AI MENU', commandsText, m, PREFIX);
   }
 };

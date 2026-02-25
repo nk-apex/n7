@@ -1,46 +1,56 @@
-import { getBotName } from '../../lib/botname.js';
+import { sendSubMenu } from '../../lib/menuHelper.js';
+
 export default {
   name: 'stalkermenu',
   aliases: ['smenu', 'stalkermenu', 'stalkercmds'],
   description: 'Shows all Stalker commands',
   category: 'Stalker Commands',
 
-  async execute(sock, m, args, prefix) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
-    const menu = `╭─⌈ 🕵️ *STALKER COMMANDS* ⌋
+    const commandsText = `╭─⊷ *📢 WHATSAPP CHANNEL*
 │
-├─⊷ *📢 WhatsApp Channel*
-│  • ${prefix}wachannel <URL>
-│  └⊷ Stalk a WhatsApp Channel
+│  • wachannel <URL>
 │
-├─⊷ *🎵 TikTok*
-│  • ${prefix}tiktokstalk <username>
-│  └⊷ Stalk a TikTok profile
-│
-├─⊷ *🐦 Twitter/X*
-│  • ${prefix}twitterstalk <username>
-│  └⊷ Stalk a Twitter/X profile
-│
-├─⊷ *🌐 IP Address*
-│  • ${prefix}ipstalk <IP>
-│  └⊷ Look up IP address info
-│
-├─⊷ *📸 Instagram*
-│  • ${prefix}igstalk <username>
-│  └⊷ Stalk an Instagram profile
-│
-├─⊷ *📦 NPM Package*
-│  • ${prefix}npmstalk <package>
-│  └⊷ Look up NPM package info
-│
-├─⊷ *🐙 GitHub*
-│  • ${prefix}gitstalk <username>
-│  └⊷ Stalk a GitHub profile
-│
-╰───────────────
-> 🐺 *${getBotName()} STALKER COMMANDS*`;
+╰─⊷
 
-    await sock.sendMessage(jid, { text: menu }, { quoted: m });
+╭─⊷ *🎵 TIKTOK*
+│
+│  • tiktokstalk <username>
+│
+╰─⊷
+
+╭─⊷ *🐦 TWITTER/X*
+│
+│  • twitterstalk <username>
+│
+╰─⊷
+
+╭─⊷ *🌐 IP ADDRESS*
+│
+│  • ipstalk <IP>
+│
+╰─⊷
+
+╭─⊷ *📸 INSTAGRAM*
+│
+│  • igstalk <username>
+│
+╰─⊷
+
+╭─⊷ *📦 NPM PACKAGE*
+│
+│  • npmstalk <package>
+│
+╰─⊷
+
+╭─⊷ *🐙 GITHUB*
+│
+│  • gitstalk <username>
+│
+╰─⊷`;
+
+    await sendSubMenu(sock, jid, '🕵️ Stalker Menu', commandsText, m, PREFIX);
   }
 };

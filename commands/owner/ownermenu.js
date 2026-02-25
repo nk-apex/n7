@@ -1,4 +1,4 @@
-import { sendSubMenu, getBotName } from '../../lib/menuHelper.js';
+import { sendSubMenu } from '../../lib/menuHelper.js';
 
 export default {
   name: "ownermenu",
@@ -9,15 +9,6 @@ export default {
 
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
-    const botName = getBotName();
-
-    const customHeader = `╭─⊷ *👑 ${botName} OWNER MENU*
-│
-│  ├⊷ *User:* ${m.pushName || "Owner"}
-│  ├⊷ *Prefix:* [ ${PREFIX || '?'} ]
-│  └⊷ *Time:* ${new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' })}
-│
-╰─⊷`;
 
     const commandsText = `╭─⊷ *⚡ CORE MANAGEMENT*
 │
@@ -118,6 +109,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, 'Owner menu', commandsText, m, customHeader);
+    await sendSubMenu(sock, jid, 'Owner Menu', commandsText, m, PREFIX);
   }
 };

@@ -7,7 +7,7 @@ export default {
   category: "Games",
   usage: ".gamemenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *🎮 GAMES*
@@ -27,6 +27,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🎮 GAMES MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🎮 GAMES MENU', commandsText, m, PREFIX);
   }
 };

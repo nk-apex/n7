@@ -1,5 +1,5 @@
 import { EFFECTS, CATEGORY_META, getEffectsByCategory, getAllCategories } from './photofuniaUtils.js';
-import { sendSubMenu, getBotName } from '../../lib/menuHelper.js';
+import { sendSubMenu } from '../../lib/menuHelper.js';
 
 export default {
   name: 'photofunia',
@@ -9,7 +9,6 @@ export default {
 
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
-    const botName = getBotName();
 
     if (args.length && CATEGORY_META[args[0].toLowerCase()]) {
       const cat = args[0].toLowerCase();
@@ -22,12 +21,6 @@ export default {
         const typeLabel = eff.type === 'image' ? '[img]' : eff.type === 'text' ? '[txt]' : '[both]';
         list += `│  • ${typeLabel} ${cmdName}\n`;
       }
-
-      const customHeader = `╭─⊷ *${meta.emoji || '🎨'} ${botName} ${meta.name.toUpperCase()}*
-│
-│  └⊷ *Category:* ${meta.name}
-│
-╰─⊷`;
 
       const commandsText = `╭─⊷ *${meta.emoji || '🎨'} ${meta.name.toUpperCase()} EFFECTS*
 │
@@ -43,7 +36,7 @@ ${list}│
 │
 ╰─⊷`;
 
-      return await sendSubMenu(sock, jid, meta.name, commandsText, m, customHeader);
+      return await sendSubMenu(sock, jid, `PhotoFunia ${meta.name}`, commandsText, m, PREFIX);
     }
 
     const cats = getAllCategories();
@@ -65,13 +58,6 @@ ${list}│
       fullList += `│\n╰─⊷\n\n`;
     }
 
-    const customHeader = `╭─⊷ *🎨 ${botName} PHOTOFUNIA*
-│
-│  ├⊷ *Total:* ${totalEffects} effects
-│  └⊷ *Categories:* ${catOrder.length}
-│
-╰─⊷`;
-
     const commandsText = `╭─⊷ *📋 LEGEND*
 │
 │  [img] Reply to image
@@ -90,6 +76,6 @@ ${fullList}
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, 'PhotoFunia menu', commandsText, m, customHeader);
+    await sendSubMenu(sock, jid, 'PhotoFunia Menu', commandsText, m, PREFIX);
   }
 };

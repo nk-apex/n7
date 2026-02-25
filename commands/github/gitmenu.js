@@ -7,7 +7,7 @@ export default {
   category: "GitHub",
   usage: ".gitmenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *🐙 GITHUB COMMANDS*
@@ -21,6 +21,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🐙 GITHUB MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🐙 GITHUB MENU', commandsText, m, PREFIX);
   }
 };

@@ -11,7 +11,6 @@ export default {
 
   async execute(sock, msg, args, PREFIX) {
     const chatId = msg.key.remoteJid;
-    const botName = getBotName();
 
     const neonEffects = [];
     const threeDEffects = [];
@@ -23,12 +22,6 @@ export default {
         neonEffects.push(`│  • ${key}`);
       }
     }
-
-    const customHeader = `╭─⊷ *✨ ${botName} EPHOTO EFFECTS*
-│
-│  └⊷ *Total:* ${Object.keys(EPHOTO_EFFECTS).length} effects
-│
-╰─⊷`;
 
     const commandsText = `╭─⊷ *💡 NEON & GLOW (${neonEffects.length})*
 │
@@ -50,6 +43,6 @@ ${threeDEffects.join('\n')}
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, chatId, 'Ephoto menu', commandsText, msg, customHeader);
+    await sendSubMenu(sock, chatId, 'Ephoto Menu', commandsText, msg, PREFIX);
   }
 };

@@ -7,7 +7,7 @@ export default {
   category: "AIVideos",
   usage: ".videomenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *🎬 AI VIDEO EFFECTS*
@@ -20,6 +20,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🎬 AI VIDEO EFFECTS MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🎬 AI VIDEO EFFECTS MENU', commandsText, m, PREFIX);
   }
 };

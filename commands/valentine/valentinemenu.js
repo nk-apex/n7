@@ -6,7 +6,7 @@ export default {
   category: 'valentine',
   description: 'Show all Valentine\'s Day commands',
 
-  async execute(sock, msg, args) {
+  async execute(sock, msg, args, PREFIX) {
     const chatId = msg.key.remoteJid;
 
     const commandsText = `╭─⊷ *💕 VALENTINE'S DAY*
@@ -20,6 +20,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, chatId, '💕 VALENTINE MENU', commandsText, msg);
+    await sendSubMenu(sock, chatId, '💕 Valentine Menu', commandsText, msg, PREFIX);
   }
 };

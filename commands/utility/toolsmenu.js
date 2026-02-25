@@ -7,7 +7,7 @@ export default {
   category: "Utility",
   usage: ".toolsmenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *🔍 INFO & SEARCH*
@@ -55,6 +55,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '✨ TOOLS & UTILITY MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '✨ Tools & Utility Menu', commandsText, m, PREFIX);
   }
 };

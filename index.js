@@ -410,7 +410,7 @@ async function generateRetrievalCaption(senderJid, retrieverJid, chatId, groupNa
     
     const senderNumber = await resolveDisplayNumber(senderJid, chatId, sock);
     const isAutoDetect = retrieverJid === 'auto-detect';
-    const retrieverDisplay = isAutoDetect ? 'WOLFBOT (Auto)' : await resolveDisplayNumber(retrieverJid, chatId, sock);
+    const retrieverDisplay = isAutoDetect ? `${getCurrentBotName()} (Auto)` : await resolveDisplayNumber(retrieverJid, chatId, sock);
     const chatName = resolvedGroupName || (isGroup ? chatId.split('@')[0] : 'Private Chat');
     const timeStr = new Date().toLocaleString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
@@ -422,7 +422,7 @@ async function generateRetrievalCaption(senderJid, retrieverJid, chatId, groupNa
     caption += `├⊷ 📥 *Retrieved by:* ${retrieverDisplay}\n`;
     caption += `├⊷ 🕐 *Time:* ${timeStr}\n`;
     caption += `╰⊷ 💬 *${isGroup ? 'Group' : 'Chat'}:* ${chatName}\n`;
-    caption += `> Retrieved by WOLFBOT`;
+    caption += `> Retrieved by ${getCurrentBotName()}`;
     return caption;
 }
 
@@ -4685,7 +4685,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         const ownerInfo = jidManager.getOwnerInfo();
                         const displayOwnerNumber = ownerInfo?.ownerNumber ? ownerInfo.ownerNumber.split(':')[0] : 'Not set';
                         
-                        const successMessage = `╭⊷『 🐺 WOLFBOT 』\n│\n├⊷ *Name:* ${BOT_NAME}\n├⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├⊷ *Owner:* (${displayOwnerNumber})\n├⊷ *Platform:* ${detectPlatform()}\n├⊷ *Mode:* ${BOT_MODE}\n└⊷ *Status:* ✅ Connected\n\n╰⊷ *Silent Wolf Online* 🐾`;
+                        const successMessage = `╭⊷『 🐺 ${getCurrentBotName()} 』\n│\n├⊷ *Name:* ${getCurrentBotName()}\n├⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├⊷ *Owner:* (${displayOwnerNumber})\n├⊷ *Platform:* ${detectPlatform()}\n├⊷ *Mode:* ${BOT_MODE}\n└⊷ *Status:* ✅ Connected\n\n╰⊷ *Silent Wolf Online* 🐾`;
                         
                         const targetJid = (ownerInfo && ownerInfo.ownerJid) ? ownerInfo.ownerJid : sock.user.id;
                         const sendPromise = sock.sendMessage(targetJid, { text: successMessage });
@@ -5562,7 +5562,7 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
 // Remove auto-join from the connection success display:
 console.log(chalk.greenBright(`
 ╔══════════════════════════════════════════════════════════════════════╗
-║                    🐺 ${chalk.bold('WOLFBOT ONLINE')} - v${VERSION} (PREFIXLESS & MEMBER DETECTION) ║
+║                    🐺 ${chalk.bold(getCurrentBotName() + ' ONLINE')} - v${VERSION} (PREFIXLESS & MEMBER DETECTION) ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║  ✅ ${isAutoReconnect ? 'Auto-reconnected' : 'Connected'} successfully!                            
 ║  👑 Owner : +${ownerInfo.ownerNumber}

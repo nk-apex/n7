@@ -7,7 +7,7 @@ export default {
   category: "Anime",
   usage: ".animemenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *💖 AFFECTION & LOVE*
@@ -51,6 +51,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🌸 ANIME MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🌸 Anime Menu', commandsText, m, PREFIX);
   }
 };

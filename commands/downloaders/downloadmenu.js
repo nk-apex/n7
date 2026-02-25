@@ -7,7 +7,7 @@ export default {
   category: "Downloaders",
   usage: ".downloadmenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *📱 SOCIAL MEDIA*
@@ -41,6 +41,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '⬇️ DOWNLOAD MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '⬇️ DOWNLOAD MENU', commandsText, m, PREFIX);
   }
 };

@@ -7,7 +7,7 @@ export default {
   category: "Media",
   usage: ".mediamenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *🔄 MEDIA CONVERSION*
@@ -24,6 +24,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🔄 MEDIA CONVERSION MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🔄 MEDIA CONVERSION MENU', commandsText, m, PREFIX);
   }
 };

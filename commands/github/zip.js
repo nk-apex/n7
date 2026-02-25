@@ -71,7 +71,7 @@ export default {
                 fileName: `${repoName}.zip`,
                 mimetype: 'application/zip',
                 caption:
-                    `╭─⌈ 🐺 *SILENT WOLF BOT* ⌋\n` +
+                    `╭─⌈ 🐺 *WOLF BOT* ⌋\n` +
                     `│\n` +
                     `│ ✧ *Repo:* ${repoFullName}\n` +
                     `│ ✧ *Size:* ${sizeMB}MB\n` +

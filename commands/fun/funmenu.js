@@ -7,7 +7,7 @@ export default {
   category: "Fun",
   usage: ".funmenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *🎭 FUN & TOOLS*
@@ -26,6 +26,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🎭 FUN MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🎭 FUN MENU', commandsText, m, PREFIX);
   }
 };

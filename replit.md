@@ -50,6 +50,7 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **NGL Attack**: An ethical hacking tool for sending anonymous messages.
 *   **Sudo System**: Manages trusted users (sudos) with elevated command access, bypassing bot mode restrictions.
 *   **Dynamic Bot Name**: All user-facing captions, footers, headers, and watermarks use the dynamic bot name (configurable via `.setbotname`). Central helper `lib/botname.js` exports `getBotName()` which reads from `global.BOT_NAME` → `process.env.BOT_NAME` → `bot_settings.json` → fallback `'WOLFBOT'`. Commands access via `extra.BOT_NAME` or direct import. Cache cleared automatically when `.setbotname` is used.
+*   **Standardized Sub-Menu Headers**: All 20+ category menus (AI, Anime, Design, Downloaders, Ethical Hacking, Ephoto, Fun, Games, GitHub, Group, ImageGen, Media Conversion, Music, Owner, PhotoFunia, Sports, Stalker, Tools, Valentine, AI Videos) use a unified header via `lib/menuHelper.js`'s `sendSubMenu()`. Header shows: bot name, owner, mode, prefix, version, platform, status, uptime, RAM bar, and memory usage. All menus include the menu image and a "Read more" effect.
 *   **Persistent Warn System**: Stores per-group warnings and limits across bot restarts.
 *   **Approve/Reject All**: Bulk approval or rejection of pending group join requests.
 *   **Chatbot Whitelist System**: Allows whitelisting specific groups and DMs for the W.O.L.F chatbot.

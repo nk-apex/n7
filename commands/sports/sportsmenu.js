@@ -95,6 +95,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🏆 SPORTS MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🏆 SPORTS MENU', commandsText, m, PREFIX);
   }
 };

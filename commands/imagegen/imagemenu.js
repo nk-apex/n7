@@ -7,7 +7,7 @@ export default {
   category: "ImageGen",
   usage: ".imagemenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *🖼️ IMAGE GENERATION*
@@ -23,6 +23,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🖼️ IMAGE MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🖼️ IMAGE MENU', commandsText, m, PREFIX);
   }
 };

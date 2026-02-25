@@ -7,7 +7,7 @@ export default {
   category: "Design",
   usage: ".logomenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *🌟 PREMIUM METALS*
@@ -64,6 +64,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🎨 LOGO DESIGN MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🎨 LOGO DESIGN MENU', commandsText, m, PREFIX);
   }
 };

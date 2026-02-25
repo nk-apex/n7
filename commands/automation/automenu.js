@@ -7,7 +7,7 @@ export default {
   category: "Automation",
   usage: ".automenu",
 
-  async execute(sock, m) {
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
     const commandsText = `╭─⊷ *⚙️ AUTOMATION COMMANDS*
@@ -24,6 +24,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '⚙️ AUTOMATION MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '⚙️ AUTOMATION MENU', commandsText, m, PREFIX);
   }
 };

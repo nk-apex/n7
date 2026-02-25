@@ -28,7 +28,7 @@ export default {
 
             `🔓 *${getBotName()} HACK TOOL v3.7*\n\n💾 Compiling stolen data...\n██████████ 95%\n\n✅ Bank details: Extracted\n✅ Social media: Compromised\n✅ Email: Accessed\n✅ Gallery: Downloaded\n⏳ Creating backdoor access...\n🔓 Installing rootkit...`,
 
-            `🔓 *${getBotName()} HACK TOOL v3.7*\n\n██████████ 100%\n\n✅ *HACK COMPLETE!*\n\n📊 *Summary:*\n├─ 📸 Photos: 2,847\n├─ 💬 Messages: 12,394\n├─ 📞 Calls: 567\n├─ 🔑 Passwords: 23\n├─ 💳 Cards: 3\n└─ 📍 Location: Tracked\n\n⚠️ *Just kidding!* 😂\n\n_This was a prank by WOLFBOT_\n_No actual hacking occurred_\n_Stay safe online!_ 🐺`,
+            `🔓 *${getBotName()} HACK TOOL v3.7*\n\n██████████ 100%\n\n✅ *HACK COMPLETE!*\n\n📊 *Summary:*\n├─ 📸 Photos: 2,847\n├─ 💬 Messages: 12,394\n├─ 📞 Calls: 567\n├─ 🔑 Passwords: 23\n├─ 💳 Cards: 3\n└─ 📍 Location: Tracked\n\n⚠️ *Just kidding!* 😂\n\n_This was a prank by ${getBotName()}_\n_No actual hacking occurred_\n_Stay safe online!_ 🐺`,
         ];
 
         const delays = [2000, 3000, 3000, 3000, 2500, 3000, 2000];

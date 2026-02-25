@@ -87,6 +87,6 @@ export default {
 │
 ╰─⊷`;
 
-    await sendSubMenu(sock, jid, '🛡️ ETHICAL HACKING MENU', commandsText, m);
+    await sendSubMenu(sock, jid, '🛡️ ETHICAL HACKING MENU', commandsText, m, PREFIX);
   }
 };
