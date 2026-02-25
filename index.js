@@ -6240,7 +6240,7 @@ async function handleIncomingMessage(sock, msg) {
                             DiskManager
                         });
                     };
-                    const handled = await handleWolfAI(sock, msg, commands, executeWolfCommand);
+                    const handled = await handleWolfAI(sock, msg, commands, executeWolfCommand, textMsg);
                     if (handled) {
                         const wolfDisplay = getDisplayNumber(senderJid);
                         const wolfLocTag = isGroup ? `[${chatId.split('@')[0].substring(0, 10)}]` : '[DM]';
