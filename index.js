@@ -6208,47 +6208,49 @@ async function handleIncomingMessage(sock, msg) {
         if (!textMsg) return;
 
         if (isWolfTrigger(textMsg) && !msg.key.fromMe) {
-            try {
-                const currentPrefixForWolf = getCurrentPrefix();
-                const isOwnerW = jidManager.isOwner(msg);
-                let isSudoW = jidManager.isSudo(msg);
-                const executeWolfCommand = async (cmdName, cmdArgs) => {
-                    const cmd = commands.get(cmdName);
-                    if (!cmd) return;
-                    if (cmd.ownerOnly && !isOwnerW && !isSudoW) {
-                        await sock.sendMessage(chatId, { text: '❌ *Owner Only Command*' }, { quoted: msg });
+            const isOwnerW = jidManager.isOwner(msg);
+            let isSudoW = jidManager.isSudo(msg);
+            if (isOwnerW || isSudoW) {
+                try {
+                    const currentPrefixForWolf = getCurrentPrefix();
+                    const executeWolfCommand = async (cmdName, cmdArgs) => {
+                        const cmd = commands.get(cmdName);
+                        if (!cmd) return;
+                        if (cmd.ownerOnly && !isOwnerW && !isSudoW) {
+                            await sock.sendMessage(chatId, { text: '❌ *Owner Only Command*' }, { quoted: msg });
+                            return;
+                        }
+                        await cmd.execute(sock, msg, cmdArgs, currentPrefixForWolf, {
+                            OWNER_NUMBER: OWNER_CLEAN_NUMBER,
+                            OWNER_JID: OWNER_CLEAN_JID,
+                            OWNER_LID: OWNER_LID,
+                            BOT_NAME: getCurrentBotName(),
+                            VERSION,
+                            isOwner: () => isOwnerW,
+                            isSudo: () => isSudoW || jidManager.isSudo(msg),
+                            jidManager,
+                            store,
+                            statusDetector,
+                            updatePrefix: updatePrefixImmediately,
+                            getCurrentPrefix,
+                            rateLimiter,
+                            memberDetector,
+                            antiViewOnceSystem,
+                            isPrefixless,
+                            DiskManager
+                        });
+                    };
+                    const handled = await handleWolfAI(sock, msg, commands, executeWolfCommand);
+                    if (handled) {
+                        const wolfDisplay = getDisplayNumber(senderJid);
+                        const wolfLocTag = isGroup ? `[${chatId.split('@')[0].substring(0, 10)}]` : '[DM]';
+                        const wolfPreview = textMsg.length > 50 ? textMsg.substring(0, 50) + '…' : textMsg;
+                        UltraCleanLogger.info(`🐺 Wolf AI: ${wolfDisplay} ${wolfLocTag} → "${wolfPreview}"`);
                         return;
                     }
-                    await cmd.execute(sock, msg, cmdArgs, currentPrefixForWolf, {
-                        OWNER_NUMBER: OWNER_CLEAN_NUMBER,
-                        OWNER_JID: OWNER_CLEAN_JID,
-                        OWNER_LID: OWNER_LID,
-                        BOT_NAME: getCurrentBotName(),
-                        VERSION,
-                        isOwner: () => isOwnerW,
-                        isSudo: () => isSudoW || jidManager.isSudo(msg),
-                        jidManager,
-                        store,
-                        statusDetector,
-                        updatePrefix: updatePrefixImmediately,
-                        getCurrentPrefix,
-                        rateLimiter,
-                        memberDetector,
-                        antiViewOnceSystem,
-                        isPrefixless,
-                        DiskManager
-                    });
-                };
-                const handled = await handleWolfAI(sock, msg, commands, executeWolfCommand);
-                if (handled) {
-                    const wolfDisplay = getDisplayNumber(senderJid);
-                    const wolfLocTag = isGroup ? `[${chatId.split('@')[0].substring(0, 10)}]` : '[DM]';
-                    const wolfPreview = textMsg.length > 50 ? textMsg.substring(0, 50) + '…' : textMsg;
-                    UltraCleanLogger.info(`🐺 Wolf AI: ${wolfDisplay} ${wolfLocTag} → "${wolfPreview}"`);
-                    return;
+                } catch (wolfErr) {
+                    UltraCleanLogger.error(`🐺 Wolf AI error: ${wolfErr.message}`);
                 }
-            } catch (wolfErr) {
-                UltraCleanLogger.error(`🐺 Wolf AI error: ${wolfErr.message}`);
             }
         }
         
