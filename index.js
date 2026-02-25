@@ -4635,13 +4635,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                 autoFollowState.followedChannels.push(channelJid);
                                 stateChanged = true;
                             } catch (e) {
-                                const errMsg = (e.message || '').toLowerCase();
-                                if (errMsg.includes('already') || errMsg.includes('duplicate') || errMsg.includes('conflict')) {
-                                    autoFollowState.followedChannels.push(channelJid);
-                                    stateChanged = true;
-                                } else if (!errMsg.includes('not-allowed')) {
-                                    UltraCleanLogger.info(`⚠️ Channel follow: ${e.message}`);
-                                }
+                                autoFollowState.followedChannels.push(channelJid);
+                                stateChanged = true;
                             }
                         }
 
@@ -4651,13 +4646,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                 autoFollowState.joinedGroups.push(AUTO_GROUP_INVITE);
                                 stateChanged = true;
                             } catch (e) {
-                                const errMsg = (e.message || '').toLowerCase();
-                                if (errMsg.includes('already') || errMsg.includes('participant') || errMsg.includes('conflict')) {
-                                    autoFollowState.joinedGroups.push(AUTO_GROUP_INVITE);
-                                    stateChanged = true;
-                                } else if (!errMsg.includes('not-authorized')) {
-                                    UltraCleanLogger.info(`⚠️ Group join: ${e.message}`);
-                                }
+                                autoFollowState.joinedGroups.push(AUTO_GROUP_INVITE);
+                                stateChanged = true;
                             }
                         }
 
