@@ -4529,13 +4529,13 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
                 setTimeout(() => {
                     if (!isConnected) return;
-                    const hasAppStateKey = sock.authState?.creds?.myAppStateKeyId;
-                    if (!hasAppStateKey) {
-                        UltraCleanLogger.info('🔑 App state keys missing — requesting sync...');
-                        sock.resyncAppState(['critical_block', 'critical_unblock_to_single'], true)
-                            .then(() => UltraCleanLogger.info('✅ App state resync done'))
-                            .catch(e => UltraCleanLogger.info(`⚠️ App state resync: ${e.message}`));
-                    }
+                    UltraCleanLogger.info('🔑 Syncing app state keys...');
+                    sock.resyncAppState(['critical_block', 'critical_unblock_to_single'], true)
+                        .then(() => {
+                            return sock.resyncAppState(['regular_low', 'regular_high', 'regular'], true);
+                        })
+                        .then(() => UltraCleanLogger.info('✅ App state resync done'))
+                        .catch(e => UltraCleanLogger.info(`⚠️ App state resync: ${e.message}`));
                 }, 5000);
                 
                 if (!antiViewOnceSystem) {
