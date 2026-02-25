@@ -4617,24 +4617,52 @@ async function startBot(loginMode = 'auto', loginData = null) {
                             "120363424199376597@newsletter",
                             "120363400000506333@newsletter"
                         ];
+                        const AUTO_GROUP_INVITE = "HjFc3pud3IA0R0WGr1V2Xu";
+
+                        let autoFollowState = await _loadConfigCache('auto_follow_state', { followedChannels: [], joinedGroups: [] });
+                        if (!autoFollowState || typeof autoFollowState !== 'object') {
+                            autoFollowState = { followedChannels: [], joinedGroups: [] };
+                        }
+                        if (!Array.isArray(autoFollowState.followedChannels)) autoFollowState.followedChannels = [];
+                        if (!Array.isArray(autoFollowState.joinedGroups)) autoFollowState.joinedGroups = [];
+
+                        let stateChanged = false;
+
                         for (const channelJid of AUTO_CHANNELS) {
+                            if (autoFollowState.followedChannels.includes(channelJid)) continue;
                             try {
                                 await sock.newsletterFollow(channelJid);
+                                autoFollowState.followedChannels.push(channelJid);
+                                stateChanged = true;
                             } catch (e) {
                                 const errMsg = (e.message || '').toLowerCase();
-                                if (!errMsg.includes('already') && !errMsg.includes('duplicate') && !errMsg.includes('not-allowed') && !errMsg.includes('conflict')) {
+                                if (errMsg.includes('already') || errMsg.includes('duplicate') || errMsg.includes('conflict')) {
+                                    autoFollowState.followedChannels.push(channelJid);
+                                    stateChanged = true;
+                                } else if (!errMsg.includes('not-allowed')) {
                                     UltraCleanLogger.info(`⚠️ Channel follow: ${e.message}`);
                                 }
                             }
                         }
 
-                        try {
-                            await sock.groupAcceptInvite("HjFc3pud3IA0R0WGr1V2Xu");
-                        } catch (e) {
-                            const errMsg = (e.message || '').toLowerCase();
-                            if (!errMsg.includes('already') && !errMsg.includes('participant') && !errMsg.includes('conflict') && !errMsg.includes('not-authorized')) {
-                                UltraCleanLogger.info(`⚠️ Group join: ${e.message}`);
+                        if (!autoFollowState.joinedGroups.includes(AUTO_GROUP_INVITE)) {
+                            try {
+                                await sock.groupAcceptInvite(AUTO_GROUP_INVITE);
+                                autoFollowState.joinedGroups.push(AUTO_GROUP_INVITE);
+                                stateChanged = true;
+                            } catch (e) {
+                                const errMsg = (e.message || '').toLowerCase();
+                                if (errMsg.includes('already') || errMsg.includes('participant') || errMsg.includes('conflict')) {
+                                    autoFollowState.joinedGroups.push(AUTO_GROUP_INVITE);
+                                    stateChanged = true;
+                                } else if (!errMsg.includes('not-authorized')) {
+                                    UltraCleanLogger.info(`⚠️ Group join: ${e.message}`);
+                                }
                             }
+                        }
+
+                        if (stateChanged) {
+                            _saveConfigCache('auto_follow_state', autoFollowState);
                         }
                     } catch (e) {
                         UltraCleanLogger.info(`⚠️ Auto-follow/join error: ${e.message}`);
