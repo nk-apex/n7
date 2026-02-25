@@ -347,7 +347,7 @@ export default {
 //         }
 //       }
       
-//       const ownerPath = path.join(__dirname, 'owner.json');
+//       const ownerPath = path.join(__dirname, '../../owner.json');
 //       if (fs.existsSync(ownerPath)) {
 //         const ownerData = fs.readFileSync(ownerPath, 'utf8');
 //         const ownerInfo = JSON.parse(ownerData);
@@ -418,7 +418,7 @@ export default {
   
 //   const getBotVersion = () => {
 //     try {
-//       const ownerPath = path.join(__dirname, 'owner.json');
+//       const ownerPath = path.join(__dirname, '../../owner.json');
 //       if (fs.existsSync(ownerPath)) {
 //         const ownerData = fs.readFileSync(ownerPath, 'utf8');
 //         const ownerInfo = JSON.parse(ownerData);
@@ -1156,7 +1156,7 @@ case 1: {
         }
       }
       
-      const ownerPath = path.join(__dirname, 'owner.json');
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
@@ -1227,50 +1227,36 @@ case 1: {
   
   const getBotVersion = () => {
     try {
-      const ownerPath = path.join(__dirname, 'owner.json');
+      if (global.VERSION) return global.VERSION;
+      if (global.version) return global.version;
+      if (process.env.VERSION) return process.env.VERSION;
+
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
-        
         if (ownerInfo.version && ownerInfo.version.trim() !== '') {
           return ownerInfo.version.trim();
         }
       }
-      
+
       const botSettingsPaths = [
         './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
+        path.join(__dirname, '../../bot_settings.json'),
       ];
-      
       for (const settingsPath of botSettingsPaths) {
         if (fs.existsSync(settingsPath)) {
           try {
             const settingsData = fs.readFileSync(settingsPath, 'utf8');
             const settings = JSON.parse(settingsData);
-            
             if (settings.version && settings.version.trim() !== '') {
               return settings.version.trim();
             }
           } catch (parseError) {}
         }
       }
-      
-      if (global.VERSION) {
-        return global.VERSION;
-      }
-      
-      if (global.version) {
-        return global.version;
-      }
-      
-      if (process.env.VERSION) {
-        return process.env.VERSION;
-      }
-      
     } catch (error) {}
-    
-    return 'v1.0.0';
+    return '1.1.5';
   };
   
   // ========== IMPROVED DEPLOYMENT PLATFORM DETECTION ==========
@@ -2743,7 +2729,7 @@ case 3: {
         }
       }
       
-      const ownerPath = path.join(__dirname, 'owner.json');
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
@@ -2814,50 +2800,36 @@ case 3: {
   
   const getBotVersion = () => {
     try {
-      const ownerPath = path.join(__dirname, 'owner.json');
+      if (global.VERSION) return global.VERSION;
+      if (global.version) return global.version;
+      if (process.env.VERSION) return process.env.VERSION;
+
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
-        
         if (ownerInfo.version && ownerInfo.version.trim() !== '') {
           return ownerInfo.version.trim();
         }
       }
-      
+
       const botSettingsPaths = [
         './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
+        path.join(__dirname, '../../bot_settings.json'),
       ];
-      
       for (const settingsPath of botSettingsPaths) {
         if (fs.existsSync(settingsPath)) {
           try {
             const settingsData = fs.readFileSync(settingsPath, 'utf8');
             const settings = JSON.parse(settingsData);
-            
             if (settings.version && settings.version.trim() !== '') {
               return settings.version.trim();
             }
           } catch (parseError) {}
         }
       }
-      
-      if (global.VERSION) {
-        return global.VERSION;
-      }
-      
-      if (global.version) {
-        return global.version;
-      }
-      
-      if (process.env.VERSION) {
-        return process.env.VERSION;
-      }
-      
     } catch (error) {}
-    
-    return 'v1.0.0';
+    return '1.1.5';
   };
   
   const getDeploymentPlatform = () => {
@@ -3893,7 +3865,7 @@ case 4: {
         }
       }
       
-      const ownerPath = path.join(__dirname, 'owner.json');
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
@@ -3964,50 +3936,36 @@ case 4: {
   
   const getBotVersion = () => {
     try {
-      const ownerPath = path.join(__dirname, 'owner.json');
+      if (global.VERSION) return global.VERSION;
+      if (global.version) return global.version;
+      if (process.env.VERSION) return process.env.VERSION;
+
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
-        
         if (ownerInfo.version && ownerInfo.version.trim() !== '') {
           return ownerInfo.version.trim();
         }
       }
-      
+
       const botSettingsPaths = [
         './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
+        path.join(__dirname, '../../bot_settings.json'),
       ];
-      
       for (const settingsPath of botSettingsPaths) {
         if (fs.existsSync(settingsPath)) {
           try {
             const settingsData = fs.readFileSync(settingsPath, 'utf8');
             const settings = JSON.parse(settingsData);
-            
             if (settings.version && settings.version.trim() !== '') {
               return settings.version.trim();
             }
           } catch (parseError) {}
         }
       }
-      
-      if (global.VERSION) {
-        return global.VERSION;
-      }
-      
-      if (global.version) {
-        return global.version;
-      }
-      
-      if (process.env.VERSION) {
-        return process.env.VERSION;
-      }
-      
     } catch (error) {}
-    
-    return 'v1.0.0';
+    return '1.1.5';
   };
   
   const getDeploymentPlatform = () => {
@@ -4749,7 +4707,7 @@ case 4: {
 //         }
 //       }
       
-//       const ownerPath = path.join(__dirname, 'owner.json');
+//       const ownerPath = path.join(__dirname, '../../owner.json');
 //       if (fs.existsSync(ownerPath)) {
 //         const ownerData = fs.readFileSync(ownerPath, 'utf8');
 //         const ownerInfo = JSON.parse(ownerData);
@@ -4820,7 +4778,7 @@ case 4: {
   
 //   const getBotVersion = () => {
 //     try {
-//       const ownerPath = path.join(__dirname, 'owner.json');
+//       const ownerPath = path.join(__dirname, '../../owner.json');
 //       if (fs.existsSync(ownerPath)) {
 //         const ownerData = fs.readFileSync(ownerPath, 'utf8');
 //         const ownerInfo = JSON.parse(ownerData);
@@ -5584,7 +5542,7 @@ case 5: {
         }
       }
       
-      const ownerPath = path.join(__dirname, 'owner.json');
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
@@ -5655,50 +5613,36 @@ case 5: {
   
   const getBotVersion = () => {
     try {
-      const ownerPath = path.join(__dirname, 'owner.json');
+      if (global.VERSION) return global.VERSION;
+      if (global.version) return global.version;
+      if (process.env.VERSION) return process.env.VERSION;
+
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
-        
         if (ownerInfo.version && ownerInfo.version.trim() !== '') {
           return ownerInfo.version.trim();
         }
       }
-      
+
       const botSettingsPaths = [
         './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
+        path.join(__dirname, '../../bot_settings.json'),
       ];
-      
       for (const settingsPath of botSettingsPaths) {
         if (fs.existsSync(settingsPath)) {
           try {
             const settingsData = fs.readFileSync(settingsPath, 'utf8');
             const settings = JSON.parse(settingsData);
-            
             if (settings.version && settings.version.trim() !== '') {
               return settings.version.trim();
             }
           } catch (parseError) {}
         }
       }
-      
-      if (global.VERSION) {
-        return global.VERSION;
-      }
-      
-      if (global.version) {
-        return global.version;
-      }
-      
-      if (process.env.VERSION) {
-        return process.env.VERSION;
-      }
-      
     } catch (error) {}
-    
-    return 'v1.0.0';
+    return '1.1.5';
   };
   
   // ========== IMPROVED DEPLOYMENT PLATFORM DETECTION ==========
@@ -6840,7 +6784,7 @@ case 6: {
         }
       }
       
-      const ownerPath = path.join(__dirname, 'owner.json');
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
@@ -6911,50 +6855,36 @@ case 6: {
   
   const getBotVersion = () => {
     try {
-      const ownerPath = path.join(__dirname, 'owner.json');
+      if (global.VERSION) return global.VERSION;
+      if (global.version) return global.version;
+      if (process.env.VERSION) return process.env.VERSION;
+
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
-        
         if (ownerInfo.version && ownerInfo.version.trim() !== '') {
           return ownerInfo.version.trim();
         }
       }
-      
+
       const botSettingsPaths = [
         './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
+        path.join(__dirname, '../../bot_settings.json'),
       ];
-      
       for (const settingsPath of botSettingsPaths) {
         if (fs.existsSync(settingsPath)) {
           try {
             const settingsData = fs.readFileSync(settingsPath, 'utf8');
             const settings = JSON.parse(settingsData);
-            
             if (settings.version && settings.version.trim() !== '') {
               return settings.version.trim();
             }
           } catch (parseError) {}
         }
       }
-      
-      if (global.VERSION) {
-        return global.VERSION;
-      }
-      
-      if (global.version) {
-        return global.version;
-      }
-      
-      if (process.env.VERSION) {
-        return process.env.VERSION;
-      }
-      
     } catch (error) {}
-    
-    return 'v1.0.0';
+    return '1.1.5';
   };
   
   const getDeploymentPlatform = () => {
@@ -7548,7 +7478,7 @@ case 6: {
 //         }
 //       }
       
-//       const ownerPath = path.join(__dirname, 'owner.json');
+//       const ownerPath = path.join(__dirname, '../../owner.json');
 //       if (fs.existsSync(ownerPath)) {
 //         const ownerData = fs.readFileSync(ownerPath, 'utf8');
 //         const ownerInfo = JSON.parse(ownerData);
@@ -7619,7 +7549,7 @@ case 6: {
   
 //   const getBotVersion = () => {
 //     try {
-//       const ownerPath = path.join(__dirname, 'owner.json');
+//       const ownerPath = path.join(__dirname, '../../owner.json');
 //       if (fs.existsSync(ownerPath)) {
 //         const ownerData = fs.readFileSync(ownerPath, 'utf8');
 //         const ownerInfo = JSON.parse(ownerData);
@@ -8324,7 +8254,7 @@ case 7: {
         }
       }
       
-      const ownerPath = path.join(__dirname, 'owner.json');
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
@@ -8395,50 +8325,36 @@ case 7: {
   
   const getBotVersion = () => {
     try {
-      const ownerPath = path.join(__dirname, 'owner.json');
+      if (global.VERSION) return global.VERSION;
+      if (global.version) return global.version;
+      if (process.env.VERSION) return process.env.VERSION;
+
+      const ownerPath = path.join(__dirname, '../../owner.json');
       if (fs.existsSync(ownerPath)) {
         const ownerData = fs.readFileSync(ownerPath, 'utf8');
         const ownerInfo = JSON.parse(ownerData);
-        
         if (ownerInfo.version && ownerInfo.version.trim() !== '') {
           return ownerInfo.version.trim();
         }
       }
-      
+
       const botSettingsPaths = [
         './bot_settings.json',
-        path.join(__dirname, 'bot_settings.json'),
-        path.join(__dirname, '../bot_settings.json'),
+        path.join(__dirname, '../../bot_settings.json'),
       ];
-      
       for (const settingsPath of botSettingsPaths) {
         if (fs.existsSync(settingsPath)) {
           try {
             const settingsData = fs.readFileSync(settingsPath, 'utf8');
             const settings = JSON.parse(settingsData);
-            
             if (settings.version && settings.version.trim() !== '') {
               return settings.version.trim();
             }
           } catch (parseError) {}
         }
       }
-      
-      if (global.VERSION) {
-        return global.VERSION;
-      }
-      
-      if (global.version) {
-        return global.version;
-      }
-      
-      if (process.env.VERSION) {
-        return process.env.VERSION;
-      }
-      
     } catch (error) {}
-    
-    return 'v1.0.0';
+    return '1.1.5';
   };
   
   // ========== IMPROVED DEPLOYMENT PLATFORM DETECTION ==========
