@@ -632,6 +632,7 @@ import { handleReactDev } from './commands/automation/reactdev.js';
 import { handleAutoView } from './commands/automation/autoviewstatus.js';
 import { initializeAutoJoin } from './commands/group/add.js';
 import antidemote from './commands/group/antidemote.js';
+import { isBugMessage as antibugCheck, isEnabled as antibugEnabled, getAction as antibugGetAction } from './commands/group/antibug.js';
 import banCommand from './commands/group/ban.js';
 
 // Pre-imported group event modules (avoids dynamic import disk I/O in hot event handlers)
@@ -703,6 +704,13 @@ globalThis.updateBotModeCache = function(newMode) {
     BOT_MODE = newMode;
     _saveConfigCache('bot_mode', { mode: newMode });
 };
+globalThis._antibugConfig = null;
+globalThis._saveAntibugConfig = function(data) {
+    _saveConfigCache('antibug_config', data);
+};
+_loadConfigCache('antibug_config', {}).then(config => {
+    globalThis._antibugConfig = config || {};
+}).catch(() => { globalThis._antibugConfig = {}; });
 globalThis.reloadConfigCaches = reloadConfigCaches;
 async function reloadConfigCaches() {
     try {
@@ -4989,7 +4997,60 @@ async function startBot(loginMode = 'auto', loginData = null) {
             const _isOldMsg = _upsertTs > 0 && (Date.now() - _upsertTs > 60000 || (connectionOpenTime > 0 && _upsertTs < connectionOpenTime - 5000));
             
             if (_isOldMsg) return;
-            
+
+            if (msg.message && msg.key?.remoteJid && !msg.key.fromMe) {
+                const chatJid = msg.key.remoteJid;
+                if (chatJid !== 'status@broadcast' && antibugEnabled(chatJid)) {
+                    const bugResult = antibugCheck(msg);
+                    if (bugResult.isBug) {
+                        const senderJid = msg.key.participant || chatJid;
+                        const isGroup = chatJid.endsWith('@g.us');
+                        const senderNum = senderJid.split('@')[0].split(':')[0];
+                        const isOwnerSender = jidManager.isOwner(msg);
+
+                        if (!isOwnerSender) {
+                            UltraCleanLogger.warning(`🛡️ ANTIBUG: ${bugResult.label} from ${senderNum} in ${isGroup ? chatJid.split('@')[0] : 'DM'} [${bugResult.severity}]`);
+
+                            try {
+                                await sock.sendMessage(chatJid, { delete: msg.key });
+                            } catch {}
+
+                            const action = antibugGetAction(chatJid);
+
+                            if (action === 'kick' && isGroup) {
+                                try {
+                                    await sock.groupParticipantsUpdate(chatJid, [senderJid], 'remove');
+                                    await sock.sendMessage(chatJid, {
+                                        text: `🛡️ *Anti-Bug:* @${senderNum} removed for sending a crash message.\n*Type:* ${bugResult.label}`,
+                                        mentions: [senderJid]
+                                    });
+                                } catch {}
+                            } else if (action === 'block') {
+                                try {
+                                    await sock.updateBlockStatus(senderJid, 'block');
+                                    if (isGroup) {
+                                        await sock.groupParticipantsUpdate(chatJid, [senderJid], 'remove');
+                                    }
+                                    await sock.sendMessage(chatJid, {
+                                        text: `🛡️ *Anti-Bug:* @${senderNum} blocked for sending a crash message.\n*Type:* ${bugResult.label}`,
+                                        mentions: [senderJid]
+                                    });
+                                } catch {}
+                            } else if (action === 'warn') {
+                                try {
+                                    await sock.sendMessage(chatJid, {
+                                        text: `🛡️ *Anti-Bug Warning:* @${senderNum} sent a potential crash message.\n*Type:* ${bugResult.label}\n\n⚠️ Next offense may result in removal.`,
+                                        mentions: [senderJid]
+                                    });
+                                } catch {}
+                            }
+
+                            return;
+                        }
+                    }
+                }
+            }
+
             if (store && msg?.key?.remoteJid && msg?.key?.id && msg?.message) {
                 store.addMessage(msg.key.remoteJid, msg.key.id, msg);
                 const voCheck = detectViewOnceMedia(msg.message);

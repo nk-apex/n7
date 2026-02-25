@@ -39,6 +39,7 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   **Anti-ViewOnce System**: Detects and reveals ViewOnce messages, with options for private or public display. Sticker/emoji reply and reaction-based view-once capture is restricted to owner-only (non-owners silently ignored).
 *   **Bot Mode System**: Allows operation in `public`, `groups`, `dms`, or `silent` (owner-only) modes.
 *   **Welcome/Goodbye Systems**: Customizable messages for new/leaving group members.
+*   **Anti-Bug System**: Detects and blocks crash/bug attacks in groups and DMs. 26+ text-based patterns (ZWJ overflow, diacritics bombs, bidi exploits, etc.) plus structural checks (VCF bombs, protocol exploits, empty crash messages, button overflow, malicious files, oversized stickers, mass mention bombs, text floods). Configurable per-chat or global, with actions: `delete`, `kick`, `block`, `warn`. Owner/sudo messages bypass detection. Config persisted to DB via `antibug_config` key. Command: `.antibug on/off/action/status/test`. File: `commands/group/antibug.js`, detection wired into `messages.upsert` handler in `index.js`.
 *   **Anti-Demote/Promote Systems**: Real-time monitoring and control over group member demotions and promotions, with configurable actions like `warn`, `kick`, or `revert`.
 *   **Auto-Join/Follow System**: Automatically adds users to configured groups or sends channel follow links.
 *   **AI Video Effects**: Generates videos or images using ephoto360 effects via `mumaker`.
