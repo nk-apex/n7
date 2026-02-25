@@ -6147,20 +6147,7 @@ async function handleIncomingMessage(sock, msg) {
         }
 
         if (!checkBotMode(msg, commandName, isSudoUser)) {
-            if (BOT_MODE === 'silent' && !isOwnerUser && !isSudoUser) {
-                return;
-            }
             if (!isOwnerUser && !isSudoUser) {
-                try {
-                    const modeMessages = {
-                        'groups': '❌ *Command Blocked*\nBot is in *Groups Only* mode. Commands only work in group chats.',
-                        'dms': '❌ *Command Blocked*\nBot is in *DMs Only* mode. Commands only work in private messages.'
-                    };
-                    await sock.sendMessage(chatId, { 
-                        text: modeMessages[BOT_MODE] || `❌ *Command Blocked*\nBot is in ${BOT_MODE} mode.`
-                    });
-                } catch {
-                }
                 return;
             }
         }
