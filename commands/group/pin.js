@@ -7,7 +7,7 @@ export default {
   description: 'Pin a replied message in the group',
   category: 'group',
 
-  async execute(sock, msg, args, from, isGroup, sender) {
+  async execute(sock, msg) {
     const jid = msg.key.remoteJid;
 
     if (!jid.endsWith('@g.us')) {
@@ -26,16 +26,23 @@ export default {
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: msg.key } });
 
+      const botId = sock.user?.id?.split(':')[0] + '@s.whatsapp.net';
+      const botLid = sock.user?.lid;
+      const participant = quotedKey.participant;
+      const isFromMe = participant === botId || participant === sock.user?.id || participant === botLid;
+
       const pinnedMsgKey = {
         remoteJid: jid,
-        fromMe: quotedKey.participant === sock.user?.id || quotedKey.participant === sock.user?.lid,
+        fromMe: isFromMe,
         id: quotedKey.stanzaId,
-        participant: quotedKey.participant
+        participant: participant
       };
 
       await sock.sendMessage(jid, {
-        pin: pinnedMsgKey,
-        type: proto.PinInChat.Type.PIN_FOR_ALL
+        pinInChat: {
+          type: proto.PinInChat.Type.PIN_FOR_ALL,
+          key: pinnedMsgKey
+        }
       });
 
       await sock.sendMessage(jid, { react: { text: '📌', key: msg.key } });

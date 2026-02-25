@@ -3,11 +3,11 @@ import { safeModify } from '../../lib/safe-modify.js';
 
 export default {
   name: 'archive',
-  alias: ['archivechat', 'archivegroup'],
-  description: 'Archive or unarchive the current group chat',
+  alias: ['archivechat', 'archivegroup', 'unarchive', 'unarchivechat', 'unarchivegroup'],
+  description: 'Archive or unarchive the current chat',
   category: 'group',
 
-  async execute(sock, msg, args, from, isGroup, sender) {
+  async execute(sock, msg, args) {
     const jid = msg.key.remoteJid;
 
     try {
@@ -16,8 +16,13 @@ export default {
       const currently = isArchived(jid);
       const shouldArchive = !currently;
 
+      const lastMessages = [{
+        key: msg.key,
+        messageTimestamp: msg.messageTimestamp
+      }];
+
       setArchived(jid, shouldArchive);
-      await safeModify(sock, { archive: shouldArchive }, jid);
+      await safeModify(sock, { archive: shouldArchive, lastMessages }, jid);
 
       await sock.sendMessage(jid, { react: { text: shouldArchive ? '📦' : '📂', key: msg.key } });
       await sock.sendMessage(jid, {

@@ -7,7 +7,7 @@ export default {
   description: 'Unpin this group from the top of your chat list',
   category: 'group',
 
-  async execute(sock, msg, args, from, isGroup, sender) {
+  async execute(sock, msg) {
     const jid = msg.key.remoteJid;
 
     if (!isPinned(jid)) {
@@ -29,6 +29,7 @@ export default {
 
     } catch (err) {
       console.error('[unpingroup]', err.message);
+      setPinned(jid, true);
       await sock.sendMessage(jid, { react: { text: '❌', key: msg.key } });
       await sock.sendMessage(jid, { text: `❌ Failed: ${err.message}` }, { quoted: msg });
     }
