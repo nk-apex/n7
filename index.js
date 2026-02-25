@@ -297,7 +297,21 @@ function getDisplayNumber(senderJid) {
     const raw = senderJid.split('@')[0].split(':')[0];
     const full = senderJid.split('@')[0];
     if (senderJid.includes('@lid')) {
-        const phone = lidPhoneCache.get(raw) || lidPhoneCache.get(full) || getPhoneFromLid(raw) || getPhoneFromLid(full);
+        let phone = lidPhoneCache.get(raw) || lidPhoneCache.get(full) || getPhoneFromLid(raw) || getPhoneFromLid(full) || resolvePhoneFromLid(senderJid);
+        if (!phone) {
+            const isOwnerLid = OWNER_LID && (senderJid === OWNER_LID || raw === OWNER_LID.split('@')[0]?.split(':')[0]);
+            if (isOwnerLid && currentSock?.user?.id && !currentSock.user.id.includes('@lid')) {
+                phone = currentSock.user.id.split('@')[0]?.split(':')[0];
+                if (phone) cacheLidPhone(raw, phone);
+            }
+            if (!phone && isOwnerLid && currentSock?.user?.lid) {
+                const lidPhone = currentSock.user.lid.split('@')[0]?.split(':')[0];
+                if (lidPhone && lidPhone !== raw && lidPhone.length >= 7) {
+                    phone = lidPhone;
+                    cacheLidPhone(raw, phone);
+                }
+            }
+        }
         return phone ? `+${phone}` : `LID:${raw.substring(0, 8)}...`;
     }
     return `+${raw}`;
@@ -4530,6 +4544,18 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     setConfigBotId(sock.user.id);
                     initSudo(sock.user.id).catch(() => {});
                     reloadConfigCaches().catch(() => {});
+                    try {
+                        const uid = sock.user.id;
+                        const ulid = sock.user.lid;
+                        const uidNum = uid?.split('@')[0]?.split(':')[0];
+                        const ulidNum = ulid?.split('@')[0]?.split(':')[0];
+                        if (ulid && uidNum && ulidNum && !uid.includes('@lid')) {
+                            cacheLidPhone(ulidNum, uidNum);
+                        } else if (uid.includes('@lid') && ulid) {
+                            const ph = ulid.split('@')[0]?.split(':')[0];
+                            if (ph && ph !== uidNum) cacheLidPhone(uidNum, ph);
+                        }
+                    } catch {}
                 }
 
                 if (!antideleteInitDone) {
@@ -5327,6 +5353,26 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
     OWNER_JID = sock.user.id;
     OWNER_NUMBER = OWNER_JID.split('@')[0];
     
+    try {
+        const userId = sock.user.id;
+        const userLid = sock.user.lid;
+        const userIdNum = userId?.split('@')[0]?.split(':')[0];
+        const userLidNum = userLid?.split('@')[0]?.split(':')[0];
+        UltraCleanLogger.info(`🔑 sock.user → id: ${userId || 'none'} | lid: ${userLid || 'none'}`);
+        if (userLid && userIdNum && userLidNum && !userId.includes('@lid')) {
+            cacheLidPhone(userLidNum, userIdNum);
+            UltraCleanLogger.info(`📱 Cached owner LID→Phone: ${userLidNum} → ${userIdNum}`);
+        } else if (userId.includes('@lid') && userLid) {
+            const phoneNum = userLid.split('@')[0]?.split(':')[0];
+            if (phoneNum && phoneNum !== userIdNum) {
+                cacheLidPhone(userIdNum, phoneNum);
+                UltraCleanLogger.info(`📱 Cached owner LID→Phone: ${userIdNum} → ${phoneNum}`);
+            }
+        } else if (userId.includes('@lid') && !userLid) {
+            UltraCleanLogger.warning(`⚠️ Owner connected with LID (${userIdNum}) but no phone mapping available from sock.user`);
+        }
+    } catch {}
+    
     const isAutoReconnect = loginMode === 'auto';
     
     const currentConnectedNumber = jidManager.cleanJid(OWNER_JID).cleanNumber;
@@ -6042,6 +6088,7 @@ async function handleIncomingMessage(sock, msg) {
         
         if (!commandName) {
             if (jidManager.isOwner(msg) && textMsg && textMsg.trim().length > 0) {
+                if (senderJid.includes('@lid')) resolvePhoneFromLid(senderJid);
                 const ownerDisplay = getDisplayNumber(senderJid);
                 const ownerLocTag = isGroup ? `[${chatId.split('@')[0].substring(0, 10)}]` : '[DM]';
                 const preview = textMsg.length > 60 ? textMsg.substring(0, 60) + '…' : textMsg;
