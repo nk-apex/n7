@@ -54,6 +54,8 @@ async function loadStatusData() {
         }
         const savedEnabled = await db.getConfig('antidelete_status_enabled', true);
         statusAntideleteState.enabled = savedEnabled;
+        const savedMode = await db.getConfig('antidelete_status_mode', 'private');
+        statusAntideleteState.mode = savedMode || 'private';
     } catch (error) {
         console.error('❌ Status Antidelete: Error loading settings from DB:', error.message);
     }
@@ -63,6 +65,7 @@ async function saveStatusData() {
     try {
         await db.setConfig('antidelete_status_settings', statusAntideleteState.settings);
         await db.setConfig('antidelete_status_enabled', statusAntideleteState.enabled);
+        await db.setConfig('antidelete_status_mode', statusAntideleteState.mode || 'private');
     } catch (error) {
         console.error('❌ Status Antidelete: Error saving settings to DB:', error.message);
     }
@@ -669,7 +672,7 @@ export async function initStatusAntidelete(sock) {
         }
 
         statusAntideleteState.sock = sock;
-        statusAntideleteState.mode = 'private';
+        if (!statusAntideleteState.mode) statusAntideleteState.mode = 'private';
 
         if (statusAntideleteState.settings.autoCleanEnabled) {
             startAutoClean();
@@ -692,6 +695,13 @@ export function updateStatusAntideleteSock(sock) {
             statusAntideleteState.ownerJid = jidNormalizedUser(sock.user.id);
         }
     }
+}
+
+export function getStatusAntideleteInfo() {
+    return {
+        enabled: statusAntideleteState.enabled,
+        mode: statusAntideleteState.mode || 'private'
+    };
 }
 
 export default {
@@ -722,12 +732,33 @@ export default {
         }
 
         switch (command) {
+            case 'private': {
+                statusAntideleteState.enabled = true;
+                statusAntideleteState.mode = 'private';
+                await saveStatusData();
+                await sock.sendMessage(chatId, {
+                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: PRIVATE* ⌋\n├─⊷ Deleted statuses sent to owner DM\n╰───`
+                }, { quoted: msg });
+                break;
+            }
+
+            case 'public': {
+                statusAntideleteState.enabled = true;
+                statusAntideleteState.mode = 'public';
+                await saveStatusData();
+                await sock.sendMessage(chatId, {
+                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: PUBLIC* ⌋\n├─⊷ Deleted statuses sent to same chat\n╰───`
+                }, { quoted: msg });
+                break;
+            }
+
             case 'on':
             case 'enable': {
                 statusAntideleteState.enabled = true;
                 await saveStatusData();
+                const currentMode = (statusAntideleteState.mode || 'private').toUpperCase();
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: ON* ⌋\n╰───`
+                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: ON (${currentMode})* ⌋\n╰───`
                 }, { quoted: msg });
                 break;
             }
@@ -744,8 +775,9 @@ export default {
 
             case 'status':
             case 'stats': {
+                const modeDisplay = statusAntideleteState.enabled ? (statusAntideleteState.mode || 'private').toUpperCase() : 'OFF';
                 const statsText = `╭─⌈ 📊 *STATUS ANTIDELETE* ⌋\n` +
-                    `├─⊷ Status: ${statusAntideleteState.enabled ? 'ON' : 'OFF'}\n` +
+                    `├─⊷ Status: ${modeDisplay}\n` +
                     `├─⊷ Tracked: ${statusAntideleteState.statusCache.size}\n` +
                     `├─⊷ Deleted: ${statusAntideleteState.stats.deletedDetected}\n` +
                     `├─⊷ Media: ${statusAntideleteState.stats.mediaCaptured}\n` +
@@ -895,7 +927,7 @@ export default {
 
             case 'help': {
                 const helpText = `╭─⌈ 🔍 *STATUS ANTIDELETE* ⌋\n` +
-                    `├─⊷ *${prefix}ads on/off*\n` +
+                    `├─⊷ *${prefix}ads private/public/off*\n` +
                     `├─⊷ *${prefix}ads stats*\n` +
                     `├─⊷ *${prefix}ads list*\n` +
                     `├─⊷ *${prefix}ads clear*\n` +
@@ -907,7 +939,7 @@ export default {
 
             default:
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🔍 *STATUS ANTIDELETE* ⌋\n├─⊷ *${prefix}ads help*\n╰───`
+                    text: `╭─⌈ 🔍 *STATUS ANTIDELETE* ⌋\n├─⊷ Usage: *${prefix}ads private/public/off*\n├─⊷ *${prefix}ads help*\n╰───`
                 }, { quoted: msg });
         }
     }

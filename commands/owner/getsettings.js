@@ -2,6 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getWarnLimit as getPerGroupLimit } from '../../lib/warnings-store.js';
+import db from '../../lib/supabase.js';
+import { getStatusAntideleteInfo } from './antideletestatus.js';
+import { getAntieditInfo } from './antiedit.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,12 +20,6 @@ function safeReadJSON(filePath) {
 function getPrefix() {
     const prefixData = safeReadJSON(path.join(__dirname, '../../data/prefix.json'));
     if (prefixData?.prefix !== undefined) return prefixData.prefix || 'none (prefixless)';
-
-    const settingsData = safeReadJSON(path.join(__dirname, '../../settings.json'));
-    if (settingsData?.prefix) return settingsData.prefix;
-
-    const botSettings = safeReadJSON(path.join(__dirname, '../../bot_settings.json'));
-    if (botSettings?.prefix) return botSettings.prefix;
 
     if (global.prefix) return global.prefix;
     if (global.CURRENT_PREFIX) return global.CURRENT_PREFIX;
@@ -117,17 +114,25 @@ function getFooter() {
 function getAntideleteState() {
     const data = safeReadJSON(path.join(__dirname, '../../data/antidelete/antidelete.json'));
     if (!data) return 'PRIVATE (default)';
+    if (!data.enabled && data.enabled !== undefined) return 'OFF';
     return (data.mode || 'private').toUpperCase();
 }
 
 function getAntiViewOnceState() {
     const data = safeReadJSON(path.join(__dirname, '../../data/antiviewonce/config.json'));
     if (!data) return 'PRIVATE (default)';
+    if (!data.enabled && data.enabled !== undefined) return 'OFF';
     return (data.mode || 'private').toUpperCase();
 }
 
 function getAutoreadState() {
     const data = safeReadJSON(path.join(__dirname, '../../data/autoread/config.json'));
+    if (!data) return 'OFF';
+    return data.enabled ? 'ON' : 'OFF';
+}
+
+function getAutoViewStatusState() {
+    const data = safeReadJSON('./data/autoViewConfig.json');
     if (!data) return 'OFF';
     return data.enabled ? 'ON' : 'OFF';
 }
@@ -199,8 +204,7 @@ export default {
         }
 
         try {
-            const ownerData = safeReadJSON(path.join(__dirname, '../../owner.json')) || {};
-            const ownerNumber = ownerData.OWNER_NUMBER || sock.user?.id?.split('@')[0] || 'Unknown';
+            const ownerNumber = global.OWNER_CLEAN_NUMBER || global.OWNER_NUMBER || sock.user?.id?.split('@')[0] || 'Unknown';
             const isPrefixless = getPrefixlessStatus();
             const prefix = isPrefixless ? 'none (prefixless)' : getPrefix();
             const mode = getBotMode();
@@ -217,11 +221,32 @@ export default {
             const antidelete = getAntideleteState();
             const antiViewOnce = getAntiViewOnceState();
             const autoread = getAutoreadState();
+            const autoViewStatus = getAutoViewStatusState();
             const antibug = getAntibugState();
             const platform = detectPlatform();
             const uptime = formatUptime(process.uptime());
             const memUsage = `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1)}MB`;
             const totalCmds = countCommands(path.join(__dirname, '../../commands'));
+
+            let antideleteStatusDisplay = 'OFF';
+            try {
+                const adsInfo = getStatusAntideleteInfo();
+                if (adsInfo.enabled) {
+                    antideleteStatusDisplay = (adsInfo.mode || 'private').toUpperCase();
+                } else {
+                    antideleteStatusDisplay = 'OFF';
+                }
+            } catch {}
+
+            let antieditDisplay = 'OFF';
+            try {
+                const aeInfo = getAntieditInfo();
+                if (aeInfo.gc.enabled || aeInfo.pm.enabled) {
+                    const gcMode = aeInfo.gc.enabled ? aeInfo.gc.mode.toUpperCase() : 'OFF';
+                    const pmMode = aeInfo.pm.enabled ? aeInfo.pm.mode.toUpperCase() : 'OFF';
+                    antieditDisplay = `GC: ${gcMode} | PM: ${pmMode}`;
+                }
+            } catch {}
 
             let caption = `⚙️  \`W.O.L.F  𝚂𝙴𝚃𝚃𝙸𝙽𝙶𝚂\`\n\n`;
 
@@ -240,12 +265,15 @@ export default {
             caption += `│ ◎ *Autotyping:* ${autotyping}\n`;
             caption += `│ ◎ *Autorecording:* ${autorecording}\n`;
             caption += `│ ◎ *Autoread:* ${autoread}\n`;
+            caption += `│ ◎ *Auto View Status:* ${autoViewStatus}\n`;
             caption += `└──────────────\n\n`;
 
             caption += `┌─── *PROTECTION* ───\n`;
             caption += `│ ◎ *Anticall:* ${anticall}\n`;
             caption += `│ ◎ *Anticall Msg:* ${anticallMsg.substring(0, 40)}${anticallMsg.length > 40 ? '...' : ''}`;
             caption += `\n│ ◎ *Antidelete:* ${antidelete}\n`;
+            caption += `│ ◎ *Antidelete Status:* ${antideleteStatusDisplay}\n`;
+            caption += `│ ◎ *Antiedit:* ${antieditDisplay}\n`;
             caption += `│ ◎ *Anti-ViewOnce:* ${antiViewOnce}\n`;
             caption += `│ ◎ *Antibug:* ${antibug}\n`;
             caption += `│ ◎ *Warn Limit:* ${warnLimit}\n`;

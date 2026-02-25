@@ -740,6 +740,13 @@ export async function initAntiedit(sock) {
     await initializeSystem(sock);
 }
 
+export function getAntieditInfo() {
+    return {
+        gc: { enabled: antieditState.gc.enabled, mode: antieditState.gc.mode },
+        pm: { enabled: antieditState.pm.enabled, mode: antieditState.pm.mode }
+    };
+}
+
 export default {
     name: 'antiedit',
     alias: ['editdetect', 'edited', 'ae'],
