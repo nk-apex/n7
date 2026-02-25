@@ -756,7 +756,8 @@ const _errSuppressArr = [
 ];
 const _warnSuppressArr = [
     'decrypted message with closed session','failed to decrypt','bad mac',
-    'closing session','stream errored','signalprotocol','ratchet',
+    'closing session','closing open session','incoming prekey bundle',
+    'stream errored','signalprotocol','ratchet',
     'sessioncipher','sessionbuilder','sessionentry','sessionstate','sessionerror'
 ];
 function _isLogSuppressed(msg) {
@@ -1397,9 +1398,9 @@ const DiskManager = {
             const preKeys = files.filter(f => f.startsWith('pre-key-'));
             const appSync = files.filter(f => f.startsWith('app-state-sync-version-'));
 
-            const senderLimit = aggressive ? 20 : 80;
-            const preKeyLimit = aggressive ? 20 : 80;
-            const appSyncLimit = aggressive ? 5 : 15;
+            const senderLimit = aggressive ? 10 : 40;
+            const preKeyLimit = aggressive ? 10 : 40;
+            const appSyncLimit = aggressive ? 3 : 10;
 
             const removeFiles = async (list, limit) => {
                 if (list.length <= limit) return 0;
@@ -2796,11 +2797,16 @@ const memoryMonitor = {
     _trimInterval: null,
     start() {
         if (this._interval) return;
+        this._lastMemWarn = 0;
         this._interval = setInterval(() => {
             try {
                 const memMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
                 if (memMB > 250) {
-                    UltraCleanLogger.warning(`High memory: ${memMB}MB - trimming caches`);
+                    const now = Date.now();
+                    if (now - this._lastMemWarn > 5 * 60 * 1000) {
+                        UltraCleanLogger.warning(`High memory: ${memMB}MB - trimming caches`);
+                        this._lastMemWarn = now;
+                    }
                     setImmediate(() => this.trimCaches(memMB > 350));
                 }
             } catch {}
@@ -2847,7 +2853,10 @@ const memoryMonitor = {
             trimMap(_pendingGroupFetches, 20, 10, null);
             if (global.gc) { global.gc(); }
             if (aggressive) {
-                UltraCleanLogger.info(`Aggressive cache trim complete`);
+                const memAfter = Math.round(process.memoryUsage().rss / 1024 / 1024);
+                if (memAfter > 350) {
+                    UltraCleanLogger.info(`Aggressive trim: ${memAfter}MB`);
+                }
             }
         } catch {}
     }
