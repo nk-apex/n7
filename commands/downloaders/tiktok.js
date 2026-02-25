@@ -1,252 +1,175 @@
 import axios from 'axios';
+import { createWriteStream, existsSync } from 'fs';
+import { promisify } from 'util';
+import { exec } from 'child_process';
+import fs from 'fs';
+
+const execAsync = promisify(exec);
+
+const globalUserCaptions = new Map();
 
 export default {
-  name: 'tiktokinfo',
-  description: 'Get TikTok account information',
-  aliases: ['ttinfo', 'tkinfo', 'tiktokstats'],
-  category: 'stalker',
-  usage: 'tiktokinfo [username]',
-  
-  async execute(sock, m, args) {
+  name: "tiktok",
+  aliases: ['tt', 'tikdown', 'ttdl'],
+  description: "Download TikTok videos without watermark",
+  category: 'downloaders',
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
-    
+    const userId = m.key.participant || m.key.remoteJid;
+
     try {
-      // Show help if no arguments
-      if (args.length === 0 || args[0]?.toLowerCase() === 'help') {
-        const helpText = `╭─⌈ 📊 *TIKTOK ACCOUNT INFO* ⌋\n│\n` +
-          `├─⊷ *.tiktokinfo <username>*\n│  └⊷ Get TikTok account information\n│\n` +
-          `├─⊷ *.ttinfo @username*\n│  └⊷ Alias for tiktokinfo\n│\n` +
-          `├─⊷ *Examples:*\n` +
-          `│  └⊷ .tiktokinfo keizzah4189\n` +
-          `│  └⊷ .ttinfo @khaby.lame\n│\n` +
-          `╰───`;
-        
-        return sock.sendMessage(jid, { text: helpText }, { quoted: m });
+      if (!args[0]) {
+        await sock.sendMessage(jid, {
+          text: `╭─⌈ 🎵 *TIKTOK DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}tiktok <url>*\n│  └⊷ Download without watermark\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}tiktok https://vt.tiktok.com/xyz\n│  └⊷ ${PREFIX}tt https://www.tiktok.com/@user/video/123\n╰───`
+        }, { quoted: m });
+        return;
       }
 
-      // Get username from arguments
-      let username = args.join(' ').trim();
-      
-      // Remove @ symbol if present
-      if (username.startsWith('@')) {
-        username = username.substring(1);
-      }
-      
-      // Remove any URL parts
-      username = username.replace('https://www.tiktok.com/', '')
-                        .replace('https://tiktok.com/', '')
-                        .replace('@', '')
-                        .trim();
-      
-      if (!username) {
-        return sock.sendMessage(jid, {
-          text: `❌ *Please provide a TikTok username!*\n\nExample: \`.tiktokinfo keizzah4189\``
-        }, { quoted: m });
+      const url = args[0];
+
+      if (!isValidTikTokUrl(url)) {
+        await sock.sendMessage(jid, { text: `❌ Invalid TikTok URL` }, { quoted: m });
+        return;
       }
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      console.log(`[TIKTOK INFO] Fetching account: @${username}`);
-      
-      try {
-        // Use the reliable API from stalk.js
-        const res = await axios.get(`https://apiskeith.vercel.app/stalker/tiktok?user=${encodeURIComponent(username)}`);
-        const data = res.data;
+      const result = await downloadTikTok(url);
 
-        if (!data.status || !data.result?.profile) {
-          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-          await sock.sendMessage(jid, {
-            text: `❌ *Account Not Found!*\n\nCould not fetch data for @${username}.\n\n💡 *Possible reasons:*\n• Account doesn't exist\n• Account is private\n• API is temporarily unavailable\n\n✅ *Try:*\n• Check username spelling\n• Use exact username (case-sensitive)\n• Try again in a few minutes`
-          }, { quoted: m });
-          return;
-        }
-
-        const { profile, stats } = data.result;
-        
-        // Create formatted caption
-        const caption = `╔═══════════════════════════╗\n` +
-                       `║   📊 TIKTOK PROFILE INFO   ║\n` +
-                       `╚═══════════════════════════╝\n\n` +
-                       
-                       `👤 *PROFILE DETAILS*\n` +
-                       `├─ Username: @${profile.username}\n` +
-                       `├─ Name: ${profile.nickname}\n` +
-                       `├─ ID: ${profile.id}\n` +
-                       `├─ Bio: ${profile.bio || "—"}\n` +
-                       `├─ Language: ${profile.language}\n` +
-                       `├─ Private: ${profile.private ? "🔒 Yes" : "🔓 No"}\n` +
-                       `├─ Verified: ${profile.verified ? "✅ Yes" : "❌ No"}\n` +
-                       `└─ Created: ${new Date(profile.createdAt).toLocaleDateString()}\n\n` +
-                       
-                       `📈 *ACCOUNT STATISTICS*\n` +
-                       `├─ Followers: ${formatNumber(stats.followers)}\n` +
-                       `├─ Following: ${formatNumber(stats.following)}\n` +
-                       `├─ Total Likes: ${formatNumber(stats.likes)}\n` +
-                       `├─ Videos: ${formatNumber(stats.videos)}\n` +
-                       `└─ Friends: ${formatNumber(stats.friends)}\n\n` +
-                       
-                       `🔗 *Profile URL:*\nhttps://tiktok.com/@${profile.username}\n\n` +
-                       `📅 *Data fetched:* ${new Date().toLocaleString()}`;
-
-        // Send profile picture with caption
-        await sock.sendMessage(jid, {
-          image: { url: profile.avatars?.large || profile.avatars?.medium || profile.avatars?.small },
-          caption: caption
-        }, { quoted: m });
-
-        console.log(`✅ [TIKTOK INFO] Successfully sent profile for @${username}`);
-        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-
-      } catch (apiError) {
-        console.error('❌ [TIKTOK INFO] API Error:', apiError);
-        
-        // Try fallback method if main API fails
-        try {
-          const fallbackInfo = await getFallbackTikTokInfo(username);
-          
-          if (fallbackInfo.error) {
-            throw new Error(fallbackInfo.error);
-          }
-          
-          const fallbackCaption = `╔═══════════════════════════╗\n` +
-                                 `║   📊 TIKTOK PROFILE INFO   ║\n` +
-                                 `╚═══════════════════════════╝\n\n` +
-                                 
-                                 `⚠️ *Using alternative data source*\n\n` +
-                                 
-                                 `👤 *PROFILE DETAILS*\n` +
-                                 `├─ Username: @${fallbackInfo.username}\n` +
-                                 `├─ Name: ${fallbackInfo.displayName}\n` +
-                                 `└─ Verified: ${fallbackInfo.verified ? "✅ Yes" : "❌ No"}\n\n` +
-                                 
-                                 `📈 *ACCOUNT STATISTICS*\n` +
-                                 `├─ Followers: ${formatNumber(fallbackInfo.followers)}\n` +
-                                 `├─ Following: ${formatNumber(fallbackInfo.following)}\n` +
-                                 `└─ Total Likes: ${formatNumber(fallbackInfo.likes)}\n\n` +
-                                 
-                                 `${fallbackInfo.bio ? `📝 *BIO*\n${fallbackInfo.bio}\n\n` : ''}` +
-                                 `🔗 *Profile URL:*\nhttps://tiktok.com/@${fallbackInfo.username}\n\n` +
-                                 `📅 *Data fetched:* ${new Date().toLocaleString()}`;
-          
-          await sock.sendMessage(jid, {
-            text: fallbackCaption
-          }, { quoted: m });
-          
-          await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-          
-        } catch (fallbackError) {
-          await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-          await sock.sendMessage(jid, {
-            text: `❌ *Failed to Fetch Account!*\n\nError: ${apiError.message || 'API unavailable'}\n\n💡 *Try:*\n• Check if username is correct\n• Make sure account is public\n• Try again later`
-          }, { quoted: m });
-        }
+      if (!result.success) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+        await sock.sendMessage(jid, { text: `❌ Download failed: ${result.error || 'Unknown error'}` }, { quoted: m });
+        return;
       }
 
-    } catch (error) {
-      console.error('❌ [TIKTOK INFO] Fatal Error:', error);
-      
+      const { videoPath } = result;
+
+      const userCaption = globalUserCaptions.get(userId) || "WolfBot is the Alpha";
+
       await sock.sendMessage(jid, {
-        text: `❌ *Unexpected Error!*\n\nAn error occurred while processing your request.\n\nError: ${error.message}`
+        video: fs.readFileSync(videoPath),
+        caption: userCaption
       }, { quoted: m });
+
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+
+      try { if (existsSync(videoPath)) fs.unlinkSync(videoPath); } catch {}
+
+    } catch (error) {
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+      await sock.sendMessage(jid, { text: `❌ Error: ${error.message}` }, { quoted: m });
     }
-  }
+  },
 };
 
-// ====== HELPER FUNCTIONS ======
-
-// Format numbers with K/M/B suffix
-function formatNumber(num) {
-  if (!num && num !== 0) return 'N/A';
-  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-  return num.toString();
+export function getUserCaption(userId) {
+  return globalUserCaptions.get(userId) || "WolfBot is the Alpha";
 }
 
-// Fallback method using simple web scraping
-async function getFallbackTikTokInfo(username) {
+export function setUserCaption(userId, caption) {
+  globalUserCaptions.set(userId, caption);
+}
+
+export function getUserCaptionMap() {
+  return globalUserCaptions;
+}
+
+function isValidTikTokUrl(url) {
+  const patterns = [
+    /https?:\/\/(vm|vt)\.tiktok\.com\/\S+/,
+    /https?:\/\/(www\.)?tiktok\.com\/@\S+\/video\/\d+/,
+    /https?:\/\/(www\.)?tiktok\.com\/t\/\S+/,
+    /https?:\/\/m\.tiktok\.com\/v\/\d+/
+  ];
+  return patterns.some(pattern => pattern.test(url));
+}
+
+async function downloadTikTok(url) {
   try {
-    // Try a simple approach using public APIs
+    const timestamp = Date.now();
+    const rand = Math.random().toString(36).slice(2);
+    const videoPath = `/tmp/wolfbot_tiktok_${timestamp}_${rand}.mp4`;
+
     const apis = [
-      `https://api.tok.gg/v1/users/@${username}`,
-      `https://tiktok-info.p.rapidapi.com/api/getUserInfo?username=${username}`,
-      `https://www.tiktok.com/@${username}`
+      {
+        url: `https://tikwm.com/api/?url=${encodeURIComponent(url)}`,
+        videoKey: 'data.play'
+      },
+      {
+        url: `https://api.tikmate.app/api/lookup?url=${encodeURIComponent(url)}`,
+        process: (data) => ({
+          video_url: `https://tikmate.app/download/${data.token}/${data.id}.mp4`
+        })
+      }
     ];
-    
+
+    let videoUrl = null;
+
     for (const api of apis) {
       try {
-        const response = await axios.get(api, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          },
-          timeout: 10000
-        });
-        
-        if (response.status === 200) {
-          const html = response.data;
-          
-          // Try to extract basic info from HTML
-          const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/);
-          if (titleMatch) {
-            const title = titleMatch[1];
-            const displayName = title.replace(' TikTok', '').replace(/\(@[^)]+\)/, '').trim();
-            
-            // Check if account exists
-            if (html.includes('Couldn\'t find this account') || html.includes('Page not found')) {
-              return { error: 'Account not found' };
-            }
-            
-            // Extract bio from meta description
-            const descMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]*)"/i);
-            const bio = descMatch ? descMatch[1] : '';
-            
-            // Try to extract basic stats from description
-            let followers = 0, following = 0, likes = 0;
-            
-            if (bio) {
-              const followerMatch = bio.match(/([\d.,]+[KM]?)\s*Followers/i);
-              if (followerMatch) followers = parseNumber(followerMatch[1]);
-              
-              const followingMatch = bio.match(/([\d.,]+[KM]?)\s*Following/i);
-              if (followingMatch) following = parseNumber(followingMatch[1]);
-              
-              const likesMatch = bio.match(/([\d.,]+[KM]?)\s*Likes/i);
-              if (likesMatch) likes = parseNumber(likesMatch[1]);
-            }
-            
-            const verified = html.includes('verifiedBadge') || title.includes('✅');
-            
-            return {
-              username: username,
-              displayName: displayName || username,
-              followers: followers,
-              following: following,
-              likes: likes,
-              bio: bio,
-              verified: verified,
-              error: null
-            };
+        const response = await axios.get(api.url, { timeout: 30000 });
+
+        if (response.data) {
+          let data = response.data;
+
+          if (api.process) {
+            const processed = api.process(data);
+            videoUrl = processed.video_url;
+          } else {
+            videoUrl = api.videoKey.split('.').reduce((obj, key) => obj?.[key], data);
           }
+
+          if (videoUrl) break;
         }
-      } catch (e) {
+      } catch {
         continue;
       }
     }
-    
-    return { error: 'All fallback methods failed' };
+
+    if (!videoUrl) {
+      return await downloadWithYtDlp(url, videoPath);
+    }
+
+    await downloadFile(videoUrl, videoPath);
+
+    return {
+      success: true,
+      videoPath
+    };
+
   } catch (error) {
-    return { error: error.message };
+    return { success: false, error: error.message };
   }
 }
 
-// Parse number from string
-function parseNumber(text) {
-  if (!text) return 0;
-  const clean = text.toString().replace(/,/g, '');
-  const num = parseFloat(clean.replace(/[^0-9.]/g, ''));
-  if (isNaN(num)) return 0;
-  if (clean.toLowerCase().includes('k')) return num * 1000;
-  if (clean.toLowerCase().includes('m')) return num * 1000000;
-  if (clean.toLowerCase().includes('b')) return num * 1000000000;
-  return num;
+async function downloadWithYtDlp(url, videoPath) {
+  try {
+    await execAsync('yt-dlp --version');
+  } catch {
+    return { success: false, error: 'yt-dlp not installed' };
+  }
+
+  try {
+    await execAsync(`yt-dlp -f "best[ext=mp4]" -o "${videoPath}" "${url}"`, { timeout: 60000 });
+    return { success: true, videoPath };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+async function downloadFile(url, filePath) {
+  const writer = createWriteStream(filePath);
+  const response = await axios({
+    method: 'GET',
+    url: url,
+    responseType: 'stream',
+    timeout: 60000
+  });
+
+  response.data.pipe(writer);
+
+  return new Promise((resolve, reject) => {
+    writer.on('finish', resolve);
+    writer.on('error', reject);
+  });
 }
