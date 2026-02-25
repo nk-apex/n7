@@ -633,6 +633,7 @@ import { handleAutoView } from './commands/automation/autoviewstatus.js';
 import { initializeAutoJoin } from './commands/group/add.js';
 import antidemote from './commands/group/antidemote.js';
 import { isBugMessage as antibugCheck, isEnabled as antibugEnabled, getAction as antibugGetAction } from './commands/group/antibug.js';
+import { checkMessageForLinks as antilinkCheck, isEnabled as antilinkEnabled, getMode as antilinkGetMode, getGroupConfig as antilinkGetConfig, isLinkExempt as antilinkIsExempt } from './commands/group/antilink.js';
 import banCommand from './commands/group/ban.js';
 
 // Pre-imported group event modules (avoids dynamic import disk I/O in hot event handlers)
@@ -711,6 +712,13 @@ globalThis._saveAntibugConfig = function(data) {
 _loadConfigCache('antibug_config', {}).then(config => {
     globalThis._antibugConfig = config || {};
 }).catch(() => { globalThis._antibugConfig = {}; });
+globalThis._antilinkConfig = null;
+globalThis._saveAntilinkConfig = function(data) {
+    _saveConfigCache('antilink_config', data);
+};
+_loadConfigCache('antilink_config', {}).then(config => {
+    globalThis._antilinkConfig = config || {};
+}).catch(() => { globalThis._antilinkConfig = {}; });
 globalThis.reloadConfigCaches = reloadConfigCaches;
 async function reloadConfigCaches() {
     try {
@@ -4591,10 +4599,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     updateStatusAntideleteSock(sock);
                 }
                 
-                try {
-                    const { initAntiLinkListener } = await import('./commands/group/antilink.js');
-                    initAntiLinkListener(sock);
-                } catch {}
+                
 
                 UltraCleanLogger.info('🔑 Sudo system ready (using signal LID mapping)');
 
@@ -5046,6 +5051,73 @@ async function startBot(loginMode = 'auto', loginData = null) {
                             }
 
                             return;
+                        }
+                    }
+                }
+            }
+
+            if (msg.message && msg.key?.remoteJid && !msg.key.fromMe) {
+                const chatJid = msg.key.remoteJid;
+                if (chatJid.endsWith('@g.us') && antilinkEnabled(chatJid)) {
+                    const linkResult = antilinkCheck(msg);
+                    if (linkResult.hasLink) {
+                        const senderJid = msg.key.participant || chatJid;
+                        const senderClean = senderJid.split(':')[0].split('@')[0];
+                        const isOwnerSender = jidManager.isOwner(msg);
+
+                        if (!isOwnerSender) {
+                            const gc = antilinkGetConfig(chatJid);
+                            if (gc?.exemptLinks && antilinkIsExempt(linkResult.links, gc.exemptLinks)) {
+                            } else {
+                                let isSenderAdmin = false;
+                                if (gc?.exemptAdmins !== false) {
+                                    try {
+                                        const gMeta = await sock.groupMetadata(chatJid);
+                                        const senderP = gMeta.participants.find(p => {
+                                            const pClean = p.id.split(':')[0].split('@')[0];
+                                            return pClean === senderClean;
+                                        });
+                                        isSenderAdmin = senderP?.admin === 'admin' || senderP?.admin === 'superadmin';
+                                    } catch {}
+                                }
+
+                                if (!isSenderAdmin) {
+                                    const mode = antilinkGetMode(chatJid);
+                                    UltraCleanLogger.warning(`🔗 ANTILINK: Link from ${senderClean} in ${chatJid.split('@')[0]} [${mode}]`);
+
+                                    if (mode === 'delete' || mode === 'kick') {
+                                        try {
+                                            await sock.sendMessage(chatJid, { delete: msg.key });
+                                        } catch {}
+                                    }
+
+                                    if (mode === 'warn') {
+                                        try {
+                                            await sock.sendMessage(chatJid, {
+                                                text: `⚠️ *Link Warning* @${senderClean}\n\nLinks are not allowed in this group!\nDetected: ${linkResult.links.length} link(s)\n\n⚠️ Repeated violations may result in removal.`,
+                                                mentions: [senderJid]
+                                            });
+                                        } catch {}
+                                    } else if (mode === 'delete') {
+                                        try {
+                                            await sock.sendMessage(chatJid, {
+                                                text: `🚫 *Link Deleted* @${senderClean}\n\nLinks are not allowed in this group!`,
+                                                mentions: [senderJid]
+                                            });
+                                        } catch {}
+                                    } else if (mode === 'kick') {
+                                        try {
+                                            await sock.sendMessage(chatJid, {
+                                                text: `🚫 @${senderClean} has been removed for sharing links.`,
+                                                mentions: [senderJid]
+                                            });
+                                            await sock.groupParticipantsUpdate(chatJid, [senderJid], 'remove');
+                                        } catch {}
+                                    }
+
+                                    return;
+                                }
+                            }
                         }
                     }
                 }

@@ -1,154 +1,119 @@
-// export default {
-//   name: 'kick',
-//   description: 'Removes mentioned members from the group.',
-//   execute: async (sock, msg, args, metadata) => {
-//     const isGroup = msg.key.remoteJid.endsWith('@g.us');
-//     const participants = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-
-//     if (!isGroup) {
-//       return sock.sendMessage(msg.key.remoteJid, { text: '❌ This command only works in packs.' }, { quoted: msg });
-//     }
-
-//     if (!participants.length) {
-//       return sock.sendMessage(msg.key.remoteJid, { text: '❗ Mention a user to kick.' }, { quoted: msg });
-//     }
-
-//     try {
-//       await sock.groupParticipantsUpdate(msg.key.remoteJid, participants, 'remove');
-//       await sock.sendMessage(msg.key.remoteJid, { text: '👢 User(s) kicked successfully.' }, { quoted: msg });
-//     } catch (err) {
-//       console.error('Kick error:', err);
-//       await sock.sendMessage(msg.key.remoteJid, { text: '❌ Failed to kick the user(s).' }, { quoted: msg });
-//     }
-//   },
-// };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export default {
   name: 'kick',
   description: 'Removes mentioned members or specified numbers from the group.',
-  execute: async (sock, msg, args, metadata) => {
-    const isGroup = msg.key.remoteJid.endsWith('@g.us');
-    
+  execute: async (sock, msg, args, PREFIX, extra) => {
+    const chatId = msg.key.remoteJid;
+    const isGroup = chatId.endsWith('@g.us');
+
     if (!isGroup) {
-      return sock.sendMessage(msg.key.remoteJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
+      return sock.sendMessage(chatId, { text: '❌ This command only works in groups.' }, { quoted: msg });
     }
 
-    // Check if user is replying to someone
-    const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const mentionedUsers = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-    
-    // Parse numbers from arguments (format: 1234567890, 9876543210, etc.)
-    const numbersFromArgs = args.filter(arg => /^\d+$/.test(arg)).map(num => `${num}@s.whatsapp.net`);
-    
-    // Get user from reply if no mentions or args
+    const contextInfo = msg.message?.extendedTextMessage?.contextInfo ||
+                        msg.message?.imageMessage?.contextInfo ||
+                        msg.message?.videoMessage?.contextInfo ||
+                        msg.message?.documentMessage?.contextInfo ||
+                        msg.message?.stickerMessage?.contextInfo || {};
+
+    const mentionedUsers = contextInfo.mentionedJid || [];
+
+    const numbersFromArgs = args.filter(arg => /^\d{7,15}$/.test(arg)).map(num => `${num}@s.whatsapp.net`);
+
     let participants = [];
-    
+
     if (mentionedUsers.length > 0) {
       participants = mentionedUsers;
     } else if (numbersFromArgs.length > 0) {
       participants = numbersFromArgs;
-    } else if (quotedMsg) {
-      // Get the sender of the quoted message
-      const quotedParticipant = msg.message.extendedTextMessage.contextInfo.participant;
-      if (quotedParticipant) {
-        participants = [quotedParticipant];
-      }
+    } else if (contextInfo.quotedMessage && contextInfo.participant) {
+      participants = [contextInfo.participant];
     }
 
     if (!participants.length) {
-      return sock.sendMessage(msg.key.remoteJid, { 
-        text: '╭─⌈ ❗ *KICK* ⌋\n│\n├─⊷ *@kick @user*\n│  └⊷ Kick via mention\n├─⊷ *@kick* (in reply)\n│  └⊷ Kick via reply\n├─⊷ *@kick 1234567890*\n│  └⊷ Kick by number\n╰───' 
+      return sock.sendMessage(chatId, {
+        text: `╭─⌈ 👢 *KICK* ⌋\n│\n├─⊷ *${PREFIX}kick @user*\n│  └⊷ Kick mentioned user\n├─⊷ *${PREFIX}kick* (reply to msg)\n│  └⊷ Kick replied user\n├─⊷ *${PREFIX}kick 1234567890*\n│  └⊷ Kick by phone number\n╰───`
       }, { quoted: msg });
     }
 
+    const botJid = sock.user?.id;
+    const botClean = botJid?.split(':')[0]?.split('@')[0];
+    const senderJid = msg.key.participant || chatId;
+
+    let groupMeta;
     try {
-      await sock.groupParticipantsUpdate(msg.key.remoteJid, participants, 'remove');
-      await sock.sendMessage(msg.key.remoteJid, { 
-        text: `👢 ${participants.length} user(s) kicked successfully.` 
-      }, { quoted: msg });
-    } catch (err) {
-      console.error('Kick error:', err);
-      await sock.sendMessage(msg.key.remoteJid, { 
-        text: '❌ Failed to kick the user(s). Make sure I have admin permissions.' 
-      }, { quoted: msg });
-    }
-  },
-};
-
-export const kickall = {
-  name: 'kickall',
-  description: 'Removes all non-admin members from the group.',
-  execute: async (sock, msg, args, metadata) => {
-    const isGroup = msg.key.remoteJid.endsWith('@g.us');
-    
-    if (!isGroup) {
-      return sock.sendMessage(msg.key.remoteJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
+      groupMeta = await sock.groupMetadata(chatId);
+    } catch {
+      return sock.sendMessage(chatId, { text: '❌ Failed to fetch group info.' }, { quoted: msg });
     }
 
-    try {
-      // Get group metadata
-      const groupMetadata = await sock.groupMetadata(msg.key.remoteJid);
-      const participants = groupMetadata.participants;
-      
-      // Filter out admins
-      const nonAdminParticipants = participants
-        .filter(p => p.admin === null)
-        .map(p => p.id);
-      
-      if (nonAdminParticipants.length === 0) {
-        return sock.sendMessage(msg.key.remoteJid, { 
-          text: 'ℹ️ All members in this group are admins.' 
-        }, { quoted: msg });
+    const botParticipant = groupMeta.participants.find(p => {
+      const pClean = p.id.split(':')[0].split('@')[0];
+      return pClean === botClean;
+    });
+    const botIsAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
+
+    if (!botIsAdmin) {
+      return sock.sendMessage(chatId, { text: '❌ I need admin permissions to kick members.' }, { quoted: msg });
+    }
+
+    const senderClean = senderJid.split(':')[0].split('@')[0];
+    const senderParticipant = groupMeta.participants.find(p => {
+      const pClean = p.id.split(':')[0].split('@')[0];
+      return pClean === senderClean;
+    });
+    const senderIsAdmin = senderParticipant?.admin === 'admin' || senderParticipant?.admin === 'superadmin';
+    const isOwner = extra?.isOwner ? extra.isOwner() : false;
+    const isSudo = extra?.isSudo ? extra.isSudo() : false;
+
+    if (!senderIsAdmin && !isOwner && !isSudo) {
+      return sock.sendMessage(chatId, { text: '❌ Only group admins can use this command.' }, { quoted: msg });
+    }
+
+    const skipped = [];
+    const toKick = [];
+
+    for (const jid of participants) {
+      const jidClean = jid.split(':')[0].split('@')[0];
+
+      if (jidClean === botClean) {
+        skipped.push(jid);
+        continue;
       }
 
-      // Send confirmation
-      await sock.sendMessage(msg.key.remoteJid, { 
-        text: `⚠️ Are you sure you want to kick ${nonAdminParticipants.length} non-admin members? Reply with "yes" to confirm.` 
-      }, { quoted: msg });
-      
-      // Wait for confirmation (you might want to implement a confirmation system)
-      // For now, we'll proceed directly
-      
-      // Kick all non-admins (in batches to avoid rate limiting)
-      const batchSize = 5;
-      let kickedCount = 0;
-      
-      for (let i = 0; i < nonAdminParticipants.length; i += batchSize) {
-        const batch = nonAdminParticipants.slice(i, i + batchSize);
-        await sock.groupParticipantsUpdate(msg.key.remoteJid, batch, 'remove');
-        kickedCount += batch.length;
-        
-        // Delay between batches
-        if (i + batchSize < nonAdminParticipants.length) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+      const targetP = groupMeta.participants.find(p => {
+        const pClean = p.id.split(':')[0].split('@')[0];
+        return pClean === jidClean;
+      });
+
+      if (targetP && (targetP.admin === 'admin' || targetP.admin === 'superadmin')) {
+        if (!isOwner && !isSudo) {
+          skipped.push(jid);
+          continue;
         }
       }
-      
-      await sock.sendMessage(msg.key.remoteJid, { 
-        text: `👢 Successfully kicked ${kickedCount} members from the group.` 
+
+      toKick.push(targetP ? targetP.id : jid);
+    }
+
+    if (toKick.length === 0) {
+      let reason = skipped.length > 0 ? 'Cannot kick admins or the bot itself.' : 'No valid users to kick.';
+      return sock.sendMessage(chatId, { text: `❌ ${reason}` }, { quoted: msg });
+    }
+
+    try {
+      await sock.groupParticipantsUpdate(chatId, toKick, 'remove');
+      const kickedNames = toKick.map(j => `@${j.split('@')[0].split(':')[0]}`).join(', ');
+      let text = `👢 Kicked ${toKick.length} user(s): ${kickedNames}`;
+      if (skipped.length > 0) {
+        text += `\n⚠️ Skipped ${skipped.length} (admins/bot)`;
+      }
+      await sock.sendMessage(chatId, {
+        text,
+        mentions: toKick
       }, { quoted: msg });
-      
     } catch (err) {
-      console.error('Kickall error:', err);
-      await sock.sendMessage(msg.key.remoteJid, { 
-        text: '❌ Failed to kick members. Make sure I have admin permissions.' 
+      await sock.sendMessage(chatId, {
+        text: '❌ Failed to kick user(s). Check my permissions.'
       }, { quoted: msg });
     }
   },
