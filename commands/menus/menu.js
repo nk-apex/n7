@@ -93,19 +93,13 @@ export default {
     const jid = m.key.remoteJid;
     let style = getCurrentMenuStyle();
     
-    let buttonModeActive = false;
-    try {
-      const { isButtonModeEnabled } = await import('../../lib/buttonMode.js');
-      buttonModeActive = isButtonModeEnabled();
-      if (buttonModeActive && style !== 8) {
-        style = 8;
-      }
-    } catch {}
+    if (style === 8) {
+      style = 5;
+    }
     
-    // Set the last used menu for toggle commands
     setLastMenu(style);
 
-    console.log(`\n🐺 [MENU] Command received from: ${jid} | Using style: ${style}${buttonModeActive ? ' (button mode)' : ''}`);
+    console.log(`\n🐺 [MENU] Command received from: ${jid} | Using style: ${style}`);
 
     try {
       switch (style) {
