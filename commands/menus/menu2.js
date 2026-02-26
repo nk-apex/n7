@@ -1,5 +1,6 @@
 import { createRequire } from 'module';
 import { getBotName } from '../../lib/menuHelper.js';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 
 const require = createRequire(import.meta.url);
 
@@ -44,33 +45,35 @@ export default {
       { name: 'videomenu', icon: '🎬', desc: 'AI video effects' },
     ];
 
-    const menuText = `🐺 *WOLFBOT CATEGORY MENU*`;
+    const buttonMode = isButtonModeEnabled();
 
-    const interactiveButtons = categories.map(cat => ({
-      name: 'quick_reply',
-      buttonParamsJson: JSON.stringify({
-        display_text: `${cat.icon} ${cat.name.replace('menu', '').charAt(0).toUpperCase() + cat.name.replace('menu', '').slice(1)}`,
-        id: `${prefix}${cat.name}`
-      })
-    }));
+    if (buttonMode && giftedBtns?.sendInteractiveMessage) {
+      const menuText = `🐺 *WOLFBOT CATEGORY MENU*`;
 
-    interactiveButtons.push({
-      name: 'quick_reply',
-      buttonParamsJson: JSON.stringify({
-        display_text: '🐺 Main Menu',
-        id: `${prefix}menu`
-      })
-    });
+      const interactiveButtons = categories.map(cat => ({
+        name: 'quick_reply',
+        buttonParamsJson: JSON.stringify({
+          display_text: `${cat.icon} ${cat.name.replace('menu', '').charAt(0).toUpperCase() + cat.name.replace('menu', '').slice(1)}`,
+          id: `${prefix}${cat.name}`
+        })
+      }));
 
-    interactiveButtons.push({
-      name: 'quick_reply',
-      buttonParamsJson: JSON.stringify({
-        display_text: '🏓 Ping',
-        id: `${prefix}ping`
-      })
-    });
+      interactiveButtons.push({
+        name: 'quick_reply',
+        buttonParamsJson: JSON.stringify({
+          display_text: '🐺 Main Menu',
+          id: `${prefix}menu`
+        })
+      });
 
-    if (giftedBtns?.sendInteractiveMessage) {
+      interactiveButtons.push({
+        name: 'quick_reply',
+        buttonParamsJson: JSON.stringify({
+          display_text: '🏓 Ping',
+          id: `${prefix}ping`
+        })
+      });
+
       try {
         await giftedBtns.sendInteractiveMessage(sock, chatId, {
           text: menuText,
@@ -84,7 +87,13 @@ export default {
       }
     }
 
-    await sock.sendMessage(chatId, { text: menuText }, { quoted: m });
-    console.log('[Menu2] Sent as plain text fallback');
+    let fallback = `╭─⌈ 📋 *${botName} CATEGORY MENUS* ⌋\n│\n`;
+    categories.forEach(cat => {
+      fallback += `├─⊷ *${prefix}${cat.name}*\n│  └⊷ ${cat.icon} ${cat.desc}\n`;
+    });
+    fallback += `│\n│ Type any menu name to see\n│ its full list of commands\n│\n╰─⊷ *🐺 ${botName}*`;
+
+    await sock.sendMessage(chatId, { text: fallback }, { quoted: m });
+    console.log('[Menu2] Sent as plain text (default mode)');
   }
 };
