@@ -4672,22 +4672,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                     btnPayload.contextInfo = btnPayload.contextInfo || {};
                                     btnPayload.contextInfo.mentionedJid = content.mentions;
                                 }
-                                if (hasMedia && isTextOnly) {
-                                } else if (hasMedia && content.caption) {
-                                    const mediaResult = await originalSendMessage(jid, content, options, ...rest);
-                                    try {
-                                        if (mediaResult?.key?.id && store) store.addSentMessage(jid, mediaResult.key.id, content);
-                                    } catch {}
-                                    try {
-                                        const btnOnly = {
-                                            text: ' ',
-                                            footer: btnPayload.footer,
-                                            interactiveButtons: btnPayload.interactiveButtons
-                                        };
-                                        if (btnPayload.contextInfo) btnOnly.contextInfo = btnPayload.contextInfo;
-                                        await _giftedBtns.sendInteractiveMessage(sock, jid, btnOnly);
-                                    } catch {}
-                                    return mediaResult;
+                                if (hasMedia) {
                                 }
                                 
                                 if (isTextOnly && !hasMedia) {
