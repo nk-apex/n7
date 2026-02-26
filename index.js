@@ -4566,7 +4566,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
         }
         
         let _skipButtonWrap = false;
-        const _noWrapCommands = new Set(['menu', 'menu2', 'buttonmenu', 'aimenu', 'animemenu', 'automenu', 'downloadmenu', 'ephotomenu', 'funmenu', 'gamemenu', 'gitmenu', 'groupmenu', 'imagemenu', 'logomenu', 'mediamenu', 'musicmenu', 'ownermenu', 'photofunia', 'securitymenu', 'stalkermenu', 'sportsmenu', 'toolsmenu', 'valentinemenu', 'videomenu', 'menustyle', 'repo']);
+        const _noWrapCommands = new Set(['menu', 'menu2', 'buttonmenu', 'aimenu', 'animemenu', 'automenu', 'downloadmenu', 'ephotomenu', 'funmenu', 'gamemenu', 'gitmenu', 'groupmenu', 'imagemenu', 'logomenu', 'mediamenu', 'musicmenu', 'ownermenu', 'photofunia', 'securitymenu', 'stalkermenu', 'sportsmenu', 'toolsmenu', 'valentinemenu', 'videomenu', 'menustyle']);
         sock.sendMessage = async (jid, content, options, ...rest) => {
             if (_skipButtonWrap) {
                 return originalSendMessage(jid, content, options, ...rest);
