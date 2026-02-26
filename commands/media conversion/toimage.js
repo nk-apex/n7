@@ -1,5 +1,6 @@
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
-import sharp from 'sharp';
+let sharp;
+try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 import fs from 'fs';
 import { getBotName } from '../../lib/botname.js';
 
@@ -49,6 +50,7 @@ export default {
         throw new Error('Animated stickers cannot be converted to static images');
       }
 
+      if (!sharp) throw new Error('sharp module not available on this platform');
       console.log(`🖼️ [TOIMAGE] Converting with sharp...`);
       
       const imageBuffer = await sharp(buffer)

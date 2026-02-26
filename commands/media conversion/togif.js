@@ -1,5 +1,6 @@
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
-import sharp from 'sharp';
+let sharp;
+try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -100,6 +101,7 @@ export default {
         const gifPath = path.join(tmpDir, `togif_${ts}.gif`);
         const mp4Path = path.join(tmpDir, `togif_${ts}.mp4`);
 
+        if (!sharp) throw new Error('sharp module not available on this platform');
         const gifBuffer = await sharp(stickerBuffer, { animated: isAnimated })
           .gif()
           .toBuffer();

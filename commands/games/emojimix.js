@@ -195,7 +195,8 @@
 
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
-import sharp from 'sharp';
+let sharp;
+try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 import webp from 'node-webpmux';
 import crypto from 'crypto';
 
@@ -302,6 +303,7 @@ export default {
       if (makeSticker) {
         // ====== CONVERT TO STICKER WITH WOLFBOT METADATA ======
         try {
+          if (!sharp) throw new Error('sharp module not available on this platform');
           console.log(`🎨 Converting to WolfBot sticker...`);
           
           // Process image with sharp (similar to tosticker command)

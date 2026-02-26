@@ -17,7 +17,8 @@
 
 
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
-import sharp from 'sharp';
+let sharp;
+try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 import webp from 'node-webpmux';
 import crypto from 'crypto';
 import { getBotName } from '../../lib/botname.js';
@@ -104,6 +105,8 @@ export default {
       }
 
       console.log(`🎨 [TOSTICKER] Converting to WebP...`);
+      
+      if (!sharp) throw new Error('sharp module not available on this platform');
       
       // Process image with sharp
       let processedImage;

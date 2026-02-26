@@ -1,6 +1,7 @@
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 import { execFile } from 'child_process';
-import sharp from 'sharp';
+let sharp;
+try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
@@ -62,6 +63,7 @@ export default {
         throw new Error('Downloaded sticker is too small or empty');
       }
 
+      if (!sharp) throw new Error('sharp module not available on this platform');
       const gifBuffer = await sharp(buffer, { animated: true })
         .gif()
         .toBuffer();

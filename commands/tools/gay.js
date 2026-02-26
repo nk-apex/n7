@@ -1,5 +1,6 @@
 import axios from 'axios';
-import sharp from 'sharp';
+let sharp;
+try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 
 export default {
   name: 'gay',
@@ -214,7 +215,7 @@ export default {
 // ====== HELPER FUNCTIONS ======
 
 async function applyRainbowEffect(imageBuffer) {
-  // Simple rainbow effect using tint and overlay
+  if (!sharp) throw new Error('sharp module not available on this platform');
   const image = sharp(imageBuffer);
   
   // Get metadata
