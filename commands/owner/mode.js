@@ -87,12 +87,9 @@ export default {
                     })
                 }));
                 
-                const modeText = `🤖 *Select Bot Mode*\n\nCurrent: ${modes[currentMode]?.icon || ''} *${currentMode}*${buttonsActive ? ' + 🔘 Buttons' : ''}`;
-                
                 try {
-                    await sock.sendMessage(chatId, { text: modeText, _skipButtons: true });
                     await _giftedBtns.sendInteractiveMessage(sock, chatId, {
-                        text: modeText,
+                        text: `🤖 *Select Bot Mode*\n\nCurrent: ${modes[currentMode]?.icon || ''} *${currentMode}*${buttonsActive ? ' + 🔘 Buttons' : ''}`,
                         interactiveButtons
                     });
                     return;
@@ -159,10 +156,8 @@ export default {
                 
                 if (isGiftedBtnsAvailable() && _giftedBtns) {
                     try {
-                        const btnText = `✅ *Buttons Mode Activated*\n\nTap any button to switch mode`;
-                        await sock.sendMessage(chatId, { text: btnText, _skipButtons: true });
                         await _giftedBtns.sendInteractiveMessage(sock, chatId, {
-                            text: btnText,
+                            text: `✅ *Buttons Mode Activated*\n\nTap any button to switch mode`,
                             interactiveButtons: buildModeInteractiveButtons()
                         });
                     } catch {
@@ -222,10 +217,8 @@ export default {
             
             if (buttonsActive && isGiftedBtnsAvailable() && _giftedBtns) {
                 try {
-                    const confirmText = `✅ *Mode: ${modeInfo.name}*\n\nTap any button to switch mode`;
-                    await sock.sendMessage(chatId, { text: confirmText, _skipButtons: true });
                     await _giftedBtns.sendInteractiveMessage(sock, chatId, {
-                        text: confirmText,
+                        text: `✅ *Mode: ${modeInfo.name}*\n\nTap any button to switch mode`,
                         interactiveButtons: buildModeInteractiveButtons()
                     });
                 } catch {

@@ -4551,10 +4551,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
         
         sock.sendMessage = async (jid, content, options, ...rest) => {
             if (isButtonModeEnabled() && _giftedBtns && content) {
-                if (content._skipButtons) {
-                    delete content._skipButtons;
-                    return originalSendMessage(jid, content, options, ...rest);
-                }
                 if (!content.buttons && !content.templateButtons && !content.interactiveButtons && !content.contacts && !content.react) {
                     const msgText = content.text || content.caption || '';
                     const isTextOnly = typeof content.text === 'string' && content.text.length > 0;
