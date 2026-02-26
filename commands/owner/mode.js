@@ -130,17 +130,31 @@ export default {
             const senderJid = msg.key.participant || chatId;
             const cleaned = jidManager.cleanJid(senderJid);
             
+            const allModeButtons = [
+                { display: '🌍 Public', id: 'public' },
+                { display: '💬 DMs', id: 'dms' },
+                { display: '👥 Groups', id: 'groups' },
+                { display: '🔇 Silent', id: 'silent' },
+                { display: '🔘 Buttons', id: 'buttons' },
+                { display: '📝 Default', id: 'default' }
+            ];
+            
+            const buildModeInteractiveButtons = () => allModeButtons.map(btn => ({
+                name: 'quick_reply',
+                buttonParamsJson: JSON.stringify({
+                    display_text: btn.display,
+                    id: `${PREFIX}mode ${btn.id}`
+                })
+            }));
+            
             if (requestedMode === 'buttons') {
                 setButtonMode(true, cleaned.cleanNumber || 'Unknown');
                 
                 if (isGiftedBtnsAvailable() && _giftedBtns) {
                     try {
                         await _giftedBtns.sendInteractiveMessage(sock, chatId, {
-                            text: `✅ *Buttons Mode Activated*\n\nAll responses now use interactive buttons`,
-                            interactiveButtons: [
-                                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📝 Switch to Default', id: `${PREFIX}mode default` }) },
-                                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🏠 Menu', id: `${PREFIX}menu` }) }
-                            ]
+                            text: `✅ *Buttons Mode Activated*\n\nTap any button to switch mode`,
+                            interactiveButtons: buildModeInteractiveButtons()
                         });
                     } catch {
                         await sock.sendMessage(chatId, {
@@ -200,11 +214,8 @@ export default {
             if (buttonsActive && isGiftedBtnsAvailable() && _giftedBtns) {
                 try {
                     await _giftedBtns.sendInteractiveMessage(sock, chatId, {
-                        text: `✅ *Mode: ${modeInfo.name}*\n\n${modeInfo.description}`,
-                        interactiveButtons: [
-                            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🔄 Change Mode', id: `${PREFIX}mode` }) },
-                            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🏠 Menu', id: `${PREFIX}menu` }) }
-                        ]
+                        text: `✅ *Mode: ${modeInfo.name}*\n\nTap any button to switch mode`,
+                        interactiveButtons: buildModeInteractiveButtons()
                     });
                 } catch {
                     await sock.sendMessage(chatId, {
