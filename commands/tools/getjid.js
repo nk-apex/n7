@@ -26,6 +26,62 @@ export default {
       }
 
       if (args[0]) {
+        const rawInput = args.join(' ').trim();
+
+        const channelLinkMatch = rawInput.match(/(?:https?:\/\/)?(?:www\.)?(?:whatsapp\.com\/channel|chat\.whatsapp\.com\/channel)\/([A-Za-z0-9_-]+)/i);
+        if (channelLinkMatch) {
+          const inviteCode = channelLinkMatch[1];
+          try {
+            const metadata = await sock.newsletterMetadata('invite', inviteCode);
+            if (metadata && metadata.id) {
+              let response = `📢 *CHANNEL JID RESOLVED*\n\n`;
+              response += `┌─── *CHANNEL INFO* ───\n`;
+              response += `│ 📛 *Name:* ${metadata.name || 'Unknown'}\n`;
+              response += `│ 🔗 *JID:* \`${metadata.id}\`\n`;
+              response += `│ 🆔 *ID:* ${metadata.id.split('@')[0]}\n`;
+              response += `│ 📝 *Type:* Newsletter/Channel\n`;
+              if (metadata.description) {
+                const desc = metadata.description.length > 100 ? metadata.description.slice(0, 100) + '...' : metadata.description;
+                response += `│ 📄 *Desc:* ${desc}\n`;
+              }
+              if (metadata.subscribers) {
+                response += `│ 👥 *Followers:* ${metadata.subscribers}\n`;
+              }
+              response += `│ 🔗 *Link:* https://whatsapp.com/channel/${inviteCode}\n`;
+              response += `└──────────────\n\n`;
+              response += `📋 *Copy-ready:*\n`;
+              response += `• \`${metadata.id}\``;
+              return send(response);
+            } else {
+              return send(`❌ Could not resolve channel link.\n\nThe channel may not exist or is private.`);
+            }
+          } catch (err) {
+            return send(`❌ Failed to resolve channel link: ${err.message || 'Unknown error'}\n\nMake sure the link is valid.`);
+          }
+        }
+
+        const groupLinkMatch = rawInput.match(/(?:https?:\/\/)?(?:chat\.whatsapp\.com)\/([A-Za-z0-9_-]+)/i);
+        if (groupLinkMatch) {
+          const inviteCode = groupLinkMatch[1];
+          try {
+            const meta = await sock.groupGetInviteInfo(inviteCode);
+            if (meta && meta.id) {
+              let response = `👥 *GROUP JID RESOLVED*\n\n`;
+              response += `┌─── *GROUP INFO* ───\n`;
+              response += `│ 📛 *Name:* ${meta.subject || 'Unknown'}\n`;
+              response += `│ 🔗 *JID:* \`${meta.id}\`\n`;
+              response += `│ 👥 *Members:* ${meta.size || meta.participants?.length || 'Unknown'}\n`;
+              response += `│ 📝 *Type:* Group\n`;
+              response += `└──────────────\n\n`;
+              response += `📋 *Copy-ready:*\n`;
+              response += `• \`${meta.id}\``;
+              return send(response);
+            }
+          } catch (err) {
+            return send(`❌ Failed to resolve group link: ${err.message || 'Unknown error'}`);
+          }
+        }
+
         const input = args[0].replace(/[^0-9@.a-z]/gi, '');
 
         if (input.includes('@g.us')) {
@@ -103,7 +159,7 @@ export default {
 
     } catch (error) {
       console.error('GetJID Error:', error);
-      await send(`❌ Error: ${error.message}\n\n💡 Usage:\n• Reply to message: getjid\n• Mention: getjid @user\n• Number: getjid 254703397679`);
+      await send(`❌ Error: ${error.message}\n\n💡 Usage:\n• Reply to message: getjid\n• Mention: getjid @user\n• Number: getjid 254703397679\n• Channel link: getjid https://whatsapp.com/channel/...\n• Group link: getjid https://chat.whatsapp.com/...`);
     }
   },
 
