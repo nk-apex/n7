@@ -73,7 +73,7 @@ export default {
         mimetype: 'image/jpeg'
       });
     } catch (err) {
-      console.log('[Menu2] Interactive failed, using fallback:', err.message);
+      console.log('[Menu2] Interactive failed, using fallback:', err?.message || err, err?.stack?.split('\n')[1] || '');
       let fallback = `╭─⌈ 📋 *ALL CATEGORY MENUS* ⌋\n│\n`;
       categories.forEach(cat => {
         fallback += `├─⊷ *${prefix}${cat.name}*\n│  └⊷ ${cat.icon} ${cat.desc}\n`;
