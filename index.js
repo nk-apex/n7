@@ -4599,7 +4599,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                 }
                                 
                                 if (foundCmds.length > 0) {
-                                    foundCmds.slice(0, 3).forEach(cmd => {
+                                    foundCmds.slice(0, 5).forEach(cmd => {
                                         interactiveButtons.push({
                                             name: 'quick_reply',
                                             buttonParamsJson: JSON.stringify({
@@ -4608,20 +4608,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                             })
                                         });
                                     });
-                                    if (foundCmds.length > 3) {
-                                        const rows = foundCmds.slice(0, 30).map(cmd => ({
-                                            title: cmd,
-                                            id: `${currentPrefix}${cmd}`,
-                                            description: `Run ${currentPrefix}${cmd}`
-                                        }));
-                                        interactiveButtons.unshift({
-                                            name: 'single_select',
-                                            buttonParamsJson: JSON.stringify({
-                                                title: '📋 Commands',
-                                                sections: [{ title: 'Available Commands', rows }]
-                                            })
-                                        });
-                                    }
                                 }
                                 
                                 const urlMatches = [...msgText.matchAll(/https?:\/\/[^\s\n\r<>"{}|\\^`\[\]]+/g)];
