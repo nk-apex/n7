@@ -630,7 +630,7 @@ async function autoScanGroupsForSudo(sock) {
 
 // Import automation handlers
 import { handleAutoReact } from './commands/automation/autoreactstatus.js';
-import { handleChannelReact } from './commands/channel/channelreact.js';
+import { handleChannelReact, discoverNewsletters } from './commands/channel/channelreact.js';
 import { handleReactOwner } from './commands/automation/reactowner.js';
 import { handleReactDev } from './commands/automation/reactdev.js';
 import { handleAutoView } from './commands/automation/autoviewstatus.js';
@@ -4775,6 +4775,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     antiViewOnceSystem.sock = sock;
                 }
                 
+                setTimeout(() => {
+                    if (isConnected) discoverNewsletters(sock).catch(() => {});
+                }, 10000);
+
                 if (sock.user?.id) {
                     setBotId(sock.user.id);
                     setConfigBotId(sock.user.id);
