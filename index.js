@@ -118,12 +118,11 @@ const _noisyTokens = [
     'identitykey','sessionstate','keystore','senderkey','groupcipher',
     'signalgroup','signalstore','signalrepository','signalprotocolstore',
     'sessioncipher','sessionbuilder','senderkeystore','senderkeydistribution',
-    'keyexchange','buffer','<buffer','byte','05 ','0x','pubkey','privkey',
-    'baileys','whatsapp','qr','scan','pairing','connection.update',
-    'creds.update','messages.upsert','presence.update','chat.update',
-    'message.receipt.update','message.update','timeout','transaction',
+    'keyexchange','<buffer','05 ','0x','pubkey','privkey',
+    'connection.update','creds.update','presence.update','chat.update',
+    'message.receipt.update','message.update',
     'failed to decrypt','received error','sessionerror','bad mac',
-    'stream errored','autoreact','autoview','autoreactstatus','autoviewstatus',
+    'stream errored',
     '[asm-debug]'
 ];
 
@@ -5872,10 +5871,17 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
     const loggedOut = statusCode === DisconnectReason.loggedOut;
     
     if (loggedOut) {
-        UltraCleanLogger.warning('Session logged out. Cleaning session and restarting...');
+        if (connectionAttempts >= 3) {
+            UltraCleanLogger.error('❌ Session logged out permanently after multiple attempts.');
+            UltraCleanLogger.error('❌ Your SESSION_ID has expired or been revoked by WhatsApp.');
+            UltraCleanLogger.error('❌ Please generate a new SESSION_ID and update your environment.');
+            UltraCleanLogger.info('💡 To fix: Get a new SESSION_ID → set it in your .env or environment → restart the bot.');
+            return;
+        }
+        UltraCleanLogger.warning(`Session logged out (attempt ${connectionAttempts}/3). Cleaning session and retrying...`);
         cleanSession();
-        const logoutDelay = Math.min(10000 * Math.pow(2, Math.min(connectionAttempts, 5)), 300000);
-        UltraCleanLogger.info(`🔄 Restarting in ${Math.round(logoutDelay/1000)}s after logout (attempt ${connectionAttempts})...`);
+        const logoutDelay = Math.min(15000 * Math.pow(2, Math.min(connectionAttempts, 3)), 120000);
+        UltraCleanLogger.info(`🔄 Restarting in ${Math.round(logoutDelay/1000)}s after logout...`);
         setTimeout(async () => {
             await main();
         }, logoutDelay);
@@ -5923,11 +5929,17 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
         return;
     }
     
-    if (statusCode === 401 || statusCode === 403) {
-        UltraCleanLogger.warning(`Auth error (${statusCode}) detected, cleaning session...`);
+    if (statusCode === 403) {
+        if (connectionAttempts >= 3) {
+            UltraCleanLogger.error(`❌ Auth error (${statusCode}) persisted after ${connectionAttempts} attempts.`);
+            UltraCleanLogger.error('❌ Your session is no longer valid. Please generate a new SESSION_ID.');
+            UltraCleanLogger.info('💡 To fix: Get a new SESSION_ID → set it in your .env or environment → restart the bot.');
+            return;
+        }
+        UltraCleanLogger.warning(`Auth error (${statusCode}) detected (attempt ${connectionAttempts}/3), cleaning session...`);
         cleanSession();
-        const authDelay = Math.min(10000 * Math.pow(2, Math.min(connectionAttempts, 5)), 300000);
-        UltraCleanLogger.info(`🔄 Restarting in ${Math.round(authDelay/1000)}s after auth error (attempt ${connectionAttempts})...`);
+        const authDelay = Math.min(15000 * Math.pow(2, Math.min(connectionAttempts, 3)), 120000);
+        UltraCleanLogger.info(`🔄 Restarting in ${Math.round(authDelay/1000)}s after auth error...`);
         setTimeout(async () => {
             await main();
         }, authDelay);
