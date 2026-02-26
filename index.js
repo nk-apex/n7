@@ -4674,7 +4674,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                 }
                                 if (hasMedia && isTextOnly) {
                                 } else if (hasMedia && content.caption) {
-                                    const mediaResult = await originalSendMessage(jid, content, options, ...rest);
+                                    const mediaOnly = { ...content };
+                                    delete mediaOnly.caption;
+                                    const mediaResult = await originalSendMessage(jid, mediaOnly, options, ...rest);
                                     try {
                                         if (mediaResult?.key?.id && store) store.addSentMessage(jid, mediaResult.key.id, content);
                                     } catch {}
