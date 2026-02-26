@@ -126,14 +126,15 @@ export default {
       
       let styleList = `╭─⌈ 🎨 *MENU STYLE* ⌋\n│\n`;
       styleList += `│  📊 Current: Style ${currentStyle}\n│\n`;
-      styleList += `├─⊷ *${PREFIX}menustyle <1-7>*\n`;
+      styleList += `├─⊷ *${PREFIX}menustyle <1-8>*\n`;
       styleList += `│  └⊷ 1️⃣ Image Menu\n`;
       styleList += `│  └⊷ 2️⃣ Text Only\n`;
       styleList += `│  └⊷ 3️⃣ Full Descriptions\n`;
       styleList += `│  └⊷ 4️⃣ Ad Style\n`;
       styleList += `│  └⊷ 5️⃣ Faded\n`;
       styleList += `│  └⊷ 6️⃣ Faded + Image\n`;
-      styleList += `│  └⊷ 7️⃣ Image + Text\n│\n`;
+      styleList += `│  └⊷ 7️⃣ Image + Text\n`;
+      styleList += `│  └⊷ 8️⃣ Buttons (Interactive)\n│\n`;
       styleList += `╰───`;
       
       return sock.sendMessage(jid, { 
@@ -145,12 +146,11 @@ export default {
     
     const styleNum = parseInt(args[0]);
     
-    // Validate input (1-7 only)
-    if (isNaN(styleNum) || styleNum < 1 || styleNum > 7) {
+    if (isNaN(styleNum) || styleNum < 1 || styleNum > 8) {
       return sock.sendMessage(
         jid,
         {
-          text: `╭─⌈ ❌ *INVALID STYLE* ⌋\n│\n├─⊷ *${PREFIX}menustyle <1-7>*\n│  └⊷ Valid styles: 1 to 7\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}menustyle 3\n│\n╰───`
+          text: `╭─⌈ ❌ *INVALID STYLE* ⌋\n│\n├─⊷ *${PREFIX}menustyle <1-8>*\n│  └⊷ Valid styles: 1 to 8\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}menustyle 3\n│\n╰───`
         },
         { 
           quoted: m // Reply format
@@ -178,7 +178,8 @@ export default {
         4: 'Ad Style - Promotional format',
         5: 'Faded - Faded aesthetic design',
         6: 'Faded + Image - Faded with image',
-        7: 'Image + Text - Balanced layout'
+        7: 'Image + Text - Balanced layout',
+        8: 'Buttons - Interactive button menus (gifted-btns)'
       };
       
       let successMsg = `✅ *Menu Style Updated*\n`;

@@ -9215,7 +9215,13 @@ case 7: {
   break;
 }
 
-
+case 8: {
+  const { sendMainMenuButtons } = await import('../../lib/buttonHelper.js');
+  const PREFIX = global.prefix || process.env.PREFIX || '.';
+  await sendMainMenuButtons(sock, jid, m, PREFIX);
+  console.log(`✅ Menu sent with interactive buttons (style 8)`);
+  break;
+}
 
 
 
