@@ -4564,7 +4564,11 @@ async function startBot(loginMode = 'auto', loginData = null) {
             UltraCleanLogger.info('⚠️ gifted-btns not available for button mode');
         }
         
+        let _skipButtonWrap = false;
         sock.sendMessage = async (jid, content, options, ...rest) => {
+            if (_skipButtonWrap) {
+                return originalSendMessage(jid, content, options, ...rest);
+            }
             if (isButtonModeEnabled() && _giftedBtns && content) {
                 if (!content.buttons && !content.templateButtons && !content.interactiveButtons && !content.contacts && !content.react) {
                     const msgText = content.text || content.caption || '';
