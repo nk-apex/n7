@@ -44,11 +44,7 @@ export default {
       { name: 'videomenu', icon: '🎬', desc: 'AI video effects' },
     ];
 
-    let menuText = `╭─⌈ 📋 *${botName} CATEGORY MENUS* ⌋\n│\n`;
-    categories.forEach(cat => {
-      menuText += `├─⊷ *${prefix}${cat.name}*\n│  └⊷ ${cat.icon} ${cat.desc}\n`;
-    });
-    menuText += `│\n│ 📜 Tap a button or type a\n│ menu name to see commands\n│\n╰─⊷ *🐺 ${botName}*`;
+    const menuText = `🐺 *WOLFBOT CATEGORY MENU*`;
 
     const interactiveButtons = categories.map(cat => ({
       name: 'quick_reply',
@@ -78,7 +74,7 @@ export default {
       try {
         await giftedBtns.sendInteractiveMessage(sock, chatId, {
           text: menuText,
-          footer: `🐺 ${botName}`,
+          footer: '',
           interactiveButtons
         });
         console.log('[Menu2] ✅ Sent with gifted-btns buttons');
