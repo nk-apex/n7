@@ -2,9 +2,15 @@ import { writeFileSync, readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { isButtonModeEnabled, setButtonMode } from '../../lib/buttonMode.js';
+import { isGiftedBtnsAvailable } from '../../lib/buttonHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+let _giftedBtns = null;
+try {
+    _giftedBtns = await import('gifted-btns');
+} catch {}
 
 export default {
     name: 'mode',
@@ -60,6 +66,55 @@ export default {
         if (!args[0]) {
             let currentMode = this.getCurrentMode();
             const buttonsActive = isButtonModeEnabled();
+            
+            if (buttonsActive && isGiftedBtnsAvailable() && _giftedBtns) {
+                const interactiveButtons = [
+                    {
+                        name: 'quick_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: `🌍 Public`,
+                            id: `${PREFIX}mode public`
+                        })
+                    },
+                    {
+                        name: 'quick_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: `💬 DMs`,
+                            id: `${PREFIX}mode dms`
+                        })
+                    },
+                    {
+                        name: 'quick_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: `👥 Groups`,
+                            id: `${PREFIX}mode groups`
+                        })
+                    },
+                    {
+                        name: 'quick_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: `🔘 Buttons`,
+                            id: `${PREFIX}mode buttons`
+                        })
+                    },
+                    {
+                        name: 'quick_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: `📝 Default`,
+                            id: `${PREFIX}mode default`
+                        })
+                    }
+                ];
+                
+                try {
+                    await _giftedBtns.sendInteractiveMessage(sock, chatId, {
+                        text: `🤖 *Select Bot Mode*`,
+                        footer: `Current: ${modes[currentMode]?.icon || ''} ${currentMode}${buttonsActive ? ' + 🔘 Buttons' : ''}`,
+                        interactiveButtons
+                    });
+                    return;
+                } catch {}
+            }
             
             let modeList = '';
             for (const [mode, info] of Object.entries(modes)) {
