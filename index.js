@@ -4323,17 +4323,11 @@ async function initDatabase() {
         if (ready && supabaseDb.isAvailable()) {
             UltraCleanLogger.success('💾 Database: PostgreSQL connected & tables ready');
             try {
-                const { loadBotName, loadBotNameFromSupabase, getBotName: _gbn } = await import('./lib/botname.js');
-                const localName = loadBotName();
-                if (!localName) {
-                    const dbName = await loadBotNameFromSupabase();
-                    if (dbName) {
-                        BOT_NAME = dbName;
-                        global.BOT_NAME = dbName;
-                    }
-                } else {
-                    BOT_NAME = localName;
-                    global.BOT_NAME = localName;
+                const { loadBotName } = await import('./lib/botname.js');
+                const name = loadBotName();
+                if (name) {
+                    BOT_NAME = name;
+                    global.BOT_NAME = name;
                 }
             } catch {}
             await runDataMigrations();
