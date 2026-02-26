@@ -133,9 +133,25 @@ export default {
             if (requestedMode === 'buttons') {
                 setButtonMode(true, cleaned.cleanNumber || 'Unknown');
                 
-                await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ✅ *BUTTONS MODE ACTIVATED* ⌋\n├─⊷ *🔘 Buttons Mode*\n│  └⊷ All bot responses now use interactive buttons\n│  └⊷ Use *${PREFIX}mode default* to switch back\n╰───`
-                }, { quoted: msg });
+                if (isGiftedBtnsAvailable() && _giftedBtns) {
+                    try {
+                        await _giftedBtns.sendInteractiveMessage(sock, chatId, {
+                            text: `✅ *Buttons Mode Activated*\n\nAll responses now use interactive buttons`,
+                            interactiveButtons: [
+                                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📝 Switch to Default', id: `${PREFIX}mode default` }) },
+                                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🏠 Menu', id: `${PREFIX}menu` }) }
+                            ]
+                        });
+                    } catch {
+                        await sock.sendMessage(chatId, {
+                            text: `✅ *Buttons Mode Activated*`
+                        }, { quoted: msg });
+                    }
+                } else {
+                    await sock.sendMessage(chatId, {
+                        text: `╭─⌈ ✅ *BUTTONS MODE ACTIVATED* ⌋\n├─⊷ *🔘 Buttons Mode*\n│  └⊷ All bot responses now use interactive buttons\n│  └⊷ Use *${PREFIX}mode default* to switch back\n╰───`
+                    }, { quoted: msg });
+                }
                 
                 console.log(`✅ Button mode ENABLED by ${cleaned.cleanNumber}`);
                 return;
@@ -179,11 +195,27 @@ export default {
             }
             
             const modeInfo = modes[requestedMode];
-            const buttonsNote = isButtonModeEnabled() ? '\n│  └⊷ Note: Buttons mode is still active' : '';
+            const buttonsActive = isButtonModeEnabled();
             
-            await sock.sendMessage(chatId, {
-                text: `╭─⌈ ✅ *MODE UPDATED* ⌋\n├─⊷ *${modeInfo.name}*\n│  └⊷ ${modeInfo.description}${buttonsNote}\n╰───`
-            }, { quoted: msg });
+            if (buttonsActive && isGiftedBtnsAvailable() && _giftedBtns) {
+                try {
+                    await _giftedBtns.sendInteractiveMessage(sock, chatId, {
+                        text: `✅ *Mode: ${modeInfo.name}*\n\n${modeInfo.description}`,
+                        interactiveButtons: [
+                            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🔄 Change Mode', id: `${PREFIX}mode` }) },
+                            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🏠 Menu', id: `${PREFIX}menu` }) }
+                        ]
+                    });
+                } catch {
+                    await sock.sendMessage(chatId, {
+                        text: `✅ *Mode: ${modeInfo.name}*\n${modeInfo.description}`
+                    }, { quoted: msg });
+                }
+            } else {
+                await sock.sendMessage(chatId, {
+                    text: `╭─⌈ ✅ *MODE UPDATED* ⌋\n├─⊷ *${modeInfo.name}*\n│  └⊷ ${modeInfo.description}\n╰───`
+                }, { quoted: msg });
+            }
             
             console.log(`✅ Mode changed to ${requestedMode} by ${cleaned.cleanNumber}`);
             
