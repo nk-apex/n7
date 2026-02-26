@@ -4666,29 +4666,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                 }
                                 if (hasMedia && isTextOnly) {
                                 } else if (hasMedia && content.caption) {
-                                    if (content.image) {
-                                        try {
-                                            let imgSource = content.image;
-                                            if (Buffer.isBuffer(imgSource)) {
-                                                btnPayload.image = { buffer: imgSource };
-                                            } else if (imgSource?.url) {
-                                                btnPayload.image = imgSource;
-                                            } else if (typeof imgSource === 'string') {
-                                                btnPayload.image = { url: imgSource };
-                                            }
-                                            const sendResult = await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
-                                            try {
-                                                if (sendResult?.key?.id && store) store.addSentMessage(jid, sendResult.key.id, content);
-                                            } catch {}
-                                            return sendResult;
-                                        } catch {
-                                            const mediaResult = await originalSendMessage(jid, content, options, ...rest);
-                                            try {
-                                                if (mediaResult?.key?.id && store) store.addSentMessage(jid, mediaResult.key.id, content);
-                                            } catch {}
-                                            return mediaResult;
-                                        }
-                                    }
                                     const mediaResult = await originalSendMessage(jid, content, options, ...rest);
                                     try {
                                         if (mediaResult?.key?.id && store) store.addSentMessage(jid, mediaResult.key.id, content);
