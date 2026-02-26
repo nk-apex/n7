@@ -6204,6 +6204,34 @@ _🐺 The Moon Watches — ..._
 function extractTextFromMessage(messageObj) {
     const content = normalizeMessageContent(messageObj);
     if (!content) return '';
+    
+    if (content.interactiveResponseMessage) {
+        try {
+            const nativeFlow = content.interactiveResponseMessage?.nativeFlowResponseMessage;
+            if (nativeFlow?.paramsJson) {
+                const params = JSON.parse(nativeFlow.paramsJson);
+                if (params.id) return params.id;
+            }
+        } catch {}
+        const body = content.interactiveResponseMessage?.body?.text;
+        if (body) return body;
+    }
+    
+    if (content.buttonsResponseMessage) {
+        return content.buttonsResponseMessage.selectedButtonId || 
+               content.buttonsResponseMessage.selectedDisplayText || '';
+    }
+    
+    if (content.listResponseMessage) {
+        return content.listResponseMessage.singleSelectReply?.selectedRowId || 
+               content.listResponseMessage.title || '';
+    }
+    
+    if (content.templateButtonReplyMessage) {
+        return content.templateButtonReplyMessage.selectedId || 
+               content.templateButtonReplyMessage.selectedDisplayText || '';
+    }
+    
     return content.conversation ||
            content.extendedTextMessage?.text ||
            content.imageMessage?.caption ||
@@ -6242,9 +6270,19 @@ async function handleIncomingMessage(sock, msg) {
             const rawMsg = msg.message || {};
             const msgContent = normalizeMessageContent(rawMsg) || rawMsg;
             const isSticker = !!msgContent.stickerMessage;
-            const rawText = msgContent.conversation || 
+            let rawText = msgContent.conversation || 
                            msgContent.extendedTextMessage?.text || 
                            msgContent.imageMessage?.caption || '';
+            if (!rawText && msgContent.interactiveResponseMessage) {
+                try {
+                    const nf = msgContent.interactiveResponseMessage?.nativeFlowResponseMessage;
+                    if (nf?.paramsJson) { const p = JSON.parse(nf.paramsJson); if (p.id) rawText = p.id; }
+                } catch {}
+                if (!rawText) rawText = msgContent.interactiveResponseMessage?.body?.text || '';
+            }
+            if (!rawText && msgContent.buttonsResponseMessage) rawText = msgContent.buttonsResponseMessage.selectedButtonId || '';
+            if (!rawText && msgContent.listResponseMessage) rawText = msgContent.listResponseMessage.singleSelectReply?.selectedRowId || '';
+            if (!rawText && msgContent.templateButtonReplyMessage) rawText = msgContent.templateButtonReplyMessage.selectedId || '';
             const trimmed = rawText.trim();
             const isEmojiOnly = trimmed.length > 0 && trimmed.length <= 10 && /^[\p{Emoji_Presentation}\p{Emoji}\u200d\ufe0f\s]+$/u.test(trimmed);
             
