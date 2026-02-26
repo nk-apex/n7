@@ -34,47 +34,20 @@ export default {
     ];
 
     if (isButtonModeEnabled() && isGiftedBtnsAvailable()) {
-      const headerText = `╭─⌈ 📋 *ALL CATEGORY MENUS* ⌋\n│\n│ Select a category below to\n│ view its commands\n│\n╰───`;
-
-      const rows = categories.map(cat => ({
-        title: `${cat.icon} ${cat.name}`,
-        id: `${prefix}${cat.name}`,
-        description: cat.desc
+      const interactiveButtons = categories.map(cat => ({
+        name: 'quick_reply',
+        buttonParamsJson: JSON.stringify({
+          display_text: `${cat.icon} ${cat.name.replace('menu', '').charAt(0).toUpperCase() + cat.name.replace('menu', '').slice(1)}`,
+          id: `${prefix}${cat.name}`
+        })
       }));
-
-      const interactiveButtons = [
-        {
-          name: 'single_select',
-          buttonParamsJson: JSON.stringify({
-            title: '📋 Select Category',
-            sections: [{ title: 'Menu Categories', rows }]
-          })
-        }
-      ];
-
-      const quickBtns = categories.slice(0, 3).map(cat => ({
-        type: 'reply',
-        text: `${cat.icon} ${cat.name.replace('menu', '')}`,
-        id: `${prefix}${cat.name}`
-      }));
-
-      quickBtns.forEach(btn => {
-        interactiveButtons.push({
-          name: 'quick_reply',
-          buttonParamsJson: JSON.stringify({
-            display_text: btn.text,
-            id: btn.id
-          })
-        });
-      });
 
       try {
         const { createRequire } = await import('module');
         const _require = createRequire(import.meta.url);
         const giftedBtns = _require('gifted-btns');
         await giftedBtns.sendInteractiveMessage(sock, chatId, {
-          text: headerText,
-          footer: '🐺 WOLFBOT | Tap a category',
+          text: `📋 *All Menu Categories*\n\nTap any button to open that menu`,
           interactiveButtons
         });
       } catch (err) {

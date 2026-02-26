@@ -68,48 +68,26 @@ export default {
             const buttonsActive = isButtonModeEnabled();
             
             if (buttonsActive && isGiftedBtnsAvailable() && _giftedBtns) {
-                const interactiveButtons = [
-                    {
-                        name: 'quick_reply',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: `🌍 Public`,
-                            id: `${PREFIX}mode public`
-                        })
-                    },
-                    {
-                        name: 'quick_reply',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: `💬 DMs`,
-                            id: `${PREFIX}mode dms`
-                        })
-                    },
-                    {
-                        name: 'quick_reply',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: `👥 Groups`,
-                            id: `${PREFIX}mode groups`
-                        })
-                    },
-                    {
-                        name: 'quick_reply',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: `🔘 Buttons`,
-                            id: `${PREFIX}mode buttons`
-                        })
-                    },
-                    {
-                        name: 'quick_reply',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: `📝 Default`,
-                            id: `${PREFIX}mode default`
-                        })
-                    }
+                const modeButtons = [
+                    { display: '🌍 Public', id: 'public' },
+                    { display: '💬 DMs', id: 'dms' },
+                    { display: '👥 Groups', id: 'groups' },
+                    { display: '🔇 Silent', id: 'silent' },
+                    { display: '🔘 Buttons', id: 'buttons' },
+                    { display: '📝 Default', id: 'default' }
                 ];
+                
+                const interactiveButtons = modeButtons.map(btn => ({
+                    name: 'quick_reply',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: btn.display,
+                        id: `${PREFIX}mode ${btn.id}`
+                    })
+                }));
                 
                 try {
                     await _giftedBtns.sendInteractiveMessage(sock, chatId, {
-                        text: `🤖 *Select Bot Mode*`,
-                        footer: `Current: ${modes[currentMode]?.icon || ''} ${currentMode}${buttonsActive ? ' + 🔘 Buttons' : ''}`,
+                        text: `🤖 *Select Bot Mode*\n\nCurrent: ${modes[currentMode]?.icon || ''} *${currentMode}*${buttonsActive ? ' + 🔘 Buttons' : ''}`,
                         interactiveButtons
                     });
                     return;
