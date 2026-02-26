@@ -2086,6 +2086,7 @@ class NewMemberDetector {
     async detectNewMembers(sock, groupUpdate) {
         try {
             if (!this.enabled) return null;
+            if (!sock?.ws?.isOpen) return null;
             
             const groupId = groupUpdate.id;
             const action = groupUpdate.action;
@@ -2093,8 +2094,13 @@ class NewMemberDetector {
             if (action === 'add' || action === 'invite') {
                 const participants = groupUpdate.participants || [];
                 
-                const metadata = await sock.groupMetadata(groupId);
-                const groupName = metadata.subject || 'Unknown Group';
+                let groupName = 'Unknown Group';
+                try {
+                    const metadata = await sock.groupMetadata(groupId);
+                    groupName = metadata.subject || 'Unknown Group';
+                } catch {
+                    return null;
+                }
                 
                 let cachedMembers = this.groupMembersCache.get(groupId) || new Set();
                 
@@ -2115,8 +2121,12 @@ class NewMemberDetector {
                     
                     if (!cachedMembers.has(userJid)) {
                         try {
-                            const userInfo = await sock.onWhatsApp(userJid);
-                            const userName = userInfo[0]?.name || userJid.split('@')[0];
+                            if (!sock?.ws?.isOpen) return null;
+                            let userName = userJid.split('@')[0];
+                            try {
+                                const userInfo = await sock.onWhatsApp(userJid);
+                                userName = userInfo[0]?.name || userName;
+                            } catch {}
                             const userNumber = userJid.split('@')[0];
                             
                             newMembers.push({
@@ -5145,14 +5155,16 @@ async function startBot(loginMode = 'auto', loginData = null) {
         
         sock.ev.on('group-participants.update', async (update) => {
             try {
-                if (memberDetector && memberDetector.enabled) {
+                if (memberDetector && memberDetector.enabled && sock?.ws?.isOpen) {
                     const newMembers = await memberDetector.detectNewMembers(sock, update);
                     if (newMembers && newMembers.length > 0) {
                         UltraCleanLogger.info(`👥 Detected ${newMembers.length} new members in group`);
                     }
                 }
             } catch (error) {
-                UltraCleanLogger.warning(`Member detection error: ${error.message}`);
+                if (!error.message?.includes('Connection Closed')) {
+                    UltraCleanLogger.warning(`Member detection error: ${error.message}`);
+                }
             }
             
             try {
