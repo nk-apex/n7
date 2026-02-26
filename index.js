@@ -123,7 +123,10 @@ const _noisyTokens = [
     'message.receipt.update','message.update',
     'failed to decrypt','received error','sessionerror','bad mac',
     'stream errored',
-    '[asm-debug]'
+    '[asm-debug]',
+    'interactive send:','native_flow','tag: \'biz\'',
+    'app state resync','syncing critical app state',
+    '[dotenv'
 ];
 
 const _importantTokens = [
@@ -135,8 +138,14 @@ const _importantTokens = [
 const shouldShowLog = (args) => {
     if (args.length === 0) return true;
     const firstArg = args[0];
-    if (typeof firstArg !== 'string') return true;
-    const lowerMsg = firstArg.toLowerCase();
+    let lowerMsg;
+    if (typeof firstArg === 'string') {
+        lowerMsg = firstArg.toLowerCase();
+    } else if (firstArg && typeof firstArg === 'object') {
+        try { lowerMsg = JSON.stringify(firstArg).toLowerCase(); } catch { return true; }
+    } else {
+        return true;
+    }
     for (let i = 0; i < _importantTokens.length; i++) {
         if (lowerMsg.includes(_importantTokens[i])) return true;
     }
@@ -166,7 +175,10 @@ function setupProcessFilter() {
         'indexinfo','pendingprekey','_chains','ephemeralkeypair',
         'lastremoteephemeralkey','rootkey','basekey','signalprotocol',
         'ratchet','chainkey','senderkey','groupcipher','sessioncipher',
-        'sessionbuilder'
+        'sessionbuilder',
+        'interactive send','native_flow','tag: \'biz\'',
+        'app state resync','syncing critical app state',
+        '[dotenv'
     ];
     
     const filterOutput = (chunk) => {
