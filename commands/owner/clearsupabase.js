@@ -1,10 +1,10 @@
 import * as supabaseDb from '../../lib/supabase.js';
 
 export default {
-    name: 'clearsupabase',
-    alias: ['clearsupa', 'clearcloud', 'wipesupa', 'wipesupabase', 'clearmedia', 'wipemedia'],
+    name: 'cleardb',
+    alias: ['clearsupabase', 'clearsupa', 'clearcloud', 'wipesupa', 'wipesupabase', 'clearmedia', 'wipemedia', 'wipedb', 'cleardata'],
     category: 'owner',
-    description: 'Clear all data from Supabase PostgreSQL database',
+    description: 'Clear all data from the local SQLite database',
     ownerOnly: true,
 
     async execute(sock, msg, args, PREFIX, extra) {
@@ -12,13 +12,13 @@ export default {
 
         if (!supabaseDb.isAvailable()) {
             await sock.sendMessage(chatId, {
-                text: `❌ Supabase/PostgreSQL is not connected. Cannot clear data.`
+                text: `❌ Database is not initialized. Cannot clear data.`
             }, { quoted: msg });
             return;
         }
 
         await sock.sendMessage(chatId, {
-            text: `⏳ Clearing all data from Supabase PostgreSQL...\n\n⚠️ This will wipe ALL tables. Please wait...`
+            text: `⏳ Clearing all data from the database...\n\n⚠️ This will wipe ALL tables. Please wait...`
         }, { quoted: msg });
 
         const startTime = Date.now();
@@ -56,7 +56,7 @@ export default {
 
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
-        let statusText = `🗑️ *SUPABASE FULL WIPE COMPLETE*\n\n`;
+        let statusText = `🗑️ *DATABASE FULL WIPE COMPLETE*\n\n`;
         statusText += `⏱️ Time: ${elapsed}s\n`;
         statusText += `📊 Total rows deleted: ${results.totalRows}\n\n`;
         statusText += `*Table Breakdown:*\n`;
@@ -74,10 +74,10 @@ export default {
             }
         }
 
-        statusText += `\n✅ All Supabase data wiped successfully!\n`;
+        statusText += `\n✅ All database data wiped successfully!\n`;
         statusText += `_Bot will rebuild data as new activity occurs._`;
 
         await sock.sendMessage(chatId, { text: statusText }, { quoted: msg });
-        console.log(`🗑️ [CLEARSUPABASE] Wiped ${results.totalRows} rows from ${Object.keys(results.tables).length} tables in ${elapsed}s`);
+        console.log(`🗑️ [CLEARDB] Wiped ${results.totalRows} rows from ${Object.keys(results.tables).length} tables in ${elapsed}s`);
     }
 };

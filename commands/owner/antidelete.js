@@ -182,18 +182,10 @@ async function autoCleanCache() {
         
         try {
             await db.cleanOlderThan('antidelete_messages', 'timestamp', maxAge);
-            const mediaCutoff = new Date(Date.now() - maxAge).toISOString();
             try {
                 if (db.isAvailable()) {
-                    const client = db.getClient();
-                    if (client) {
-                        const c = await client.connect();
-                        try {
-                            await c.query('DELETE FROM media_store WHERE created_at < $1 AND file_path LIKE $2', [mediaCutoff, 'messages/%']);
-                        } finally {
-                            c.release();
-                        }
-                    }
+                    const mediaCutoff = new Date(Date.now() - maxAge).toISOString();
+                    await db.removeWhere('media_store', { created_at: mediaCutoff });
                 }
             } catch {}
         } catch {}

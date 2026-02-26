@@ -4318,10 +4318,10 @@ updateTerminalHeader();
 // ====== DATABASE INIT ======
 async function initDatabase() {
     try {
-        UltraCleanLogger.info('💾 Database: Connecting to PostgreSQL...');
+        UltraCleanLogger.info('💾 Database: Initializing SQLite...');
         const ready = await supabaseDb.initTables();
         if (ready && supabaseDb.isAvailable()) {
-            UltraCleanLogger.success('💾 Database: PostgreSQL connected & tables ready');
+            UltraCleanLogger.success('💾 Database: SQLite ready (local storage)');
             try {
                 const { loadBotName } = await import('./lib/botname.js');
                 const name = loadBotName();
@@ -4333,7 +4333,7 @@ async function initDatabase() {
             await runDataMigrations();
             return true;
         } else {
-            UltraCleanLogger.info('💾 Database: Tables not ready yet, using local JSON fallback.');
+            UltraCleanLogger.info('💾 Database: SQLite init failed, using local JSON fallback.');
             return false;
         }
     } catch (err) {

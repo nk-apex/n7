@@ -20,15 +20,14 @@ The bot runs on Node.js 20 (upgraded from 18 during import), using ESM modules. 
 *   `commands/`: Holds command handlers by category.
 
 **Database Integration:**
-*   **Supabase PostgreSQL (Primary)**: Bot data is stored in Supabase PostgreSQL for multi-user, cross-platform support. Connection auto-built from `SUPABASE_DB_PASSWORD` secret using Session Pooler (`aws-1-eu-west-1.pooler.supabase.com:5432`).
-*   **Connection Priority**: `SUPABASE_DB_PASSWORD` env var (if set) > `DATABASE_URL` env var > hardcoded default password (built-in fallback). All three resolve to a Supabase connection.
-*   **Cross-Platform & Zero-Config**: Works on Replit, Pterodactyl, and any platform with zero setup. The Supabase project ref, pooler host, user, port, and default password are all hardcoded in `lib/supabase.js`. Every bot instance automatically connects to the central Supabase database — no environment variables needed by end users.
-*   **Fallback Mechanism**: The bot remains fully functional using local JSON even if PostgreSQL is unavailable.
-*   **Module**: `lib/supabase.js` manages connections, health checks, and CRUD operations (name kept for backward compatibility).
-*   **Tables**: 14 tables are defined, covering bot configurations, warnings, sudoers, chatbot data, antidelete, welcome/goodbye, group features, auto-configurations, and media storage.
-*   **Per-Bot Isolation**: All tables use composite primary keys with `bot_id` to ensure complete data isolation between different bot instances. Tables scoped by bot_id: `bot_configs`, `sudoers`, `sudo_config`, `chatbot_config`, `chatbot_conversations`, `auto_configs`, `warnings`, `warning_limits`, `welcome_goodbye`, `group_features`, `antidelete_messages`, `antidelete_statuses`. Only `lid_map` and `media_store` remain global (shared across instances).
-*   **Automatic Migration**: `initTables()` detects tables missing `bot_id` and migrates them independently (ADD COLUMN + DROP/ADD composite PK), ensuring safe upgrades from older schema versions.
-*   **Periodic Cleanup**: Auto-cleans antidelete messages, statuses, and media older than 24 hours every 30 minutes to prevent storage bloat. Cleanup is scoped by bot_id.
+*   **Local SQLite (sql.js)**: Bot data stored locally in `data/bot.sqlite` using sql.js (SQLite compiled to WebAssembly). Zero native dependencies — works on every platform (Replit, Heroku, Pterodactyl, VPS, etc.) without C++ compilation or build tools.
+*   **Zero-Config**: No database server, no credentials, no environment variables needed. Database file created automatically on first run.
+*   **Module**: `lib/supabase.js` manages all database operations (name kept for backward compatibility with all importers). Drop-in replacement — same API surface as the previous PostgreSQL implementation.
+*   **Persistence**: Database auto-saves to disk every 30 seconds when dirty, plus on process exit (SIGINT/SIGTERM). Uses atomic write (tmp file + rename) to prevent corruption.
+*   **Tables**: 14 tables covering bot configurations, warnings, sudoers, chatbot data, antidelete, welcome/goodbye, group features, auto-configurations, and media storage.
+*   **Per-Bot Isolation**: All tables use composite primary keys with `bot_id`. Each bot instance is single-user (no shared data between users).
+*   **Periodic Cleanup**: Auto-cleans antidelete messages, statuses, and media older than 48 hours every 30 minutes.
+*   **JSON Helpers**: `readJSON()`/`writeJSON()` still available for legacy JSON file operations alongside SQLite.
 *   **Disk Space Manager**: Monitors disk usage every 3 minutes, warns at 200MB free, critical cleanup at 80MB. Cleans session signal files (sender-keys, pre-keys), temp directories, viewonce/antidelete local media, log files, and backups. Proactive disk check runs before saveCreds to prevent ENOSPC errors. Emergency cleanup triggers on any ENOSPC write failure.
 
 **Key Features & Implementations:**
