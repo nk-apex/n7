@@ -1,15 +1,17 @@
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import { isButtonModeEnabled, setButtonMode } from '../../lib/buttonMode.js';
 import { isGiftedBtnsAvailable } from '../../lib/buttonHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const _require = createRequire(import.meta.url);
 let _giftedBtns = null;
 try {
-    _giftedBtns = await import('gifted-btns');
+    _giftedBtns = _require('gifted-btns');
 } catch {}
 
 export default {
@@ -91,7 +93,9 @@ export default {
                         interactiveButtons
                     });
                     return;
-                } catch {}
+                } catch (e) {
+                    console.log('[Mode] Interactive buttons failed:', e?.message);
+                }
             }
             
             let modeList = '';
