@@ -1,5 +1,12 @@
-import { sendInteractiveWithImage } from '../../lib/buttonHelper.js';
-import { getBotName, getMenuImageBuffer } from '../../lib/menuHelper.js';
+import { createRequire } from 'module';
+import { getBotName } from '../../lib/menuHelper.js';
+
+const require = createRequire(import.meta.url);
+
+let giftedBtns;
+try {
+  giftedBtns = require('gifted-btns');
+} catch (e) {}
 
 export default {
   name: "menu2",
@@ -11,6 +18,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const chatId = m.key.remoteJid;
     const prefix = PREFIX || global.prefix || '.';
+    const botName = getBotName();
 
     const categories = [
       { name: 'aimenu', icon: '🤖', desc: 'AI commands & models' },
@@ -36,6 +44,12 @@ export default {
       { name: 'videomenu', icon: '🎬', desc: 'AI video effects' },
     ];
 
+    let menuText = `╭─⌈ 📋 *${botName} CATEGORY MENUS* ⌋\n│\n`;
+    categories.forEach(cat => {
+      menuText += `├─⊷ *${prefix}${cat.name}*\n│  └⊷ ${cat.icon} ${cat.desc}\n`;
+    });
+    menuText += `│\n│ 📜 Tap a button or type a\n│ menu name to see commands\n│\n╰─⊷ *🐺 ${botName}*`;
+
     const interactiveButtons = categories.map(cat => ({
       name: 'quick_reply',
       buttonParamsJson: JSON.stringify({
@@ -60,26 +74,21 @@ export default {
       })
     });
 
-    const botName = getBotName();
-    const bodyText = `╭─⌈ 📋 *ALL CATEGORY MENUS* ⌋\n│\n│ Tap a button below to open\n│ any category menu\n│\n╰─⊷ *${botName}*`;
-
-    try {
-      const media = await getMenuImageBuffer();
-      await sendInteractiveWithImage(sock, chatId, {
-        bodyText,
-        footerText: `🐺 ${botName}`,
-        buttons: interactiveButtons,
-        imageBuffer: media?.buffer || null,
-        mimetype: 'image/jpeg'
-      });
-    } catch (err) {
-      console.log('[Menu2] Interactive failed, using fallback:', err?.message || err, err?.stack?.split('\n')[1] || '');
-      let fallback = `╭─⌈ 📋 *ALL CATEGORY MENUS* ⌋\n│\n`;
-      categories.forEach(cat => {
-        fallback += `├─⊷ *${prefix}${cat.name}*\n│  └⊷ ${cat.icon} ${cat.desc}\n`;
-      });
-      fallback += `│\n│ Type any menu name to see\n│ its full list of commands\n│\n╰───`;
-      await sock.sendMessage(chatId, { text: fallback }, { quoted: m });
+    if (giftedBtns?.sendInteractiveMessage) {
+      try {
+        await giftedBtns.sendInteractiveMessage(sock, chatId, {
+          text: menuText,
+          footer: `🐺 ${botName}`,
+          interactiveButtons
+        });
+        console.log('[Menu2] ✅ Sent with gifted-btns buttons');
+        return;
+      } catch (err) {
+        console.log('[Menu2] gifted-btns failed:', err?.message || err);
+      }
     }
+
+    await sock.sendMessage(chatId, { text: menuText }, { quoted: m });
+    console.log('[Menu2] Sent as plain text fallback');
   }
 };
