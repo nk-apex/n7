@@ -4674,6 +4674,17 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                 }
                                 
                                 if (isTextOnly && !hasMedia) {
+                                    const isGroup = jid.includes('@g.us');
+                                    if (isGroup) {
+                                        const textResult = await originalSendMessage(jid, content, options, ...rest);
+                                        try {
+                                            if (textResult?.key?.id && store) store.addSentMessage(jid, textResult.key.id, content);
+                                        } catch {}
+                                        try {
+                                            await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
+                                        } catch {}
+                                        return textResult;
+                                    }
                                     const sendResult = await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
                                     try {
                                         if (sendResult?.key?.id && store) store.addSentMessage(jid, sendResult.key.id, content);
