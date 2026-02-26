@@ -6241,20 +6241,37 @@ function extractTextFromMessage(messageObj) {
     if (!content) return '';
     
     if (content.interactiveResponseMessage) {
+        const irm = content.interactiveResponseMessage;
         try {
-            const nativeFlow = content.interactiveResponseMessage?.nativeFlowResponseMessage;
+            const nativeFlow = irm?.nativeFlowResponseMessage;
             if (nativeFlow?.paramsJson) {
                 const params = JSON.parse(nativeFlow.paramsJson);
+                if (params.id) {
+                    console.log('[BtnClick] nativeFlow.id:', params.id);
+                    return params.id;
+                }
+            }
+        } catch {}
+        try {
+            if (irm?.nativeFlowResponseMessage?.name === 'quick_reply') {
+                const params = JSON.parse(irm.nativeFlowResponseMessage.paramsJson || '{}');
                 if (params.id) return params.id;
             }
         } catch {}
-        const body = content.interactiveResponseMessage?.body?.text;
-        if (body) return body;
+        const body = irm?.body?.text;
+        if (body) {
+            console.log('[BtnClick] body.text fallback:', body);
+            return body;
+        }
+        console.log('[BtnClick] Raw interactiveResponseMessage keys:', JSON.stringify(Object.keys(irm || {})));
+        try { console.log('[BtnClick] Full IRM:', JSON.stringify(irm).substring(0, 500)); } catch {}
     }
     
     if (content.buttonsResponseMessage) {
-        return content.buttonsResponseMessage.selectedButtonId || 
+        const btnId = content.buttonsResponseMessage.selectedButtonId || 
                content.buttonsResponseMessage.selectedDisplayText || '';
+        if (btnId) console.log('[BtnClick] buttonsResponse:', btnId);
+        return btnId;
     }
     
     if (content.listResponseMessage) {
