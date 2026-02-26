@@ -662,6 +662,7 @@ import { initAntidelete, antideleteStoreMessage, antideleteHandleUpdate, updateA
 
 // Import status antidelete system (always on, handles status messages exclusively)
 import { initStatusAntidelete, statusAntideleteStoreMessage, statusAntideleteHandleUpdate, updateStatusAntideleteSock } from './commands/owner/antideletestatus.js';
+import { initStatusReplyListener } from './lib/statusReplyListener.js';
 
 // Import W.O.L.F chatbot system
 import { isChatbotActiveForChat, handleChatbotMessage } from './commands/ai/chatbot.js';
@@ -4565,7 +4566,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
         }
         
         let _skipButtonWrap = false;
-        const _noWrapCommands = new Set(['menu', 'menu2', 'buttonmenu', 'aimenu', 'animemenu', 'automenu', 'downloadmenu', 'ephotomenu', 'funmenu', 'gamemenu', 'gitmenu', 'groupmenu', 'imagemenu', 'logomenu', 'mediamenu', 'musicmenu', 'ownermenu', 'photofunia', 'securitymenu', 'stalkermenu', 'sportsmenu', 'toolsmenu', 'valentinemenu', 'videomenu', 'menustyle']);
+        const _noWrapCommands = new Set(['menu', 'menu2', 'buttonmenu', 'aimenu', 'animemenu', 'automenu', 'downloadmenu', 'ephotomenu', 'funmenu', 'gamemenu', 'gitmenu', 'groupmenu', 'imagemenu', 'logomenu', 'mediamenu', 'musicmenu', 'ownermenu', 'photofunia', 'securitymenu', 'stalkermenu', 'sportsmenu', 'toolsmenu', 'valentinemenu', 'videomenu', 'menustyle', 'repo']);
         sock.sendMessage = async (jid, content, options, ...rest) => {
             if (_skipButtonWrap) {
                 return originalSendMessage(jid, content, options, ...rest);
@@ -4797,6 +4798,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         console.error('❌ Status Antidelete init error:', err.message);
                         statusAntideleteInitDone = false;
                     });
+                    initStatusReplyListener(sock, OWNER_CLEAN_JID);
                 } else {
                     updateStatusAntideleteSock(sock);
                 }
