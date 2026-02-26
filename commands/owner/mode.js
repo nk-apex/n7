@@ -1,6 +1,7 @@
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { isButtonModeEnabled, setButtonMode } from '../../lib/buttonMode.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,20 +44,43 @@ export default {
                 name: '🔇 Silent Mode',
                 description: 'Bot responds only to the owner',
                 icon: '🔇'
+            },
+            'buttons': {
+                name: '🔘 Buttons Mode',
+                description: 'All bot responses use interactive buttons (gifted-btns)',
+                icon: '🔘'
+            },
+            'default': {
+                name: '📝 Default Mode',
+                description: 'Switch back to normal text responses (disables buttons)',
+                icon: '📝'
             }
         };
         
         if (!args[0]) {
             let currentMode = this.getCurrentMode();
+            const buttonsActive = isButtonModeEnabled();
             
             let modeList = '';
             for (const [mode, info] of Object.entries(modes)) {
-                const isCurrent = mode === currentMode ? ' ✅' : '';
+                let isCurrent = '';
+                if (mode === 'buttons' && buttonsActive) {
+                    isCurrent = ' ✅';
+                } else if (mode === 'default' && !buttonsActive && currentMode === 'public') {
+                    isCurrent = ' ✅';
+                } else if (mode !== 'buttons' && mode !== 'default' && mode === currentMode) {
+                    isCurrent = buttonsActive ? '' : ' ✅';
+                }
                 modeList += `├─⊷ *${PREFIX}mode ${mode}*${isCurrent}\n│  └⊷ ${info.description}\n`;
             }
             
+            let statusLine = `├─⊷ *Current:* ${modes[currentMode]?.name || currentMode}`;
+            if (buttonsActive) {
+                statusLine += `\n├─⊷ *Buttons:* 🔘 ACTIVE`;
+            }
+            
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 🤖 *BOT MODE* ⌋\n├─⊷ *Current:* ${modes[currentMode]?.name || currentMode}\n${modeList}╰───`
+                text: `╭─⌈ 🤖 *BOT MODE* ⌋\n${statusLine}\n${modeList}╰───`
             }, { quoted: msg });
         }
         
@@ -72,6 +96,30 @@ export default {
         try {
             const senderJid = msg.key.participant || chatId;
             const cleaned = jidManager.cleanJid(senderJid);
+            
+            if (requestedMode === 'buttons') {
+                setButtonMode(true, cleaned.cleanNumber || 'Unknown');
+                
+                await sock.sendMessage(chatId, {
+                    text: `╭─⌈ ✅ *BUTTONS MODE ACTIVATED* ⌋\n├─⊷ *🔘 Buttons Mode*\n│  └⊷ All bot responses now use interactive buttons\n│  └⊷ Use *${PREFIX}mode default* to switch back\n╰───`
+                }, { quoted: msg });
+                
+                console.log(`✅ Button mode ENABLED by ${cleaned.cleanNumber}`);
+                return;
+            }
+            
+            if (requestedMode === 'default') {
+                setButtonMode(false, cleaned.cleanNumber || 'Unknown');
+                
+                const currentOperatingMode = this.getCurrentMode();
+                
+                await sock.sendMessage(chatId, {
+                    text: `╭─⌈ ✅ *DEFAULT MODE RESTORED* ⌋\n├─⊷ *📝 Default Mode*\n│  └⊷ Buttons disabled, using normal text responses\n│  └⊷ Operating mode: ${modes[currentOperatingMode]?.name || currentOperatingMode}\n╰───`
+                }, { quoted: msg });
+                
+                console.log(`✅ Button mode DISABLED by ${cleaned.cleanNumber}`);
+                return;
+            }
             
             const modeData = {
                 mode: requestedMode,
@@ -98,9 +146,10 @@ export default {
             }
             
             const modeInfo = modes[requestedMode];
+            const buttonsNote = isButtonModeEnabled() ? '\n│  └⊷ Note: Buttons mode is still active' : '';
             
             await sock.sendMessage(chatId, {
-                text: `╭─⌈ ✅ *MODE UPDATED* ⌋\n├─⊷ *${modeInfo.name}*\n│  └⊷ ${modeInfo.description}\n╰───`
+                text: `╭─⌈ ✅ *MODE UPDATED* ⌋\n├─⊷ *${modeInfo.name}*\n│  └⊷ ${modeInfo.description}${buttonsNote}\n╰───`
             }, { quoted: msg });
             
             console.log(`✅ Mode changed to ${requestedMode} by ${cleaned.cleanNumber}`);

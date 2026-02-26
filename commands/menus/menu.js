@@ -91,12 +91,21 @@ export default {
   description: "Shows the Wolf Command Center in various styles",
   async execute(sock, m, args) {
     const jid = m.key.remoteJid;
-    const style = getCurrentMenuStyle();
+    let style = getCurrentMenuStyle();
+    
+    let buttonModeActive = false;
+    try {
+      const { isButtonModeEnabled } = await import('../../lib/buttonMode.js');
+      buttonModeActive = isButtonModeEnabled();
+      if (buttonModeActive && style !== 8) {
+        style = 8;
+      }
+    } catch {}
     
     // Set the last used menu for toggle commands
     setLastMenu(style);
 
-    console.log(`\n🐺 [MENU] Command received from: ${jid} | Using style: ${style}`);
+    console.log(`\n🐺 [MENU] Command received from: ${jid} | Using style: ${style}${buttonModeActive ? ' (button mode)' : ''}`);
 
     try {
       switch (style) {

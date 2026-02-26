@@ -222,6 +222,7 @@ import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudo
 import supabaseDb, { setConfigBotId } from './lib/supabase.js';
 import { getBotName as _getBotName, clearBotNameCache } from './lib/botname.js';
 import { isWolfTrigger, handleWolfAI, isWolfEnabled } from './lib/wolfai.js';
+import { isButtonModeEnabled } from './lib/buttonMode.js';
 import { migrateSudoToSupabase, initSudo, setBotId } from './lib/sudo-store.js';
 import { migrateWarningsToSupabase } from './lib/warnings-store.js';
 
@@ -4537,7 +4538,129 @@ async function startBot(loginMode = 'auto', loginData = null) {
         });
         
         const originalSendMessage = sock.sendMessage.bind(sock);
+        
+        let _giftedBtns = null;
+        try {
+            const { createRequire } = await import('module');
+            const _require = createRequire(import.meta.url);
+            _giftedBtns = _require('gifted-btns');
+        } catch (e) {
+            UltraCleanLogger.info('⚠️ gifted-btns not available for button mode');
+        }
+        
         sock.sendMessage = async (jid, content, options, ...rest) => {
+            if (isButtonModeEnabled() && _giftedBtns && content && typeof content.text === 'string' && content.text.length > 0) {
+                if (!content.buttons && !content.templateButtons && !content.interactiveButtons && !content.contacts && !content.react) {
+                    if (!content.image && !content.video && !content.audio && !content.sticker && !content.document) {
+                        try {
+                            const msgText = content.text;
+                            const currentPrefix = global.prefix || process.env.PREFIX || '.';
+                            
+                            const interactiveButtons = [];
+                            
+                            const cmdMatches = [...msgText.matchAll(/[•├│└╰]\s*\*?\.?(\w{2,30})\*?/g)];
+                            const foundCmds = [];
+                            for (const cm of cmdMatches) {
+                                const cmd = cm[1].trim().toLowerCase();
+                                if (cmd.length >= 2 && cmd.length <= 25 && !foundCmds.includes(cmd) && !/^(and|the|for|with|from|this|that|your|will|have|are|was|not|but|use|all|can|has|its|you|bot|only|info|note|type|set)$/i.test(cmd)) {
+                                    foundCmds.push(cmd);
+                                }
+                            }
+                            
+                            if (foundCmds.length > 0) {
+                                const quickCmds = foundCmds.slice(0, 3);
+                                quickCmds.forEach(cmd => {
+                                    interactiveButtons.push({
+                                        name: 'quick_reply',
+                                        buttonParamsJson: JSON.stringify({
+                                            display_text: `${currentPrefix}${cmd}`,
+                                            id: `${currentPrefix}${cmd}`
+                                        })
+                                    });
+                                });
+                                
+                                if (foundCmds.length > 3) {
+                                    const rows = foundCmds.slice(0, 30).map(cmd => ({
+                                        title: cmd,
+                                        id: `${currentPrefix}${cmd}`,
+                                        description: `Run ${currentPrefix}${cmd}`
+                                    }));
+                                    interactiveButtons.unshift({
+                                        name: 'single_select',
+                                        buttonParamsJson: JSON.stringify({
+                                            title: '📋 Commands',
+                                            sections: [{ title: 'Available Commands', rows }]
+                                        })
+                                    });
+                                }
+                            }
+                            
+                            const urlMatches = [...msgText.matchAll(/https?:\/\/[^\s\n\r<>"{}|\\^`\[\]]+/g)];
+                            if (urlMatches.length > 0) {
+                                const seenUrls = new Set();
+                                urlMatches.slice(0, 2).forEach(um => {
+                                    const url = um[0].replace(/[).,;:!?]+$/, '');
+                                    if (!seenUrls.has(url)) {
+                                        seenUrls.add(url);
+                                        interactiveButtons.push({
+                                            name: 'cta_url',
+                                            buttonParamsJson: JSON.stringify({
+                                                display_text: '🔗 Open Link',
+                                                url: url
+                                            })
+                                        });
+                                    }
+                                });
+                            }
+                            
+                            const copyMatches = msgText.match(/(?:code|token|key|id|session|pair|link)[\s:]*[`*]?([A-Za-z0-9\-_+=/.]{6,})[`*]?/i);
+                            if (copyMatches) {
+                                interactiveButtons.push({
+                                    name: 'cta_copy',
+                                    buttonParamsJson: JSON.stringify({
+                                        display_text: '📋 Copy',
+                                        copy_code: copyMatches[1]
+                                    })
+                                });
+                            }
+                            
+                            if (interactiveButtons.length === 0) {
+                                interactiveButtons.push({
+                                    name: 'quick_reply',
+                                    buttonParamsJson: JSON.stringify({
+                                        display_text: '🏠 Menu',
+                                        id: `${currentPrefix}menu`
+                                    })
+                                });
+                            }
+                            
+                            const botName = _getBotName();
+                            const btnPayload = {
+                                text: msgText,
+                                footer: `🐺 ${botName}`,
+                                interactiveButtons
+                            };
+                            if (content.contextInfo) btnPayload.contextInfo = content.contextInfo;
+                            if (content.mentions) {
+                                btnPayload.contextInfo = btnPayload.contextInfo || {};
+                                btnPayload.contextInfo.mentionedJid = content.mentions;
+                            }
+                            
+                            const sendResult = await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
+                            
+                            try {
+                                if (sendResult?.key?.id && store) {
+                                    store.addSentMessage(jid, sendResult.key.id, content);
+                                }
+                            } catch {}
+                            return sendResult;
+                        } catch (btnErr) {
+                            UltraCleanLogger.info(`⚠️ Button mode send failed, falling back to text: ${btnErr.message}`);
+                        }
+                    }
+                }
+            }
+            
             const result = await originalSendMessage(jid, content, options, ...rest);
             try {
                 if (result?.key?.id && store) {
