@@ -105,6 +105,7 @@
     "replicate": "^1.4.0",
     "ruhend-scraper": "^9.0.8",
     "silent-wolf-bot": "file:",
+    "sql.js": "^1.14.0",
     "systeminformation": "^5.31.1",
     "translate-google": "^1.5.0",
     "ws": "^8.19.0"
