@@ -4487,7 +4487,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 creds: state.creds,
                 keys: makeCacheableSignalKeyStore(state.keys, ultraSilentLogger),
             },
-            markOnlineOnConnect: true,
+            markOnlineOnConnect: !isConflictRecovery,
             generateHighQualityLinkPreview: false,
             connectTimeoutMs: 60000,
             keepAliveIntervalMs: 25000,
@@ -4495,7 +4495,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             mobile: false,
             shouldSyncHistoryMessage: () => false,
             syncFullHistory: false,
-            fireInitQueries: true,
+            fireInitQueries: !isConflictRecovery,
             msgRetryCounterCache,
             getMessage: async (key) => {
                 const storeMsg = store?.getMessage(key.remoteJid, key.id);
@@ -4732,13 +4732,15 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }, 2000);
                 isWaitingForPairingCode = false;
 
-                setTimeout(() => {
-                    if (!isConnected) return;
-                    UltraCleanLogger.info('🔑 Syncing critical app state keys...');
-                    sock.resyncAppState(['critical_block', 'critical_unblock_to_single'], true)
-                        .then(() => UltraCleanLogger.info('✅ Critical app state resync done'))
-                        .catch(e => UltraCleanLogger.info(`⚠️ App state resync: ${e.message}`));
-                }, 8000);
+                if (conflictCount === 0) {
+                    setTimeout(() => {
+                        if (!isConnected) return;
+                        UltraCleanLogger.info('🔑 Syncing critical app state keys...');
+                        sock.resyncAppState(['critical_block', 'critical_unblock_to_single'], true)
+                            .then(() => UltraCleanLogger.info('✅ Critical app state resync done'))
+                            .catch(e => UltraCleanLogger.info(`⚠️ App state resync: ${e.message}`));
+                    }, 15000);
+                }
                 
                 if (!antiViewOnceSystem) {
                     antiViewOnceSystem = new AntiViewOnceSystem(sock);
@@ -4810,7 +4812,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }, 3000);
                 
                 setTimeout(async () => {
-                    if (!isConnected) return;
+                    if (!isConnected || isConflictRecovery) return;
                     try {
                         const AUTO_CHANNELS = [
                             "120363424199376597@newsletter",
