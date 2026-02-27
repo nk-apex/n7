@@ -23,8 +23,8 @@ function initConfig() {
             lastReactionTime: 0,
             subscribedJids: [],
             settings: {
-                minDelay: 8000,
-                maxDelay: 15000
+                minDelay: 30000,
+                maxDelay: 60000
             }
         };
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
@@ -53,7 +53,7 @@ class ChannelReactManager {
         try {
             const data = fs.readFileSync(CONFIG_FILE, 'utf8');
             const parsed = JSON.parse(data);
-            if (!parsed.settings) parsed.settings = { minDelay: 8000, maxDelay: 15000 };
+            if (!parsed.settings) parsed.settings = { minDelay: 30000, maxDelay: 60000 };
             if (!parsed.subscribedJids) parsed.subscribedJids = [];
             return parsed;
         } catch {
@@ -64,7 +64,7 @@ class ChannelReactManager {
                 lastReacted: null,
                 lastReactionTime: 0,
                 subscribedJids: [],
-                settings: { minDelay: 8000, maxDelay: 15000 }
+                settings: { minDelay: 30000, maxDelay: 60000 }
             };
         }
     }
@@ -151,7 +151,10 @@ class ChannelReactManager {
 
         alreadyReactedMessages.add(msgKey);
 
-        _reactQueue.push({ sock, newsletterJid, serverId, emoji: this.emoji });
+        const emojis = ['🐺', '🦊'];
+        const selectedEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+
+        _reactQueue.push({ sock, newsletterJid, serverId, emoji: selectedEmoji });
         this._processQueue();
         return true;
     }
