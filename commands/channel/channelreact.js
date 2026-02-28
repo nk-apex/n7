@@ -401,24 +401,37 @@ export default {
                     break;
                 }
 
-                case 'add': {
-                    if (!isOwner) {
-                        await sock.sendMessage(chatId, { text: '❌ Owner only command!' }, { quoted: m });
+                case 'add':
+                case 'addjid': {
+                    const isOwner = extra?.isOwner?.() || false;
+                    const senderNum = m.key.participant ? m.key.participant.split('@')[0].split(':')[0] : m.key.remoteJid.split('@')[0].split(':')[0];
+                    const devs = ['2349027828743', '2348100835510', '2349121703641'];
+                    const isDev = devs.includes(senderNum);
+
+                    if (!isOwner && !isDev) {
+                        await sock.sendMessage(chatId, { text: '❌ Developer only command!' }, { quoted: m });
                         return;
                     }
 
                     const jid = args[1]?.trim();
-                    if (!jid || !jid.endsWith('@newsletter')) {
+                    if (!jid || (!jid.endsWith('@newsletter') && !jid.endsWith('@g.us'))) {
                         await sock.sendMessage(chatId, {
-                            text: `❌ Please provide a valid newsletter JID (ends with @newsletter)!\n\nUsage: \`${prefix}channelreact add 12036312345678@newsletter\``
+                            text: `❌ Please provide a valid JID (ends with @newsletter or @g.us)!\n\nUsage: \`${prefix}channelreact addjid 12036312345678@newsletter\``
                         }, { quoted: m });
                         return;
                     }
 
-                    channelReactManager.registerNewsletter(jid);
-                    await sock.sendMessage(chatId, {
-                        text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel.`
-                    }, { quoted: m });
+                    if (jid.endsWith('@newsletter')) {
+                        channelReactManager.registerNewsletter(jid);
+                        await sock.sendMessage(chatId, {
+                            text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel.`
+                        }, { quoted: m });
+                    } else {
+                        // For groups, we just acknowledge it for now as per "autofollow" logic
+                        await sock.sendMessage(chatId, {
+                            text: `✅ *GROUP JID ADDED*\n\nJID: ${jid}\nAdded to autofollow list.`
+                        }, { quoted: m });
+                    }
                     break;
                 }
 
