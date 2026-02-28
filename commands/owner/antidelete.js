@@ -632,17 +632,24 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
         
         const senderNumber = messageData.realNumber || getRealWhatsAppNumber(messageData.senderJid);
         
+        const chatName = messageData.chatName || (messageData.isGroup ? 'Group Chat' : 'Private Chat');
+        
         let detailsText;
         if (messageData.isStatus) {
             detailsText = `\n\n✧ ${getBotName()} status antidelete🐺\n`;
             detailsText += `✧ 𝙿𝚘𝚜𝚝𝚎𝚍 𝙱𝚢 : ${senderNumber} (${messageData.pushName})\n`;
+            if (deletedByNumber && deletedByNumber !== senderNumber) {
+                detailsText += `✧ 𝙳𝚎𝚕𝚎𝚝𝚎𝚍 𝙱𝚢 : ${deletedByNumber}\n`;
+            }
             detailsText += `✧ 𝚃𝚒𝚖𝚎 : ${time}\n`;
             detailsText += `✧ 𝚃𝚢𝚙𝚎 : ${messageData.type.toUpperCase()}\n`;
         } else {
-            detailsText = `\n\n✧ ${getBotName()} antidelete🐺\n`;
-            detailsText += `✧ 𝙳𝚎𝚕𝚎𝚝𝚎𝚍 𝙱𝚢 : ${deletedByNumber}\n`;
-            detailsText += `✧ 𝚂𝚎𝚗𝚝 𝚋𝚢 : ${senderNumber} (${messageData.pushName})\n`;
-            detailsText += `✧ 𝙲𝚑𝚊𝚝 : ${messageData.chatName}\n`;
+            detailsText = `\n\n✧ ${getBotName()} message antidelete🐺\n`;
+            detailsText += `✧ 𝙵𝚛𝚘𝚖 : ${senderNumber} (${messageData.pushName})\n`;
+            if (deletedByNumber && deletedByNumber !== senderNumber) {
+                detailsText += `✧ 𝙳𝚎𝚕𝚎𝚝𝚎𝚍 𝙱𝚢 : ${deletedByNumber}\n`;
+            }
+            detailsText += `✧ 𝙲𝚑𝚊𝚝 : ${chatName}\n`;
             detailsText += `✧ 𝚃𝚒𝚖𝚎 : ${time}\n`;
             detailsText += `✧ 𝚃𝚢𝚙𝚎 : ${messageData.type.toUpperCase()}\n`;
         }

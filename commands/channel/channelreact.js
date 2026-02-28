@@ -392,9 +392,56 @@ export default {
                         const shortId = jid.split('@')[0];
                         text += `├─ ${i + 1}. ${shortId}\n`;
                     }
-                    text += `│\n╰───`;
+                    text += `│\n`;
+                    text += `├─⊷ *${prefix}channelreact add <jid>*\n│  └⊷ Add a channel JID manually\n`;
+                    text += `├─⊷ *${prefix}channelreact remove <jid>*\n│  └⊷ Remove a channel JID\n`;
+                    text += `╰───`;
 
                     await sock.sendMessage(chatId, { text }, { quoted: m });
+                    break;
+                }
+
+                case 'add': {
+                    if (!isOwner) {
+                        await sock.sendMessage(chatId, { text: '❌ Owner only command!' }, { quoted: m });
+                        return;
+                    }
+
+                    const jid = args[1]?.trim();
+                    if (!jid || !jid.endsWith('@newsletter')) {
+                        await sock.sendMessage(chatId, {
+                            text: `❌ Please provide a valid newsletter JID (ends with @newsletter)!\n\nUsage: \`${prefix}channelreact add 12036312345678@newsletter\``
+                        }, { quoted: m });
+                        return;
+                    }
+
+                    channelReactManager.registerNewsletter(jid);
+                    await sock.sendMessage(chatId, {
+                        text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel.`
+                    }, { quoted: m });
+                    break;
+                }
+
+                case 'remove':
+                case 'delete': {
+                    if (!isOwner) {
+                        await sock.sendMessage(chatId, { text: '❌ Owner only command!' }, { quoted: m });
+                        return;
+                    }
+
+                    const jid = args[1]?.trim();
+                    if (!jid) {
+                        await sock.sendMessage(chatId, {
+                            text: `❌ Please provide a JID to remove!\n\nUsage: \`${prefix}channelreact remove 12036312345678@newsletter\``
+                        }, { quoted: m });
+                        return;
+                    }
+
+                    const targetJid = jid.endsWith('@newsletter') ? jid : `${jid}@newsletter`;
+                    channelReactManager.removeNewsletter(targetJid);
+                    await sock.sendMessage(chatId, {
+                        text: `✅ *CHANNEL REMOVED*\n\nJID: ${targetJid}\nBot will no longer react to this channel.`
+                    }, { quoted: m });
                     break;
                 }
 

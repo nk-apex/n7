@@ -542,12 +542,12 @@ async function sendStatusToOwnerDM(statusData, deletedByNumber) {
 
         const ownerJid = statusAntideleteState.ownerJid;
         const time = new Date(statusData.timestamp).toLocaleString();
-        const senderNumber = statusData.senderNumber || getRealWhatsAppNumber(statusData.senderJid);
+        const postedByNumber = statusData.senderNumber || getRealWhatsAppNumber(statusData.senderJid);
         const displayName = statusData.pushName || 'Unknown';
 
         let detailsText = `\n\n✧ ${getBotName()} status antidelete🐺\n`;
-        detailsText += `✧ 𝙿𝚘𝚜𝚝𝚎𝚍 𝙱𝚢 : ${senderNumber} (${displayName})\n`;
-        if (deletedByNumber && deletedByNumber !== senderNumber) {
+        detailsText += `✧ 𝙿𝚘𝚜𝚝𝚎𝚍 𝙱𝚢 : ${postedByNumber} (${displayName})\n`;
+        if (deletedByNumber && deletedByNumber !== postedByNumber) {
             detailsText += `✧ 𝙳𝚎𝚕𝚎𝚝𝚎𝚍 𝙱𝚢 : ${deletedByNumber}\n`;
         }
         detailsText += `✧ 𝚃𝚒𝚖𝚎 : ${time}\n`;
