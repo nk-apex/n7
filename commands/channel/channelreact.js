@@ -8,6 +8,7 @@
 
 
 
+
 // import fs from 'fs';
 // import path from 'path';
 
@@ -18,6 +19,17 @@
 // let _reactQueue = [];
 // let _processingQueue = false;
 
+// // Random emoji pool - much wider variety
+// const EMOJI_POOL = [
+//     '🐺', '🦊', '🐕', '🐩', '🐈', '🐆', '🦁', '🐯', '🐅', '🐃',
+//     '🐂', '🐄', '🐪', '🐫', '🦒', '🦘', '🦬', '🐖', '🐗', '🐏',
+//     '🐑', '🐐', '🦌', '🐕‍🦺', '🦮', '🐕', '🦊', '🐺', '🐱', '🐈',
+//     '🦁', '🐯', '🐅', '🐆', '🐴', '🫎', '🫏', '🦄', '🦓', '🦌',
+//     '🦬', '🐃', '🐂', '🐄', '🐎', '🐖', '🐗', '🐏', '🐑', '🐐',
+//     '🦙', '🦒', '🦏', '🦛', '🐁', '🐭', '🐹', '🐰', '🐇', '🦫',
+//     '🦔', '🦇', '🐻', '🐨', '🐼', '🦥', '🦦', '🦨', '🦘', '🦡'
+// ];
+
 // function initConfig() {
 //     const configDir = path.dirname(CONFIG_FILE);
 //     if (!fs.existsSync(configDir)) {
@@ -27,14 +39,14 @@
 //     if (!fs.existsSync(CONFIG_FILE)) {
 //         const defaultConfig = {
 //             enabled: true,
-//             emoji: '🐺',
+//             emoji: '🐺', // default, but will be overridden randomly
 //             totalReacted: 0,
 //             lastReacted: null,
 //             lastReactionTime: 0,
 //             subscribedJids: [],
 //             settings: {
-//                 minDelay: 30000,
-//                 maxDelay: 60000
+//                 minDelay: 300000,  // 5 minutes in milliseconds
+//                 maxDelay: 360000    // 6 minutes in milliseconds
 //             }
 //         };
 //         fs.writeFileSync(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
@@ -63,7 +75,7 @@
 //         try {
 //             const data = fs.readFileSync(CONFIG_FILE, 'utf8');
 //             const parsed = JSON.parse(data);
-//             if (!parsed.settings) parsed.settings = { minDelay: 30000, maxDelay: 60000 };
+//             if (!parsed.settings) parsed.settings = { minDelay: 300000, maxDelay: 360000 };
 //             if (!parsed.subscribedJids) parsed.subscribedJids = [];
 //             return parsed;
 //         } catch {
@@ -74,7 +86,7 @@
 //                 lastReacted: null,
 //                 lastReactionTime: 0,
 //                 subscribedJids: [],
-//                 settings: { minDelay: 30000, maxDelay: 60000 }
+//                 settings: { minDelay: 300000, maxDelay: 360000 }
 //             };
 //         }
 //     }
@@ -88,8 +100,12 @@
 
 //     get enabled() { return this.config.enabled; }
 //     get emoji() { return this.config.emoji || '🐺'; }
-//     get minDelay() { return this.config.settings?.minDelay || 8000; }
-//     get maxDelay() { return this.config.settings?.maxDelay || 15000; }
+//     get minDelay() { return this.config.settings?.minDelay || 300000; } // 5 min default
+//     get maxDelay() { return this.config.settings?.maxDelay || 360000; } // 6 min default
+
+//     getRandomEmoji() {
+//         return EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
+//     }
 
 //     toggle(forceOff = false) {
 //         if (forceOff) {
@@ -121,8 +137,8 @@
 
 //     setDelay(min, max) {
 //         if (!this.config.settings) this.config.settings = {};
-//         this.config.settings.minDelay = Math.max(5000, min);
-//         this.config.settings.maxDelay = Math.max(this.config.settings.minDelay + 2000, max);
+//         this.config.settings.minDelay = Math.max(300000, min); // Min 5 minutes
+//         this.config.settings.maxDelay = Math.max(this.config.settings.minDelay + 60000, max); // At least 1 min gap
 //         this.saveConfig();
 //     }
 
@@ -161,8 +177,8 @@
 
 //         alreadyReactedMessages.add(msgKey);
 
-//         const emojis = ['🐺', '🦊'];
-//         const selectedEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+//         // Get a random emoji from the pool
+//         const selectedEmoji = this.getRandomEmoji();
 
 //         _reactQueue.push({ sock, newsletterJid, serverId, emoji: selectedEmoji });
 //         this._processQueue();
@@ -180,8 +196,11 @@
 //             const timeSinceLast = now - this.lastReactionTime;
 //             const delay = this.getRandomDelay();
 
+//             // Wait if needed to ensure minimum delay between reactions
 //             if (timeSinceLast < delay) {
-//                 await new Promise(r => setTimeout(r, delay - timeSinceLast));
+//                 const waitTime = delay - timeSinceLast;
+//                 console.log(`[CHANNEL-REACT] Waiting ${Math.round(waitTime / 1000)}s before next reaction`);
+//                 await new Promise(r => setTimeout(r, waitTime));
 //             }
 
 //             try {
@@ -191,14 +210,18 @@
 //                 this.config.lastReacted = new Date().toISOString();
 //                 this.config.lastReactionTime = this.lastReactionTime;
 
+//                 console.log(`[CHANNEL-REACT] Reacted with ${emoji} (${this.config.totalReacted} total, next in ${this.getRandomDelay() / 1000}s)`);
+
 //                 if (this.config.totalReacted % 10 === 0) {
 //                     this.saveConfig();
 //                 }
 //             } catch (err) {
 //                 if (err?.message?.includes('rate') || err?.message?.includes('429')) {
-//                     const backoff = 30000 + Math.random() * 30000;
+//                     const backoff = 60000 + Math.random() * 120000; // 1-3 min backoff
 //                     console.log(`[CHANNEL-REACT] Rate limited, backing off ${Math.round(backoff / 1000)}s`);
 //                     await new Promise(r => setTimeout(r, backoff));
+//                 } else {
+//                     console.log(`[CHANNEL-REACT] Failed: ${err?.message}`);
 //                 }
 //             }
 //         }
@@ -216,7 +239,8 @@
 //             knownChannels: knownNewsletters.size,
 //             minDelay: this.minDelay,
 //             maxDelay: this.maxDelay,
-//             queueLength: _reactQueue.length
+//             queueLength: _reactQueue.length,
+//             emojiPoolSize: EMOJI_POOL.length
 //         };
 //     }
 // }
@@ -262,7 +286,7 @@
 // export default {
 //     name: 'channelreact',
 //     alias: ['chreact', 'cr', 'reactchannel', 'channelautoreact'],
-//     desc: 'Auto-react to WhatsApp channel messages with emoji',
+//     desc: 'Auto-react to WhatsApp channel messages with random emojis (5-6 min delay)',
 //     category: 'channel',
 //     ownerOnly: false,
 
@@ -276,10 +300,11 @@
 
 //                 let text = `╭─⌈ 📢 *CHANNEL AUTO-REACT* ⌋\n│\n`;
 //                 text += `│ Status: ${stats.enabled ? '✅ *ACTIVE*' : '❌ *INACTIVE*'}\n`;
-//                 text += `│ Emoji: ${stats.emoji}\n`;
+//                 text += `│ Random Emoji: ✓ (${stats.emojiPoolSize} options)\n`;
 //                 text += `│ Total Reacted: ${stats.totalReacted}\n`;
 //                 text += `│ Known Channels: ${stats.knownChannels}\n`;
 //                 text += `│ Delay: ${stats.minDelay / 1000}s - ${stats.maxDelay / 1000}s\n`;
+//                 text += `│ ⏱️ *5-6 MINUTES BETWEEN REACTIONS*\n`;
 //                 if (stats.queueLength > 0) {
 //                     text += `│ Queue: ${stats.queueLength} pending\n`;
 //                 }
@@ -289,8 +314,7 @@
 //                 text += `│\n`;
 //                 text += `├─⊷ *${prefix}channelreact on*\n│  └⊷ Enable auto-react\n`;
 //                 text += `├─⊷ *${prefix}channelreact off*\n│  └⊷ Disable auto-react\n`;
-//                 text += `├─⊷ *${prefix}channelreact emoji <emoji>*\n│  └⊷ Set reaction emoji\n`;
-//                 text += `├─⊷ *${prefix}channelreact delay <min> <max>*\n│  └⊷ Set delay in seconds (e.g. 8 15)\n`;
+//                 text += `├─⊷ *${prefix}channelreact delay <min> <max>*\n│  └⊷ Set delay in seconds (min 300s/5min)\n`;
 //                 text += `├─⊷ *${prefix}channelreact channels*\n│  └⊷ List known channels\n`;
 //                 text += `├─⊷ *${prefix}channelreact stats*\n│  └⊷ View statistics\n`;
 //                 text += `╰───`;
@@ -312,7 +336,7 @@
 
 //                     channelReactManager.enable();
 //                     await sock.sendMessage(chatId, {
-//                         text: `✅ *CHANNEL AUTO-REACT ENABLED*\n\nBot will auto-react to subscribed channel messages with ${channelReactManager.emoji}\nDelay: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s\nKnown channels: ${knownNewsletters.size}\n\nUse \`${prefix}channelreact off\` to disable.`
+//                         text: `✅ *CHANNEL AUTO-REACT ENABLED*\n\nBot will auto-react to channel messages with random emojis from pool of ${EMOJI_POOL.length} options.\n\n⏱️ *Delay: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s*\nKnown channels: ${knownNewsletters.size}\n\nUse \`${prefix}channelreact off\` to disable.`
 //                     }, { quoted: m });
 //                     break;
 //                 }
@@ -332,30 +356,6 @@
 //                     break;
 //                 }
 
-//                 case 'emoji':
-//                 case 'setemoji':
-//                 case 'set': {
-//                     if (!isOwner) {
-//                         await sock.sendMessage(chatId, { text: '❌ Owner only command!' }, { quoted: m });
-//                         return;
-//                     }
-
-//                     const emoji = args.slice(1).join(' ').trim();
-//                     if (!emoji) {
-//                         await sock.sendMessage(chatId, {
-//                             text: `❌ Please provide an emoji!\n\nUsage: \`${prefix}channelreact emoji ❤️\`\n\nCurrent emoji: ${channelReactManager.emoji}`
-//                         }, { quoted: m });
-//                         return;
-//                     }
-
-//                     const oldEmoji = channelReactManager.emoji;
-//                     channelReactManager.setEmoji(emoji);
-//                     await sock.sendMessage(chatId, {
-//                         text: `✅ *REACTION EMOJI UPDATED*\n\n${oldEmoji} → ${emoji}\n\nAll channel reactions will now use ${emoji}`
-//                     }, { quoted: m });
-//                     break;
-//                 }
-
 //                 case 'delay':
 //                 case 'setdelay':
 //                 case 'speed': {
@@ -367,18 +367,18 @@
 //                     const minSec = parseInt(args[1]);
 //                     const maxSec = parseInt(args[2]);
 
-//                     if (!minSec || minSec < 5) {
+//                     if (!minSec || minSec < 300) { // Minimum 5 minutes (300 seconds)
 //                         await sock.sendMessage(chatId, {
-//                             text: `❌ Invalid delay!\n\nUsage: \`${prefix}channelreact delay <min_sec> <max_sec>\`\nExample: \`${prefix}channelreact delay 8 15\`\n\nMinimum: 5 seconds (to avoid bans)\nCurrent: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s`
+//                             text: `❌ Invalid delay! Minimum is 300 seconds (5 minutes).\n\nUsage: \`${prefix}channelreact delay <min_sec> <max_sec>\`\nExample: \`${prefix}channelreact delay 300 360\` (5-6 min)\n\nCurrent: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s`
 //                         }, { quoted: m });
 //                         return;
 //                     }
 
-//                     const finalMax = maxSec && maxSec > minSec ? maxSec : minSec + 7;
+//                     const finalMax = maxSec && maxSec > minSec ? maxSec : minSec + 60;
 //                     channelReactManager.setDelay(minSec * 1000, finalMax * 1000);
 
 //                     await sock.sendMessage(chatId, {
-//                         text: `✅ *REACTION DELAY UPDATED*\n\nDelay: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s\n\nReactions will be spaced with random delays in this range to avoid bans.`
+//                         text: `✅ *REACTION DELAY UPDATED*\n\n⏱️ New Delay: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s\n\nReactions will be spaced with random delays in this range to avoid bans.`
 //                     }, { quoted: m });
 //                     break;
 //                 }
@@ -434,10 +434,9 @@
 //                     if (jid.endsWith('@newsletter')) {
 //                         channelReactManager.registerNewsletter(jid);
 //                         await sock.sendMessage(chatId, {
-//                             text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel.`
+//                             text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel with random emojis (5-6 min delay).`
 //                         }, { quoted: m });
 //                     } else {
-//                         // For groups, we just acknowledge it for now as per "autofollow" logic
 //                         await sock.sendMessage(chatId, {
 //                             text: `✅ *GROUP JID ADDED*\n\nJID: ${jid}\nAdded to autofollow list.`
 //                         }, { quoted: m });
@@ -473,10 +472,10 @@
 //                     const stats = channelReactManager.getStats();
 //                     let text = `📊 *CHANNEL REACT STATS*\n\n`;
 //                     text += `Status: ${stats.enabled ? '✅ Active' : '❌ Inactive'}\n`;
-//                     text += `Emoji: ${stats.emoji}\n`;
+//                     text += `Random Emoji Pool: ${stats.emojiPoolSize} options\n`;
 //                     text += `Total Reacted: ${stats.totalReacted}\n`;
 //                     text += `Known Channels: ${stats.knownChannels}\n`;
-//                     text += `Delay: ${stats.minDelay / 1000}s - ${stats.maxDelay / 1000}s\n`;
+//                     text += `⏱️ Delay: ${stats.minDelay / 1000}s - ${stats.maxDelay / 1000}s\n`;
 //                     if (stats.queueLength > 0) {
 //                         text += `Queue: ${stats.queueLength} pending\n`;
 //                     }
@@ -503,9 +502,6 @@
 //         }
 //     }
 // };
-
-
-
 
 
 
@@ -559,7 +555,7 @@ function initConfig() {
     if (!fs.existsSync(CONFIG_FILE)) {
         const defaultConfig = {
             enabled: true,
-            emoji: '🐺', // default, but will be overridden randomly
+            emoji: '🐺',
             totalReacted: 0,
             lastReacted: null,
             lastReactionTime: 0,
@@ -620,11 +616,26 @@ class ChannelReactManager {
 
     get enabled() { return this.config.enabled; }
     get emoji() { return this.config.emoji || '🐺'; }
-    get minDelay() { return this.config.settings?.minDelay || 300000; } // 5 min default
-    get maxDelay() { return this.config.settings?.maxDelay || 360000; } // 6 min default
+    get minDelay() { return this.config.settings?.minDelay || 300000; }
+    get maxDelay() { return this.config.settings?.maxDelay || 360000; }
 
     getRandomEmoji() {
         return EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
+    }
+
+    // ========== TRULY RANDOM DELAY BETWEEN MIN AND MAX ==========
+    getRandomDelay() {
+        const min = this.minDelay;
+        const max = this.maxDelay;
+        // Returns a random number between min and max (inclusive)
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // ========== GET NEXT REACTION DELAY (DIFFERENT EACH TIME) ==========
+    getNextReactionDelay() {
+        const delay = this.getRandomDelay();
+        console.log(`[CHANNEL-REACT] Next reaction in ${(delay / 1000 / 60).toFixed(2)} minutes (${delay / 1000}s)`);
+        return delay;
     }
 
     toggle(forceOff = false) {
@@ -683,12 +694,6 @@ class ChannelReactManager {
         this.saveConfig();
     }
 
-    getRandomDelay() {
-        const min = this.minDelay;
-        const max = this.maxDelay;
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
     async queueReaction(sock, newsletterJid, serverId) {
         if (!this.config.enabled) return false;
 
@@ -701,7 +706,11 @@ class ChannelReactManager {
         const selectedEmoji = this.getRandomEmoji();
 
         _reactQueue.push({ sock, newsletterJid, serverId, emoji: selectedEmoji });
-        this._processQueue();
+        
+        // Process queue if not already processing
+        if (!_processingQueue) {
+            this._processQueue();
+        }
         return true;
     }
 
@@ -714,12 +723,15 @@ class ChannelReactManager {
 
             const now = Date.now();
             const timeSinceLast = now - this.lastReactionTime;
-            const delay = this.getRandomDelay();
+            
+            // Get a NEW random delay for THIS reaction
+            const requiredDelay = this.getRandomDelay();
 
-            // Wait if needed to ensure minimum delay between reactions
-            if (timeSinceLast < delay) {
-                const waitTime = delay - timeSinceLast;
-                console.log(`[CHANNEL-REACT] Waiting ${Math.round(waitTime / 1000)}s before next reaction`);
+            // Calculate how much longer we need to wait
+            if (timeSinceLast < requiredDelay) {
+                const waitTime = requiredDelay - timeSinceLast;
+                const waitMinutes = (waitTime / 1000 / 60).toFixed(2);
+                console.log(`[CHANNEL-REACT] Waiting ${waitMinutes} minutes (${waitTime / 1000}s) before next reaction`);
                 await new Promise(r => setTimeout(r, waitTime));
             }
 
@@ -730,7 +742,11 @@ class ChannelReactManager {
                 this.config.lastReacted = new Date().toISOString();
                 this.config.lastReactionTime = this.lastReactionTime;
 
-                console.log(`[CHANNEL-REACT] Reacted with ${emoji} (${this.config.totalReacted} total, next in ${this.getRandomDelay() / 1000}s)`);
+                // Get the NEXT random delay for logging
+                const nextDelay = this.getRandomDelay();
+                const nextDelayMinutes = (nextDelay / 1000 / 60).toFixed(2);
+                
+                console.log(`[CHANNEL-REACT] ✓ Reacted with ${emoji} | Total: ${this.config.totalReacted} | Next in ~${nextDelayMinutes} min`);
 
                 if (this.config.totalReacted % 10 === 0) {
                     this.saveConfig();
@@ -738,10 +754,10 @@ class ChannelReactManager {
             } catch (err) {
                 if (err?.message?.includes('rate') || err?.message?.includes('429')) {
                     const backoff = 60000 + Math.random() * 120000; // 1-3 min backoff
-                    console.log(`[CHANNEL-REACT] Rate limited, backing off ${Math.round(backoff / 1000)}s`);
+                    console.log(`[CHANNEL-REACT] ⚠️ Rate limited, backing off ${Math.round(backoff / 1000)}s`);
                     await new Promise(r => setTimeout(r, backoff));
                 } else {
-                    console.log(`[CHANNEL-REACT] Failed: ${err?.message}`);
+                    console.log(`[CHANNEL-REACT] ❌ Failed: ${err?.message}`);
                 }
             }
         }
@@ -823,8 +839,8 @@ export default {
                 text += `│ Random Emoji: ✓ (${stats.emojiPoolSize} options)\n`;
                 text += `│ Total Reacted: ${stats.totalReacted}\n`;
                 text += `│ Known Channels: ${stats.knownChannels}\n`;
-                text += `│ Delay: ${stats.minDelay / 1000}s - ${stats.maxDelay / 1000}s\n`;
-                text += `│ ⏱️ *5-6 MINUTES BETWEEN REACTIONS*\n`;
+                text += `│ Delay Range: ${stats.minDelay / 1000}s - ${stats.maxDelay / 1000}s\n`;
+                text += `│ ⏱️ *RANDOM DELAY EACH TIME (5-6 min)*\n`;
                 if (stats.queueLength > 0) {
                     text += `│ Queue: ${stats.queueLength} pending\n`;
                 }
@@ -834,7 +850,7 @@ export default {
                 text += `│\n`;
                 text += `├─⊷ *${prefix}channelreact on*\n│  └⊷ Enable auto-react\n`;
                 text += `├─⊷ *${prefix}channelreact off*\n│  └⊷ Disable auto-react\n`;
-                text += `├─⊷ *${prefix}channelreact delay <min> <max>*\n│  └⊷ Set delay in seconds (min 300s/5min)\n`;
+                text += `├─⊷ *${prefix}channelreact delay <min> <max>*\n│  └⊷ Set delay range in seconds (min 300s/5min)\n`;
                 text += `├─⊷ *${prefix}channelreact channels*\n│  └⊷ List known channels\n`;
                 text += `├─⊷ *${prefix}channelreact stats*\n│  └⊷ View statistics\n`;
                 text += `╰───`;
@@ -856,7 +872,7 @@ export default {
 
                     channelReactManager.enable();
                     await sock.sendMessage(chatId, {
-                        text: `✅ *CHANNEL AUTO-REACT ENABLED*\n\nBot will auto-react to channel messages with random emojis from pool of ${EMOJI_POOL.length} options.\n\n⏱️ *Delay: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s*\nKnown channels: ${knownNewsletters.size}\n\nUse \`${prefix}channelreact off\` to disable.`
+                        text: `✅ *CHANNEL AUTO-REACT ENABLED*\n\nBot will auto-react to channel messages with random emojis from pool of ${EMOJI_POOL.length} options.\n\n⏱️ *Random Delay: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s*\n_(Each reaction has a random delay in this range)_\n\nKnown channels: ${knownNewsletters.size}\n\nUse \`${prefix}channelreact off\` to disable.`
                     }, { quoted: m });
                     break;
                 }
@@ -889,7 +905,7 @@ export default {
 
                     if (!minSec || minSec < 300) { // Minimum 5 minutes (300 seconds)
                         await sock.sendMessage(chatId, {
-                            text: `❌ Invalid delay! Minimum is 300 seconds (5 minutes).\n\nUsage: \`${prefix}channelreact delay <min_sec> <max_sec>\`\nExample: \`${prefix}channelreact delay 300 360\` (5-6 min)\n\nCurrent: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s`
+                            text: `❌ Invalid delay! Minimum is 300 seconds (5 minutes).\n\nUsage: \`${prefix}channelreact delay <min_sec> <max_sec>\`\nExample: \`${prefix}channelreact delay 300 360\` (5-6 min random)\n\nCurrent: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s`
                         }, { quoted: m });
                         return;
                     }
@@ -898,7 +914,7 @@ export default {
                     channelReactManager.setDelay(minSec * 1000, finalMax * 1000);
 
                     await sock.sendMessage(chatId, {
-                        text: `✅ *REACTION DELAY UPDATED*\n\n⏱️ New Delay: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s\n\nReactions will be spaced with random delays in this range to avoid bans.`
+                        text: `✅ *REACTION DELAY UPDATED*\n\n⏱️ New Random Delay Range: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s\n\nEach reaction will have a RANDOM delay within this range.\nExample: 5.2 min, then 5.8 min, then 5.4 min, etc.`
                     }, { quoted: m });
                     break;
                 }
@@ -954,7 +970,7 @@ export default {
                     if (jid.endsWith('@newsletter')) {
                         channelReactManager.registerNewsletter(jid);
                         await sock.sendMessage(chatId, {
-                            text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel with random emojis (5-6 min delay).`
+                            text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel with random emojis and random delays (5-6 min range).`
                         }, { quoted: m });
                     } else {
                         await sock.sendMessage(chatId, {
@@ -995,7 +1011,7 @@ export default {
                     text += `Random Emoji Pool: ${stats.emojiPoolSize} options\n`;
                     text += `Total Reacted: ${stats.totalReacted}\n`;
                     text += `Known Channels: ${stats.knownChannels}\n`;
-                    text += `⏱️ Delay: ${stats.minDelay / 1000}s - ${stats.maxDelay / 1000}s\n`;
+                    text += `⏱️ Random Delay Range: ${stats.minDelay / 1000}s - ${stats.maxDelay / 1000}s\n`;
                     if (stats.queueLength > 0) {
                         text += `Queue: ${stats.queueLength} pending\n`;
                     }
