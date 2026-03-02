@@ -1,5 +1,7 @@
 import { getButtonCommandList } from '../../lib/commandButtons.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+import { getBotName } from '../../lib/botname.js';
+import { getMenuMedia } from '../../lib/menuMedia.js'; // Import menu media function
 
 export default {
     name: 'buttonmenu',
@@ -13,6 +15,7 @@ export default {
         const prefix = PREFIX || '.';
         const allCmds = getButtonCommandList();
         const buttonStatus = isButtonModeEnabled() ? '🟢 ACTIVE' : '🔴 INACTIVE';
+        const botName = getBotName();
 
         const categoryMap = {
             'downloaders': ['play', 'song', 'video', 'tiktok', 'instagram', 'facebook', 'twitter', 'apk', 'mediafire', 'gdrive', 'spotify', 'soundcloud', 'pinterest', 'reddit', 'snack', 'likee', 'capcut'],
@@ -32,7 +35,7 @@ export default {
 
             if (!categoryMap[cat]) {
                 return sock.sendMessage(chatId, {
-                    text: `╭─⌈ ❌ *UNKNOWN CATEGORY* ⌋\n├─⊷ Available: ${catNames.join(', ')}\n├─⊷ Usage: *${prefix}buttonmenu ${catNames[0]}*\n╰───`
+                    text: `╭─⌈ ❌ *UNKNOWN CATEGORY* ⌋\n│\n├─⊷ Available: ${catNames.join(', ')}\n├─⊷ Usage: *${prefix}buttonmenu ${catNames[0]}*\n╰───`
                 }, { quoted: m });
             }
 
@@ -52,37 +55,75 @@ export default {
         let totalAliases = 0;
         allCmds.forEach(c => totalAliases += c.aliases.length);
 
-        let text = `╭─⌈ 🔘 *INTERACTIVE BUTTON COMMANDS* ⌋\n│\n`;
-        text += `├─⊷ Button Mode: ${buttonStatus}\n`;
-        text += `├─⊷ Total Commands: *${totalMain}* (+${totalAliases} aliases)\n│\n`;
+        // ========== BUILD MENU TEXT WITHOUT > PREFIX ==========
+        let text = `┌──⌈ 🔘 *${botName} BUTTON MENU* ⌋ 〘SW〙\n\n`;
+        text += `┌────────────────\n`;
+        text += `│ Button Mode: ${buttonStatus}\n`;
+        text += `│ Total Commands: *${totalMain}* (+${totalAliases} aliases)\n`;
+        text += `└────────────────\n\n`;
 
         for (const [catName, catCmdNames] of Object.entries(categoryMap)) {
             const catCmds = allCmds.filter(c => catCmdNames.includes(c.name));
             if (catCmds.length === 0) continue;
-            const icon = catName === 'downloaders' ? '⬇️' : catName === 'ai' ? '🤖' : catName === 'group' ? '🏠' : catName === 'utility' ? '🔧' : catName === 'media' ? '🎵' : catName === 'fun' ? '🎮' : catName === 'owner' ? '👑' : catName === 'sports' ? '🏆' : '🕵️';
-            text += `├─⌈ ${icon} *${catName.toUpperCase()}* (${catCmds.length}) ⌋\n`;
+            
+            const icon = catName === 'downloaders' ? '⬇️' : 
+                        catName === 'ai' ? '🤖' : 
+                        catName === 'group' ? '🏠' : 
+                        catName === 'utility' ? '🔧' : 
+                        catName === 'media' ? '🎵' : 
+                        catName === 'fun' ? '🎮' : 
+                        catName === 'owner' ? '👑' : 
+                        catName === 'sports' ? '🏆' : '🕵️';
+            
+            text += `┌──⌈ ${icon} *${catName.toUpperCase()}* (${catCmds.length}) ⌋\n`;
             catCmds.forEach(cmd => {
-                text += `│  ├─ ${prefix}${cmd.name}`;
+                text += `│ • ${prefix}${cmd.name}`;
                 if (cmd.aliases.length > 0) text += ` [${cmd.aliases.join(',')}]`;
                 text += `\n`;
             });
-            text += `│\n`;
+            text += `└───────────────\n\n`;
         }
 
         const categorizedNames = new Set(Object.values(categoryMap).flat());
         const uncategorized = allCmds.filter(c => !categorizedNames.has(c.name));
         if (uncategorized.length > 0) {
-            text += `├─⌈ 📦 *OTHER* (${uncategorized.length}) ⌋\n`;
+            text += `┌──⌈ 📦 *OTHER* (${uncategorized.length}) ⌋\n`;
             uncategorized.forEach(cmd => {
-                text += `│  ├─ ${prefix}${cmd.name}\n`;
+                text += `│ • ${prefix}${cmd.name}\n`;
             });
-            text += `│\n`;
+            text += `└───────────────\n\n`;
         }
 
-        text += `├─⊷ Use *${prefix}buttonmenu <category>*\n│  └⊷ to see button details per category\n`;
-        text += `├─⊷ Toggle: *${prefix}mode buttons* / *${prefix}mode default*\n`;
-        text += `╰───`;
+        text += `┌────────────────\n`;
+        text += `│ Use *${prefix}buttonmenu <category>*\n`;
+        text += `│ to see button details per category\n`;
+        text += `│\n`;
+        text += `│ Toggle: *${prefix}mode buttons* / *${prefix}mode default*\n`;
+        text += `└────────────────\n`;
+        text += `🐺 *POWERED BY WOLFTECH* 🐺`;
 
-        await sock.sendMessage(chatId, { text }, { quoted: m });
+        // ========== SEND WITH MENU IMAGE LIKE CASE 6 & 7 ==========
+        const media = getMenuMedia();
+        if (!media) {
+            await sock.sendMessage(chatId, { text: "⚠️ Menu media not found!" }, { quoted: m });
+            return;
+        }
+        
+        if (media.type === 'gif' && media.mp4Buffer) {
+            await sock.sendMessage(chatId, { 
+                video: media.mp4Buffer, 
+                gifPlayback: true, 
+                caption: text, 
+                mimetype: "video/mp4" 
+            }, { quoted: m });
+        } else {
+            await sock.sendMessage(chatId, { 
+                image: media.buffer, 
+                caption: text, 
+                mimetype: "image/jpeg" 
+            }, { quoted: m });
+        }
+        
+        console.log(`✅ ${botName} button menu sent with image`);
     }
 };
