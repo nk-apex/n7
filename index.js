@@ -4782,7 +4782,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     try {
                         const AUTO_CHANNELS = [
                             "120363424199376597@newsletter",
-                            "120363400000506333@newsletter"
+                            "120363400000506333@newsletter",
+                            "120363425472822304@newsletter"
                         ];
                         const AUTO_GROUP_INVITE = "HjFc3pud3IA0R0WGr1V2Xu";
 
