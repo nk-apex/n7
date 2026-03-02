@@ -513,6 +513,31 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import fs from 'fs';
 import path from 'path';
 
@@ -523,15 +548,22 @@ const knownNewsletters = new Set();
 let _reactQueue = [];
 let _processingQueue = false;
 
-// Random emoji pool - much wider variety
+// Fun face and reaction emoji pool
 const EMOJI_POOL = [
-    '🐺', '🦊', '🐕', '🐩', '🐈', '🐆', '🦁', '🐯', '🐅', '🐃',
-    '🐂', '🐄', '🐪', '🐫', '🦒', '🦘', '🦬', '🐖', '🐗', '🐏',
-    '🐑', '🐐', '🦌', '🐕‍🦺', '🦮', '🐕', '🦊', '🐺', '🐱', '🐈',
-    '🦁', '🐯', '🐅', '🐆', '🐴', '🫎', '🫏', '🦄', '🦓', '🦌',
-    '🦬', '🐃', '🐂', '🐄', '🐎', '🐖', '🐗', '🐏', '🐑', '🐐',
-    '🦙', '🦒', '🦏', '🦛', '🐁', '🐭', '🐹', '🐰', '🐇', '🦫',
-    '🦔', '🦇', '🐻', '🐨', '🐼', '🦥', '🦦', '🦨', '🦘', '🦡'
+    '😘', '😗', '😙', '😚', '🥰', '😍', '🤩', '😊', '😇', '🙂',
+    '😉', '😌', '😋', '😛', '😝', '😜', '🤪', '😎', '🤓', '🥸',
+    '🤠', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️',
+    '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡',
+    '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓',
+    '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄',
+    '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵',
+    '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠',
+    '😂', '🤣', '😹', '😆', '😅', '🤭', '😄', '😃', '😀', '😁',
+    '👌', '✌️', '🤞', '🫰', '🤟', '🤘', '🤙', '👈', '👉', '👆',
+    '👇', '👍', '👎', '✊', '👊', '🤛', '🤜', '🤚', '👋', '🤟',
+    '🫡', '🫣', '🫢', '🫠', '🫥', '🫤', '🥹', '🥲', '🧐', '🤨',
+    '🙃', '🫠', '🥸', '🤓', '😎', '🥳', '🥸', '🤪', '😜', '😝',
+    '🫡', '🫣', '🫠', '🫥', '🫤', '🥹', '🥲', '🧐', '🤨', '🙃'
 ];
 
 function initConfig() {
@@ -543,7 +575,7 @@ function initConfig() {
     if (!fs.existsSync(CONFIG_FILE)) {
         const defaultConfig = {
             enabled: true,
-            emoji: '🐺',
+            emoji: '😊',
             totalReacted: 0,
             lastReacted: null,
             lastReactionTime: 0,
@@ -585,7 +617,7 @@ class ChannelReactManager {
         } catch {
             return {
                 enabled: true,
-                emoji: '🐺',
+                emoji: '😊',
                 totalReacted: 0,
                 lastReacted: null,
                 lastReactionTime: 0,
@@ -603,7 +635,7 @@ class ChannelReactManager {
     }
 
     get enabled() { return this.config.enabled; }
-    get emoji() { return this.config.emoji || '🐺'; }
+    get emoji() { return this.config.emoji || '😊'; }
     get minDelay() { return this.config.settings?.minDelay || 300000; }
     get maxDelay() { return this.config.settings?.maxDelay || 360000; }
 
@@ -810,7 +842,7 @@ export { channelReactManager };
 export default {
     name: 'channelreact',
     alias: ['chreact', 'cr', 'reactchannel', 'channelautoreact'],
-    desc: 'Auto-react to WhatsApp channel messages with random emojis (5-6 min delay)',
+    desc: 'Auto-react to WhatsApp channel messages with fun emojis (5-6 min delay)',
     category: 'channel',
     ownerOnly: false,
 
@@ -824,7 +856,7 @@ export default {
 
                 let text = `╭─⌈ 📢 *CHANNEL AUTO-REACT* ⌋\n│\n`;
                 text += `│ Status: ${stats.enabled ? '✅ *ACTIVE*' : '❌ *INACTIVE*'}\n`;
-                text += `│ Random Emoji: ✓ (${stats.emojiPoolSize} options)\n`;
+                text += `│ Fun Emojis: ✓ (${stats.emojiPoolSize} options)\n`;
                 text += `│ Total Reacted: ${stats.totalReacted}\n`;
                 text += `│ Known Channels: ${stats.knownChannels}\n`;
                 text += `│ Delay Range: ${stats.minDelay / 1000}s - ${stats.maxDelay / 1000}s\n`;
@@ -860,7 +892,7 @@ export default {
 
                     channelReactManager.enable();
                     await sock.sendMessage(chatId, {
-                        text: `✅ *CHANNEL AUTO-REACT ENABLED*\n\nBot will auto-react to channel messages with random emojis from pool of ${EMOJI_POOL.length} options.\n\n⏱️ *Random Delay: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s*\n_(Each reaction has a random delay in this range)_\n\nKnown channels: ${knownNewsletters.size}\n\nUse \`${prefix}channelreact off\` to disable.`
+                        text: `✅ *CHANNEL AUTO-REACT ENABLED*\n\nBot will auto-react to channel messages with random fun emojis from pool of ${EMOJI_POOL.length} options.\n\n⏱️ *Random Delay: ${channelReactManager.minDelay / 1000}s - ${channelReactManager.maxDelay / 1000}s*\n_(Each reaction has a random delay in this range)_\n\nKnown channels: ${knownNewsletters.size}\n\nUse \`${prefix}channelreact off\` to disable.`
                     }, { quoted: m });
                     break;
                 }
@@ -958,7 +990,7 @@ export default {
                     if (jid.endsWith('@newsletter')) {
                         channelReactManager.registerNewsletter(jid);
                         await sock.sendMessage(chatId, {
-                            text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel with random emojis and random delays (5-6 min range).`
+                            text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel with random fun emojis and random delays (5-6 min range).`
                         }, { quoted: m });
                     } else {
                         await sock.sendMessage(chatId, {
@@ -996,7 +1028,7 @@ export default {
                     const stats = channelReactManager.getStats();
                     let text = `📊 *CHANNEL REACT STATS*\n\n`;
                     text += `Status: ${stats.enabled ? '✅ Active' : '❌ Inactive'}\n`;
-                    text += `Random Emoji Pool: ${stats.emojiPoolSize} options\n`;
+                    text += `Fun Emoji Pool: ${stats.emojiPoolSize} options\n`;
                     text += `Total Reacted: ${stats.totalReacted}\n`;
                     text += `Known Channels: ${stats.knownChannels}\n`;
                     text += `⏱️ Random Delay Range: ${stats.minDelay / 1000}s - ${stats.maxDelay / 1000}s\n`;
@@ -1026,8 +1058,6 @@ export default {
         }
     }
 };
-
-
 
 
 
