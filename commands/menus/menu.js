@@ -6556,14 +6556,6 @@ case 5: {
 }
 
 
-
-
-
-
-
-
-
-
 case 6: {
   const currentBotName = _getBotName();
   
@@ -6609,7 +6601,6 @@ case 6: {
     ];
     
     // Create 650+ invisible characters for reliable "Read more" on all devices
-    // Laptops have wider screens, need more characters to trigger the effect
     const invisibleString = Array.from({ length: 680 }, 
       (_, i) => invisibleChars[i % invisibleChars.length]
     ).join('');
@@ -6804,78 +6795,150 @@ case 6: {
     return '1.1.5';
   };
   
+  // ========== IMPROVED DEPLOYMENT PLATFORM DETECTION (from case 7) ==========
   const getDeploymentPlatform = () => {
-    if (process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.HEROKU_API_KEY) {
-      return { name: 'Heroku', icon: '🦸', status: 'Active' };
+    // Check Heroku FIRST (most specific env variables)
+    if (process.env.HEROKU_APP_NAME || 
+        process.env.DYNO || 
+        process.env.HEROKU_API_KEY ||
+        (process.env.PORT && process.env.PORT !== '3000' && process.env.PORT !== '8080')) {
+      return {
+        name: 'Heroku',
+        status: 'Active',
+        icon: '🦸'
+      };
     }
-    if (process.env.RENDER_SERVICE_ID || process.env.RENDER_SERVICE_NAME || process.env.RENDER) {
-      return { name: 'Render', icon: '⚡', status: 'Active' };
+    // Check Render
+    else if (process.env.RENDER_SERVICE_ID || 
+             process.env.RENDER_SERVICE_NAME ||
+             process.env.RENDER) {
+      return {
+        name: 'Render',
+        status: 'Active',
+        icon: '⚡'
+      };
     }
-    if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_NAME || process.env.RAILWAY_SERVICE_NAME) {
-      return { name: 'Railway', icon: '🚂', status: 'Active' };
+    // Check Railway
+    else if (process.env.RAILWAY_ENVIRONMENT ||
+             process.env.RAILWAY_PROJECT_NAME ||
+             process.env.RAILWAY_SERVICE_NAME) {
+      return {
+        name: 'Railway',
+        status: 'Active',
+        icon: '🚂'
+      };
     }
-    if (process.env.REPL_ID || process.env.REPLIT_DB_URL || process.env.REPLIT_USER || process.env.REPL_SLUG) {
-      return { name: 'Replit', icon: '🌀', status: 'Active' };
+    // Check Replit
+    else if (process.env.REPL_ID || 
+             process.env.REPLIT_DB_URL ||
+             process.env.REPLIT_USER ||
+             process.env.REPL_SLUG) {
+      return {
+        name: 'Replit',
+        status: 'Active',
+        icon: '🌀'
+      };
     }
-    if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.VERCEL_URL) {
-      return { name: 'Vercel', icon: '▲', status: 'Active' };
+    // Check Vercel
+    else if (process.env.VERCEL || 
+             process.env.VERCEL_ENV ||
+             process.env.VERCEL_URL) {
+      return {
+        name: 'Vercel',
+        status: 'Active',
+        icon: '▲'
+      };
     }
-    if (process.env.GLITCH_PROJECT_REMIX || process.env.PROJECT_REMIX_CHAIN || process.env.GLITCH) {
-      return { name: 'Glitch', icon: '🎏', status: 'Active' };
+    // Check Glitch
+    else if (process.env.GLITCH_PROJECT_REMIX ||
+             process.env.PROJECT_REMIX_CHAIN ||
+             process.env.GLITCH) {
+      return {
+        name: 'Glitch',
+        status: 'Active',
+        icon: '🎏'
+      };
     }
-    if (process.env.KOYEB_APP || process.env.KOYEB_REGION || process.env.KOYEB_SERVICE) {
-      return { name: 'Koyeb', icon: '☁️', status: 'Active' };
+    // Check Koyeb
+    else if (process.env.KOYEB_APP ||
+             process.env.KOYEB_REGION ||
+             process.env.KOYEB_SERVICE) {
+      return {
+        name: 'Koyeb',
+        status: 'Active',
+        icon: '☁️'
+      };
     }
-    if (process.env.CYCLIC_URL || process.env.CYCLIC_APP_ID || process.env.CYCLIC_DB) {
-      return { name: 'Cyclic', icon: '🔄', status: 'Active' };
+    // Check Cyclic
+    else if (process.env.CYCLIC_URL ||
+             process.env.CYCLIC_APP_ID ||
+             process.env.CYCLIC_DB) {
+      return {
+        name: 'Cyclic',
+        status: 'Active',
+        icon: '🔄'
+      };
     }
-    if (process.env.PANEL || process.env.PTERODACTYL) {
-      return { name: 'Panel/Pterodactyl', icon: '🖥️', status: 'Active' };
+    // Check Panel/Pterodactyl
+    else if (process.env.PANEL ||
+             process.env.PTERODACTYL ||
+             process.env.NODE_ENV === 'production' && 
+             (process.platform === 'linux' && !process.env.SSH_CONNECTION)) {
+      return {
+        name: 'Panel/VPS',
+        status: 'Active',
+        icon: '🖥️'
+      };
     }
-    if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT || (process.platform === 'linux' && process.env.USER === 'root')) {
-      return { name: 'VPS/SSH', icon: '🖥️', status: 'Active' };
+    // Check SSH/VPS
+    else if (process.env.SSH_CONNECTION || 
+             process.env.SSH_CLIENT ||
+             (process.platform === 'linux' && process.env.USER === 'root')) {
+      return {
+        name: 'VPS/SSH',
+        status: 'Active',
+        icon: '🖥️'
+      };
     }
-    if (process.platform === 'win32') {
-      return { name: 'Windows PC', icon: '💻', status: 'Active' };
+    // Check OS
+    else if (process.platform === 'win32') {
+      return {
+        name: 'Windows PC',
+        status: 'Active',
+        icon: '💻'
+      };
+    } else if (process.platform === 'darwin') {
+      return {
+        name: 'MacOS',
+        status: 'Active',
+        icon: '🍎'
+      };
+    } else if (process.platform === 'linux') {
+      return {
+        name: 'Linux Local',
+        status: 'Active',
+        icon: '🐧'
+      };
+    } else {
+      return {
+        name: 'Local Machine',
+        status: 'Active',
+        icon: '🏠'
+      };
     }
-    if (process.platform === 'darwin') {
-      return { name: 'MacOS', icon: '🍎', status: 'Active' };
-    }
-    if (process.platform === 'android') {
-      return { name: 'Termux (Android)', icon: '📱', status: 'Active' };
-    }
-    if (process.platform === 'linux') {
-      return { name: 'Linux', icon: '🐧', status: 'Active' };
-    }
-    return { name: 'Unknown', icon: '🏠', status: 'Active' };
   };
   
-  // Get current time and date
-  const now = new Date();
-  const currentTime = now.toLocaleTimeString('en-US', { 
-    hour12: true, 
-    hour: '2-digit', 
-    minute: '2-digit',
-    second: '2-digit'
-  });
-  
-  const currentDate = now.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-  
   // Load bot information using helper functions
-  const botName = getBotName();
+  const botName = _getBotName();
   const ownerName = getOwnerName();
   const botPrefix = getBotPrefix();
   const botVersion = getBotVersion();
   const botMode = getBotMode();
   const deploymentPlatform = getDeploymentPlatform();
   
-  // Add bot name header before the info section
-  let infoSection = `> 🐺🌕 *${currentBotName}* 🌕🐺\n`;
+  // ========== UPDATED HEADER FORMAT ==========
+  // ┌──⌈ WOLFBOT ⌋ 〘SW〙
+  let infoSection = `> ┌──⌈ ${currentBotName} ⌋ 〘SW〙\n\n`;
   
   // Add info section only if any field is enabled
   const fieldsStatus = getAllFieldsStatus(style);
@@ -6890,298 +6953,723 @@ case 6: {
   }
   
   if (hasInfoFields) {
-    const start = performance.now();
     const uptime = process.uptime();
     const h = Math.floor(uptime / 3600);
     const mnt = Math.floor((uptime % 3600) / 60);
     const s = Math.floor(uptime % 60);
     const uptimeStr = `${h}h ${mnt}m ${s}s`;
-    const speed = (performance.now() - start).toFixed(2);
-    const usedMem = (process.memoryUsage().rss / 1024 / 1024).toFixed(1);
-    const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(0);
     
-    // SAFE CALCULATION: Prevent negative or invalid percentages
-    const memPercentNum = ((usedMem / (totalMem * 1024)) * 100);
-    const memPercent = Math.min(Math.max(parseFloat(memPercentNum.toFixed(0)), 0), 100);
-    
-    // SAFE BAR CALCULATION: Prevent negative repeat values
-    const filledBars = Math.max(Math.floor(memPercent / 10), 0);
-    const emptyBars = Math.max(10 - filledBars, 0);
+    // ========== ACCURATE RAM CALCULATION (like case 7) ==========
+    const mem = process.memoryUsage();
+    const usedMemMB = mem.heapUsed / 1024 / 1024;
+    const totalMemMB = mem.heapTotal / 1024 / 1024;
+    const usedMem = usedMemMB.toFixed(1);
+    const totalMem = totalMemMB.toFixed(1);
+    const memPercent = Math.round((usedMemMB / totalMemMB) * 100);
+    const memPercentDisplay = memPercent;
+    const filledBars = Math.round((memPercent / 100) * 10);
+    const emptyBars = 10 - filledBars;
     const memBar = "█".repeat(filledBars) + "░".repeat(emptyBars);
-    
-    // Calculate command speed in milliseconds
-    const commandSpeed = `${speed}ms`;
     
     const infoLines = [];
     
-    // ========== CROSS-DEVICE FRIENDLY FORMAT ==========
-    // Keep formatting simple for all screen sizes
-    if ((fieldsStatus && fieldsStatus.time) || (!fieldsStatus)) {
-      infoLines.push(`> ┃ Date: ${currentDate}`);
-      infoLines.push(`> ┃ Time: ${currentTime}`);
-    }
-    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`> ┃ User: ${m.pushName || "Anonymous"}`);
+    // Only include these fields (removed time, speed, status)
+    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`> ┃ User: ▣ ${m.pushName || "Anonymous"}`);
     if ((fieldsStatus && fieldsStatus.owner) || (!fieldsStatus)) infoLines.push(`> ┃ Owner: ${ownerName}`);
     if ((fieldsStatus && fieldsStatus.mode) || (!fieldsStatus)) infoLines.push(`> ┃ Mode: ${botMode}`);
     if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`> ┃ Prefix: [ ${botPrefix} ]`);
     if ((fieldsStatus && fieldsStatus.version) || (!fieldsStatus)) infoLines.push(`> ┃ Version: ${botVersion}`);
     if ((fieldsStatus && fieldsStatus.host) || (!fieldsStatus)) {
-      infoLines.push(`> ┃ Panel: ${deploymentPlatform.name}`);
-      infoLines.push(`> ┃ Status: ${deploymentPlatform.status}`);
-    }
-    if ((fieldsStatus && fieldsStatus.speed) || (!fieldsStatus)) {
-      infoLines.push(`> ┃ Speed: ${commandSpeed}`);
+      infoLines.push(`> ┃ Platform: ${deploymentPlatform.icon} ${deploymentPlatform.name}`);
     }
     if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`> ┃ Uptime: ${uptimeStr}`);
-    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`> ┃ Usage: ${usedMem} MB of ${totalMem} GB`);
-    if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) infoLines.push(`> ┃ RAM: ${memBar} ${memPercent}%`);
+    if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) infoLines.push(`> ┃ RAM: ${memBar} ${memPercentDisplay}%`);
+    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`> ┃ Memory: ${usedMem}MB / ${totalMem}MB`);
 
     if (infoLines.length > 0) {
-      const infoCaption = `> ┌────────────────\n${infoLines.join('\n')}\n> └────────────────\n`;
+      const infoCaption = `> ┌────────────────\n${infoLines.join('\n')}\n> └────────────────\n\n`;
       infoSection += infoCaption;
     }
   } else {
     // If no info fields are enabled, still show basic header
-    infoSection += `> *No additional information is enabled.*\n> *Use .togglemenuinfo to customize*\n`;
+    infoSection += `> *No additional information is enabled.*\n> *Use .togglemenuinfo to customize*\n\n`;
   }
 
-  const commandsText = `> ┌────────────────
-> │ 🏠 *GROUP MANAGEMENT* 🏠 
-> ├────────────────
-> │ 🛡️ *ADMIN & MODERATION* 🛡️ 
-> ├────────────────
-> │ • add                     
-> │ • promote                 
-> │ • demote                  
-> │ • kick                    
-> │ • kickall                 
-> │ • ban                     
-> │ • unban                   
-> │ • banlist                 
-> │ • clearbanlist            
-> │ • warn                    
-> │ • resetwarn               
-> │ • setwarn                 
-> │ • mute                    
-> │ • unmute                  
-> │ • gctime                  
-> │ • antileave               
-> │ • antilink                
-> │ • welcome                 
-> ├────────────────
-> │ 🚫 *AUTO-MODERATION* 🚫   
-> ├────────────────
-> │ • antisticker             
-> │ • antiviewonce  
-> │ • antilink  
-> │ • antiimage
-> │ • antivideo
-> │ • antiaudio
-> │ • antimention
-> │ • antistatusmention  
-> │ • antigrouplink
-> ├────────────────
-> │ 📊 *GROUP INFO & TOOLS* 📊 
-> ├────────────────
-> │ • groupinfo               
-> │ • tagadmin                
-> │ • tagall                  
-> │ • hidetag                 
-> │ • link                    
-> │ • invite                  
-> │ • revoke                  
-> │ • setdesc                 
-> │ • fangtrace               
-> │ • getgpp                  
-> └────────────────
+  // ========== COMMAND SECTIONS WITH > PREFIX ==========
+  const categorySections = [
+`> ┌──⌈ \`GROUP MANAGEMENT\` ⌋
+> │ add
+> │ promote
+> │ promoteall
+> │ demote
+> │ demoteall
+> │ kick
+> │ kickall
+> │ ban
+> │ unban
+> │ clearbanlist
+> │ warn
+> │ resetwarn
+> │ setwarn
+> │ warnings
+> │ mute
+> │ unmute
+> │ gctime
+> │ antileave
+> │ antilink
+> │ welcome
+> │ goodbye
+> │ leave
+> │ creategroup
+> └───────────────`,
+`> ┌──⌈ \`AUTO MODERATION\` ⌋
+> │ antisticker
+> │ antiimage
+> │ antivideo
+> │ antiaudio
+> │ antimention
+> │ antistatusmention
+> │ antigrouplink
+> │ antidemote
+> │ antipromote
+> │ antiviewonce
+> └───────────────`,
+`> ┌──⌈ \`GROUP INFO & TOOLS\` ⌋
+> │ groupinfo
+> │ grouplink
+> │ tagadmin
+> │ tagall
+> │ hidetag
+> │ link
+> │ invite
+> │ revoke
+> │ setdesc
+> │ fangtrace
+> │ getgpp
+> │ togstatus
+> │ getparticipants
+> │ listonline
+> │ listinactive
+> │ approveall
+> │ rejectall
+> └───────────────`,
+`> ┌──⌈ \`MENU SETTINGS\` ⌋
+> │ menu
+> │ menu2
+> │ menustyle
+> │ togglemenuinfo
+> │ setmenuimage
+> │ restoremenuimage
+> └───────────────`,
+`> ┌──⌈ \`OWNER CONTROLS\` ⌋
+> │ setbotname
+> │ resetbotname
+> │ setowner
+> │ resetowner
+> │ setprefix
+> │ prefix
+> │ iamowner
+> │ about
+> │ owner
+> │ block
+> │ unblock
+> │ blockdetect
+> │ silent
+> │ anticall
+> │ mode
+> │ setpp
+> │ setfooter
+> │ repo
+> │ pair
+> │ antidelete
+> │ antideletestatus
+> │ antiedit
+> │ chatbot
+> │ shutdown
+> └───────────────`,
+`> ┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
+> │ restart
+> │ workingreload
+> │ reloadenv
+> │ getsettings
+> │ setsetting
+> │ test
+> │ disk
+> │ hostip
+> │ findcommands
+> │ latestupdates
+> │ panel
+> │ debugchat
+> └───────────────`,
+`> ┌──⌈ \`SUDO\` ⌋
+> │ addsudo
+> │ delsudo
+> │ listsudo
+> │ checksudo
+> │ clearsudo
+> │ sudomode
+> │ sudoinfo
+> │ mysudo
+> │ sudodebug
+> │ linksudo
+> └───────────────`,
+`> ┌──⌈ \`AUTOMATION\` ⌋
+> │ autoread
+> │ autotyping
+> │ autorecording
+> │ autoreact
+> │ autoreactstatus
+> │ autoviewstatus
+> │ autobio
+> │ autorec
+> │ reactowner
+> └───────────────`,
+`> ┌──⌈ \`PRIVACY CONTROLS\` ⌋
+> │ online
+> │ privacy
+> │ receipt
+> │ profilepic
+> │ viewer
+> └───────────────`,
+`> ┌──⌈ \`GENERAL UTILITIES\` ⌋
+> │ alive
+> │ ping
+> │ ping2
+> │ time
+> │ uptime
+> │ define
+> │ news
+> │ covid
+> │ weather
+> │ wiki
+> │ translate
+> │ iplookup
+> │ getip
+> │ getpp
+> │ getgpp
+> │ prefixinfo
+> │ platform
+> └───────────────`,
+`> ┌──⌈ \`CONVERSION & MEDIA\` ⌋
+> │ shorturl
+> │ url
+> │ fetch
+> │ qrencode
+> │ take
+> │ imgbb
+> │ save
+> │ screenshot
+> │ inspect
+> │ toimage
+> │ tosticker
+> │ toaudio
+> │ tovoice
+> │ tts
+> │ trebleboost
+> │ jarvis
+> └───────────────`,
+`> ┌──⌈ \`CONTACT TOOLS\` ⌋
+> │ vcf
+> │ viewvcf
+> │ vv
+> │ vv2
+> └───────────────`,
+`> ┌──⌈ \`MUSIC\` ⌋
+> │ play
+> │ song
+> │ video
+> │ videodoc
+> │ lyrics
+> │ shazam
+> │ spotify
+> └───────────────`,
+`> ┌──⌈ \`MEDIA DOWNLOADS\` ⌋
+> │ tiktok
+> │ instagram
+> │ facebook
+> │ snapchat
+> │ apk
+> │ yts
+> │ ytplay
+> │ ytmp3
+> │ ytv
+> │ ytmp4
+> │ ytvdoc
+> │ videodl
+> │ playlist
+> └───────────────`,
+`> ┌──⌈ \`AI COMMANDS\` ⌋
+> │ gpt
+> │ chatgpt
+> │ copilot
+> │ bing
+> │ bard
+> │ claudeai
+> │ grok
+> │ blackbox
+> │ mistral
+> │ metai
+> │ perplexity
+> │ qwenai
+> │ ilama
+> │ venice
+> │ wormgpt
+> │ deepseek+
+> │ chatbot
+> └───────────────`,
+`> ┌──⌈ \`AI GENERATION\` ⌋
+> │ imagine
+> │ imagegen
+> │ flux
+> │ analyze
+> │ suno
+> │ speechwriter
+> │ humanizer
+> │ summarize
+> │ totext
+> │ removebg
+> │ vision
+> └───────────────`,
+`> ┌──⌈ \`AI TOOLS\` ⌋
+> │ videogen
+> │ aiscanner
+> │ aimenu
+> │ brandlogo
+> │ companylogo
+> │ logoai
+> └───────────────`,
+`> ┌──⌈ \`AI VIDEO EFFECTS\` ⌋
+> │ tigervideo
+> │ introvideo
+> │ lightningpubg
+> │ lovevideo
+> │ videogen
+> └───────────────`,
+`> ┌──⌈ \`IMAGE TOOLS\` ⌋
+> │ image
+> │ imagegen
+> │ imagine
+> │ anime
+> │ art
+> │ real
+> │ remini
+> │ vision
+> └───────────────`,
+`> ┌──⌈ \`SPORTS\` ⌋
+> │ football
+> │ matchstats
+> │ sportsnews
+> │ teamnews
+> │ basketball
+> │ cricket
+> │ f1
+> │ nfl
+> │ mma
+> │ tennis
+> │ baseball
+> │ hockey
+> │ golf
+> │ sportsmenu
+> └───────────────`,
+`> ┌──⌈ \`ETHICAL HACKING\` ⌋
+> │ whois
+> │ dnslookup
+> │ subdomain
+> │ reverseip
+> │ geoip
+> │ portscan
+> │ headers
+> │ traceroute
+> │ asnlookup
+> │ shodan
+> │ pinghost
+> │ latency
+> │ sslcheck
+> │ tlsinfo
+> │ openports
+> │ firewallcheck
+> │ maclookup
+> │ bandwidthtest
+> │ securityheaders
+> │ wafdetect
+> │ robotscheck
+> │ sitemap
+> │ cmsdetect
+> │ techstack
+> │ cookiescan
+> │ redirectcheck
+> │ xsscheck
+> │ sqlicheck
+> │ csrfcheck
+> │ clickjackcheck
+> │ directoryscan
+> │ exposedfiles
+> │ misconfigcheck
+> │ cvecheck
+> │ hashidentify
+> │ hashcheck
+> │ bcryptcheck
+> │ passwordstrength
+> │ leakcheck
+> │ metadata
+> │ filehash
+> │ malwarecheck
+> │ urlscan
+> │ phishcheck
+> │ nmap
+> │ ipinfo
+> │ nglattack
+> │ securitymenu
+> └───────────────`,
+`> ┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
+> │ goldlogo
+> │ silverlogo
+> │ platinumlogo
+> │ chromelogo
+> │ diamondlogo
+> │ bronzelogo
+> │ steellogo
+> │ copperlogo
+> │ titaniumlogo
+> │ firelogo
+> │ icelogo
+> │ iceglowlogo
+> │ lightninglogo
+> │ aqualogo
+> │ rainbowlogo
+> │ sunlogo
+> │ moonlogo
+> │ dragonlogo
+> │ phoenixlogo
+> │ wizardlogo
+> │ crystallogo
+> │ darkmagiclogo
+> │ shadowlogo
+> │ smokelogo
+> │ bloodlogo
+> │ neonlogo
+> │ glowlogo
+> │ gradientlogo
+> │ matrixlogo
+> └───────────────`,
+`> ┌──⌈ \`GITHUB TOOLS\` ⌋
+> │ gitclone
+> │ gitinfo
+> │ repanalyze
+> │ zip
+> │ update
+> │ repo
+> └───────────────`,
+`> ┌──⌈ \`ANIME REACTIONS\` ⌋
+> │ animemenu
+> │ awoo
+> │ bully
+> │ cringe
+> │ cry
+> │ cuddle
+> │ dance
+> │ glomp
+> │ highfive
+> │ hug
+> │ kill
+> │ kiss
+> │ lick
+> │ megumin
+> │ neko
+> │ pat
+> │ shinobu
+> │ trap
+> │ trap2
+> │ waifu
+> │ wink
+> │ yeet
+> └───────────────`,
+`> ┌──⌈ \`GAMES\` ⌋
+> │ coinflip
+> │ dare
+> │ dice
+> │ emojimix
+> │ joke
+> │ quiz
+> │ rps
+> │ snake
+> │ tetris
+> │ truth
+> │ tictactoe
+> │ quote
+> └───────────────`,
+`> ┌──⌈ \`FUN & TOOLS\` ⌋
+> │ bf
+> │ gf
+> │ couple
+> │ gay
+> │ getjid
+> │ movie
+> │ trailer
+> │ goodmorning
+> │ goodnight
+> │ channelstatus
+> │ hack
+> └───────────────`,
+`> ┌──⌈ \`QUICK COMMANDS\` ⌋
+> │ p
+> │ up
+> └───────────────`,
+`> ┌──⌈ \`EPHOTO TEXT EFFECTS\` ⌋
+> │ neon
+> │ colorfulglow
+> │ advancedglow
+> │ neononline
+> │ blueneon
+> │ neontext
+> │ neonlight
+> │ greenneon
+> │ greenlightneon
+> │ blueneonlogo
+> │ galaxyneon
+> │ retroneon
+> │ multicolorneon
+> │ hackerneon
+> │ devilwings
+> │ glowtext
+> │ blackpinkneon
+> │ neonglitch
+> │ colorfulneonlight
+> │ wooden3d
+> │ cubic3d
+> │ wooden3donline
+> │ water3d
+> │ cuongthi3d
+> │ text3d
+> │ graffiti3d
+> │ silver3d
+> │ style3d
+> │ metal3d
+> │ ruby3d
+> │ birthday3d
+> │ metallogo3d
+> │ pig3d
+> │ avengers3d
+> │ hologram3d
+> │ gradient3d
+> │ stone3d
+> │ space3d
+> │ sand3d
+> │ gradienttext3d
+> │ lightbulb3d
+> │ snow3d
+> │ papercut3d
+> │ underwater3d
+> │ shinymetallic3d
+> │ gradientstyle3d
+> │ beach3d
+> │ crack3d
+> │ wood3d
+> │ americanflag3d
+> │ christmas3d
+> │ nigeriaflag3d
+> │ christmassnow3d
+> │ goldenchristmas3d
+> │ decorativemetal3d
+> │ colorfulpaint3d
+> │ glossysilver3d
+> │ balloon3d
+> │ comic3d
+> │ ephotomenu
+> └───────────────`,
+`> ┌──⌈ \`PHOTOFUNIA EFFECTS\` ⌋
+> │ smokeflare
+> │ nightmarewriting
+> │ lightning
+> │ cemeterygates
+> │ summoningspirits
+> │ ghostwood
+> │ autumn
+> │ jade
+> │ romantic
+> │ mystical
+> │ lomography
+> │ sepia
+> │ watercolourtext
+> │ denimemdroidery
+> │ cinematicket
+> │ arrowsigns
+> │ yacht
+> │ cloudyfilter
+> │ lightgraffiti
+> │ chalkboard
+> │ rustywriting
+> │ streetsign
+> │ floralwreath
+> │ retrowave
+> │ youaremyuniverse
+> │ einstein
+> │ rugbyball
+> │ redandblue
+> │ vhs
+> │ typewriter
+> │ diptych
+> │ badges
+> │ wanted
+> │ crown
+> │ anime
+> │ popart
+> │ puzzle
+> │ glass
+> │ animator
+> │ postersonthewall
+> │ posterwall
+> │ trainstationposter
+> │ rainynight
+> │ nightmotion
+> │ campaign
+> │ bicycle
+> │ citylight
+> │ affiche
+> │ sidewalk
+> │ cyclist
+> │ tulips
+> │ cafe
+> │ underground
+> │ reconstruction
+> │ posters
+> │ melbournegallery
+> │ artadmirer
+> │ nationalgalleryinlondon
+> │ blackwhitegallery
+> │ galleryvisitor
+> │ paintingandsketches
+> │ passingbythepainting
+> │ silhouettes
+> │ rijskmuseum
+> │ oldcamera
+> │ kittyandframe
+> │ frame
+> │ mirror
+> │ formulaoneracer
+> │ warrior
+> │ knight
+> │ biker
+> │ surfer
+> │ snowboard
+> │ dj
+> │ bodybuilder
+> │ lulu
+> │ hockey
+> │ ethanol
+> │ godfather
+> │ pirates
+> │ miss
+> │ concretejungle
+> │ broadwayatnight
+> │ newyorkatnight
+> │ shoppingarcade
+> │ oldtram
+> │ workerbythebillboard
+> │ eveningbillboard
+> │ pedestriancrossing
+> │ cube
+> │ nyc
+> │ city
+> │ ax
+> │ trump
+> │ obama
+> │ madonna
+> │ putin
+> │ theframe
+> │ atthebeach
+> │ lavander
+> │ reproduction
+> │ daffodils
+> │ painter
+> │ explorerdrawing
+> │ artistinahat
+> │ drawinglesson
+> │ brugge
+> │ watercolours
+> │ truck
+> │ portrait
+> │ quill
+> │ stamps
+> │ magiccard
+> │ postagestamp
+> │ truckadvert
+> │ tablet
+> │ artonthebrickwall
+> │ toasts
+> │ photowall
+> │ lego
+> │ wall
+> │ eye
+> │ morningmug
+> │ topsecret
+> │ breakingnews
+> │ vinylrecord
+> │ beer
+> │ coin
+> │ readingmagazine
+> │ rosesandmarshmallows
+> │ interview
+> │ reading
+> │ esquire
+> │ vogue
+> │ analoguetv
+> │ festivereading
+> │ thebook
+> │ veryoldbook
+> │ rosevine
+> │ loveletter
+> │ lovelock
+> │ weddingday
+> │ brooches
+> │ valentine
+> │ eastercard
+> │ bunnies
+> │ snowsign
+> │ christmaswriting
+> │ snowglobe
+> │ frostywindowwriting
+> │ santasnowangel
+> │ santasparcelpicture
+> │ newyearframes
+> │ photofunia
+> └───────────────`,
+`> 🐺 *POWERED BY WOLFTECH* 🐺`
+  ];
 
-> ┌────────────────
-> │ 🎨 *MENU COMMANDS* 🎨
-> ├────────────────
-> │ • togglemenuinfo
-> │ • setmenuimage
-> │ • resetmenuinfo
-> │ • menustyle
-> └────────────────
-
-> ┌────────────────
-> │ 👑 *OWNER CONTROLS* 👑    
-> ├────────────────
-> │ ⚡ *CORE MANAGEMENT* ⚡    
-> ├────────────────
-> │ • setbotname              
-> │ • setowner                
-> │ • setprefix               
-> │ • iamowner                
-> │ • about                   
-> │ • block                   
-> │ • unblock                 
-> │ • blockdetect             
-> │ • silent                  
-> │ • anticall                
-> │ • mode                    
-> │ • online                  
-> │ • setpp                   
-> │ • repo                    
-> ├────────────────
-> │ 🔄 *SYSTEM & MAINTENANCE* 🛠️ 
-> ├────────────────
-> │ • restart                 
-> │ • workingreload           
-> │ • reloadenv               
-> │ • getsettings             
-> │ • setsetting              
-> │ • test                    
-> │ • disk                    
-> │ • hostip                  
-> │ • findcommands            
-> └────────────────
-
-> ┌────────────────
-> │ ⚙️ *AUTOMATION* ⚙️
-> ├────────────────
-> │ • autoread                
-> │ • autotyping              
-> │ • autorecording           
-> │ • autoreact               
-> │ • autoreactstatus         
-> │ • autobio                 
-> │ • autorec                 
-> └────────────────
-
-> ┌────────────────
-> │ ✨ *GENERAL UTILITIES* ✨
-> ├────────────────
-> │ 🔍 *INFO & SEARCH* 🔎
-> ├────────────────
-> │ • alive
-> │ • ping
-> │ • ping2
-> │ • time
-> │ • connection
-> │ • define
-> │ • news
-> │ • covid
-> │ • iplookup
-> │ • getip
-> │ • getpp
-> │ • getgpp
-> │ • prefixinfo
-> ├───────────────
-> │ 🔗 *CONVERSION & MEDIA* 📁
-> ├───────────────
-> │ • shorturl
-> │ • qrencode
-> │ • take
-> │ • imgbb
-> │ • tiktok
-> │ • save
-> ├───────────────
-> │ 📝 *PERSONAL TOOLS* 📅
-> ├───────────────
-> │ • pair
-> │ • resetwarn
-> │ • setwarn
-> └────────────────
-
-> ┌────────────────
-> │ 🎵 *MUSIC & MEDIA* 🎶
-> ├────────────────
-> │ • play                    
-> │ • song                    
-> │ • lyrics                  
-> │ • spotify                 
-> │ • video                   
-> │ • video2                  
-> │ • bassboost               
-> │ • trebleboost             
-> └────────────────
-
-> ┌───────────────
-> │ 🤖 *MEDIA & AI COMMANDS* 🧠 
-> ├───────────────
-> │ ⬇️ *MEDIA DOWNLOADS* 📥     
-> ├───────────────
-> │ • youtube                 
-> │ • tiktok                 
-> │ • instagram               
-> │ • facebook                
-> │ • snapchat                
-> │ • apk                     
-> ├───────────────
-> │ 🎨 *AI GENERATION* 💡    
-> ├───────────────
-> │ • gpt                     
-> │ • gemini                  
-> │ • deepseek                
-> │ • deepseek+               
-> │ • analyze                 
-> │ • suno                    
-> │ • wolfbot                 
-> │ • videogen                
-> └───────────────
-
-> ┌───────────────
-> │ 🖼️ *IMAGE TOOLS* 🖼️
-> ├───────────────
-> │ • image                   
-> │ • imagegenerate           
-> │ • anime                   
-> │ • art                     
-> │ • real                    
-> └───────────────
-
-> ┌───────────────
-> │ 🏆 *SPORTS* 🏆
-> ├───────────────
-> │ • football                
-> │ • basketball              
-> │ • cricket                 
-> │ • f1                      
-> │ • nfl                     
-> │ • mma                     
-> │ • tennis                  
-> │ • baseball                
-> │ • hockey                  
-> │ • golf                    
-> │ • sportsmenu              
-> └───────────────
-
-> ┌───────────────
-> │ 🛡️ *SECURITY & HACKING* 🔒 
-> ├───────────────
-> │ 🌐 *NETWORK & INFO* 📡   
-> ├───────────────
-> │ • ipinfo                  
-> │ • shodan                  
-> │ • iplookup                
-> │ • getip                   
-> └───────────────
-
-> 🐺🌕*POWERED BY WOLF TECH*🌕🐺
-`;
+  // Create the read more separator
+  const readMoreSep = Array.from({ length: 550 }, (_, i) => ['\u200E','\u200F','\u200B','\u200C','\u200D','\u2060','\uFEFF'][i % 7]).join('');
   
-  // ========== APPLY "READ MORE" EFFECT ==========
-  // Combine info section (visible) and commands (hidden) with "Read more"
-  finalCaption = createReadMoreEffect(infoSection, commandsText);
-  // ========== END "READ MORE" EFFECT ==========
+  // Join all category sections with the separator
+  const commandsText = categorySections.join(`\n${readMoreSep}\n`);
+  
+  // Combine info section and commands with read more effect
+  finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
 
   const media = getMenuMedia();
   if (!media) {
     await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: m });
     return;
   }
+  
   if (media.type === 'gif' && media.mp4Buffer) {
-    await sock.sendMessage(jid, { video: media.mp4Buffer, gifPlayback: true, caption: finalCaption, mimetype: "video/mp4" }, { quoted: m });
+    await sock.sendMessage(jid, { 
+      video: media.mp4Buffer, 
+      gifPlayback: true, 
+      caption: finalCaption, 
+      mimetype: "video/mp4" 
+    }, { quoted: m });
   } else {
-    await sock.sendMessage(jid, { image: media.buffer, caption: finalCaption, mimetype: "image/jpeg" }, { quoted: m });
+    await sock.sendMessage(jid, { 
+      image: media.buffer, 
+      caption: finalCaption, 
+      mimetype: "image/jpeg" 
+    }, { quoted: m });
   }
   
-  console.log(`✅ ${currentBotName} menu sent with image and "Read more" effect`);
+  console.log(`✅ ${currentBotName} menu sent with "Read more" effect`);
   break;
 }
-
-
 
 // case 7: {
 //   // First, get the bot name BEFORE showing loading message
