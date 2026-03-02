@@ -1238,79 +1238,49 @@ function updatePrefixImmediately(newPrefix) {
 // Platform detection
 // Update the platform detection function
 function detectPlatform() {
-    // Check Heroku FIRST (most specific env variables)
-    if (process.env.HEROKU_APP_NAME || 
-        process.env.DYNO || 
-        process.env.HEROKU_API_KEY ||
-        (process.env.PORT && process.env.PORT !== '3000' && process.env.PORT !== '8080')) {
-        return 'Heroku';
+    if (process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.HEROKU_API_KEY) {
+        return { name: 'Heroku', icon: '🦸' };
     }
-    // Check Render
-    else if (process.env.RENDER_SERVICE_ID || 
-             process.env.RENDER_SERVICE_NAME ||
-             process.env.RENDER) {
-        return 'Render';
+    if (process.env.RENDER_SERVICE_ID || process.env.RENDER_SERVICE_NAME || process.env.RENDER) {
+        return { name: 'Render', icon: '⚡' };
     }
-    // Check Railway
-    else if (process.env.RAILWAY_ENVIRONMENT ||
-             process.env.RAILWAY_PROJECT_NAME ||
-             process.env.RAILWAY_SERVICE_NAME) {
-        return 'Railway';
+    if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_NAME || process.env.RAILWAY_SERVICE_NAME) {
+        return { name: 'Railway', icon: '🚂' };
     }
-    // Check Replit
-    else if (process.env.REPL_ID || 
-             process.env.REPLIT_DB_URL ||
-             process.env.REPLIT_USER ||
-             process.env.REPL_SLUG) {
-        return 'Replit';
+    if (process.env.REPL_ID || process.env.REPLIT_DB_URL || process.env.REPLIT_USER || process.env.REPL_SLUG) {
+        return { name: 'Replit', icon: '🌀' };
     }
-    // Check Vercel
-    else if (process.env.VERCEL || 
-             process.env.VERCEL_ENV ||
-             process.env.VERCEL_URL) {
-        return 'Vercel';
+    if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.VERCEL_URL) {
+        return { name: 'Vercel', icon: '▲' };
     }
-    // Check Glitch
-    else if (process.env.GLITCH_PROJECT_REMIX ||
-             process.env.PROJECT_REMIX_CHAIN ||
-             process.env.GLITCH) {
-        return 'Glitch';
+    if (process.env.GLITCH_PROJECT_REMIX || process.env.PROJECT_REMIX_CHAIN || process.env.GLITCH) {
+        return { name: 'Glitch', icon: '🎏' };
     }
-    // Check Koyeb
-    else if (process.env.KOYEB_APP ||
-             process.env.KOYEB_REGION ||
-             process.env.KOYEB_SERVICE) {
-        return 'Koyeb';
+    if (process.env.KOYEB_APP || process.env.KOYEB_REGION || process.env.KOYEB_SERVICE) {
+        return { name: 'Koyeb', icon: '☁️' };
     }
-    // Check Cyclic
-    else if (process.env.CYCLIC_URL ||
-             process.env.CYCLIC_APP_ID ||
-             process.env.CYCLIC_DB) {
-        return 'Cyclic';
+    if (process.env.CYCLIC_URL || process.env.CYCLIC_APP_ID || process.env.CYCLIC_DB) {
+        return { name: 'Cyclic', icon: '🔄' };
     }
-    // Check Panel/Pterodactyl
-    else if (process.env.PANEL ||
-             process.env.PTERODACTYL ||
-             process.env.NODE_ENV === 'production' && 
-             (process.platform === 'linux' && !process.env.SSH_CONNECTION)) {
-        return 'Panel/VPS';
+    if (process.env.PANEL || process.env.PTERODACTYL) {
+        return { name: 'Panel/Pterodactyl', icon: '🖥️' };
     }
-    // Check SSH/VPS
-    else if (process.env.SSH_CONNECTION || 
-             process.env.SSH_CLIENT ||
-             (process.platform === 'linux' && process.env.USER === 'root')) {
-        return 'VPS/SSH';
+    if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT || (process.platform === 'linux' && process.env.USER === 'root')) {
+        return { name: 'VPS/SSH', icon: '🖥️' };
     }
-    // Check OS
-    else if (process.platform === 'win32') {
-        return 'Windows PC';
-    } else if (process.platform === 'darwin') {
-        return 'MacOS';
-    } else if (process.platform === 'linux') {
-        return 'Linux Local';
-    } else {
-        return 'Local Machine';
+    if (process.platform === 'win32') {
+        return { name: 'Windows PC', icon: '💻' };
     }
+    if (process.platform === 'darwin') {
+        return { name: 'MacOS', icon: '🍎' };
+    }
+    if (process.platform === 'android') {
+        return { name: 'Termux (Android)', icon: '📱' };
+    }
+    if (process.platform === 'linux') {
+        return { name: 'Linux', icon: '🐧' };
+    }
+    return { name: 'Unknown', icon: '🏠' };
 }
 // ====== GLOBAL VARIABLES ======
 let OWNER_NUMBER = null;
@@ -4867,7 +4837,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         const ownerInfo = jidManager.getOwnerInfo();
                         const displayOwnerNumber = ownerInfo?.ownerNumber ? ownerInfo.ownerNumber.split(':')[0] : 'Not set';
                         
-                        const successMessage = `╭⊷『 🐺 ${getCurrentBotName()} 』\n│\n├⊷ *Name:* ${getCurrentBotName()}\n├⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├⊷ *Owner:* (${displayOwnerNumber})\n├⊷ *Platform:* ${detectPlatform()}\n├⊷ *Mode:* ${BOT_MODE}\n└⊷ *Status:* ✅ Connected\n\n╰⊷ *Silent Wolf Online* 🐾`;
+                        const successMessage = `╭⊷『 🐺 ${getCurrentBotName()} 』\n│\n├⊷ *Name:* ${getCurrentBotName()}\n├⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├⊷ *Owner:* (${displayOwnerNumber})\n├⊷ *Platform:* ${detectPlatform().icon} ${detectPlatform().name}\n├⊷ *Mode:* ${BOT_MODE}\n└⊷ *Status:* ✅ Connected\n\n╰⊷ *Silent Wolf Online* 🐾`;
                         
                         const targetJid = (ownerInfo && ownerInfo.ownerJid) ? ownerInfo.ownerJid : sock.user.id;
                         const sendPromise = sock.sendMessage(targetJid, { text: successMessage });
