@@ -1273,7 +1273,7 @@ const require = createRequire(import.meta.url);
 
 /* -------------------- Configuration with Token -------------------- */
 // Use environment variable or fallback to hardcoded (for backward compatibility)
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "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";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "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";
 
 // Updated URLs with token authentication
 const UPDATE_ZIP_URL = `https://${GITHUB_TOKEN}@github.com/nk-apex/n7/archive/refs/heads/main.zip`;
