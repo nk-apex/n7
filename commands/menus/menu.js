@@ -2836,92 +2836,49 @@ case 3: {
   };
   
   const getDeploymentPlatform = () => {
-    // Detect deployment platform
-    if (process.env.REPL_ID || process.env.REPLIT_DB_URL) {
-      return {
-        name: 'Replit',
-        status: 'Active',
-        icon: '🌀'
-      };
-    } else if (process.env.HEROKU_APP_NAME) {
-      return {
-        name: 'Heroku',
-        status: 'Active',
-        icon: '🦸'
-      };
-    } else if (process.env.RENDER_SERVICE_ID) {
-      return {
-        name: 'Render',
-        status: 'Active',
-        icon: '⚡'
-      };
-    } else if (process.env.RAILWAY_ENVIRONMENT) {
-      return {
-        name: 'Railway',
-        status: 'Active',
-        icon: '🚂'
-      };
-    } else if (process.env.VERCEL) {
-      return {
-        name: 'Vercel',
-        status: 'Active',
-        icon: '▲'
-      };
-    } else if (process.env.GLITCH_PROJECT_REMIX) {
-      return {
-        name: 'Glitch',
-        status: 'Active',
-        icon: '🎏'
-      };
-    } else if (process.env.KOYEB) {
-      return {
-        name: 'Koyeb',
-        status: 'Active',
-        icon: '☁️'
-      };
-    } else if (process.env.CYCLIC_URL) {
-      return {
-        name: 'Cyclic',
-        status: 'Active',
-        icon: '🔄'
-      };
-    } else if (process.env.PANEL) {
-      return {
-        name: 'PteroPanel',
-        status: 'Active',
-        icon: '🖥️'
-      };
-    } else if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT) {
-      return {
-        name: 'VPS/SSH',
-        status: 'Active',
-        icon: '🖥️'
-      };
-    } else if (process.platform === 'win32') {
-      return {
-        name: 'Windows PC',
-        status: 'Active',
-        icon: '💻'
-      };
-    } else if (process.platform === 'linux') {
-      return {
-        name: 'Linux VPS',
-        status: 'Active',
-        icon: '🐧'
-      };
-    } else if (process.platform === 'darwin') {
-      return {
-        name: 'MacOS',
-        status: 'Active',
-        icon: '🍎'
-      };
-    } else {
-      return {
-        name: 'Local Machine',
-        status: 'Active',
-        icon: '🏠'
-      };
+    if (process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.HEROKU_API_KEY) {
+      return { name: 'Heroku', icon: '🦸', status: 'Active' };
     }
+    if (process.env.RENDER_SERVICE_ID || process.env.RENDER_SERVICE_NAME || process.env.RENDER) {
+      return { name: 'Render', icon: '⚡', status: 'Active' };
+    }
+    if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_NAME || process.env.RAILWAY_SERVICE_NAME) {
+      return { name: 'Railway', icon: '🚂', status: 'Active' };
+    }
+    if (process.env.REPL_ID || process.env.REPLIT_DB_URL || process.env.REPLIT_USER || process.env.REPL_SLUG) {
+      return { name: 'Replit', icon: '🌀', status: 'Active' };
+    }
+    if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.VERCEL_URL) {
+      return { name: 'Vercel', icon: '▲', status: 'Active' };
+    }
+    if (process.env.GLITCH_PROJECT_REMIX || process.env.PROJECT_REMIX_CHAIN || process.env.GLITCH) {
+      return { name: 'Glitch', icon: '🎏', status: 'Active' };
+    }
+    if (process.env.KOYEB_APP || process.env.KOYEB_REGION || process.env.KOYEB_SERVICE) {
+      return { name: 'Koyeb', icon: '☁️', status: 'Active' };
+    }
+    if (process.env.CYCLIC_URL || process.env.CYCLIC_APP_ID || process.env.CYCLIC_DB) {
+      return { name: 'Cyclic', icon: '🔄', status: 'Active' };
+    }
+    if (process.env.PANEL || process.env.PTERODACTYL) {
+      return { name: 'Panel/Pterodactyl', icon: '🖥️', status: 'Active' };
+    }
+    if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT || (process.platform === 'linux' && process.env.USER === 'root')) {
+      return { name: 'VPS/SSH', icon: '🖥️', status: 'Active' };
+    }
+    if (process.platform === 'win32') {
+      return { name: 'Windows PC', icon: '💻', status: 'Active' };
+    }
+    if (process.platform === 'darwin') {
+      return { name: 'MacOS', icon: '🍎', status: 'Active' };
+    }
+    if (process.platform === 'android') {
+      return { name: 'Termux (Android)', icon: '📱', status: 'Active' };
+    }
+    if (process.platform === 'linux') {
+      return { name: 'Linux', icon: '🐧', status: 'Active' };
+    }
+    return { name: 'Unknown', icon: '🏠', status: 'Active' };
   };
   
   // Get current time and date
@@ -3972,92 +3929,49 @@ case 4: {
   };
   
   const getDeploymentPlatform = () => {
-    // Detect deployment platform
-    if (process.env.REPL_ID || process.env.REPLIT_DB_URL) {
-      return {
-        name: 'Replit',
-        status: 'Active',
-        icon: '🌀'
-      };
-    } else if (process.env.HEROKU_APP_NAME) {
-      return {
-        name: 'Heroku',
-        status: 'Active',
-        icon: '🦸'
-      };
-    } else if (process.env.RENDER_SERVICE_ID) {
-      return {
-        name: 'Render',
-        status: 'Active',
-        icon: '⚡'
-      };
-    } else if (process.env.RAILWAY_ENVIRONMENT) {
-      return {
-        name: 'Railway',
-        status: 'Active',
-        icon: '🚂'
-      };
-    } else if (process.env.VERCEL) {
-      return {
-        name: 'Vercel',
-        status: 'Active',
-        icon: '▲'
-      };
-    } else if (process.env.GLITCH_PROJECT_REMIX) {
-      return {
-        name: 'Glitch',
-        status: 'Active',
-        icon: '🎏'
-      };
-    } else if (process.env.KOYEB) {
-      return {
-        name: 'Koyeb',
-        status: 'Active',
-        icon: '☁️'
-      };
-    } else if (process.env.CYCLIC_URL) {
-      return {
-        name: 'Cyclic',
-        status: 'Active',
-        icon: '🔄'
-      };
-    } else if (process.env.PANEL) {
-      return {
-        name: 'PteroPanel',
-        status: 'Active',
-        icon: '🖥️'
-      };
-    } else if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT) {
-      return {
-        name: 'VPS/SSH',
-        status: 'Active',
-        icon: '🖥️'
-      };
-    } else if (process.platform === 'win32') {
-      return {
-        name: 'Windows PC',
-        status: 'Active',
-        icon: '💻'
-      };
-    } else if (process.platform === 'linux') {
-      return {
-        name: 'Linux VPS',
-        status: 'Active',
-        icon: '🐧'
-      };
-    } else if (process.platform === 'darwin') {
-      return {
-        name: 'MacOS',
-        status: 'Active',
-        icon: '🍎'
-      };
-    } else {
-      return {
-        name: 'Local Machine',
-        status: 'Active',
-        icon: '🏠'
-      };
+    if (process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.HEROKU_API_KEY) {
+      return { name: 'Heroku', icon: '🦸', status: 'Active' };
     }
+    if (process.env.RENDER_SERVICE_ID || process.env.RENDER_SERVICE_NAME || process.env.RENDER) {
+      return { name: 'Render', icon: '⚡', status: 'Active' };
+    }
+    if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_NAME || process.env.RAILWAY_SERVICE_NAME) {
+      return { name: 'Railway', icon: '🚂', status: 'Active' };
+    }
+    if (process.env.REPL_ID || process.env.REPLIT_DB_URL || process.env.REPLIT_USER || process.env.REPL_SLUG) {
+      return { name: 'Replit', icon: '🌀', status: 'Active' };
+    }
+    if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.VERCEL_URL) {
+      return { name: 'Vercel', icon: '▲', status: 'Active' };
+    }
+    if (process.env.GLITCH_PROJECT_REMIX || process.env.PROJECT_REMIX_CHAIN || process.env.GLITCH) {
+      return { name: 'Glitch', icon: '🎏', status: 'Active' };
+    }
+    if (process.env.KOYEB_APP || process.env.KOYEB_REGION || process.env.KOYEB_SERVICE) {
+      return { name: 'Koyeb', icon: '☁️', status: 'Active' };
+    }
+    if (process.env.CYCLIC_URL || process.env.CYCLIC_APP_ID || process.env.CYCLIC_DB) {
+      return { name: 'Cyclic', icon: '🔄', status: 'Active' };
+    }
+    if (process.env.PANEL || process.env.PTERODACTYL) {
+      return { name: 'Panel/Pterodactyl', icon: '🖥️', status: 'Active' };
+    }
+    if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT || (process.platform === 'linux' && process.env.USER === 'root')) {
+      return { name: 'VPS/SSH', icon: '🖥️', status: 'Active' };
+    }
+    if (process.platform === 'win32') {
+      return { name: 'Windows PC', icon: '💻', status: 'Active' };
+    }
+    if (process.platform === 'darwin') {
+      return { name: 'MacOS', icon: '🍎', status: 'Active' };
+    }
+    if (process.platform === 'android') {
+      return { name: 'Termux (Android)', icon: '📱', status: 'Active' };
+    }
+    if (process.platform === 'linux') {
+      return { name: 'Linux', icon: '🐧', status: 'Active' };
+    }
+    return { name: 'Unknown', icon: '🏠', status: 'Active' };
   };
   
   // Get current time and date
@@ -6891,92 +6805,49 @@ case 6: {
   };
   
   const getDeploymentPlatform = () => {
-    // Detect deployment platform
-    if (process.env.REPL_ID || process.env.REPLIT_DB_URL) {
-      return {
-        name: 'Replit',
-        status: 'Active',
-        icon: '🌀'
-      };
-    } else if (process.env.HEROKU_APP_NAME) {
-      return {
-        name: 'Heroku',
-        status: 'Active',
-        icon: '🦸'
-      };
-    } else if (process.env.RENDER_SERVICE_ID) {
-      return {
-        name: 'Render',
-        status: 'Active',
-        icon: '⚡'
-      };
-    } else if (process.env.RAILWAY_ENVIRONMENT) {
-      return {
-        name: 'Railway',
-        status: 'Active',
-        icon: '🚂'
-      };
-    } else if (process.env.VERCEL) {
-      return {
-        name: 'Vercel',
-        status: 'Active',
-        icon: '▲'
-      };
-    } else if (process.env.GLITCH_PROJECT_REMIX) {
-      return {
-        name: 'Glitch',
-        status: 'Active',
-        icon: '🎏'
-      };
-    } else if (process.env.KOYEB) {
-      return {
-        name: 'Koyeb',
-        status: 'Active',
-        icon: '☁️'
-      };
-    } else if (process.env.CYCLIC_URL) {
-      return {
-        name: 'Cyclic',
-        status: 'Active',
-        icon: '🔄'
-      };
-    } else if (process.env.PANEL) {
-      return {
-        name: 'PteroPanel',
-        status: 'Active',
-        icon: '🖥️'
-      };
-    } else if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT) {
-      return {
-        name: 'VPS/SSH',
-        status: 'Active',
-        icon: '🖥️'
-      };
-    } else if (process.platform === 'win32') {
-      return {
-        name: 'Windows PC',
-        status: 'Active',
-        icon: '💻'
-      };
-    } else if (process.platform === 'linux') {
-      return {
-        name: 'Linux VPS',
-        status: 'Active',
-        icon: '🐧'
-      };
-    } else if (process.platform === 'darwin') {
-      return {
-        name: 'MacOS',
-        status: 'Active',
-        icon: '🍎'
-      };
-    } else {
-      return {
-        name: 'Local Machine',
-        status: 'Active',
-        icon: '🏠'
-      };
+    if (process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.HEROKU_API_KEY) {
+      return { name: 'Heroku', icon: '🦸', status: 'Active' };
     }
+    if (process.env.RENDER_SERVICE_ID || process.env.RENDER_SERVICE_NAME || process.env.RENDER) {
+      return { name: 'Render', icon: '⚡', status: 'Active' };
+    }
+    if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_NAME || process.env.RAILWAY_SERVICE_NAME) {
+      return { name: 'Railway', icon: '🚂', status: 'Active' };
+    }
+    if (process.env.REPL_ID || process.env.REPLIT_DB_URL || process.env.REPLIT_USER || process.env.REPL_SLUG) {
+      return { name: 'Replit', icon: '🌀', status: 'Active' };
+    }
+    if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.VERCEL_URL) {
+      return { name: 'Vercel', icon: '▲', status: 'Active' };
+    }
+    if (process.env.GLITCH_PROJECT_REMIX || process.env.PROJECT_REMIX_CHAIN || process.env.GLITCH) {
+      return { name: 'Glitch', icon: '🎏', status: 'Active' };
+    }
+    if (process.env.KOYEB_APP || process.env.KOYEB_REGION || process.env.KOYEB_SERVICE) {
+      return { name: 'Koyeb', icon: '☁️', status: 'Active' };
+    }
+    if (process.env.CYCLIC_URL || process.env.CYCLIC_APP_ID || process.env.CYCLIC_DB) {
+      return { name: 'Cyclic', icon: '🔄', status: 'Active' };
+    }
+    if (process.env.PANEL || process.env.PTERODACTYL) {
+      return { name: 'Panel/Pterodactyl', icon: '🖥️', status: 'Active' };
+    }
+    if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT || (process.platform === 'linux' && process.env.USER === 'root')) {
+      return { name: 'VPS/SSH', icon: '🖥️', status: 'Active' };
+    }
+    if (process.platform === 'win32') {
+      return { name: 'Windows PC', icon: '💻', status: 'Active' };
+    }
+    if (process.platform === 'darwin') {
+      return { name: 'MacOS', icon: '🍎', status: 'Active' };
+    }
+    if (process.platform === 'android') {
+      return { name: 'Termux (Android)', icon: '📱', status: 'Active' };
+    }
+    if (process.platform === 'linux') {
+      return { name: 'Linux', icon: '🐧', status: 'Active' };
+    }
+    return { name: 'Unknown', icon: '🏠', status: 'Active' };
   };
   
   // Get current time and date
