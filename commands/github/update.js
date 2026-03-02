@@ -1254,6 +1254,20 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { exec } from "child_process";
 import { getBotName } from '../../lib/botname.js';
 import { promisify } from "util";
@@ -1265,6 +1279,7 @@ import https from "https";
 import http from "http";
 import { createRequire } from 'module';
 import { createWriteStream } from "fs";
+import AdmZip from 'adm-zip'; // Direct import for JS extraction
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -1272,8 +1287,18 @@ const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 
 /* -------------------- Configuration with Token -------------------- */
-// Use environment variable or fallback to hardcoded (for backward compatibility)
+// Use environment variable or fallback to hardcoded
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "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";
+
+// Platform detection
+const IS_WINDOWS = process.platform === 'win32';
+const IS_LINUX = process.platform === 'linux';
+const IS_MAC = process.platform === 'darwin';
+const IS_RAILWAY = !!process.env.RAILWAY_SERVICE_ID;
+const IS_RENDER = !!process.env.RENDER_SERVICE_ID;
+const IS_HEROKU = !!process.env.DYNO;
+
+console.log(`[UPDATE] Platform: ${process.platform} | Railway: ${IS_RAILWAY} | Render: ${IS_RENDER} | Heroku: ${IS_HEROKU}`);
 
 // Updated URLs with token authentication
 const UPDATE_ZIP_URL = `https://${GITHUB_TOKEN}@github.com/nk-apex/n7/archive/refs/heads/main.zip`;
@@ -2059,9 +2084,9 @@ async function copyDirectoryFast(src, dest, timeout = PRESERVE_TIMEOUT) {
   }
 }
 
-/* -------------------- ZIP Update with Token Authentication -------------------- */
+/* -------------------- ZIP Update with Pure JS Extraction -------------------- */
 async function updateViaZip(zipUrl = API_ZIP_URL) {
-  console.log('Starting fast ZIP update with token authentication...');
+  console.log('Starting fast ZIP update with pure JavaScript extraction...');
   
   const tmpDir = path.join(process.cwd(), 'tmp_update_fast_' + Date.now());
   const zipPath = path.join(tmpDir, 'update.zip');
@@ -2077,7 +2102,7 @@ async function updateViaZip(zipUrl = API_ZIP_URL) {
     const { preserveDir, preserved } = await preserveEssentialFiles();
     console.log(`Preserved ${preserved.length} items: ${preserved.join(', ')}`);
     
-    console.log('Downloading update from GitHub API...');
+    console.log('Downloading update from GitHub...');
     let lastProgress = 0;
     
     await downloadWithProgress(zipUrl, zipPath, (percent, downloaded, total) => {
@@ -2093,13 +2118,16 @@ async function updateViaZip(zipUrl = API_ZIP_URL) {
     }
     console.log(`Downloaded ${(stat.size / 1024 / 1024).toFixed(2)} MB`);
     
-    console.log('Extracting ZIP...');
-    await Promise.race([
-      extractZip(zipPath, extractTo),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Extraction timeout')), EXTRACTION_TIMEOUT)
-      )
-    ]);
+    // EXTRACTION - PURE JAVASCRIPT (works everywhere)
+    console.log('Extracting ZIP with adm-zip (pure JS)...');
+    try {
+      const zip = new AdmZip(zipPath);
+      zip.extractAllTo(extractTo, true);
+      console.log('✅ Extraction complete');
+    } catch (extractError) {
+      console.error('Extraction failed:', extractError);
+      throw new Error(`Failed to extract ZIP: ${extractError.message}`);
+    }
     
     const entries = await fsPromises.readdir(extractTo);
     let root = extractTo;
@@ -2132,18 +2160,7 @@ async function updateViaZip(zipUrl = API_ZIP_URL) {
   } catch (error) {
     console.error('ZIP update failed:', error);
     
-    // Fallback to alternative URL if API fails
-    if (error.message.includes('token') || error.message.includes('401') || error.message.includes('403')) {
-      console.log('Token authentication failed, trying alternative download method...');
-      try {
-        // Try the direct zip URL with token in URL
-        const directUrl = `https://${GITHUB_TOKEN}@github.com/nk-apex/n7/archive/refs/heads/main.zip`;
-        return await updateViaZip(directUrl);
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
-      }
-    }
-    
+    // Cleanup temp dir on error
     try {
       if (fs.existsSync(tmpDir)) {
         await fsPromises.rm(tmpDir, { recursive: true, force: true });
@@ -2251,33 +2268,6 @@ async function restorePreservedFiles(preserveDir) {
   } catch (error) {
     console.warn('Failed to restore preserved files:', error.message);
   }
-}
-
-/* -------------------- Extract Zip Utility -------------------- */
-async function extractZip(zipPath, outDir) {
-  if (process.platform === 'win32') {
-    await run(`powershell -NoProfile -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${outDir}' -Force"`);
-    return;
-  }
-  
-  const tools = [
-    { cmd: 'unzip', args: `-o "${zipPath}" -d "${outDir}"` },
-    { cmd: '7z', args: `x "${zipPath}" -o"${outDir}" -y` },
-    { cmd: 'busybox', args: `unzip "${zipPath}" -d "${outDir}"` },
-  ];
-  
-  for (const tool of tools) {
-    try {
-      await run(`which ${tool.cmd}`);
-      console.log(`Extracting with ${tool.cmd}...`);
-      await run(`${tool.cmd} ${tool.args}`);
-      return;
-    } catch {
-      continue;
-    }
-  }
-  
-  throw new Error('No extraction tool found');
 }
 
 /* -------------------- Main Command -------------------- */
@@ -2438,7 +2428,7 @@ export default {
         await editStatus(`✅ **Git Update Complete**\nUpdated to: ${result.newRev?.slice(0, 7) || 'N/A'}\nSize: ${result.sizeAfter} MB ${sizeMsg}\nInstalling dependencies...`);
         
       } else {
-        await editStatus('📥 **Using ZIP update method**\nDownloading latest version...');
+        await editStatus('📥 **Using ZIP update method (pure JS)**\nWorks on all platforms...');
         result = await updateViaZip();
         
         await editStatus(`✅ **ZIP Update Complete**\nFiles updated: ${result.fileCount || 0}\nInstalling dependencies...`);
@@ -2529,7 +2519,7 @@ export default {
         errorText += '**Solution:** Check internet or try .update git\n';
       } else if (err.message.includes('Git')) {
         errorText += '**Reason:** Git operation failed\n';
-        errorText += '**Solution:** Try .update zip instead\n';
+        errorText += '**Solution:** Try .update zip instead (now uses pure JS)\n';
       } else if (err.message.includes('clean')) {
         errorText += '**Reason:** History cleanup failed\n';
         errorText += '**Solution:** Try without clean option first\n';
@@ -2541,7 +2531,7 @@ export default {
       errorText += '`.update deep` - Deep clean + update\n';
       errorText += '`.update git hot` - Git update + hot reload\n';
       errorText += '`.update size` - Check repository size\n';
-      errorText += '`.update zip` - ZIP update (fallback)\n';
+      errorText += '`.update zip` - ZIP update (pure JS - works everywhere)\n';
       errorText += '`.update soft` - Update without restart\n';
       
       try {
@@ -2556,8 +2546,3 @@ export default {
     }
   }
 };
-
-
-
-
-
