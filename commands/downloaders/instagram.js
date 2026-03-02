@@ -1,197 +1,163 @@
-
-import { igdl } from "ruhend-scraper";
 import axios from 'axios';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import fs from 'fs';
+import path from 'path';
+import { getBotName } from '../../lib/botname.js';
 
 // Store processed message IDs to prevent duplicates
 const processedMessages = new Set();
 
 export default {
   name: 'instagram',
-  description: 'Download Instagram videos/photos',
-  category: 'downloader',
-
-  async execute(sock, m, args) {
-    console.log('📷 [INSTAGRAM] Command triggered');
-    
+  aliases: ['ig', 'igdl', 'insta'],
+  description: 'Download Instagram videos/photos without watermark',
+  category: 'downloaders',
+  
+  async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
-    
-    // try {
-    //   if (!args || !args[0]) {
-    //     await sock.sendMessage(jid, { 
-    //       text: `📷 *Instagram Downloader*\n\nUsage: ,instagram <url>\n\nExamples:\n• ,instagram https://instagram.com/reel/xyz\n• ,instagram https://instagram.com/p/xyz\n• ,instagram https://instagram.com/tv/xyz` 
-    //     }, { quoted: m });
-    //     return;
-    //   }
+    const userId = m.key.participant || m.key.remoteJid;
 
+    try {
+      if (!args[0]) {
+        await sock.sendMessage(jid, {
+          text: `╭─⌈ 📷 *INSTAGRAM DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}instagram <url>*\n│  └⊷ Download reels/posts\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}ig https://instagram.com/reel/xyz\n│  └⊷ ${PREFIX}insta https://instagram.com/p/xyz\n╰───`
+        }, { quoted: m });
+        return;
+      }
 
-    if (!args || !args[0]) {
-  const prefix = ','; // Your bot's prefix
-  await sock.sendMessage(jid, { 
-    text: `╭─⌈ 📷 *INSTAGRAM DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}instagram <url>*\n│  └⊷ Download reels/posts\n╰───` 
-  }, { quoted: m });
-  return;
-}
       const url = args[0];
-      console.log(`📷 [INSTAGRAM] URL: ${url}`);
-      
-      // Validate Instagram URL
-      const instagramPatterns = [
-        /https?:\/\/(?:www\.)?instagram\.com\//,
-        /https?:\/\/(?:www\.)?instagr\.am\//,
-        /https?:\/\/(?:www\.)?instagram\.com\/p\//,
-        /https?:\/\/(?:www\.)?instagram\.com\/reel\//,
-        /https?:\/\/(?:www\.)?instagram\.com\/tv\//
-      ];
 
-      const isValidUrl = instagramPatterns.some(pattern => pattern.test(url));
-      
-      if (!isValidUrl) {
+      if (!isValidInstagramUrl(url)) {
         await sock.sendMessage(jid, { 
-          text: "❌ Not a valid Instagram link\n\nProvide: instagram.com/p/... or instagram.com/reel/..."
+          text: `❌ Invalid Instagram URL\n\nValid formats:\n• instagram.com/p/...\n• instagram.com/reel/...` 
         }, { quoted: m });
         return;
       }
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      // Check if message has already been processed
-      if (processedMessages.has(m.key.id)) {
-        console.log(`📷 [INSTAGRAM] Message already processed`);
-        return;
-      }
-      
-      processedMessages.add(m.key.id);
-      
-      // Clean up old message IDs after 5 minutes
-      setTimeout(() => {
-        processedMessages.delete(m.key.id);
-      }, 5 * 60 * 1000);
+      const result = await downloadInstagram(url);
 
-      // Use ruhend-scraper
-      const downloadData = await igdl(url);
-      
-      if (!downloadData || !downloadData.data || downloadData.data.length === 0) {
-        return await sock.sendMessage(jid, { 
-          text: "❌ No media found at this link\n\nPossible reasons:\n• Private account\n• Content removed\n• Invalid URL"
-        }, { quoted: m });
-      }
-
-      const mediaData = downloadData.data;
-      console.log(`📷 [INSTAGRAM] Found ${mediaData.length} media items`);
-      
-      // Send first 3 media items
-      const maxItems = Math.min(3, mediaData.length);
-      let successCount = 0;
-      
-      for (let i = 0; i < maxItems; i++) {
-        const media = mediaData[i];
-        const mediaUrl = media.url;
-
-        if (!mediaUrl) continue;
-
-        try {
-          // Determine if it's video or image
-          const isVideo = /\.(mp4|mov|avi|mkv|webm)$/i.test(mediaUrl) || 
-                         media.type === 'video' || 
-                         url.includes('/reel/') || 
-                         url.includes('/tv/');
-
-          if (isVideo) {
-            // Download video to temp file first to check size
-            const tempDir = './temp/ig';
-            if (!existsSync(tempDir)) mkdirSync(tempDir, { recursive: true });
-            
-            const tempFile = `${tempDir}/ig_${Date.now()}_${i}.mp4`;
-            
-            await downloadToFile(mediaUrl, tempFile);
-            
-            const fileSize = fs.statSync(tempFile).size;
-            const sizeMB = (fileSize / (1024 * 1024)).toFixed(1);
-            
-            if (parseFloat(sizeMB) > 16) {
-              await sock.sendMessage(jid, { 
-                text: `⚠️ Video ${i+1} too large: ${sizeMB}MB\nSkipping...` 
-              });
-              if (existsSync(tempFile)) fs.unlinkSync(tempFile);
-              continue;
-            }
-            
-            const videoData = fs.readFileSync(tempFile);
-            
-            await sock.sendMessage(jid, {
-              video: videoData,
-              mimetype: "video/mp4",
-              caption: i === 0 ? "📷 Instagram Video" : `Part ${i+1}`
-            });
-
-            if (existsSync(tempFile)) fs.unlinkSync(tempFile);
-            
-          } else {
-            // For images, send directly
-            await sock.sendMessage(jid, {
-              image: { url: mediaUrl },
-              caption: i === 0 ? "📷 Instagram Photo" : `Photo ${i+1}`
-            });
-          }
-          
-          successCount++;
-          
-          // Small delay between sends
-          if (i < maxItems - 1) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
-          
-        } catch (mediaError) {
-          console.error(`📷 [INSTAGRAM] Error sending media ${i+1}:`, mediaError.message);
-          continue;
-        }
-      }
-
-      if (successCount > 0) {
-        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-      } else {
+      if (!result.success) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         await sock.sendMessage(jid, { 
-          text: `❌ Could not download any media\n\n💡 Try manually: https://snapinsta.app` 
+          text: `❌ Download failed: ${result.error || 'Unknown error'}\n\n📱 Try manual: https://snapinsta.app` 
+        }, { quoted: m });
+        return;
+      }
+
+      const { mediaPath, isVideo } = result;
+      const botName = getBotName();
+
+      if (isVideo) {
+        await sock.sendMessage(jid, {
+          video: fs.readFileSync(mediaPath),
+          mimetype: "video/mp4",
+          caption: `${botName} is the Alpha`
+        }, { quoted: m });
+      } else {
+        await sock.sendMessage(jid, {
+          image: fs.readFileSync(mediaPath),
+          caption: `${botName} is the Alpha`
         }, { quoted: m });
       }
+
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+
+      // Cleanup temp file
+      try { 
+        if (existsSync(mediaPath)) fs.unlinkSync(mediaPath); 
+      } catch {}
+
     } catch (error) {
-      console.error('📷 [INSTAGRAM] Command error:', error);
+      console.error('Instagram download error:', error);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      
-      let errorMsg = "❌ An error occurred while processing the request";
-      
-      if (error.message.includes('timeout')) {
-        errorMsg += "\n⏱ Request timed out";
-      } else if (error.message.includes('ENOTFOUND')) {
-        errorMsg += "\n🌐 Network error";
-      } else if (error.message.includes('scraper')) {
-        errorMsg += "\n🔧 Scraper failed";
-      }
-      
-      errorMsg += "\n\n💡 Try: https://snapinsta.app manually";
-      
       await sock.sendMessage(jid, { 
-        text: errorMsg
+        text: `❌ Error: ${error.message}` 
       }, { quoted: m });
     }
   }
 };
-                   
 
-async function downloadToFile(url, filePath) {
+function isValidInstagramUrl(url) {
+  const patterns = [
+    /https?:\/\/(?:www\.)?instagram\.com\/(p|reel|tv|reels)\/[a-zA-Z0-9_-]+/i,
+    /https?:\/\/(?:www\.)?instagr\.am\/(p|reel|tv|reels)\/[a-zA-Z0-9_-]+/i
+  ];
+  return patterns.some(pattern => pattern.test(url));
+}
+
+async function downloadInstagram(url) {
+  try {
+    const timestamp = Date.now();
+    const rand = Math.random().toString(36).slice(2);
+    const mediaPath = path.join('/tmp', `wolfbot_ig_${timestamp}_${rand}.mp4`);
+
+    let mediaUrl = null;
+    let isVideo = url.includes('/reel/') || url.includes('/tv/');
+
+    // Try GiftedTech API first
+    try {
+      const giftedUrl = `https://api.giftedtech.co.ke/api/download/instadlv2?apikey=gifted&url=${encodeURIComponent(url)}`;
+      const response = await axios.get(giftedUrl, { timeout: 15000 });
+      
+      if (response.data?.status === 200 && response.data?.result?.download_url) {
+        mediaUrl = response.data.result.download_url;
+        isVideo = mediaUrl.includes('.mp4') || true;
+        console.log('✅ GiftedTech API success');
+      }
+    } catch (e) {
+      console.log('GiftedTech API failed:', e.message);
+    }
+
+    // Try xWolf API as fallback
+    if (!mediaUrl) {
+      try {
+        const xwolfUrl = `https://apis.xwolf.space/api/download/instagram?url=${encodeURIComponent(url)}`;
+        const response = await axios.get(xwolfUrl, { timeout: 15000 });
+        
+        if (response.data?.result?.url) {
+          mediaUrl = response.data.result.url;
+          isVideo = mediaUrl.includes('.mp4') || isVideo;
+        } else if (response.data?.url) {
+          mediaUrl = response.data.url;
+          isVideo = mediaUrl.includes('.mp4') || isVideo;
+        }
+        console.log('✅ xWolf API success');
+      } catch (e) {
+        console.log('xWolf API failed:', e.message);
+      }
+    }
+
+    if (!mediaUrl) {
+      throw new Error('No API could fetch the media');
+    }
+
+    // Download the media
+    await downloadFile(mediaUrl, mediaPath);
+
+    return {
+      success: true,
+      mediaPath,
+      isVideo
+    };
+
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+async function downloadFile(url, filePath) {
   const writer = createWriteStream(filePath);
   const response = await axios({
     method: 'GET',
     url: url,
     responseType: 'stream',
-    timeout: 45000,
+    timeout: 60000,
+    maxContentLength: 100 * 1024 * 1024,
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Referer': 'https://www.instagram.com/',
-      'Accept': 'video/mp4,video/*,image/*,*/*;q=0.8'
+      'Referer': 'https://www.instagram.com/'
     }
   });
 
@@ -199,13 +165,7 @@ async function downloadToFile(url, filePath) {
 
   return new Promise((resolve, reject) => {
     writer.on('finish', resolve);
-    writer.on('error', (err) => {
-      if (existsSync(filePath)) fs.unlinkSync(filePath);
-      reject(err);
-    });
-    response.data.on('error', (err) => {
-      if (existsSync(filePath)) fs.unlinkSync(filePath);
-      reject(err);
-    });
+    writer.on('error', reject);
+    response.data.on('error', reject);
   });
-} 
+}
