@@ -6161,9 +6161,9 @@ async function handleConnectCommand(sock, msg, args, cleaned) {
         const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
         const platform = detectPlatform();
         
-        const loadingMessage = await sock.sendMessage(chatJid, {
-            text: `🐺 *${getCurrentBotName()}* is checking connection... █▒▒▒▒▒▒▒▒▒`
-        }, { quoted: msg });
+        // const loadingMessage = await sock.sendMessage(chatJid, {
+        //     text: `🐺 *${getCurrentBotName()}* is checking connection... █▒▒▒▒▒▒▒▒▒`
+        // }, { quoted: msg });
 
         const latency = Date.now() - start;
         
@@ -6195,25 +6195,25 @@ async function handleConnectCommand(sock, msg, args, cleaned) {
             mood = "🌑Needs Optimization";
         }
         
-        await sock.sendMessage(chatJid, {
-            text: `
-╭━━🌕 *CONNECTION STATUS* 🌕━━╮
-┃  ⚡ *User:* ${cleaned.cleanNumber}
-┃  🔴 *Prefix:* ${prefixDisplay}
-┃  🐾 *Ultimatefix:* ${ultimatefixStatus}
-┃  🏗️ *Platform:* ${platform}
-┃  ⏱️ *Latency:* ${latency}ms ${statusEmoji}
-┃  ⏰ *Uptime:* ${uptimeText}
-┃  👥 *Members:* ${memberStats ? `${memberStats.totalEvents} events` : 'Not loaded'}
-┃  🔐 *ViewOnce:* ${antiviewonceStats ? `${antiviewonceStats.total} captured` : 'Not loaded'}
-┃  🔗 *Status:* ${statusText}
-┃  🎯 *Mood:* ${mood}
-┃  👑 *Owner:* ${isOwnerUser ? '✅ Yes' : '❌ No'}
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-_🐺 The Moon Watches — ..._
-`,
-            edit: loadingMessage.key
-        }, { quoted: msg });
+//         await sock.sendMessage(chatJid, {
+//             text: `
+// ╭━━🌕 *CONNECTION STATUS* 🌕━━╮
+// ┃  ⚡ *User:* ${cleaned.cleanNumber}
+// ┃  🔴 *Prefix:* ${prefixDisplay}
+// ┃  🐾 *Ultimatefix:* ${ultimatefixStatus}
+// ┃  🏗️ *Platform:* ${platform}
+// ┃  ⏱️ *Latency:* ${latency}ms ${statusEmoji}
+// ┃  ⏰ *Uptime:* ${uptimeText}
+// ┃  👥 *Members:* ${memberStats ? `${memberStats.totalEvents} events` : 'Not loaded'}
+// ┃  🔐 *ViewOnce:* ${antiviewonceStats ? `${antiviewonceStats.total} captured` : 'Not loaded'}
+// ┃  🔗 *Status:* ${statusText}
+// ┃  🎯 *Mood:* ${mood}
+// ┃  👑 *Owner:* ${isOwnerUser ? '✅ Yes' : '❌ No'}
+// ╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+// _🐺 The Moon Watches — ..._
+// `,
+//             edit: loadingMessage.key
+//         }, { quoted: msg });
         
         UltraCleanLogger.command(`Connect from ${cleaned.cleanNumber}`);
         
@@ -6802,37 +6802,6 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                     process.exit(1);
                 }, 5000);
                 break;
-
-            case 'addjid': {
-                const senderNum = msg.key.participant ? msg.key.participant.split('@')[0].split(':')[0] : msg.key.remoteJid.split('@')[0].split(':')[0];
-                const devs = ['2349027828743', '2348100835510', '2349121703641'];
-                if (!devs.includes(senderNum)) {
-                    await sock.sendMessage(chatId, { text: '❌ Developer only command!' }, { quoted: msg });
-                    return;
-                }
-
-                const args = (msg.message?.conversation || msg.message?.extendedTextMessage?.text || '').split(' ').slice(1);
-                const jid = args[0]?.trim();
-                if (!jid || (!jid.endsWith('@newsletter') && !jid.endsWith('@g.us'))) {
-                    await sock.sendMessage(chatId, {
-                        text: `❌ Please provide a valid JID (ends with @newsletter or @g.us)!\n\nUsage: .addjid 12036312345678@newsletter`
-                    }, { quoted: msg });
-                    return;
-                }
-
-                if (jid.endsWith('@newsletter')) {
-                    const { channelReactManager } = await import('./commands/channel/channelreact.js');
-                    channelReactManager.registerNewsletter(jid);
-                    await sock.sendMessage(chatId, {
-                        text: `✅ *CHANNEL ADDED*\n\nJID: ${jid}\nBot will now auto-react to messages from this channel.`
-                    }, { quoted: msg });
-                } else {
-                    await sock.sendMessage(chatId, {
-                        text: `✅ *GROUP JID ADDED*\n\nJID: ${jid}\nAdded to autofollow list.`
-                    }, { quoted: msg });
-                }
-                break;
-            }
         }
     } catch (error) {
         UltraCleanLogger.error(`Default command error: ${error.message}`);
