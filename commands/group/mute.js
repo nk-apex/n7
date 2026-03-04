@@ -48,8 +48,8 @@ export default {
   name: 'mute',
   description: 'Mute the group (read-only)',
   category: 'group',
-  alias: ['lock', 'silence'],
-  async execute(sock, msg, args) {
+  alias: ['lock', 'silence', 'closegroup', 'close'],
+  async execute(sock, msg, args, prefix, extra) {
     const sender = msg.key.remoteJid;
     const isGroup = sender.endsWith('@g.us');
 
@@ -62,7 +62,7 @@ export default {
 
     try {
       // Get group metadata
-      const groupMetadata = await sock.groupMetadata(sender);
+      const groupMetadata = extra?.groupMetadata || await sock.groupMetadata(sender);
       
       // Get the user who sent the message
       const user = msg.key.participant || msg.key.remoteJid;
@@ -70,12 +70,25 @@ export default {
       // Check if user is an admin
       const participant = groupMetadata.participants.find(p => p.id === user);
       const isAdmin = participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
+      const isOwner = typeof extra?.isOwner === 'function' ? extra.isOwner() : extra?.isOwner;
 
-      if (!isAdmin) {
+      if (!isAdmin && !isOwner) {
         await sock.sendMessage(sender, { 
           text: '⛔ Only the Alpha wolves (admins) can silence the pack.' 
         }, { quoted: msg });
         return;
+      }
+
+      // Check if bot is admin
+      const botIsAdmin = extra?.isBotAdmin || false;
+      if (!botIsAdmin) {
+        // Fallback check
+        const botId = sock.user.id.replace(/:.*$/, '') + '@s.whatsapp.net';
+        const botParticipant = groupMetadata.participants.find(p => p.id === botId);
+        if (!botParticipant || (botParticipant.admin !== 'admin' && botParticipant.admin !== 'superadmin')) {
+          await sock.sendMessage(sender, { text: '⚠️ I need to be an admin to do this.' }, { quoted: msg });
+          return;
+        }
       }
 
       // Check if already muted
@@ -93,7 +106,7 @@ export default {
       await sock.sendMessage(sender, {
         text: '🔇 *The pack has been silenced!*\n\n' +
               'Only the Alpha wolves (admins) may now speak.\n' +
-              'To unmute, use: *.unmute*'
+              `To unmute, use: *${prefix || '.'}unmute*`
       }, { quoted: msg });
 
     } catch (error) {
