@@ -1,42 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //INNER-PEACE - SILENT WOLF
 
 
@@ -5413,7 +5374,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             }
             
             if (msg.key?.remoteJid === 'status@broadcast') {
-                handleAutoView(sock, msg.key).catch(() => {});
+                handleAutoView(sock, msg.key, msg.message).catch(() => {});
                 handleAutoReact(sock, msg.key).catch(() => {});
                 if (statusDetector) {
                     statusDetector.detectStatusUpdate(msg).catch(() => {});
@@ -7077,16 +7038,3 @@ main().catch((error) => {
     UltraCleanLogger.critical(`Fatal error: ${error.message}`);
     process.exit(1);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
