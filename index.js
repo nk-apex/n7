@@ -6172,9 +6172,9 @@ async function handleConnectCommand(sock, msg, args, cleaned) {
         const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
         const platform = detectPlatform();
         
-        const loadingMessage = await sock.sendMessage(chatJid, {
-            text: `🐺 *${getCurrentBotName()}* is checking connection... █▒▒▒▒▒▒▒▒▒`
-        }, { quoted: msg });
+        // const loadingMessage = await sock.sendMessage(chatJid, {
+        //     text: `🐺 *${getCurrentBotName()}* is checking connection... █▒▒▒▒▒▒▒▒▒`
+        // }, { quoted: msg });
 
         const latency = Date.now() - start;
         
@@ -6206,25 +6206,25 @@ async function handleConnectCommand(sock, msg, args, cleaned) {
             mood = "🌑Needs Optimization";
         }
         
-        await sock.sendMessage(chatJid, {
-            text: `
-╭━━🌕 *CONNECTION STATUS* 🌕━━╮
-┃  ⚡ *User:* ${cleaned.cleanNumber}
-┃  🔴 *Prefix:* ${prefixDisplay}
-┃  🐾 *Ultimatefix:* ${ultimatefixStatus}
-┃  🏗️ *Platform:* ${platform}
-┃  ⏱️ *Latency:* ${latency}ms ${statusEmoji}
-┃  ⏰ *Uptime:* ${uptimeText}
-┃  👥 *Members:* ${memberStats ? `${memberStats.totalEvents} events` : 'Not loaded'}
-┃  🔐 *ViewOnce:* ${antiviewonceStats ? `${antiviewonceStats.total} captured` : 'Not loaded'}
-┃  🔗 *Status:* ${statusText}
-┃  🎯 *Mood:* ${mood}
-┃  👑 *Owner:* ${isOwnerUser ? '✅ Yes' : '❌ No'}
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-_🐺 The Moon Watches — ..._
-`,
-            edit: loadingMessage.key
-        }, { quoted: msg });
+//         await sock.sendMessage(chatJid, {
+//             text: `
+// ╭━━🌕 *CONNECTION STATUS* 🌕━━╮
+// ┃  ⚡ *User:* ${cleaned.cleanNumber}
+// ┃  🔴 *Prefix:* ${prefixDisplay}
+// ┃  🐾 *Ultimatefix:* ${ultimatefixStatus}
+// ┃  🏗️ *Platform:* ${platform}
+// ┃  ⏱️ *Latency:* ${latency}ms ${statusEmoji}
+// ┃  ⏰ *Uptime:* ${uptimeText}
+// ┃  👥 *Members:* ${memberStats ? `${memberStats.totalEvents} events` : 'Not loaded'}
+// ┃  🔐 *ViewOnce:* ${antiviewonceStats ? `${antiviewonceStats.total} captured` : 'Not loaded'}
+// ┃  🔗 *Status:* ${statusText}
+// ┃  🎯 *Mood:* ${mood}
+// ┃  👑 *Owner:* ${isOwnerUser ? '✅ Yes' : '❌ No'}
+// ╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+// _🐺 The Moon Watches — ..._
+// `,
+//             edit: loadingMessage.key
+//         }, { quoted: msg });
         
         UltraCleanLogger.command(`Connect from ${cleaned.cleanNumber}`);
         
