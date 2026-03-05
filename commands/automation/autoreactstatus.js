@@ -1,57 +1,40 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// commands/status/autoreactstatus.js
+// commands/automation/autoreactstatus.js
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import supabase from '../../lib/supabase.js';
+import { getPhoneFromLid } from '../../lib/sudo-store.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const CONFIG_FILE = './data/autoReactConfig.json';
 
-// Track reacted statuses to prevent duplicates
 const alreadyReactedStatuses = new Set();
-const statusCheckInterval = 60 * 60 * 1000; // Clear cache every hour
+const statusCheckInterval = 60 * 60 * 1000;
 
-// Initialize config directory and file
 function initConfig() {
     const configDir = path.dirname(CONFIG_FILE);
     if (!fs.existsSync(configDir)) {
         fs.mkdirSync(configDir, { recursive: true });
     }
-    
     if (!fs.existsSync(CONFIG_FILE)) {
         const defaultConfig = {
-            enabled: true, // ON BY DEFAULT
-            mode: 'fixed', // fixed mode by default
-            fixedEmoji: '🐺', // WOLF EMOJI AS DEFAULT
+            enabled: true,
+            viewMode: 'view+react',      // ← NEW: 'view+react' | 'react-only'
+            mode: 'fixed',
+            fixedEmoji: '🐺',
             reactions: ["🐺", "❤️", "👍", "🔥", "🎉", "😂", "😮", "👏", "🎯", "💯", "🌟", "✨", "⚡", "💥", "🫶"],
             logs: [],
             totalReacted: 0,
             lastReacted: null,
             consecutiveReactions: 0,
             lastSender: null,
-            lastReactionTime: 0, // Track last reaction time
-            reactedStatuses: [], // Track which statuses we've reacted to
+            lastReactionTime: 0,
+            reactedStatuses: [],
             settings: {
-                rateLimitDelay: 2000, // Increased to prevent rate limits
+                rateLimitDelay: 2000,
                 reactToAll: true,
                 ignoreConsecutiveLimit: true,
                 noHourlyLimit: true
@@ -59,11 +42,7 @@ function initConfig() {
         };
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
     }
-    
-    // Clear reacted status cache periodically
-    setInterval(() => {
-        alreadyReactedStatuses.clear();
-    }, statusCheckInterval);
+    setInterval(() => { alreadyReactedStatuses.clear(); }, statusCheckInterval);
 }
 
 initConfig();
@@ -79,35 +58,52 @@ initConfig();
     } catch {}
 })();
 
-// Auto React Manager
+// ── Resolve @lid → @s.whatsapp.net with retry ─────────────────────────────────
+// contacts.upsert (which populates the LID map) fires ~1-3s AFTER messages.upsert,
+// so we poll until the mapping is available before giving up.
+async function resolveLidWithRetry(sock, lidJid, maxWaitMs = 6000, intervalMs = 500) {
+    const lidNum = lidJid.split('@')[0].split(':')[0];
+    for (let elapsed = 0; elapsed < maxWaitMs; elapsed += intervalMs) {
+        // Check sudo-store (persisted across restarts)
+        const stored = getPhoneFromLid(lidNum);
+        if (stored) return `${stored}@s.whatsapp.net`;
+        // Check in-memory signal repository
+        try {
+            for (const fmt of [lidJid, `${lidNum}:0@lid`, `${lidNum}@lid`]) {
+                const pn = sock.signalRepository?.lidMapping?.getPNForLID?.(fmt);
+                if (pn) {
+                    const num = String(pn).split('@')[0].replace(/\D/g, '');
+                    if (num.length >= 7) return `${num}@s.whatsapp.net`;
+                }
+            }
+        } catch (_) {}
+        await new Promise(r => setTimeout(r, intervalMs));
+    }
+    return null; // could not resolve within timeout
+}
+
 class AutoReactManager {
     constructor() {
         this.config = this.loadConfig();
         this.reactionQueue = [];
         this.lastReactionTime = this.config.lastReactionTime || 0;
         this.reactedStatuses = new Set(this.config.reactedStatuses || []);
-        
-        // Clean up old reacted statuses (older than 24 hours)
         this.cleanupOldReactedStatuses();
-        
-        // Log initialization
-        
     }
-    
+
     loadConfig() {
         try {
             const data = fs.readFileSync(CONFIG_FILE, 'utf8');
             const config = JSON.parse(data);
-            
-            // Ensure new fields exist
             config.reactedStatuses = config.reactedStatuses || [];
             config.lastReactionTime = config.lastReactionTime || 0;
-            
+            config.viewMode = config.viewMode || 'view+react'; // backwards compat
             return config;
         } catch (error) {
             console.error('Error loading auto react config:', error);
             return {
                 enabled: true,
+                viewMode: 'view+react',
                 mode: 'fixed',
                 fixedEmoji: '🐺',
                 reactions: ["🐺", "❤️", "👍", "🔥", "🎉", "😂", "😮", "👏", "🎯", "💯", "🌟", "✨", "⚡", "💥", "🫶"],
@@ -127,83 +123,54 @@ class AutoReactManager {
             };
         }
     }
-    
+
     saveConfig() {
         try {
             this.config.reactedStatuses = Array.from(this.reactedStatuses);
             this.config.lastReactionTime = this.lastReactionTime;
-            
             fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2));
             supabase.setConfig('autoreact_config', this.config).catch(() => {});
         } catch (error) {
             console.error('Error saving auto react config:', error);
         }
     }
-    
-    // Clean up reacted statuses older than 24 hours
+
     cleanupOldReactedStatuses() {
         const now = Date.now();
-        const statusKeys = Array.from(this.reactedStatuses);
         let cleaned = false;
-        
-        for (const statusKey of statusKeys) {
+        for (const statusKey of Array.from(this.reactedStatuses)) {
             try {
                 const parts = statusKey.split('|');
-                if (parts.length >= 3) {
-                    const timestamp = parseInt(parts[2]);
-                    if (now - timestamp > 24 * 60 * 60 * 1000) { // 24 hours
-                        this.reactedStatuses.delete(statusKey);
-                        cleaned = true;
-                    }
+                if (parts.length >= 3 && now - parseInt(parts[2]) > 24 * 60 * 60 * 1000) {
+                    this.reactedStatuses.delete(statusKey);
+                    cleaned = true;
                 }
-            } catch (e) {
-                // If parsing fails, remove the entry
+            } catch {
                 this.reactedStatuses.delete(statusKey);
                 cleaned = true;
             }
         }
-        
-        if (cleaned) {
-            this.saveConfig();
-        }
+        if (cleaned) this.saveConfig();
     }
-    
-    get enabled() {
-        return this.config.enabled;
-    }
-    
-    get mode() {
-        return this.config.mode;
-    }
-    
-    get fixedEmoji() {
-        return this.config.fixedEmoji;
-    }
-    
-    get reactions() {
-        return this.config.reactions;
-    }
-    
-    get logs() {
-        return this.config.logs;
-    }
-    
-    get totalReacted() {
-        return this.config.totalReacted;
-    }
-    
+
+    get enabled()      { return this.config.enabled; }
+    get viewMode()     { return this.config.viewMode; }
+    get mode()         { return this.config.mode; }
+    get fixedEmoji()   { return this.config.fixedEmoji; }
+    get reactions()    { return this.config.reactions; }
+    get logs()         { return this.config.logs; }
+    get totalReacted() { return this.config.totalReacted; }
+
     generateStatusKey(statusKey) {
         const sender = statusKey.participant || statusKey.remoteJid;
-        const statusId = statusKey.id;
-        return `${sender}|${statusId}`;
+        return `${sender}|${statusKey.id}`;
     }
-    
+
     generateStatusKeyWithTimestamp(statusKey) {
         const sender = statusKey.participant || statusKey.remoteJid;
-        const statusId = statusKey.id;
-        return `${sender}|${statusId}|${Date.now()}`;
+        return `${sender}|${statusKey.id}|${Date.now()}`;
     }
-    
+
     hasReactedToStatus(statusKey) {
         const lookupKey = this.generateStatusKey(statusKey);
         for (const key of this.reactedStatuses) {
@@ -211,7 +178,7 @@ class AutoReactManager {
         }
         return false;
     }
-    
+
     markStatusAsReacted(statusKey) {
         const storageKey = this.generateStatusKeyWithTimestamp(statusKey);
         this.reactedStatuses.add(storageKey);
@@ -221,27 +188,24 @@ class AutoReactManager {
         }
         this.saveConfig();
     }
-    
-    // Smart toggle: if already ON, just confirm instead of toggling
+
     toggle(forceOff = false) {
-        if (forceOff) {
-            // Force turn off
-            this.config.enabled = false;
-            this.saveConfig();
-            return false;
-        }
-        
-        // If already enabled, don't toggle - just return true (enabled)
-        if (this.config.enabled) {
-            return true; // Still enabled
-        }
-        
-        // If disabled, enable it
+        if (forceOff) { this.config.enabled = false; this.saveConfig(); return false; }
+        if (this.config.enabled) return true;
         this.config.enabled = true;
         this.saveConfig();
         return true;
     }
-    
+
+    setViewMode(mode) {
+        if (mode === 'view+react' || mode === 'react-only') {
+            this.config.viewMode = mode;
+            this.saveConfig();
+            return true;
+        }
+        return false;
+    }
+
     setMode(newMode) {
         if (newMode === 'random' || newMode === 'fixed') {
             this.config.mode = newMode;
@@ -250,69 +214,45 @@ class AutoReactManager {
         }
         return false;
     }
-    
+
     setFixedEmoji(emoji) {
-        if (emoji.length <= 2) {
-            this.config.fixedEmoji = emoji;
-            this.saveConfig();
-            return true;
-        }
+        if (emoji.length <= 2) { this.config.fixedEmoji = emoji; this.saveConfig(); return true; }
         return false;
     }
-    
+
     addReaction(emoji) {
         if (!this.config.reactions.includes(emoji) && emoji.length <= 2) {
-            this.config.reactions.push(emoji);
-            this.saveConfig();
-            return true;
+            this.config.reactions.push(emoji); this.saveConfig(); return true;
         }
         return false;
     }
-    
+
     removeReaction(emoji) {
         const index = this.config.reactions.indexOf(emoji);
-        if (index !== -1) {
-            this.config.reactions.splice(index, 1);
-            this.saveConfig();
-            return true;
-        }
+        if (index !== -1) { this.config.reactions.splice(index, 1); this.saveConfig(); return true; }
         return false;
     }
-    
+
     resetReactions() {
         this.config.reactions = ["🐺", "❤️", "👍", "🔥", "🎉", "😂", "😮", "👏", "🎯", "💯", "🌟", "✨", "⚡", "💥", "🫶"];
         this.saveConfig();
     }
-    
+
     addLog(sender, reaction, statusId, type = 'status') {
-        const logEntry = {
-            sender,
-            reaction,
-            statusId,
-            type,
-            timestamp: Date.now()
-        };
-        
+        const logEntry = { sender, reaction, statusId, type, timestamp: Date.now() };
         this.config.logs.push(logEntry);
         this.config.totalReacted++;
         this.config.lastReacted = logEntry;
-        
-        // Check for consecutive statuses from same sender
         if (this.config.lastSender === sender) {
             this.config.consecutiveReactions++;
         } else {
             this.config.consecutiveReactions = 1;
             this.config.lastSender = sender;
         }
-        
-        // Keep only last 100 logs
-        if (this.config.logs.length > 100) {
-            this.config.logs.shift();
-        }
-        
+        if (this.config.logs.length > 100) this.config.logs.shift();
         this.saveConfig();
     }
-    
+
     clearLogs() {
         this.config.logs = [];
         this.config.totalReacted = 0;
@@ -322,10 +262,11 @@ class AutoReactManager {
         this.reactedStatuses.clear();
         this.saveConfig();
     }
-    
+
     getStats() {
         return {
             enabled: this.config.enabled,
+            viewMode: this.config.viewMode,
             mode: this.config.mode,
             fixedEmoji: this.config.fixedEmoji,
             reactions: [...this.config.reactions],
@@ -337,406 +278,286 @@ class AutoReactManager {
             settings: { ...this.config.settings }
         };
     }
-    
+
     shouldReact(sender, statusKey) {
         if (!this.config.enabled) return false;
-        
-        // Check if we've already reacted to this status
-        if (this.hasReactedToStatus(statusKey)) {
-            return false;
-        }
-        
-        const now = Date.now();
-        if (now - this.lastReactionTime < this.config.settings.rateLimitDelay) {
-            return false;
-        }
-        
-        if (!this.config.settings.ignoreConsecutiveLimit && 
-            this.config.lastSender === sender && 
-            this.config.consecutiveReactions >= 3) {
-            return false;
-        }
-        
+        if (this.hasReactedToStatus(statusKey)) return false;
+        if (Date.now() - this.lastReactionTime < this.config.settings.rateLimitDelay) return false;
+        if (!this.config.settings.ignoreConsecutiveLimit &&
+            this.config.lastSender === sender &&
+            this.config.consecutiveReactions >= 3) return false;
         return true;
     }
-    
+
     getReaction() {
-        if (this.config.mode === 'fixed') {
-            return this.config.fixedEmoji;
-        } else {
-            // Random mode - pick ONE random emoji per status
-            if (this.config.reactions.length === 0) return '🐺';
-            const randomIndex = Math.floor(Math.random() * this.config.reactions.length);
-            return this.config.reactions[randomIndex];
-        }
+        if (this.config.mode === 'fixed') return this.config.fixedEmoji;
+        if (this.config.reactions.length === 0) return '🐺';
+        return this.config.reactions[Math.floor(Math.random() * this.config.reactions.length)];
     }
-    
-    async checkIfStatusExists(sock, statusKey) {
-        try {
-            // Try to fetch status info to see if it exists
-            // This is a simple check - WhatsApp doesn't always provide a way to verify
-            // We'll use the timestamp as a heuristic
-            const statusTimestamp = statusKey.timestamp || Date.now();
-            const timeSinceStatus = Date.now() - statusTimestamp;
-            
-            // If status is older than 48 hours, it's probably expired/deleted
-            if (timeSinceStatus > 48 * 60 * 60 * 1000) {
-                return false;
-            }
-            
-            // We could also check if we're still receiving updates for this status
-            // For now, we'll assume it exists if it's not too old
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Error checking status existence:', error.message);
-            return false; // If we can't check, assume it doesn't exist
-        }
-    }
-    
+
     async reactToStatus(sock, statusKey) {
         try {
-            const sender = statusKey.participant || statusKey.remoteJid;
-            const cleanSender = sender.split('@')[0];
-            const statusId = statusKey.id;
-            
-            if (!this.shouldReact(sender, statusKey)) {
-                return false;
+            const rawSender  = statusKey.participant || statusKey.remoteJid;
+            const cleanSender = rawSender.split('@')[0].split(':')[0];
+            const statusId   = statusKey.id;
+            const isLid      = rawSender.includes('@lid');
+
+            if (!this.shouldReact(rawSender, statusKey)) return false;
+
+            // ── STEP 1: View first (only in view+react mode) ─────────────────
+            if (this.config.viewMode === 'view+react') {
+                try {
+                    // Resolve @lid → @s.whatsapp.net (same fix as autoviewstatus)
+                    // Without this, readMessages silently accepts @lid but does nothing
+                    let resolvedJid = rawSender;
+                    if (isLid) {
+                        const resolved = await resolveLidWithRetry(sock, rawSender, 6000, 500);
+                        if (resolved) resolvedJid = resolved;
+                    }
+                    await sock.readMessages([{
+                        remoteJid:   'status@broadcast',
+                        id:          statusKey.id,
+                        participant: resolvedJid,
+                        fromMe:      false
+                    }]);
+                } catch (_) {
+                    // Non-fatal — still proceed to react
+                }
             }
-            
-            const statusExists = await this.checkIfStatusExists(sock, statusKey);
-            if (!statusExists) {
-                return false;
-            }
-            
+
+            // ── STEP 2: React ────────────────────────────────────────────────
             const reactionEmoji = this.getReaction();
-            
-            // React to status
+
             await sock.relayMessage(
                 'status@broadcast',
                 {
                     reactionMessage: {
                         key: {
-                            remoteJid: 'status@broadcast',
-                            id: statusKey.id,
+                            remoteJid:   'status@broadcast',
+                            id:          statusKey.id,
                             participant: statusKey.participant || statusKey.remoteJid,
-                            fromMe: false
+                            fromMe:      false
                         },
                         text: reactionEmoji
                     }
                 },
                 {
-                    messageId: statusKey.id,
+                    messageId:     statusKey.id,
                     statusJidList: [statusKey.remoteJid, statusKey.participant || statusKey.remoteJid]
                 }
             );
-            
-            // Update reaction time
+
             this.lastReactionTime = Date.now();
-            
-            // Mark this status as reacted to
             this.markStatusAsReacted(statusKey);
-            
-            // Add to logs
             this.addLog(cleanSender, reactionEmoji, statusId, 'status');
-            
+
             return true;
-            
+
         } catch (error) {
             if (error.message?.includes('rate-overlimit') || error.message?.includes('rate limit')) {
-                this.config.settings.rateLimitDelay = Math.min(
-                    this.config.settings.rateLimitDelay * 2,
-                    10000
-                );
+                this.config.settings.rateLimitDelay = Math.min(this.config.settings.rateLimitDelay * 2, 10000);
                 this.saveConfig();
             }
-            
             if (error.message?.includes('not found') || error.message?.includes('message deleted')) {
                 this.markStatusAsReacted(statusKey);
             }
-            
             return false;
         }
     }
 }
 
-// Create singleton instance
 const autoReactManager = new AutoReactManager();
 
-// Export the function for index.js
 export async function handleAutoReact(sock, statusKey) {
     return await autoReactManager.reactToStatus(sock, statusKey);
 }
 
-// Export the manager for other uses
 export { autoReactManager };
 
-// The command module
 export default {
     name: "autoreactstatus",
-    alias: [ "reactstatus", "statusreact", "sr", "reacts"],
+    alias: ["reactstatus", "statusreact", "sr", "reacts"],
     desc: "Automatically react to WhatsApp statuses 🐺",
     category: "Status",
     ownerOnly: false,
-    
+
     async execute(sock, m, args, prefix, extra) {
         try {
-            // Check if sender is owner
             const isOwner = extra?.isOwner?.() || false;
-            
+
             if (args.length === 0) {
-                // Show current status
                 const stats = autoReactManager.getStats();
-                
+                const vmLabel = stats.viewMode === 'view+react' ? '👁️ + 🐺  view then react' : '🐺  react only (no view)';
                 let statusText = `╭─⌈ 🐺 *AUTOREACTSTATUS* ⌋\n│\n`;
-                statusText += `│ Status: ${stats.enabled ? '✅ **ACTIVE**' : '❌ **INACTIVE**'}\n`;
-                statusText += `│ Mode: ${stats.mode === 'fixed' ? `Fixed (${stats.fixedEmoji})` : 'Random (1 emoji per status)'}\n│\n`;
-                statusText += `├─⊷ *${prefix}autoreactstatus on*\n│  └⊷ Enable reactions\n`;
-                statusText += `├─⊷ *${prefix}autoreactstatus off*\n│  └⊷ Disable reactions\n`;
-                statusText += `├─⊷ *${prefix}autoreactstatus random*\n│  └⊷ Random emoji mode\n`;
-                statusText += `├─⊷ *${prefix}autoreactstatus emoji <emoji>*\n│  └⊷ Set fixed emoji\n`;
+                statusText += `│ Status    : ${stats.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}\n`;
+                statusText += `│ View Mode : ${vmLabel}\n`;
+                statusText += `│ Emoji Mode: ${stats.mode === 'fixed' ? `Fixed (${stats.fixedEmoji})` : 'Random (1 emoji per status)'}\n│\n`;
+                statusText += `├─⊷ *${prefix}sr on / off*\n│  └⊷ Enable or disable\n`;
+                statusText += `├─⊷ *${prefix}sr view+react*\n│  └⊷ View status then react\n`;
+                statusText += `├─⊷ *${prefix}sr react-only*\n│  └⊷ React without viewing\n`;
+                statusText += `├─⊷ *${prefix}sr random*\n│  └⊷ Random emoji mode\n`;
+                statusText += `├─⊷ *${prefix}sr emoji <emoji>*\n│  └⊷ Set fixed emoji\n`;
+                statusText += `├─⊷ *${prefix}sr stats*\n│  └⊷ View statistics\n`;
                 statusText += `╰───`;
-                
                 await sock.sendMessage(m.key.remoteJid, { text: statusText }, { quoted: m });
                 return;
             }
-            
+
             const action = args[0].toLowerCase();
-            
+
             switch (action) {
                 case 'on':
                 case 'enable':
-                case 'start':
-                    if (!isOwner) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: "❌ Owner only command!"
-                        }, { quoted: m });
-                        return;
-                    }
-                    
-                    // Use smart toggle that doesn't toggle if already on
+                case 'start': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only command!" }, { quoted: m }); return; }
                     const currentlyEnabled = autoReactManager.enabled;
-                    const result = autoReactManager.toggle(false); // false = don't force off
-                    
+                    autoReactManager.toggle(false);
                     if (currentlyEnabled) {
-                        // Already enabled, just show confirmation
                         await sock.sendMessage(m.key.remoteJid, {
-                            text: `✅ *AUTOREACTSTATUS IS ALREADY ACTIVE*\n\n🐺 Auto reactions are already enabled!\n\nCurrent settings:\n• Mode: ${autoReactManager.mode}\n• Emoji: ${autoReactManager.mode === 'fixed' ? autoReactManager.fixedEmoji : 'Random'}\n• Total reacted: ${autoReactManager.totalReacted}\n\nUse \`${prefix}autoreactstatus off\` to disable.`
+                            text: `✅ *AUTOREACTSTATUS IS ALREADY ACTIVE*\n\n🐺 Auto reactions already enabled!\n\n• View Mode: ${autoReactManager.viewMode}\n• Emoji Mode: ${autoReactManager.mode}\n• Emoji: ${autoReactManager.mode === 'fixed' ? autoReactManager.fixedEmoji : 'Random'}\n• Total reacted: ${autoReactManager.totalReacted}\n\nUse \`${prefix}sr off\` to disable.`
                         }, { quoted: m });
                     } else {
-                        // Was disabled, now enabled
                         await sock.sendMessage(m.key.remoteJid, {
-                            text: `✅ *AUTOREACTSTATUS ENABLED*\n\n🐺 I will now automatically react to ALL statuses!\n\nIMPORTANT: Random mode now reacts with ONLY ONE emoji per status.\n\nDefault emoji: ${autoReactManager.fixedEmoji}\nMode: ${autoReactManager.mode}`
+                            text: `✅ *AUTOREACTSTATUS ENABLED*\n\n🐺 Will now ${autoReactManager.viewMode === 'view+react' ? 'view then react to' : 'react to (without viewing)'} ALL statuses!\n\nView Mode: ${autoReactManager.viewMode}\nEmoji: ${autoReactManager.fixedEmoji}\nMode: ${autoReactManager.mode}`
                         }, { quoted: m });
                     }
                     break;
-                    
+                }
+
                 case 'off':
                 case 'disable':
-                case 'stop':
-                    if (!isOwner) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: "❌ Owner only command!"
-                        }, { quoted: m });
-                        return;
-                    }
-                    
-                    // Force turn off
+                case 'stop': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only command!" }, { quoted: m }); return; }
                     const wasEnabled = autoReactManager.enabled;
-                    autoReactManager.toggle(true); // true = force off
-                    
-                    if (wasEnabled) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `❌ *AUTOREACTSTATUS DISABLED*\n\nAuto reactions have been turned off.\n\nUse \`${prefix}autoreactstatus on\` to enable again.`
-                        }, { quoted: m });
-                    } else {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `⚠️ *AUTOREACTSTATUS ALREADY DISABLED*\n\nAuto reactions are already turned off.\n\nUse \`${prefix}autoreactstatus on\` to enable.`
-                        }, { quoted: m });
-                    }
+                    autoReactManager.toggle(true);
+                    await sock.sendMessage(m.key.remoteJid, {
+                        text: wasEnabled
+                            ? `❌ *AUTOREACTSTATUS DISABLED*\n\nUse \`${prefix}sr on\` to enable again.`
+                            : `⚠️ *AUTOREACTSTATUS ALREADY DISABLED*\n\nUse \`${prefix}sr on\` to enable.`
+                    }, { quoted: m });
                     break;
-                    
+                }
+
+                // ── View mode commands ────────────────────────────────────────
+                case 'view+react':
+                case 'viewreact': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only command!" }, { quoted: m }); return; }
+                    autoReactManager.setViewMode('view+react');
+                    await sock.sendMessage(m.key.remoteJid, {
+                        text: `👁️ + 🐺 *VIEW+REACT MODE*\n\nWill now view the status first, then react.\nSender will see you in their viewers list.`
+                    }, { quoted: m });
+                    break;
+                }
+
+                case 'react-only':
+                case 'reactonly': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only command!" }, { quoted: m }); return; }
+                    autoReactManager.setViewMode('react-only');
+                    await sock.sendMessage(m.key.remoteJid, {
+                        text: `🐺 *REACT-ONLY MODE*\n\nWill react without marking the status as viewed.\nSender will NOT see you in their viewers list.`
+                    }, { quoted: m });
+                    break;
+                }
+
                 case 'random':
                     autoReactManager.setMode('random');
-                    await sock.sendMessage(m.key.remoteJid, {
-                        text: `🎲 *Mode set to RANDOM*\n\nI will react with ONE random emoji per status!\n\nCurrent emoji list: ${autoReactManager.reactions.join(' ')}`
-                    }, { quoted: m });
+                    await sock.sendMessage(m.key.remoteJid, { text: `🎲 *Mode set to RANDOM*\n\nWill react with ONE random emoji per status!\n\nEmoji list: ${autoReactManager.reactions.join(' ')}` }, { quoted: m });
                     break;
-                    
-                case 'emoji':
+
+                case 'emoji': {
                     if (args.length < 2) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS EMOJI* ⌋\n│\n│ Current: ${autoReactManager.fixedEmoji}\n│\n├─⊷ *${prefix}autoreactstatus emoji 🐺*\n│  └⊷ Set fixed emoji\n╰───`
-                        }, { quoted: m });
+                        await sock.sendMessage(m.key.remoteJid, { text: `╭─⌈ 🐺 *AUTOREACTSTATUS EMOJI* ⌋\n│\n│ Current: ${autoReactManager.fixedEmoji}\n│\n├─⊷ *${prefix}sr emoji 🐺*\n│  └⊷ Set fixed emoji\n╰───` }, { quoted: m });
                         return;
                     }
-                    
                     const emoji = args[1];
-                    if (emoji.length > 2) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: '❌ Please use a single emoji (max 2 characters).'
-                        }, { quoted: m });
-                        return;
-                    }
-                    
+                    if (emoji.length > 2) { await sock.sendMessage(m.key.remoteJid, { text: '❌ Please use a single emoji (max 2 characters).' }, { quoted: m }); return; }
                     if (autoReactManager.setFixedEmoji(emoji)) {
                         autoReactManager.setMode('fixed');
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `✅ *Fixed Emoji Set*\n\nReactions will now use: ${emoji}\n\nMode automatically switched to FIXED.`
-                        }, { quoted: m });
+                        await sock.sendMessage(m.key.remoteJid, { text: `✅ *Fixed Emoji Set*\n\nReactions will now use: ${emoji}\n\nMode automatically switched to FIXED.` }, { quoted: m });
                     } else {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: '❌ Failed to set emoji.'
-                        }, { quoted: m });
+                        await sock.sendMessage(m.key.remoteJid, { text: '❌ Failed to set emoji.' }, { quoted: m });
                     }
                     break;
-                    
+                }
+
                 case 'stats':
                 case 'statistics':
-                case 'info':
-                    const detailedStats = autoReactManager.getStats();
+                case 'info': {
+                    const s = autoReactManager.getStats();
+                    const vmLabel = s.viewMode === 'view+react' ? '👁️ + 🐺 View then React' : '🐺 React only (no view)';
                     let statsText = `📊 *AUTOREACTSTATUS STATISTICS*\n\n`;
-                    statsText += `🟢 Status: ${detailedStats.enabled ? '**ACTIVE** ✅' : '**INACTIVE** ❌'}\n`;
-                    statsText += `🎭 Mode: ${detailedStats.mode === 'fixed' ? `FIXED (${detailedStats.fixedEmoji})` : 'RANDOM (1 emoji/status)'}\n`;
-                    statsText += `🐺 Total Reacted: **${detailedStats.totalReacted}**\n`;
-                    statsText += `📝 Tracked Statuses: ${detailedStats.reactedStatusesCount}\n`;
-                    statsText += `🔄 Consecutive Reactions: ${detailedStats.consecutiveReactions}\n\n`;
-                    
-                    if (detailedStats.lastReacted) {
-                        const timeAgo = Math.floor((Date.now() - detailedStats.lastReacted.timestamp) / 60000);
-                        statsText += `🕒 *Last Reaction:*\n`;
-                        statsText += `• To: ${detailedStats.lastReacted.sender}\n`;
-                        statsText += `• With: ${detailedStats.lastReacted.reaction}\n`;
-                        statsText += `• ${timeAgo < 1 ? 'Just now' : `${timeAgo} minutes ago`}\n`;
+                    statsText += `🟢 Status     : ${s.enabled ? '**ACTIVE** ✅' : '**INACTIVE** ❌'}\n`;
+                    statsText += `👁️ View Mode  : ${vmLabel}\n`;
+                    statsText += `🎭 Emoji Mode : ${s.mode === 'fixed' ? `FIXED (${s.fixedEmoji})` : 'RANDOM (1 emoji/status)'}\n`;
+                    statsText += `🐺 Total Reacted: **${s.totalReacted}**\n`;
+                    statsText += `📝 Tracked Statuses: ${s.reactedStatusesCount}\n`;
+                    statsText += `🔄 Consecutive: ${s.consecutiveReactions}\n\n`;
+                    if (s.lastReacted) {
+                        const ago = Math.floor((Date.now() - s.lastReacted.timestamp) / 60000);
+                        statsText += `🕒 *Last Reaction:*\n• To: ${s.lastReacted.sender}\n• With: ${s.lastReacted.reaction}\n• ${ago < 1 ? 'Just now' : `${ago} minutes ago`}\n`;
                     }
-                    
-                    statsText += `\n⚙️ *Settings:*\n`;
-                    statsText += `• Rate Limit: ${detailedStats.settings.rateLimitDelay}ms\n`;
-                    statsText += `• React to All: ${detailedStats.settings.reactToAll ? '✅' : '❌'}\n`;
-                    statsText += `• Ignore Consecutive: ${detailedStats.settings.ignoreConsecutiveLimit ? '✅' : '❌'}\n`;
-                    statsText += `• Hourly Limit: ❌ DISABLED\n`;
-                    
+                    statsText += `\n⚙️ *Settings:*\n• Rate Limit: ${s.settings.rateLimitDelay}ms\n• React to All: ${s.settings.reactToAll ? '✅' : '❌'}\n• Ignore Consecutive: ${s.settings.ignoreConsecutiveLimit ? '✅' : '❌'}\n• Hourly Limit: ❌ DISABLED\n`;
                     await sock.sendMessage(m.key.remoteJid, { text: statsText }, { quoted: m });
                     break;
-                    
+                }
+
                 case 'list':
-                case 'emojis':
+                case 'emojis': {
                     const emojiList = autoReactManager.reactions;
-                    await sock.sendMessage(m.key.remoteJid, {
-                        text: `😄 *Random Emoji List (${emojiList.length}):*\n\n${emojiList.join(' ')}\n\nCurrent mode: ${autoReactManager.mode}\nFixed emoji: ${autoReactManager.fixedEmoji}\n\nNOTE: Random mode uses ONE random emoji per status.`
-                    }, { quoted: m });
+                    await sock.sendMessage(m.key.remoteJid, { text: `😄 *Random Emoji List (${emojiList.length}):*\n\n${emojiList.join(' ')}\n\nCurrent mode: ${autoReactManager.mode}\nFixed emoji: ${autoReactManager.fixedEmoji}\n\nNOTE: Random mode uses ONE random emoji per status.` }, { quoted: m });
                     break;
-                    
-                case 'add':
-                    if (!isOwner) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: "❌ Owner only command!"
-                        }, { quoted: m });
-                        return;
-                    }
-                    
-                    if (args.length < 2) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS ADD* ⌋\n│\n├─⊷ *${prefix}autoreactstatus add ❤️*\n│  └⊷ Add to random list\n╰───`
-                        }, { quoted: m });
-                        return;
-                    }
-                    
+                }
+
+                case 'add': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only command!" }, { quoted: m }); return; }
+                    if (args.length < 2) { await sock.sendMessage(m.key.remoteJid, { text: `Usage: \`${prefix}sr add ❤️\`` }, { quoted: m }); return; }
                     const addEmoji = args[1];
-                    if (addEmoji.length > 2) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: '❌ Please use a single emoji (max 2 characters).'
-                        }, { quoted: m });
-                        return;
-                    }
-                    
+                    if (addEmoji.length > 2) { await sock.sendMessage(m.key.remoteJid, { text: '❌ Please use a single emoji (max 2 characters).' }, { quoted: m }); return; }
                     if (autoReactManager.addReaction(addEmoji)) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `✅ *Emoji Added*\n\n${addEmoji} has been added to the random list.\n\nCurrent list (${autoReactManager.reactions.length}):\n${autoReactManager.reactions.join(' ')}`
-                        }, { quoted: m });
+                        await sock.sendMessage(m.key.remoteJid, { text: `✅ ${addEmoji} added.\n\nCurrent list (${autoReactManager.reactions.length}):\n${autoReactManager.reactions.join(' ')}` }, { quoted: m });
                     } else {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `⚠️ Emoji ${addEmoji} is already in the list or invalid.\n\nCurrent list: ${autoReactManager.reactions.join(' ')}`
-                        }, { quoted: m });
+                        await sock.sendMessage(m.key.remoteJid, { text: `⚠️ ${addEmoji} already in list or invalid.\n\nCurrent list: ${autoReactManager.reactions.join(' ')}` }, { quoted: m });
                     }
                     break;
-                    
-                case 'remove':
-                    if (!isOwner) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: "❌ Owner only command!"
-                        }, { quoted: m });
-                        return;
-                    }
-                    
-                    if (args.length < 2) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `╭─⌈ 🐺 *AUTOREACTSTATUS REMOVE* ⌋\n│\n├─⊷ *${prefix}autoreactstatus remove 🔥*\n│  └⊷ Remove from list\n╰───`
-                        }, { quoted: m });
-                        return;
-                    }
-                    
+                }
+
+                case 'remove': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only command!" }, { quoted: m }); return; }
+                    if (args.length < 2) { await sock.sendMessage(m.key.remoteJid, { text: `Usage: \`${prefix}sr remove 🔥\`` }, { quoted: m }); return; }
                     const removeEmoji = args[1];
                     if (autoReactManager.removeReaction(removeEmoji)) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `✅ *Emoji Removed*\n\n${removeEmoji} has been removed from the random list.\n\nCurrent list (${autoReactManager.reactions.length}):\n${autoReactManager.reactions.join(' ')}`
-                        }, { quoted: m });
+                        await sock.sendMessage(m.key.remoteJid, { text: `✅ ${removeEmoji} removed.\n\nCurrent list (${autoReactManager.reactions.length}):\n${autoReactManager.reactions.join(' ')}` }, { quoted: m });
                     } else {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `❌ Emoji ${removeEmoji} not found in the list.\n\nCurrent list: ${autoReactManager.reactions.join(' ')}`
-                        }, { quoted: m });
+                        await sock.sendMessage(m.key.remoteJid, { text: `❌ ${removeEmoji} not found.\n\nCurrent list: ${autoReactManager.reactions.join(' ')}` }, { quoted: m });
                     }
                     break;
-                    
+                }
+
                 case 'reset':
-                case 'clear':
-                    if (!isOwner) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: "❌ Owner only command!"
-                        }, { quoted: m });
-                        return;
-                    }
-                    
-                    // Clear everything
+                case 'clear': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only command!" }, { quoted: m }); return; }
                     autoReactManager.clearLogs();
-                    await sock.sendMessage(m.key.remoteJid, {
-                        text: `🔄 *All Data Reset*\n\n• Logs cleared\n• Reaction count reset to 0\n• Tracked statuses cleared\n\nFresh start! 🐺`
-                    }, { quoted: m });
+                    await sock.sendMessage(m.key.remoteJid, { text: `🔄 *All Data Reset*\n\n• Logs cleared\n• Reaction count reset to 0\n• Tracked statuses cleared\n\nFresh start! 🐺` }, { quoted: m });
                     break;
-                    
+                }
+
                 case 'clean':
-                case 'cleanup':
-                    if (!isOwner) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: "❌ Owner only command!"
-                        }, { quoted: m });
-                        return;
-                    }
-                    
+                case 'cleanup': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only command!" }, { quoted: m }); return; }
                     autoReactManager.resetReactions();
-                    await sock.sendMessage(m.key.remoteJid, {
-                        text: `🔄 *Emoji List Reset*\n\nReset to default emojis:\n${autoReactManager.reactions.join(' ')}`
-                    }, { quoted: m });
+                    await sock.sendMessage(m.key.remoteJid, { text: `🔄 *Emoji List Reset*\n\nReset to defaults:\n${autoReactManager.reactions.join(' ')}` }, { quoted: m });
                     break;
-                    
+                }
+
                 default:
                     await sock.sendMessage(m.key.remoteJid, {
-                        text: `╭─⌈ ❓ *AUTOREACTSTATUS* ⌋\n│\n├─⊷ *${prefix}autoreactstatus on/off*\n│  └⊷ Enable or disable\n├─⊷ *${prefix}autoreactstatus random*\n│  └⊷ Random emoji mode\n├─⊷ *${prefix}autoreactstatus emoji 🐺*\n│  └⊷ Set fixed emoji\n├─⊷ *${prefix}autoreactstatus stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}autoreactstatus list*\n│  └⊷ View emoji list\n╰───`
+                        text: `╭─⌈ ❓ *AUTOREACTSTATUS* ⌋\n│\n├─⊷ *${prefix}sr on / off*\n├─⊷ *${prefix}sr view+react*\n├─⊷ *${prefix}sr react-only*\n├─⊷ *${prefix}sr random*\n├─⊷ *${prefix}sr emoji 🐺*\n├─⊷ *${prefix}sr stats*\n├─⊷ *${prefix}sr list*\n╰───`
                     }, { quoted: m });
             }
-            
+
         } catch (error) {
             console.error('AutoReactStatus command error:', error);
-            await sock.sendMessage(m.key.remoteJid, {
-                text: `❌ Command failed: ${error.message}`
-            }, { quoted: m });
+            await sock.sendMessage(m.key.remoteJid, { text: `❌ Command failed: ${error.message}` }, { quoted: m });
         }
     }
 };
-
-
-
-
-
-
-
