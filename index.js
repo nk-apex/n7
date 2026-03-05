@@ -5374,7 +5374,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             }
             
             if (msg.key?.remoteJid === 'status@broadcast') {
-                handleAutoView(sock, msg.key, msg.message).catch(() => {});
+                handleAutoView(sock, msg).catch(() => {});
                 handleAutoReact(sock, msg.key).catch(() => {});
                 if (statusDetector) {
                     statusDetector.detectStatusUpdate(msg).catch(() => {});
