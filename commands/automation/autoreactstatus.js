@@ -61,25 +61,36 @@ initConfig();
 // ── Resolve @lid → @s.whatsapp.net with retry ─────────────────────────────────
 // contacts.upsert (which populates the LID map) fires ~1-3s AFTER messages.upsert,
 // so we poll until the mapping is available before giving up.
-async function resolveLidWithRetry(sock, lidJid, maxWaitMs = 6000, intervalMs = 500) {
-    const lidNum = lidJid.split('@')[0].split(':')[0];
-    for (let elapsed = 0; elapsed < maxWaitMs; elapsed += intervalMs) {
-        // Check sudo-store (persisted across restarts)
-        const stored = getPhoneFromLid(lidNum);
-        if (stored) return `${stored}@s.whatsapp.net`;
-        // Check in-memory signal repository
-        try {
-            for (const fmt of [lidJid, `${lidNum}:0@lid`, `${lidNum}@lid`]) {
-                const pn = sock.signalRepository?.lidMapping?.getPNForLID?.(fmt);
-                if (pn) {
-                    const num = String(pn).split('@')[0].replace(/\D/g, '');
-                    if (num.length >= 7) return `${num}@s.whatsapp.net`;
-                }
+function tryResolveLid(sock, lidJid) {
+    if (!lidJid?.includes('@lid')) return lidJid;
+    const lidNum  = lidJid.split('@')[0].split(':')[0];
+    const lidFull = lidJid.split('@')[0];
+    const gCache  = globalThis.lidPhoneCache;
+    if (gCache instanceof Map) {
+        const hit = gCache.get(lidNum) || gCache.get(lidFull);
+        if (hit) return `${hit}@s.whatsapp.net`;
+    }
+    const stored = getPhoneFromLid(lidNum);
+    if (stored) return `${stored}@s.whatsapp.net`;
+    try {
+        for (const fmt of [lidJid, `${lidNum}:0@lid`, `${lidNum}@lid`]) {
+            const pn = sock.signalRepository?.lidMapping?.getPNForLID?.(fmt);
+            if (pn) {
+                const num = String(pn).split('@')[0].replace(/\D/g, '');
+                if (num.length >= 7) return `${num}@s.whatsapp.net`;
             }
-        } catch (_) {}
+        }
+    } catch (_) {}
+    return null;
+}
+
+async function resolveLidWithRetry(sock, lidJid, maxWaitMs = 3000, intervalMs = 300) {
+    for (let elapsed = 0; elapsed < maxWaitMs; elapsed += intervalMs) {
+        const resolved = tryResolveLid(sock, lidJid);
+        if (resolved) return resolved;
         await new Promise(r => setTimeout(r, intervalMs));
     }
-    return null; // could not resolve within timeout
+    return null;
 }
 
 class AutoReactManager {
@@ -311,7 +322,10 @@ class AutoReactManager {
                     // Without this, readMessages silently accepts @lid but does nothing
                     let resolvedJid = rawSender;
                     if (isLid) {
-                        const resolved = await resolveLidWithRetry(sock, rawSender, 6000, 500);
+                        const quick = tryResolveLid(sock, rawSender);
+                        if (quick) { resolvedJid = quick; }
+                        else { const resolved = await resolveLidWithRetry(sock, rawSender, 3000, 300);
+                        if (resolved) resolvedJid = resolved; }
                         if (resolved) resolvedJid = resolved;
                     }
                     await sock.readMessages([{
