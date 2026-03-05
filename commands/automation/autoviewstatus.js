@@ -30,46 +30,63 @@ function logBox(sender, msgType, result, note = '') {
 }
 
 function getMessageType(message) {
-    if (!message) return `${D}stub / no body${X}`;
+    if (!message) return `${D}stub${X}`;
     const map = {
         imageMessage: '🖼️  Image', videoMessage: '🎥  Video',
         extendedTextMessage: '📝  Text', conversation: '💬  Text',
         audioMessage: '🎵  Audio', stickerMessage: '🎭  Sticker',
         documentMessage: '📄  Document', reactionMessage: '😮  Reaction',
-        protocolMessage: '🔧  Protocol (delete/edit)',
+        protocolMessage: '🔧  Protocol',
     };
     const key = Object.keys(message)[0];
     return map[key] || `📦  ${key}`;
 }
 
-// ── Resolve @lid → phone number, retrying until contacts.upsert has fired ────
-// The LID mapping is populated by contacts.upsert which fires AFTER messages.upsert.
-// We retry for up to maxWaitMs before giving up.
-async function resolveLidWithRetry(sock, lidJid, maxWaitMs = 6000, intervalMs = 500) {
-    const lidNum = lidJid.split('@')[0].split(':')[0];
+// ── Resolve @lid → @s.whatsapp.net ───────────────────────────────────────────
+// Uses ALL available sources in priority order:
+//   1. globalThis.lidPhoneCache  — index.js in-memory cache (contacts.upsert, group metadata)
+//   2. getPhoneFromLid()         — sudo-store persistent file
+//   3. sock.signalRepository     — Baileys signal protocol LID mapping
+function tryResolveLid(sock, lidJid) {
+    if (!lidJid?.includes('@lid')) return lidJid;
 
-    for (let elapsed = 0; elapsed < maxWaitMs; elapsed += intervalMs) {
-        // Try sudo-store first (persisted across restarts)
-        const stored = getPhoneFromLid(lidNum);
-        if (stored) return `${stored}@s.whatsapp.net`;
+    const lidNum  = lidJid.split('@')[0].split(':')[0];
+    const lidFull = lidJid.split('@')[0]; // may include :0 suffix
 
-        // Try sock.signalRepository (in-memory, populated after connect)
-        try {
-            const formats = [lidJid, `${lidNum}:0@lid`, `${lidNum}@lid`];
-            for (const fmt of formats) {
-                const pn = sock.signalRepository?.lidMapping?.getPNForLID?.(fmt);
-                if (pn) {
-                    const num = String(pn).split('@')[0].replace(/\D/g, '');
-                    if (num.length >= 7) return `${num}@s.whatsapp.net`;
-                }
-            }
-        } catch (_) {}
-
-        // Not resolved yet — wait and retry
-        await new Promise(r => setTimeout(r, intervalMs));
+    // 1. globalThis.lidPhoneCache (set by index.js line 337)
+    //    This is the richest source — populated by contacts.upsert AND group metadata
+    const gCache = globalThis.lidPhoneCache;
+    if (gCache instanceof Map) {
+        const hit = gCache.get(lidNum) || gCache.get(lidFull);
+        if (hit) return `${hit}@s.whatsapp.net`;
     }
 
-    return null; // failed to resolve within timeout
+    // 2. sudo-store persistent mapping
+    const stored = getPhoneFromLid(lidNum);
+    if (stored) return `${stored}@s.whatsapp.net`;
+
+    // 3. Baileys signal repository (populated when Baileys processes group/contact data)
+    try {
+        for (const fmt of [lidJid, `${lidNum}:0@lid`, `${lidNum}@lid`]) {
+            const pn = sock.signalRepository?.lidMapping?.getPNForLID?.(fmt);
+            if (pn) {
+                const num = String(pn).split('@')[0].replace(/\D/g, '');
+                if (num.length >= 7) return `${num}@s.whatsapp.net`;
+            }
+        }
+    } catch (_) {}
+
+    return null;
+}
+
+// ── Retry resolver — contacts.upsert fires shortly after messages.upsert ─────
+async function resolveLidWithRetry(sock, lidJid, maxWaitMs = 3000, intervalMs = 300) {
+    for (let elapsed = 0; elapsed < maxWaitMs; elapsed += intervalMs) {
+        const resolved = tryResolveLid(sock, lidJid);
+        if (resolved) return resolved;
+        await new Promise(r => setTimeout(r, intervalMs));
+    }
+    return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -125,8 +142,7 @@ class AutoViewManager {
 
     toggle(forceOff = false) {
         this.config.enabled = forceOff ? false : true;
-        this.saveConfig();
-        return this.config.enabled;
+        this.saveConfig(); return this.config.enabled;
     }
 
     addLog(sender, action = 'viewed') {
@@ -158,25 +174,32 @@ class AutoViewManager {
         return false;
     }
 
-    async viewStatus(sock, statusKey, message) {
+    // Called from index.js as: handleAutoView(sock, msg)
+    async viewStatus(sock, msg) {
         try {
-            const rawSender = statusKey.participant || statusKey.remoteJid;
-            if (!rawSender || statusKey.fromMe) return false;
+            // Support both full msg object and bare key
+            const key       = msg?.key ?? msg;
+            const message   = msg?.message;
+
+            if (key.fromMe) return false;
+
+            const rawSender  = key.participant || key.remoteJid;
+            if (!rawSender || rawSender === 'status@broadcast') return false;
 
             const isLid      = rawSender.includes('@lid');
             const displayNum = rawSender.replace(/@s\.whatsapp\.net|@lid|@g\.us/g, '').split(':')[0];
             const msgType    = getMessageType(message);
 
             if (!this.config.enabled || !this.config.settings.markAsSeen) {
-                logBox(displayNum, msgType, `${Y}SKIPPED — autoview is ${!this.config.enabled ? 'OFF' : 'markAsSeen OFF'}${X}`);
+                logBox(displayNum, msgType, `${Y}SKIPPED — autoview is OFF${X}`);
                 return false;
             }
 
-            logBox(displayNum, msgType, `${G}${B}Queued — resolving${isLid ? ' LID' : ''}...${X}`,
-                isLid ? `Raw LID: ${rawSender}` : '');
+            logBox(displayNum, msgType,
+                `${G}${B}Queued${isLid ? ' — resolving LID...' : ''}${X}`,
+                isLid ? `LID: ${rawSender}` : `JID: ${rawSender}`);
 
-            // Run the view asynchronously so we don't block the event loop
-            this._doView(sock, statusKey, rawSender, isLid, displayNum).catch(() => {});
+            this._doView(sock, key, rawSender, isLid, displayNum).catch(() => {});
             return true;
 
         } catch (err) {
@@ -185,28 +208,39 @@ class AutoViewManager {
         }
     }
 
-    async _doView(sock, statusKey, rawSender, isLid, displayNum) {
-        // Rate limit
+    async _doView(sock, key, rawSender, isLid, displayNum) {
         const wait = this.config.settings.rateLimitDelay - (Date.now() - this.lastViewTime);
         if (wait > 0) await new Promise(r => setTimeout(r, wait));
 
-        // ── Resolve LID with retry (contacts.upsert fires ~1-3s after status) ─
         let resolvedJid = rawSender;
+        let resolution  = 'not a LID';
+
         if (isLid) {
-            console.log(`${C}🔍 Resolving LID ${rawSender} (will retry up to 6s)...${X}`);
-            const resolved = await resolveLidWithRetry(sock, rawSender, 6000, 500);
-            if (resolved) {
-                resolvedJid = resolved;
-                console.log(`${G}✔ LID resolved: ${rawSender} → ${resolved}${X}`);
+            // Try instantly first (globalThis.lidPhoneCache may already have it)
+            const quick = tryResolveLid(sock, rawSender);
+            if (quick) {
+                resolvedJid = quick;
+                resolution  = `✔ instant (${quick})`;
+                console.log(`${G}✔ LID resolved instantly: ${rawSender} → ${quick}${X}`);
             } else {
-                console.log(`${Y}⚠️  LID could not be resolved — attempting view with raw LID anyway${X}`);
+                // contacts.upsert fires shortly after — retry for up to 3s
+                console.log(`${C}🔍 LID not in cache yet, waiting for contacts.upsert... (max 3s)${X}`);
+                const retried = await resolveLidWithRetry(sock, rawSender, 3000, 300);
+                if (retried) {
+                    resolvedJid = retried;
+                    resolution  = `✔ after retry (${retried})`;
+                    console.log(`${G}✔ LID resolved after retry: ${rawSender} → ${retried}${X}`);
+                } else {
+                    resolution = `✘ unresolvable — no shared group or contact`;
+                    console.log(`${Y}⚠️  LID unresolvable: ${rawSender}${X}`);
+                    console.log(`${Y}    (Contact not in any shared group — WhatsApp hides real JID)${X}`);
+                }
             }
         }
 
-        // Build the key with the best JID we have
         const resolvedKey = {
             remoteJid:   'status@broadcast',
-            id:          statusKey.id,
+            id:          key.id,
             participant: resolvedJid,
             fromMe:      false
         };
@@ -221,18 +255,18 @@ class AutoViewManager {
         } catch (e1) {
             // Attempt 2: sendReadReceipt
             try {
-                await sock.sendReadReceipt('status@broadcast', resolvedJid, [statusKey.id]);
+                await sock.sendReadReceipt('status@broadcast', resolvedJid, [key.id]);
                 success = true; method = 'sendReadReceipt';
             } catch (e2) {
-                // Attempt 3: original key as-is
+                // Attempt 3: original key untouched
                 try {
-                    await sock.readMessages([statusKey]);
-                    success = true; method = 'readMessages (original key)';
+                    await sock.readMessages([key]);
+                    success = true; method = 'readMessages (raw key)';
                 } catch (e3) {
-                    console.log(`${R}${B}❌ ALL VIEW ATTEMPTS FAILED for ${displayNum}${X}`);
-                    console.log(`${R}   attempt1 readMessages(resolved) : ${e1.message}${X}`);
-                    console.log(`${R}   attempt2 sendReadReceipt        : ${e2.message}${X}`);
-                    console.log(`${R}   attempt3 readMessages(original) : ${e3.message}${X}`);
+                    console.log(`${R}${B}❌ ALL VIEW ATTEMPTS FAILED — ${displayNum}${X}`);
+                    console.log(`${R}   1) readMessages(resolved) : ${e1.message}${X}`);
+                    console.log(`${R}   2) sendReadReceipt        : ${e2.message}${X}`);
+                    console.log(`${R}   3) readMessages(raw)      : ${e3.message}${X}`);
                     return;
                 }
             }
@@ -241,15 +275,18 @@ class AutoViewManager {
         if (success) {
             this.lastViewTime = Date.now();
             this.addLog(displayNum, 'viewed');
-            console.log(`${G}${B}✅ VIEWED${X}${G} [${method}] → ${displayNum}  (resolved JID: ${resolvedJid})${X}`);
+            const jidLabel = resolvedJid.includes('@lid')
+                ? `${Y}(raw @lid — may not register as view)${X}`
+                : `${G}(${resolvedJid})${X}`;
+            console.log(`${G}${B}✅ VIEWED${X}${G} [${method}] → ${displayNum} ${jidLabel}${X}`);
         }
     }
 }
 
 const autoViewManager = new AutoViewManager();
 
-export async function handleAutoView(sock, statusKey, message) {
-    return await autoViewManager.viewStatus(sock, statusKey, message);
+export async function handleAutoView(sock, msg) {
+    return await autoViewManager.viewStatus(sock, msg);
 }
 
 export { autoViewManager };
