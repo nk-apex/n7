@@ -4,36 +4,86 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import supabase from '../../lib/supabase.js';
+import { getPhoneFromLid } from '../../lib/sudo-store.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const CONFIG_FILE = './data/autoViewConfig.json';
 
-// Initialize config directory and file
+// ── Console colours ───────────────────────────────────────────────────────────
+const G = '\x1b[32m'; const C = '\x1b[36m'; const Y = '\x1b[33m';
+const R = '\x1b[31m'; const B = '\x1b[1m';  const D = '\x1b[2m'; const X = '\x1b[0m';
+
+function logBox(sender, msgType, result, note = '') {
+    const t = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const d = new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+    console.log(`${G}${B}┌──────────────────────────────────────────────────┐${X}`);
+    console.log(`${G}${B}│  👁️  STATUS DETECTED                              │${X}`);
+    console.log(`${G}${B}├──────────────────────────────────────────────────┤${X}`);
+    console.log(`${G}│  ${C}${B}From   :${X}${G} ${sender}${X}`);
+    console.log(`${G}│  ${C}${B}Type   :${X}${G} ${msgType}${X}`);
+    console.log(`${G}│  ${C}${B}Time   :${X}${G} ${t}  ${D}(${d})${X}`);
+    console.log(`${G}│  ${C}${B}Result :${X}${G} ${result}${X}`);
+    if (note) console.log(`${G}│  ${D}${note}${X}`);
+    console.log(`${G}${B}└──────────────────────────────────────────────────┘${X}`);
+}
+
+function getMessageType(message) {
+    if (!message) return `${D}stub / no body${X}`;
+    const map = {
+        imageMessage: '🖼️  Image', videoMessage: '🎥  Video',
+        extendedTextMessage: '📝  Text', conversation: '💬  Text',
+        audioMessage: '🎵  Audio', stickerMessage: '🎭  Sticker',
+        documentMessage: '📄  Document', reactionMessage: '😮  Reaction',
+        protocolMessage: '🔧  Protocol (delete/edit)',
+    };
+    const key = Object.keys(message)[0];
+    return map[key] || `📦  ${key}`;
+}
+
+// ── Resolve @lid → phone number, retrying until contacts.upsert has fired ────
+// The LID mapping is populated by contacts.upsert which fires AFTER messages.upsert.
+// We retry for up to maxWaitMs before giving up.
+async function resolveLidWithRetry(sock, lidJid, maxWaitMs = 6000, intervalMs = 500) {
+    const lidNum = lidJid.split('@')[0].split(':')[0];
+
+    for (let elapsed = 0; elapsed < maxWaitMs; elapsed += intervalMs) {
+        // Try sudo-store first (persisted across restarts)
+        const stored = getPhoneFromLid(lidNum);
+        if (stored) return `${stored}@s.whatsapp.net`;
+
+        // Try sock.signalRepository (in-memory, populated after connect)
+        try {
+            const formats = [lidJid, `${lidNum}:0@lid`, `${lidNum}@lid`];
+            for (const fmt of formats) {
+                const pn = sock.signalRepository?.lidMapping?.getPNForLID?.(fmt);
+                if (pn) {
+                    const num = String(pn).split('@')[0].replace(/\D/g, '');
+                    if (num.length >= 7) return `${num}@s.whatsapp.net`;
+                }
+            }
+        } catch (_) {}
+
+        // Not resolved yet — wait and retry
+        await new Promise(r => setTimeout(r, intervalMs));
+    }
+
+    return null; // failed to resolve within timeout
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function initConfig() {
     const configDir = path.dirname(CONFIG_FILE);
-    if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir, { recursive: true });
-    }
-    
+    if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
     if (!fs.existsSync(CONFIG_FILE)) {
-        const defaultConfig = {
-            enabled: true, // ON BY DEFAULT
-            logs: [],
-            totalViewed: 0,
-            lastViewed: null,
-            consecutiveViews: 0,
-            lastSender: null,
-            settings: {
-                rateLimitDelay: 1000, // 1 second delay between views
-                viewToAll: true, // View all statuses
-                ignoreConsecutiveLimit: true, // View consecutive statuses
-                markAsSeen: true, // Actually mark as "seen"
-                noHourlyLimit: true // NO HOURLY LIMIT
-            }
-        };
-        fs.writeFileSync(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify({
+            enabled: true, logs: [], totalViewed: 0, lastViewed: null,
+            consecutiveViews: 0, lastSender: null,
+            settings: { rateLimitDelay: 1000, viewToAll: true,
+                ignoreConsecutiveLimit: true, markAsSeen: true, noHourlyLimit: true }
+        }, null, 2));
     }
 }
 
@@ -43,505 +93,268 @@ initConfig();
     try {
         if (supabase.isAvailable()) {
             const dbData = await supabase.getConfig('autoview_config');
-            if (dbData && dbData.enabled !== undefined) {
-                fs.writeFileSync(CONFIG_FILE, JSON.stringify(dbData, null, 2));
-            }
+            if (dbData?.enabled !== undefined) fs.writeFileSync(CONFIG_FILE, JSON.stringify(dbData, null, 2));
         }
     } catch {}
 })();
 
-// Auto View Manager
 class AutoViewManager {
     constructor() {
         this.config = this.loadConfig();
-        this.viewQueue = [];
         this.lastViewTime = 0;
-        this._draining = false;
     }
-    
+
     loadConfig() {
-        try {
-            const data = fs.readFileSync(CONFIG_FILE, 'utf8');
-            return JSON.parse(data);
-        } catch (error) {
-            console.error('Error loading auto view config:', error);
-            return {
-                enabled: true,
-                logs: [],
-                totalViewed: 0,
-                lastViewed: null,
-                consecutiveViews: 0,
-                lastSender: null,
-                settings: {
-                    rateLimitDelay: 1000,
-                    viewToAll: true,
-                    ignoreConsecutiveLimit: true,
-                    markAsSeen: true,
-                    noHourlyLimit: true
-                }
-            };
-        }
+        try { return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); }
+        catch { return { enabled: true, logs: [], totalViewed: 0, lastViewed: null,
+            consecutiveViews: 0, lastSender: null,
+            settings: { rateLimitDelay: 1000, viewToAll: true,
+                ignoreConsecutiveLimit: true, markAsSeen: true, noHourlyLimit: true } }; }
     }
-    
+
     saveConfig() {
         try {
             fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2));
             supabase.setConfig('autoview_config', this.config).catch(() => {});
-        } catch (error) {
-            console.error('Error saving auto view config:', error);
-        }
+        } catch {}
     }
-    
-    get enabled() {
+
+    get enabled()     { return this.config.enabled; }
+    get logs()        { return this.config.logs; }
+    get totalViewed() { return this.config.totalViewed; }
+
+    toggle(forceOff = false) {
+        this.config.enabled = forceOff ? false : true;
+        this.saveConfig();
         return this.config.enabled;
     }
-    
-    get logs() {
-        return this.config.logs;
-    }
-    
-    get totalViewed() {
-        return this.config.totalViewed;
-    }
-    
-    // Smart toggle: if already ON, just confirm instead of toggling
-    toggle(forceOff = false) {
-        if (forceOff) {
-            // Force turn off
-            this.config.enabled = false;
-            this.saveConfig();
-            return false;
-        }
-        
-        // If already enabled, don't toggle - just return true (enabled)
-        if (this.config.enabled) {
-            return true; // Still enabled
-        }
-        
-        // If disabled, enable it
-        this.config.enabled = true;
-        this.saveConfig();
-        return true;
-    }
-    
+
     addLog(sender, action = 'viewed') {
-        const logEntry = {
-            sender,
-            action,
-            timestamp: Date.now()
-        };
-        
-        this.config.logs.push(logEntry);
+        const entry = { sender, action, timestamp: Date.now() };
+        this.config.logs.push(entry);
         this.config.totalViewed++;
-        this.config.lastViewed = logEntry;
-        
-        // Check for consecutive statuses from same sender
-        if (this.config.lastSender === sender) {
-            this.config.consecutiveViews++;
-        } else {
-            this.config.consecutiveViews = 1;
-            this.config.lastSender = sender;
-        }
-        
-        // Keep only last 100 logs
-        if (this.config.logs.length > 100) {
-            this.config.logs.shift();
-        }
-        
+        this.config.lastViewed = entry;
+        this.config.consecutiveViews = this.config.lastSender === sender ? this.config.consecutiveViews + 1 : 1;
+        this.config.lastSender = sender;
+        if (this.config.logs.length > 100) this.config.logs.shift();
         this.saveConfig();
     }
-    
+
     clearLogs() {
-        this.config.logs = [];
-        this.config.totalViewed = 0;
-        this.config.lastViewed = null;
-        this.config.consecutiveViews = 0;
-        this.config.lastSender = null;
+        Object.assign(this.config, { logs: [], totalViewed: 0, lastViewed: null, consecutiveViews: 0, lastSender: null });
         this.saveConfig();
     }
-    
+
     getStats() {
-        return {
-            enabled: this.config.enabled,
-            totalViewed: this.config.totalViewed,
-            lastViewed: this.config.lastViewed,
-            consecutiveViews: this.config.consecutiveViews,
-            settings: { ...this.config.settings }
-        };
+        return { enabled: this.config.enabled, totalViewed: this.config.totalViewed,
+            lastViewed: this.config.lastViewed, consecutiveViews: this.config.consecutiveViews,
+            settings: { ...this.config.settings } };
     }
-    
-    shouldView(sender) {
-        if (!this.config.enabled) return false;
-        if (!this.config.settings.markAsSeen) return false;
-        return true;
-    }
-    
-    async viewStatus(sock, statusKey) {
-        try {
-            const sender = statusKey.participant || statusKey.remoteJid;
-            if (!sender || statusKey.fromMe) return false;
-            const cleanSender = sender.split('@')[0];
-            
-            if (!this.shouldView(sender)) {
-                return false;
-            }
-            
-            this.viewQueue.push({ key: statusKey, sender: cleanSender });
-            this._drainQueue(sock);
-            
-            return true;
-        } catch {
-            return false;
-        }
-    }
-    
-    _drainQueue(sock) {
-        if (this._draining) return;
-        this._draining = true;
-        
-        const processNext = async () => {
-            while (this.viewQueue.length > 0) {
-                const { key, sender } = this.viewQueue.shift();
-                
-                const now = Date.now();
-                const wait = this.config.settings.rateLimitDelay - (now - this.lastViewTime);
-                if (wait > 0) {
-                    await new Promise(r => setTimeout(r, wait));
-                }
-                
-                try {
-                    const participant = key.participant || key.remoteJid;
-                    await sock.sendReceipt(key.remoteJid, participant, [key.id], 'read');
-                    this.lastViewTime = Date.now();
-                    this.addLog(sender, 'viewed');
-                } catch (err) {
-                    try {
-                        await sock.readMessages([key]);
-                        this.lastViewTime = Date.now();
-                        this.addLog(sender, 'viewed');
-                    } catch {
-                    }
-                }
-            }
-            
-            this._draining = false;
-        };
-        
-        processNext().catch(() => { this._draining = false; });
-    }
-    
-    // Update settings
+
     updateSetting(setting, value) {
-        if (this.config.settings.hasOwnProperty(setting)) {
-            this.config.settings[setting] = value;
-            this.saveConfig();
-            return true;
+        if (Object.prototype.hasOwnProperty.call(this.config.settings, setting)) {
+            this.config.settings[setting] = value; this.saveConfig(); return true;
         }
         return false;
     }
+
+    async viewStatus(sock, statusKey, message) {
+        try {
+            const rawSender = statusKey.participant || statusKey.remoteJid;
+            if (!rawSender || statusKey.fromMe) return false;
+
+            const isLid      = rawSender.includes('@lid');
+            const displayNum = rawSender.replace(/@s\.whatsapp\.net|@lid|@g\.us/g, '').split(':')[0];
+            const msgType    = getMessageType(message);
+
+            if (!this.config.enabled || !this.config.settings.markAsSeen) {
+                logBox(displayNum, msgType, `${Y}SKIPPED — autoview is ${!this.config.enabled ? 'OFF' : 'markAsSeen OFF'}${X}`);
+                return false;
+            }
+
+            logBox(displayNum, msgType, `${G}${B}Queued — resolving${isLid ? ' LID' : ''}...${X}`,
+                isLid ? `Raw LID: ${rawSender}` : '');
+
+            // Run the view asynchronously so we don't block the event loop
+            this._doView(sock, statusKey, rawSender, isLid, displayNum).catch(() => {});
+            return true;
+
+        } catch (err) {
+            console.error('autoviewstatus error:', err.message);
+            return false;
+        }
+    }
+
+    async _doView(sock, statusKey, rawSender, isLid, displayNum) {
+        // Rate limit
+        const wait = this.config.settings.rateLimitDelay - (Date.now() - this.lastViewTime);
+        if (wait > 0) await new Promise(r => setTimeout(r, wait));
+
+        // ── Resolve LID with retry (contacts.upsert fires ~1-3s after status) ─
+        let resolvedJid = rawSender;
+        if (isLid) {
+            console.log(`${C}🔍 Resolving LID ${rawSender} (will retry up to 6s)...${X}`);
+            const resolved = await resolveLidWithRetry(sock, rawSender, 6000, 500);
+            if (resolved) {
+                resolvedJid = resolved;
+                console.log(`${G}✔ LID resolved: ${rawSender} → ${resolved}${X}`);
+            } else {
+                console.log(`${Y}⚠️  LID could not be resolved — attempting view with raw LID anyway${X}`);
+            }
+        }
+
+        // Build the key with the best JID we have
+        const resolvedKey = {
+            remoteJid:   'status@broadcast',
+            id:          statusKey.id,
+            participant: resolvedJid,
+            fromMe:      false
+        };
+
+        let success = false;
+        let method  = '';
+
+        // Attempt 1: readMessages with resolved key
+        try {
+            await sock.readMessages([resolvedKey]);
+            success = true; method = 'readMessages';
+        } catch (e1) {
+            // Attempt 2: sendReadReceipt
+            try {
+                await sock.sendReadReceipt('status@broadcast', resolvedJid, [statusKey.id]);
+                success = true; method = 'sendReadReceipt';
+            } catch (e2) {
+                // Attempt 3: original key as-is
+                try {
+                    await sock.readMessages([statusKey]);
+                    success = true; method = 'readMessages (original key)';
+                } catch (e3) {
+                    console.log(`${R}${B}❌ ALL VIEW ATTEMPTS FAILED for ${displayNum}${X}`);
+                    console.log(`${R}   attempt1 readMessages(resolved) : ${e1.message}${X}`);
+                    console.log(`${R}   attempt2 sendReadReceipt        : ${e2.message}${X}`);
+                    console.log(`${R}   attempt3 readMessages(original) : ${e3.message}${X}`);
+                    return;
+                }
+            }
+        }
+
+        if (success) {
+            this.lastViewTime = Date.now();
+            this.addLog(displayNum, 'viewed');
+            console.log(`${G}${B}✅ VIEWED${X}${G} [${method}] → ${displayNum}  (resolved JID: ${resolvedJid})${X}`);
+        }
+    }
 }
 
-// Create singleton instance
 const autoViewManager = new AutoViewManager();
 
-// Export the function for index.js
-export async function handleAutoView(sock, statusKey) {
-    return await autoViewManager.viewStatus(sock, statusKey);
+export async function handleAutoView(sock, statusKey, message) {
+    return await autoViewManager.viewStatus(sock, statusKey, message);
 }
 
-// Export the manager for other uses
 export { autoViewManager };
 
-// The command module
 export default {
     name: "autoviewstatus",
     alias: ["autoview", "viewstatus", "statusview", "vs", "views"],
     desc: "Automatically view (mark as seen) WhatsApp statuses 👁️",
     category: "Automation",
     ownerOnly: false,
-    
+
     async execute(sock, m, args, prefix, extra) {
         try {
-            // Check if sender is owner
             const isOwner = extra?.isOwner?.() || false;
-            
+
             if (args.length === 0) {
-                // Show current status
-                const stats = autoViewManager.getStats();
-                
-                let statusText = `╭─⌈ 👁️ *AUTOVIEWSTATUS* ⌋\n│\n`;
-                statusText += `│ Status: ${stats.enabled ? '✅ **ACTIVE**' : '❌ **INACTIVE**'}\n│\n`;
-                statusText += `├─⊷ *${prefix}autoviewstatus on*\n│  └⊷ Enable viewing\n`;
-                statusText += `├─⊷ *${prefix}autoviewstatus off*\n│  └⊷ Disable viewing\n`;
-                statusText += `╰───`;
-             
-                
-                await sock.sendMessage(m.key.remoteJid, { text: statusText }, { quoted: m });
+                const s = autoViewManager.getStats();
+                let text = `╭─⌈ 👁️ *AUTOVIEWSTATUS* ⌋\n│\n`;
+                text += `│ Status: ${s.enabled ? '✅ **ACTIVE**' : '❌ **INACTIVE**'}\n│\n`;
+                text += `├─⊷ *${prefix}autoviewstatus on*\n│  └⊷ Enable viewing\n`;
+                text += `├─⊷ *${prefix}autoviewstatus off*\n│  └⊷ Disable viewing\n`;
+                text += `├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ Statistics\n`;
+                text += `╰───`;
+                await sock.sendMessage(m.key.remoteJid, { text }, { quoted: m });
                 return;
             }
-            
+
             const action = args[0].toLowerCase();
-            
+
             switch (action) {
-                case 'on':
-                case 'enable':
-                case 'start':
-                    if (!isOwner) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: "❌ Owner only command!"
-                        }, { quoted: m });
-                        return;
-                    }
-                    
-                    // Use smart toggle that doesn't toggle if already on
-                    const currentlyEnabled = autoViewManager.enabled;
-                    const result = autoViewManager.toggle(false); // false = don't force off
-                    
-                    if (currentlyEnabled) {
-                        // Already enabled, just show confirmation
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `✅ *AUTOVIEWSTATUS IS ALREADY ACTIVE*\n\n👁️ Auto viewing is already enabled!\n\nCurrent settings:\n• Mark as seen: ${autoViewManager.config.settings.markAsSeen ? '✅' : '❌'}\n• Delay: ${autoViewManager.config.settings.rateLimitDelay}ms\n• Total viewed: ${autoViewManager.totalViewed}\n\nUse \`${prefix}autoviewstatus off\` to disable.`
-                        }, { quoted: m });
-                    } else {
-                        // Was disabled, now enabled
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `✅ *AUTOVIEWSTATUS ENABLED*\n\n👁️ I will now automatically view ALL statuses!\n\nStatuses will be marked as "seen" automatically.`
-                        }, { quoted: m });
-                    }
+                case 'on': case 'enable': case 'start': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only!" }, { quoted: m }); return; }
+                    const wasOn = autoViewManager.enabled;
+                    autoViewManager.toggle(false);
+                    await sock.sendMessage(m.key.remoteJid, {
+                        text: wasOn
+                            ? `✅ *Already active!*\nTotal viewed: ${autoViewManager.totalViewed}`
+                            : `✅ *AUTOVIEWSTATUS ENABLED*\n\n👁️ Will now automatically view ALL statuses!`
+                    }, { quoted: m });
                     break;
-                    
-                case 'off':
-                case 'disable':
-                case 'stop':
-                    if (!isOwner) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: "❌ Owner only command!"
-                        }, { quoted: m });
-                        return;
-                    }
-                    
-                    // Force turn off
-                    const wasEnabled = autoViewManager.enabled;
-                    autoViewManager.toggle(true); // true = force off
-                    
-                    if (wasEnabled) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `❌ *AUTOVIEWSTATUS DISABLED*\n\nAuto viewing has been turned off.\n\nUse \`${prefix}autoviewstatus on\` to enable again.`
-                        }, { quoted: m });
-                    } else {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `⚠️ *AUTOVIEWSTATUS ALREADY DISABLED*\n\nAuto viewing is already turned off.\n\nUse \`${prefix}autoviewstatus on\` to enable.`
-                        }, { quoted: m });
-                    }
+                }
+                case 'off': case 'disable': case 'stop': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only!" }, { quoted: m }); return; }
+                    const wasOn = autoViewManager.enabled;
+                    autoViewManager.toggle(true);
+                    await sock.sendMessage(m.key.remoteJid, {
+                        text: wasOn ? `❌ *AUTOVIEWSTATUS DISABLED*` : `⚠️ Already disabled.`
+                    }, { quoted: m });
                     break;
-                    
-                case 'stats':
-                case 'statistics':
-                case 'info':
-                    const detailedStats = autoViewManager.getStats();
-                    let statsText = `📊 *AUTOVIEWSTATUS STATISTICS*\n\n`;
-                    statsText += `🟢 Status: ${detailedStats.enabled ? '**ACTIVE** ✅' : '**INACTIVE** ❌'}\n`;
-                    statsText += `👁️ Total Viewed: **${detailedStats.totalViewed}**\n`;
-                    statsText += `🔄 Consecutive Views: ${detailedStats.consecutiveViews}\n`;
-                    statsText += `📝 Logs Stored: ${detailedStats.logs?.length || 0}\n\n`;
-                    
-                    statsText += `⚙️ *Settings:*\n`;
-                    statsText += `• Mark as Seen: ${detailedStats.settings.markAsSeen ? '✅' : '❌'}\n`;
-                    statsText += `• Delay: ${detailedStats.settings.rateLimitDelay}ms\n`;
-                    statsText += `• View All: ${detailedStats.settings.viewToAll ? '✅' : '❌'}\n`;
-                    statsText += `• Ignore Consecutive: ${detailedStats.settings.ignoreConsecutiveLimit ? '✅' : '❌'}\n`;
-                    statsText += `• Hourly Limit: ❌ DISABLED\n`;
-                    
-                    if (detailedStats.lastViewed) {
-                        const timeAgo = Math.floor((Date.now() - detailedStats.lastViewed.timestamp) / 60000);
-                        statsText += `\n🕒 *Last Viewed:*\n`;
-                        statsText += `• From: ${detailedStats.lastViewed.sender}\n`;
-                        statsText += `• Action: ${detailedStats.lastViewed.action}\n`;
-                        statsText += `• ${timeAgo < 1 ? 'Just now' : `${timeAgo} minutes ago`}\n`;
+                }
+                case 'stats': case 'statistics': case 'info': {
+                    const s = autoViewManager.getStats();
+                    let text = `📊 *AUTOVIEWSTATUS STATS*\n\n`;
+                    text += `🟢 Status: ${s.enabled ? 'ACTIVE ✅' : 'INACTIVE ❌'}\n`;
+                    text += `👁️ Total Viewed: **${s.totalViewed}**\n`;
+                    text += `🔄 Consecutive: ${s.consecutiveViews}\n\n`;
+                    text += `⚙️ Mark as Seen: ${s.settings.markAsSeen ? '✅' : '❌'}\n`;
+                    text += `⚙️ Delay: ${s.settings.rateLimitDelay}ms\n`;
+                    if (s.lastViewed) {
+                        const ago = Math.floor((Date.now() - s.lastViewed.timestamp) / 60000);
+                        text += `\n🕒 Last: ${s.lastViewed.sender} (${ago < 1 ? 'just now' : ago + ' min ago'})`;
                     }
-                    
-                    await sock.sendMessage(m.key.remoteJid, { text: statsText }, { quoted: m });
+                    await sock.sendMessage(m.key.remoteJid, { text }, { quoted: m });
                     break;
-                    
-                case 'logs':
-                case 'history':
+                }
+                case 'logs': case 'history': {
                     const logs = autoViewManager.logs.slice(-10).reverse();
-                    if (logs.length === 0) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `📭 *No Logs Found*\n\nNo statuses have been viewed yet.`
-                        }, { quoted: m });
-                        return;
-                    }
-                    
-                    let logsText = `📋 *RECENT STATUS VIEWS*\n\n`;
-                    logs.forEach((log, index) => {
-                        const time = new Date(log.timestamp).toLocaleTimeString();
-                        logsText += `${index + 1}. ${log.sender} - ${log.action}\n   ${time}\n`;
-                    });
-                    
-                    logsText += `\n📊 Total: ${autoViewManager.totalViewed} statuses viewed`;
-                    
-                    await sock.sendMessage(m.key.remoteJid, { text: logsText }, { quoted: m });
+                    if (!logs.length) { await sock.sendMessage(m.key.remoteJid, { text: `📭 No statuses viewed yet.` }, { quoted: m }); return; }
+                    let text = `📋 *RECENT STATUS VIEWS*\n\n`;
+                    logs.forEach((l, i) => { text += `${i+1}. ${l.sender} — ${new Date(l.timestamp).toLocaleTimeString()}\n`; });
+                    text += `\n📊 Total: ${autoViewManager.totalViewed}`;
+                    await sock.sendMessage(m.key.remoteJid, { text }, { quoted: m });
                     break;
-                    
-                case 'settings':
-                case 'config':
-                    if (args.length < 2) {
-                        const settings = autoViewManager.config.settings;
-                        let settingsText = `╭─⌈ ⚙️ *AUTOVIEWSTATUS SETTINGS* ⌋\n│\n`;
-                        settingsText += `│ Mark as Seen: ${settings.markAsSeen ? '✅ ON' : '❌ OFF'}\n`;
-                        settingsText += `│ Delay: ${settings.rateLimitDelay}ms\n`;
-                        settingsText += `│ View All: ${settings.viewToAll ? '✅' : '❌'}\n`;
-                        settingsText += `│ Ignore Consecutive: ${settings.ignoreConsecutiveLimit ? '✅' : '❌'}\n│\n`;
-                        settingsText += `├─⊷ *${prefix}autoviewstatus settings seen on/off*\n│  └⊷ Toggle mark as seen\n`;
-                        settingsText += `├─⊷ *${prefix}autoviewstatus settings delay <ms>*\n│  └⊷ Set viewing delay\n`;
-                        settingsText += `├─⊷ *${prefix}autoviewstatus settings all on/off*\n│  └⊷ Toggle view all\n`;
-                        settingsText += `├─⊷ *${prefix}autoviewstatus settings consecutive on/off*\n│  └⊷ Toggle consecutive\n`;
-                        settingsText += `╰───`;
-                        
-                        await sock.sendMessage(m.key.remoteJid, { text: settingsText }, { quoted: m });
-                        return;
-                    }
-                    
-                    const settingName = args[1].toLowerCase();
-                    
-                    if (settingName === 'seen') {
-                        if (args.length < 3) {
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: `╭─⌈ ⚙️ *SETTINGS: SEEN* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings seen on/off*\n│  └⊷ Toggle mark as seen\n╰───`
-                            }, { quoted: m });
-                            return;
-                        }
-                        
-                        const seenSetting = args[2].toLowerCase();
-                        if (seenSetting === 'on') {
-                            autoViewManager.updateSetting('markAsSeen', true);
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '✅ Statuses will be marked as "seen"'
-                            }, { quoted: m });
-                        } else if (seenSetting === 'off') {
-                            autoViewManager.updateSetting('markAsSeen', false);
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '❌ Statuses will NOT be marked as "seen"'
-                            }, { quoted: m });
-                        } else {
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '❌ Invalid option! Use "on" or "off"'
-                            }, { quoted: m });
-                            return;
-                        }
-                        
-                    } else if (settingName === 'delay') {
-                        if (args.length < 3) {
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: `╭─⌈ ⚙️ *SETTINGS: DELAY* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings delay <ms>*\n│  └⊷ Set viewing delay\n╰───`
-                            }, { quoted: m });
-                            return;
-                        }
-                        
-                        const delay = parseInt(args[2]);
-                        if (isNaN(delay) || delay < 500) {
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '❌ Invalid delay! Minimum is 500ms (0.5 second).'
-                            }, { quoted: m });
-                            return;
-                        }
-                        
-                        autoViewManager.updateSetting('rateLimitDelay', delay);
-                        
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: `✅ Viewing delay set to ${delay}ms`
-                        }, { quoted: m });
-                        
-                    } else if (settingName === 'all') {
-                        if (args.length < 3) {
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: `╭─⌈ ⚙️ *SETTINGS: VIEW ALL* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings all on/off*\n│  └⊷ Toggle view all\n╰───`
-                            }, { quoted: m });
-                            return;
-                        }
-                        
-                        const allSetting = args[2].toLowerCase();
-                        if (allSetting === 'on') {
-                            autoViewManager.updateSetting('viewToAll', true);
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '✅ Will view ALL statuses'
-                            }, { quoted: m });
-                        } else if (allSetting === 'off') {
-                            autoViewManager.updateSetting('viewToAll', false);
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '❌ Will view selective statuses'
-                            }, { quoted: m });
-                        } else {
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '❌ Invalid option! Use "on" or "off"'
-                            }, { quoted: m });
-                            return;
-                        }
-                        
-                    } else if (settingName === 'consecutive') {
-                        if (args.length < 3) {
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: `╭─⌈ ⚙️ *SETTINGS: CONSECUTIVE* ⌋\n│\n├─⊷ *${prefix}autoviewstatus settings consecutive on/off*\n│  └⊷ Toggle consecutive\n╰───`
-                            }, { quoted: m });
-                            return;
-                        }
-                        
-                        const consecutiveSetting = args[2].toLowerCase();
-                        if (consecutiveSetting === 'on') {
-                            autoViewManager.updateSetting('ignoreConsecutiveLimit', true);
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '✅ Will view consecutive statuses'
-                            }, { quoted: m });
-                        } else if (consecutiveSetting === 'off') {
-                            autoViewManager.updateSetting('ignoreConsecutiveLimit', false);
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '❌ Will NOT view consecutive statuses'
-                            }, { quoted: m });
-                        } else {
-                            await sock.sendMessage(m.key.remoteJid, {
-                                text: '❌ Invalid option! Use "on" or "off"'
-                            }, { quoted: m });
-                            return;
-                        }
-                    }
-                    
-                    break;
-                    
-                case 'reset':
-                case 'clearstats':
-                    if (!isOwner) {
-                        await sock.sendMessage(m.key.remoteJid, {
-                            text: "❌ Owner only command!"
-                        }, { quoted: m });
-                        return;
-                    }
+                }
+                case 'reset': case 'clearstats': {
+                    if (!isOwner) { await sock.sendMessage(m.key.remoteJid, { text: "❌ Owner only!" }, { quoted: m }); return; }
                     autoViewManager.clearLogs();
-                    await sock.sendMessage(m.key.remoteJid, {
-                        text: `🗑️ *Statistics Cleared*\n\nAll viewing logs and statistics have been reset.\n\nTotal viewed: 0\nLogs: 0`
-                    }, { quoted: m });
+                    await sock.sendMessage(m.key.remoteJid, { text: `🗑️ All logs reset. Total viewed: 0` }, { quoted: m });
                     break;
-                    
-                case 'help':
-                case 'cmd':
-                    await sock.sendMessage(m.key.remoteJid, {
-                        text: `╭─⌈ 📖 *AUTOVIEWSTATUS HELP* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on*\n│  └⊷ Enable viewing\n├─⊷ *${prefix}autoviewstatus off*\n│  └⊷ Disable viewing\n├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}autoviewstatus logs*\n│  └⊷ View recent logs\n├─⊷ *${prefix}autoviewstatus settings*\n│  └⊷ Configure options\n├─⊷ *${prefix}autoviewstatus reset*\n│  └⊷ Clear stats\n╰───`
-                    }, { quoted: m });
+                }
+                case 'settings': case 'config': {
+                    const sub = args[1]?.toLowerCase();
+                    if (!sub) {
+                        const s = autoViewManager.config.settings;
+                        await sock.sendMessage(m.key.remoteJid, { text: `⚙️ Mark as Seen: ${s.markAsSeen ? '✅' : '❌'}\n⚙️ Delay: ${s.rateLimitDelay}ms\n\n*${prefix}autoviewstatus settings seen on/off*\n*${prefix}autoviewstatus settings delay <ms>*` }, { quoted: m });
+                        return;
+                    }
+                    if (sub === 'seen') {
+                        const val = args[2]?.toLowerCase();
+                        if (val === 'on' || val === 'off') autoViewManager.updateSetting('markAsSeen', val === 'on');
+                        await sock.sendMessage(m.key.remoteJid, { text: `✅ markAsSeen → ${val}` }, { quoted: m });
+                    } else if (sub === 'delay') {
+                        const delay = parseInt(args[2]);
+                        if (isNaN(delay) || delay < 500) { await sock.sendMessage(m.key.remoteJid, { text: '❌ Min 500ms' }, { quoted: m }); return; }
+                        autoViewManager.updateSetting('rateLimitDelay', delay);
+                        await sock.sendMessage(m.key.remoteJid, { text: `✅ Delay → ${delay}ms` }, { quoted: m });
+                    }
                     break;
-                    
+                }
                 default:
-                    await sock.sendMessage(m.key.remoteJid, {
-                        text: `╭─⌈ ❓ *AUTOVIEWSTATUS* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on/off*\n│  └⊷ Enable or disable\n├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ View statistics\n├─⊷ *${prefix}autoviewstatus settings*\n│  └⊷ Configure options\n├─⊷ *${prefix}autoviewstatus help*\n│  └⊷ Show all commands\n╰───`
-                    }, { quoted: m });
+                    await sock.sendMessage(m.key.remoteJid, { text: `╭─⌈ ❓ *AUTOVIEWSTATUS* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on/off*\n├─⊷ *${prefix}autoviewstatus stats*\n├─⊷ *${prefix}autoviewstatus logs*\n├─⊷ *${prefix}autoviewstatus settings*\n╰───` }, { quoted: m });
             }
-            
         } catch (error) {
-            console.error('AutoViewStatus command error:', error);
-            await sock.sendMessage(m.key.remoteJid, {
-                text: `❌ Command failed: ${error.message}`
-            }, { quoted: m });
+            console.error('AutoViewStatus error:', error);
+            await sock.sendMessage(m.key.remoteJid, { text: `❌ ${error.message}` }, { quoted: m });
         }
     }
 };
-
-
