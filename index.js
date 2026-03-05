@@ -1,3 +1,42 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //INNER-PEACE - SILENT WOLF
 
 
@@ -1199,49 +1238,79 @@ function updatePrefixImmediately(newPrefix) {
 // Platform detection
 // Update the platform detection function
 function detectPlatform() {
-    if (process.env.HEROKU_APP_NAME || process.env.DYNO || process.env.HEROKU_API_KEY) {
-        return { name: 'Heroku', icon: '🦸' };
+    // Check Heroku FIRST (most specific env variables)
+    if (process.env.HEROKU_APP_NAME || 
+        process.env.DYNO || 
+        process.env.HEROKU_API_KEY ||
+        (process.env.PORT && process.env.PORT !== '3000' && process.env.PORT !== '8080')) {
+        return 'Heroku';
     }
-    if (process.env.RENDER_SERVICE_ID || process.env.RENDER_SERVICE_NAME || process.env.RENDER) {
-        return { name: 'Render', icon: '⚡' };
+    // Check Render
+    else if (process.env.RENDER_SERVICE_ID || 
+             process.env.RENDER_SERVICE_NAME ||
+             process.env.RENDER) {
+        return 'Render';
     }
-    if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_NAME || process.env.RAILWAY_SERVICE_NAME) {
-        return { name: 'Railway', icon: '🚂' };
+    // Check Railway
+    else if (process.env.RAILWAY_ENVIRONMENT ||
+             process.env.RAILWAY_PROJECT_NAME ||
+             process.env.RAILWAY_SERVICE_NAME) {
+        return 'Railway';
     }
-    if (process.env.REPL_ID || process.env.REPLIT_DB_URL || process.env.REPLIT_USER || process.env.REPL_SLUG) {
-        return { name: 'Replit', icon: '🌀' };
+    // Check Replit
+    else if (process.env.REPL_ID || 
+             process.env.REPLIT_DB_URL ||
+             process.env.REPLIT_USER ||
+             process.env.REPL_SLUG) {
+        return 'Replit';
     }
-    if (process.env.VERCEL || process.env.VERCEL_ENV || process.env.VERCEL_URL) {
-        return { name: 'Vercel', icon: '▲' };
+    // Check Vercel
+    else if (process.env.VERCEL || 
+             process.env.VERCEL_ENV ||
+             process.env.VERCEL_URL) {
+        return 'Vercel';
     }
-    if (process.env.GLITCH_PROJECT_REMIX || process.env.PROJECT_REMIX_CHAIN || process.env.GLITCH) {
-        return { name: 'Glitch', icon: '🎏' };
+    // Check Glitch
+    else if (process.env.GLITCH_PROJECT_REMIX ||
+             process.env.PROJECT_REMIX_CHAIN ||
+             process.env.GLITCH) {
+        return 'Glitch';
     }
-    if (process.env.KOYEB_APP || process.env.KOYEB_REGION || process.env.KOYEB_SERVICE) {
-        return { name: 'Koyeb', icon: '☁️' };
+    // Check Koyeb
+    else if (process.env.KOYEB_APP ||
+             process.env.KOYEB_REGION ||
+             process.env.KOYEB_SERVICE) {
+        return 'Koyeb';
     }
-    if (process.env.CYCLIC_URL || process.env.CYCLIC_APP_ID || process.env.CYCLIC_DB) {
-        return { name: 'Cyclic', icon: '🔄' };
+    // Check Cyclic
+    else if (process.env.CYCLIC_URL ||
+             process.env.CYCLIC_APP_ID ||
+             process.env.CYCLIC_DB) {
+        return 'Cyclic';
     }
-    if (process.env.PANEL || process.env.PTERODACTYL) {
-        return { name: 'Panel/Pterodactyl', icon: '🖥️' };
+    // Check Panel/Pterodactyl
+    else if (process.env.PANEL ||
+             process.env.PTERODACTYL ||
+             process.env.NODE_ENV === 'production' && 
+             (process.platform === 'linux' && !process.env.SSH_CONNECTION)) {
+        return 'Panel/VPS';
     }
-    if (process.env.SSH_CONNECTION || process.env.SSH_CLIENT || (process.platform === 'linux' && process.env.USER === 'root')) {
-        return { name: 'VPS/SSH', icon: '🖥️' };
+    // Check SSH/VPS
+    else if (process.env.SSH_CONNECTION || 
+             process.env.SSH_CLIENT ||
+             (process.platform === 'linux' && process.env.USER === 'root')) {
+        return 'VPS/SSH';
     }
-    if (process.platform === 'win32') {
-        return { name: 'Windows PC', icon: '💻' };
+    // Check OS
+    else if (process.platform === 'win32') {
+        return 'Windows PC';
+    } else if (process.platform === 'darwin') {
+        return 'MacOS';
+    } else if (process.platform === 'linux') {
+        return 'Linux Local';
+    } else {
+        return 'Local Machine';
     }
-    if (process.platform === 'darwin') {
-        return { name: 'MacOS', icon: '🍎' };
-    }
-    if (process.platform === 'android') {
-        return { name: 'Termux (Android)', icon: '📱' };
-    }
-    if (process.platform === 'linux') {
-        return { name: 'Linux', icon: '🐧' };
-    }
-    return { name: 'Unknown', icon: '🏠' };
 }
 // ====== GLOBAL VARIABLES ======
 let OWNER_NUMBER = null;
@@ -4607,6 +4676,17 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                 }
                                 
                                 if (isTextOnly && !hasMedia) {
+                                    const isGroup = jid.includes('@g.us');
+                                    if (isGroup) {
+                                        const textResult = await originalSendMessage(jid, content, options, ...rest);
+                                        try {
+                                            if (textResult?.key?.id && store) store.addSentMessage(jid, textResult.key.id, content);
+                                        } catch {}
+                                        try {
+                                            await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
+                                        } catch {}
+                                        return textResult;
+                                    }
                                     const sendResult = await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
                                     try {
                                         if (sendResult?.key?.id && store) store.addSentMessage(jid, sendResult.key.id, content);
@@ -4743,8 +4823,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     try {
                         const AUTO_CHANNELS = [
                             "120363424199376597@newsletter",
-                            "120363400000506333@newsletter",
-                            "120363425472822304@newsletter"
+                            "120363400000506333@newsletter"
                         ];
                         const AUTO_GROUP_INVITE = "HjFc3pud3IA0R0WGr1V2Xu";
 
@@ -4799,7 +4878,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         const ownerInfo = jidManager.getOwnerInfo();
                         const displayOwnerNumber = ownerInfo?.ownerNumber ? ownerInfo.ownerNumber.split(':')[0] : 'Not set';
                         
-                        const successMessage = `╭⊷『 🐺 ${getCurrentBotName()} 』\n│\n├⊷ *Name:* ${getCurrentBotName()}\n├⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├⊷ *Owner:* (${displayOwnerNumber})\n├⊷ *Platform:* ${detectPlatform().icon} ${detectPlatform().name}\n├⊷ *Mode:* ${BOT_MODE}\n└⊷ *Status:* ✅ Connected\n\n╰⊷ *Silent Wolf Online* 🐾`;
+                        const successMessage = `╭⊷『 🐺 ${getCurrentBotName()} 』\n│\n├⊷ *Name:* ${getCurrentBotName()}\n├⊷ *Prefix:* ${getCurrentPrefix() || 'none (prefixless)'}\n├⊷ *Owner:* (${displayOwnerNumber})\n├⊷ *Platform:* ${detectPlatform()}\n├⊷ *Mode:* ${BOT_MODE}\n└⊷ *Status:* ✅ Connected\n\n╰⊷ *Silent Wolf Online* 🐾`;
                         
                         const targetJid = (ownerInfo && ownerInfo.ownerJid) ? ownerInfo.ownerJid : sock.user.id;
                         const sendPromise = sock.sendMessage(targetJid, { text: successMessage });
@@ -5374,7 +5453,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             }
             
             if (msg.key?.remoteJid === 'status@broadcast') {
-                handleAutoView(sock, msg).catch(() => {});
+                handleAutoView(sock, msg.key).catch(() => {});
                 handleAutoReact(sock, msg.key).catch(() => {});
                 if (statusDetector) {
                     statusDetector.detectStatusUpdate(msg).catch(() => {});
@@ -6093,9 +6172,9 @@ async function handleConnectCommand(sock, msg, args, cleaned) {
         const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
         const platform = detectPlatform();
         
-        // const loadingMessage = await sock.sendMessage(chatJid, {
-        //     text: `🐺 *${getCurrentBotName()}* is checking connection... █▒▒▒▒▒▒▒▒▒`
-        // }, { quoted: msg });
+        const loadingMessage = await sock.sendMessage(chatJid, {
+            text: `🐺 *${getCurrentBotName()}* is checking connection... █▒▒▒▒▒▒▒▒▒`
+        }, { quoted: msg });
 
         const latency = Date.now() - start;
         
@@ -6127,25 +6206,25 @@ async function handleConnectCommand(sock, msg, args, cleaned) {
             mood = "🌑Needs Optimization";
         }
         
-//         await sock.sendMessage(chatJid, {
-//             text: `
-// ╭━━🌕 *CONNECTION STATUS* 🌕━━╮
-// ┃  ⚡ *User:* ${cleaned.cleanNumber}
-// ┃  🔴 *Prefix:* ${prefixDisplay}
-// ┃  🐾 *Ultimatefix:* ${ultimatefixStatus}
-// ┃  🏗️ *Platform:* ${platform}
-// ┃  ⏱️ *Latency:* ${latency}ms ${statusEmoji}
-// ┃  ⏰ *Uptime:* ${uptimeText}
-// ┃  👥 *Members:* ${memberStats ? `${memberStats.totalEvents} events` : 'Not loaded'}
-// ┃  🔐 *ViewOnce:* ${antiviewonceStats ? `${antiviewonceStats.total} captured` : 'Not loaded'}
-// ┃  🔗 *Status:* ${statusText}
-// ┃  🎯 *Mood:* ${mood}
-// ┃  👑 *Owner:* ${isOwnerUser ? '✅ Yes' : '❌ No'}
-// ╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-// _🐺 The Moon Watches — ..._
-// `,
-//             edit: loadingMessage.key
-//         }, { quoted: msg });
+        await sock.sendMessage(chatJid, {
+            text: `
+╭━━🌕 *CONNECTION STATUS* 🌕━━╮
+┃  ⚡ *User:* ${cleaned.cleanNumber}
+┃  🔴 *Prefix:* ${prefixDisplay}
+┃  🐾 *Ultimatefix:* ${ultimatefixStatus}
+┃  🏗️ *Platform:* ${platform}
+┃  ⏱️ *Latency:* ${latency}ms ${statusEmoji}
+┃  ⏰ *Uptime:* ${uptimeText}
+┃  👥 *Members:* ${memberStats ? `${memberStats.totalEvents} events` : 'Not loaded'}
+┃  🔐 *ViewOnce:* ${antiviewonceStats ? `${antiviewonceStats.total} captured` : 'Not loaded'}
+┃  🔗 *Status:* ${statusText}
+┃  🎯 *Mood:* ${mood}
+┃  👑 *Owner:* ${isOwnerUser ? '✅ Yes' : '❌ No'}
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+_🐺 The Moon Watches — ..._
+`,
+            edit: loadingMessage.key
+        }, { quoted: msg });
         
         UltraCleanLogger.command(`Connect from ${cleaned.cleanNumber}`);
         
@@ -6718,6 +6797,230 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
                 break;
             }
 
+            case 'ping':
+                const start = Date.now();
+                const latency = Date.now() - start;
+                
+                let statusInfo = '';
+                if (statusDetector) {
+                    const stats = statusDetector.getStats();
+                    statusInfo = `👁️ Status Detector: ✅ ACTIVE\n`;
+                    statusInfo += `📊 Detected: ${stats.totalDetected} statuses\n`;
+                }
+                
+                let memberInfo = '';
+                if (memberDetector) {
+                    const memberStats = memberDetector.getStats();
+                    memberInfo = `👥 Member Detector: ✅ ACTIVE\n`;
+                    memberInfo += `📊 Events: ${memberStats.totalEvents}\n`;
+                }
+                
+                let antiviewonceInfoPing = '';
+                if (antiViewOnceSystem) {
+                    const antiviewonceStats = antiViewOnceSystem.getStats();
+                    antiviewonceInfoPing = `🔐 Anti-ViewOnce: ✅ ACTIVE\n`;
+                    antiviewonceInfoPing += `📊 Captured: ${antiviewonceStats.total} media\n`;
+                    antiviewonceInfoPing += `🎯 Mode: ${antiviewonceStats.mode}\n`;
+                }
+                
+                await sock.sendMessage(chatId, { 
+                    text: `🏓 *Pong!*\nLatency: ${latency}ms\nPrefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\nMode: ${BOT_MODE}\nOwner: ${isOwnerUser ? 'Yes ✅' : 'No ❌'}\n${statusInfo}${memberInfo}${antiviewonceInfoPing}Status: Connected ✅`
+                }, { quoted: msg });
+                break;
+                
+            case 'help':
+                let helpText = `🐺 *${getCurrentBotName()} HELP*\n\n`;
+                helpText += `Prefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\n`;
+                helpText += `Mode: ${BOT_MODE}\n`;
+                helpText += `Commands: ${commands.size}\n\n`;
+                
+                helpText += `*PREFIX MANAGEMENT*\n`;
+                helpText += `${prefixDisplay}setprefix <new_prefix> - Change prefix (persistent)\n`;
+                helpText += `${prefixDisplay}setprefix none - Enable prefixless mode\n`;
+                helpText += `${prefixDisplay}prefixinfo - Show prefix information\n\n`;
+                
+                helpText += `*MEMBER DETECTION*\n`;
+                helpText += `${prefixDisplay}members - Show member detection stats\n`;
+                helpText += `${prefixDisplay}welcomeset - Configure welcome messages\n\n`;
+                
+                helpText += `*ANTI-VIEWONCE*\n`;
+                helpText += `${prefixDisplay}av private - Send view-once to owner DM\n`;
+                helpText += `${prefixDisplay}av public - Reveal view-once in chat\n`;
+                helpText += `${prefixDisplay}av off - Disable anti-viewonce\n`;
+                helpText += `${prefixDisplay}av settings - Check status\n\n`;
+                
+                helpText += `*STATUS DETECTOR*\n`;
+                helpText += `${prefixDisplay}statusstats - Show status detection stats\n\n`;
+                
+                for (const [category, cmds] of commandCategories.entries()) {
+                    helpText += `*${category.toUpperCase()}*\n`;
+                    helpText += `${cmds.slice(0, 6).join(', ')}`;
+                    if (cmds.length > 6) helpText += `... (+${cmds.length - 6} more)`;
+                    helpText += '\n\n';
+                }
+                
+                await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
+                break;
+                
+           
+            case 'uptime':
+                const uptime = process.uptime();
+                const hours = Math.floor(uptime / 3600);
+                const minutes = Math.floor((uptime % 3600) / 60);
+                const seconds = Math.floor(uptime % 60);
+                
+                let statusDetectorInfo = '';
+                if (statusDetector) {
+                    const stats = statusDetector.getStats();
+                    statusDetectorInfo = `👁️ Status Detector: ✅ ACTIVE\n`;
+                    statusDetectorInfo += `📊 Detected: ${stats.totalDetected} statuses\n`;
+                    statusDetectorInfo += `🕒 Last: ${stats.lastDetection}\n`;
+                }
+                
+                let memberDetectorInfo = '';
+                if (memberDetector) {
+                    const memberStats = memberDetector.getStats();
+                    memberDetectorInfo = `👥 Member Detector: ✅ ACTIVE\n`;
+                    memberDetectorInfo += `📊 Events: ${memberStats.totalEvents}\n`;
+                    memberDetectorInfo += `📈 Groups: ${memberStats.totalGroups}\n`;
+                }
+                
+                let antiviewonceInfo = '';
+                if (antiViewOnceSystem) {
+                    const antiviewonceStats = antiViewOnceSystem.getStats();
+                    antiviewonceInfo = `🔐 Anti-ViewOnce: ✅ ACTIVE\n`;
+                    antiviewonceInfo += `📊 Captured: ${antiviewonceStats.total} media\n`;
+                    antiviewonceInfo += `🎯 Mode: ${antiviewonceStats.mode}\n`;
+                    antiviewonceInfo += `💾 Size: ${antiviewonceStats.totalSizeKB}KB\n`;
+                }
+                
+                await sock.sendMessage(chatId, {
+                    text: `⏰ *UPTIME*\n\n${hours}h ${minutes}m ${seconds}s\n📊 Commands: ${commands.size}\n👑 Owner: +${ownerInfo.ownerNumber}\n💬 Prefix: "${isPrefixless ? 'none (prefixless)' : currentPrefix}"\n🎛️ Mode: ${BOT_MODE}\n${statusDetectorInfo}${memberDetectorInfo}${antiviewonceInfo}`
+                }, { quoted: msg });
+                break;
+                
+            case 'statusstats':
+                if (statusDetector) {
+                    const stats = statusDetector.getStats();
+                    const recent = statusDetector.statusLogs.slice(-3).reverse();
+                    
+                    let statsText = `📊 *STATUS DETECTION STATS*\n\n`;
+                    statsText += `🔍 Status: ✅ ACTIVE\n`;
+                    statsText += `📈 Total detected: ${stats.totalDetected}\n`;
+                    statsText += `🕒 Last detection: ${stats.lastDetection}\n\n`;
+                    
+                    if (recent.length > 0) {
+                        statsText += `📱 *Recent Statuses:*\n`;
+                        recent.forEach((status, index) => {
+                            statsText += `${index + 1}. ${status.sender}: ${status.type} (${new Date(status.timestamp).toLocaleTimeString()})\n`;
+                        });
+                    }
+                    
+                    await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
+                } else {
+                    await sock.sendMessage(chatId, { 
+                        text: '❌ Status detector not initialized.'
+                    }, { quoted: msg });
+                }
+                break;
+                
+            case 'members':
+            case 'memberstats':
+                if (memberDetector) {
+                    const stats = memberDetector.getStats();
+                    
+                    let membersText = `👥 *MEMBER DETECTION STATS*\n\n`;
+                    membersText += `🔍 Status: ${stats.enabled ? '✅ ACTIVE' : '❌ DISABLED'}\n`;
+                    membersText += `📈 Total events: ${stats.totalEvents}\n`;
+                    membersText += `👥 Groups monitored: ${stats.totalGroups}\n`;
+                    membersText += `📊 Groups cached: ${stats.cachedGroups}\n\n`;
+                    
+                    membersText += `🎯 *Features:*\n`;
+                    membersText += `• Auto-detect new members\n`;
+                    membersText += `• Terminal notifications\n`;
+                    membersText += `• Welcome message system\n`;
+                    membersText += `• Profile picture support\n`;
+                    
+                    await sock.sendMessage(chatId, { text: membersText }, { quoted: msg });
+                } else {
+                    await sock.sendMessage(chatId, { 
+                        text: '❌ Member detector not initialized.'
+                    }, { quoted: msg });
+                }
+                break;
+                
+            case 'welcomeset':
+            case 'welcomeconfig':
+                const welcomeText = `🎉 *WELCOME SYSTEM CONFIGURATION*\n\n` +
+                                  `The welcome system is automatically enabled!\n\n` +
+                                  `*How it works:*\n` +
+                                  `1. Bot detects new members in groups\n` +
+                                  `2. Sends welcome message with profile picture\n` +
+                                  `3. Mentions the new member\n` +
+                                  `4. Shows terminal notification\n\n` +
+                                  `*Default Welcome Message:*\n` +
+                                  `"🎉 Welcome {name} to {group}! 🎊\n\n` +
+                                  `We're now {members} members strong! 💪\n\n` +
+                                  `Please read the group rules and enjoy your stay! 😊"\n\n` +
+                                  `*Variables:*\n` +
+                                  `{name} - Member's name\n` +
+                                  `{group} - Group name\n` +
+                                  `{members} - Total members\n` +
+                                  `{mention} - Mention the member\n\n` +
+                                  `*Note:* System runs automatically in background!`;
+                
+                await sock.sendMessage(chatId, { text: welcomeText }, { quoted: msg });
+                break;
+        
+            case 'ultimatefix':
+            case 'solveowner':
+            case 'fixall':
+                const fixSenderJid = msg.key.participant || chatId;
+                const fixCleaned = jidManager.cleanJid(fixSenderJid);
+                
+                if (!jidManager.isOwner(msg) && !msg.key.fromMe) {
+                    await sock.sendMessage(chatId, {
+                        text: '❌ *Owner Only Command*'
+                    }, { quoted: msg });
+                    return;
+                }
+                
+                const fixResult = await ultimateFixSystem.applyUltimateFix(sock, fixSenderJid, fixCleaned, false);
+                
+                if (fixResult.success) {
+                    await sock.sendMessage(chatId, {
+                        text: `✅ *ULTIMATE FIX APPLIED*\n\nYou should now have full owner access!`
+                    }, { quoted: msg });
+                } else {
+                    await sock.sendMessage(chatId, {
+                        text: `❌ *Ultimate Fix Failed*`
+                    }, { quoted: msg });
+                }
+                break;
+                
+            case 'prefixinfo':
+                const prefixDbStatus = {
+                    'bot_settings (DB)': !!_cache_bot_settings,
+                    'prefix_config (DB)': !!_cache_prefix_config
+                };
+                
+                let infoText = `⚡ *PREFIX INFORMATION*\n\n`;
+                infoText += `📝 Current Prefix: *${isPrefixless ? 'none (prefixless)' : currentPrefix}*\n`;
+                infoText += `⚙️ Default Prefix: ${DEFAULT_PREFIX}\n`;
+                infoText += `🌐 Global Prefix: ${global.prefix || 'Not set'}\n`;
+                infoText += `📁 ENV Prefix: ${process.env.PREFIX || 'Not set'}\n`;
+                infoText += `🎯 Prefixless Mode: ${isPrefixless ? '✅ ENABLED' : '❌ DISABLED'}\n\n`;
+                
+                infoText += `📋 *Config Status:*\n`;
+                for (const [cfgName, loaded] of Object.entries(prefixDbStatus)) {
+                    infoText += `├─ ${cfgName}: ${loaded ? '✅' : '❌'}\n`;
+                }
+                
+                infoText += `\n💡 *Changes are saved to database and persist after restart!*`;
+                
+                await sock.sendMessage(chatId, { text: infoText }, { quoted: msg });
+                break;
+                
             case 'forcerestart':
                 if (!jidManager.isOwner(msg)) {
                     await sock.sendMessage(chatId, {
@@ -7038,3 +7341,16 @@ main().catch((error) => {
     UltraCleanLogger.critical(`Fatal error: ${error.message}`);
     process.exit(1);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
