@@ -4454,11 +4454,15 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 );
                 if (requiresPatch) {
                     message = {
-                        messageContextInfo: {
-                            deviceListMetadataVersion: 2,
-                            deviceListMetadata: {},
+                        viewOnceMessage: {
+                            message: {
+                                messageContextInfo: {
+                                    deviceListMetadataVersion: 2,
+                                    deviceListMetadata: {},
+                                },
+                                ...message,
+                            },
                         },
-                        ...message,
                     };
                 }
                 return message;
@@ -4597,22 +4601,14 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                 }
                                 
                                 if (isTextOnly && !hasMedia) {
-                                    const isGroup = jid.includes('@g.us');
-                                    if (isGroup) {
-                                        const textResult = await originalSendMessage(jid, content, options, ...rest);
-                                        try {
-                                            if (textResult?.key?.id && store) store.addSentMessage(jid, textResult.key.id, content);
-                                        } catch {}
-                                        try {
-                                            await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
-                                        } catch {}
-                                        return textResult;
-                                    }
-                                    const sendResult = await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
+                                    const textResult = await originalSendMessage(jid, content, options, ...rest);
                                     try {
-                                        if (sendResult?.key?.id && store) store.addSentMessage(jid, sendResult.key.id, content);
+                                        if (textResult?.key?.id && store) store.addSentMessage(jid, textResult.key.id, content);
                                     } catch {}
-                                    return sendResult;
+                                    try {
+                                        await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
+                                    } catch {}
+                                    return textResult;
                                 }
                             }
                         } catch (btnErr) {
