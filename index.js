@@ -4741,7 +4741,18 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         autoConnectOnStart.trigger(sock).catch(() => {});
                     }
                 }, 3000);
-                
+
+                setTimeout(async () => {
+                    if (!isConnected) return;
+                    try {
+                        await sock.updateReadReceiptsPrivacy('all');
+                        await sock.fetchPrivacySettings(true);
+                        UltraCleanLogger.info('✅ Read receipts enabled — status views will register correctly');
+                    } catch (e) {
+                        UltraCleanLogger.info(`⚠️ Could not enable read receipts: ${e.message}`);
+                    }
+                }, 6000);
+
                 setTimeout(async () => {
                     if (!isConnected || isConflictRecovery) return;
                     try {
