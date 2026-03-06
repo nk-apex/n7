@@ -6,6 +6,7 @@ import { getWarnLimit as getPerGroupLimit } from '../../lib/warnings-store.js';
 import db from '../../lib/supabase.js';
 import { getStatusAntideleteInfo } from './antideletestatus.js';
 import { getAntieditInfo } from './antiedit.js';
+import { detectPlatform } from '../../lib/platformDetect.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -146,19 +147,6 @@ function getAntibugState() {
     return `${enabled.length} group(s) enabled`;
 }
 
-function detectPlatform() {
-    if (process.env.REPL_ID || process.env.REPLIT_DB_URL || process.env.REPL_SLUG || process.env.REPL_OWNER) return 'Replit';
-    if (process.env.DYNO || process.env.HEROKU_APP_NAME) return 'Heroku';
-    if (process.env.RENDER || process.env.RENDER_SERVICE_ID) return 'Render';
-    if (process.env.RAILWAY_STATIC_URL || process.env.RAILWAY_SERVICE_ID) return 'Railway';
-    if (process.env.VERCEL || process.env.VERCEL_URL) return 'Vercel';
-    if (process.env.AWS_LAMBDA_FUNCTION_NAME) return 'AWS';
-    if (process.env.GOOGLE_CLOUD_PROJECT) return 'Google Cloud';
-    if (process.env.FLY_APP_NAME) return 'Fly.io';
-    if (process.env.KOYEB_APP_NAME) return 'Koyeb';
-    if (fs.existsSync('/.dockerenv')) return 'Docker';
-    return 'VPS / Local';
-}
 
 function formatUptime(seconds) {
     const d = Math.floor(seconds / 86400);

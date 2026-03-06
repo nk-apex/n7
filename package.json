@@ -63,7 +63,6 @@
     "@google/generative-ai": "^0.24.1",
     "@hapi/boom": "^10.0.1",
     "@iamtraction/google-translate": "^2.0.1",
-    "@stdlib/stats-base-mean": "^0.2.2",
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "adm-zip": "^0.5.16",
     "archiver": "^7.0.1",

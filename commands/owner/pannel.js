@@ -1,6 +1,7 @@
 // commands/system/panelstatus.js
 import os from "os";
-import si from "systeminformation"; // You'll need to install: npm install systeminformation
+import si from "systeminformation";
+import { detectPlatform } from '../../lib/platformDetect.js';
 
 export default {
   name: "panel",
@@ -153,7 +154,7 @@ export default {
 🌐 *Network*
 • *Connections:* ${activeConnections} active
 • *Processes:* ${processes} running
-• *Platform:* ${os.platform()} ${os.arch()}
+• *Platform:* ${detectPlatform()}
 
 👤 *User:* @${sender.split("@")[0]}
 ⏰ *Time:* ${new Date().toLocaleTimeString()}

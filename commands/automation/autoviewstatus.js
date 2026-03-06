@@ -170,19 +170,20 @@ class AutoViewManager {
     }
 
     async _sendReceipt(sock, statusKey, displayId) {
-        // ── APPROACH: pass the key EXACTLY as received from messages.upsert ──
-        // Do NOT reconstruct or modify the key at all.
-        // Baileys internally handles @lid JIDs for read receipts when given
-        // the original key from the event — it knows how to route it.
-        //
-        // The key shape from messages.upsert for a status:
-        //   { remoteJid: 'status@broadcast', id: '...', participant: '123@lid', fromMe: false }
-        //
-        // readMessages() sends a type-3 (READ) receipt to the server.
-        // WhatsApp server resolves the @lid to the real JID on its end.
-
         let success = false;
         let method  = '';
+
+        const participant = statusKey.participant || statusKey.remoteJid;
+        const messageTimestamp = statusKey.messageTimestamp || Math.floor(Date.now() / 1000);
+
+        // Subscribe to the poster's presence first.
+        // Newer WhatsApp requires this to register a status view on the sender's side.
+        try {
+            if (sock.presenceSubscribe && participant && !participant.includes('broadcast')) {
+                await sock.presenceSubscribe(participant);
+                await new Promise(r => setTimeout(r, 300));
+            }
+        } catch {}
 
         // Method 1: readMessages with the raw key as-is
         try {
@@ -191,28 +192,54 @@ class AutoViewManager {
             method  = 'readMessages';
         } catch (e1) {
 
-            // Method 2: chatModify to mark status chat as read
+            // Method 2: readMessages with a clean key (no extra fields that may confuse Baileys)
             try {
-                await sock.chatModify(
-                    { markRead: true, lastMessages: [{ key: statusKey, messageTimestamp: Math.floor(Date.now() / 1000) }] },
-                    'status@broadcast'
-                );
+                await sock.readMessages([{
+                    remoteJid: 'status@broadcast',
+                    id: statusKey.id,
+                    fromMe: false,
+                    participant
+                }]);
                 success = true;
-                method  = 'chatModify';
+                method  = 'readMessages-clean';
             } catch (e2) {
 
-                // Method 3: sendReadReceipt directly to the participant
+                // Method 3: chatModify to mark status chat as read
                 try {
-                    const participant = statusKey.participant || statusKey.remoteJid;
-                    await sock.sendReadReceipt('status@broadcast', participant, [statusKey.id]);
+                    await sock.chatModify(
+                        { markRead: true, lastMessages: [{ key: statusKey, messageTimestamp }] },
+                        'status@broadcast'
+                    );
                     success = true;
-                    method  = 'sendReadReceipt';
+                    method  = 'chatModify';
                 } catch (e3) {
-                    console.log(`${R}${B}❌ ALL METHODS FAILED for ${displayId}${X}`);
-                    console.log(`${R}   readMessages   : ${e1.message}${X}`);
-                    console.log(`${R}   chatModify     : ${e2.message}${X}`);
-                    console.log(`${R}   sendReadReceipt: ${e3.message}${X}`);
-                    return;
+
+                    // Method 4: sendReadReceipt to status@broadcast with participant
+                    try {
+                        await sock.sendReadReceipt('status@broadcast', participant, [statusKey.id]);
+                        success = true;
+                        method  = 'sendReadReceipt';
+                    } catch (e4) {
+
+                        // Method 5: sendReadReceipt directly to the participant's JID
+                        try {
+                            if (participant && !participant.includes('broadcast')) {
+                                await sock.sendReadReceipt(participant, 'status@broadcast', [statusKey.id]);
+                                success = true;
+                                method  = 'directParticipantReceipt';
+                            } else {
+                                throw new Error('no valid participant');
+                            }
+                        } catch (e5) {
+                            console.log(`${R}${B}❌ ALL METHODS FAILED for ${displayId}${X}`);
+                            console.log(`${R}   readMessages        : ${e1.message}${X}`);
+                            console.log(`${R}   readMessages-clean  : ${e2.message}${X}`);
+                            console.log(`${R}   chatModify          : ${e3.message}${X}`);
+                            console.log(`${R}   sendReadReceipt     : ${e4.message}${X}`);
+                            console.log(`${R}   directParticipant   : ${e5.message}${X}`);
+                            return;
+                        }
+                    }
                 }
             }
         }

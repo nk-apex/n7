@@ -25,6 +25,7 @@ import { execSync } from "child_process";
 import { getCurrentMenuStyle } from "./menustyle.js";
 import { setLastMenu, getAllFieldsStatus } from "../menus/menuToggles.js";
 import { getBotName as _getBotName } from '../../lib/botname.js';
+import { getPlatformInfo } from '../../lib/platformDetect.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -577,7 +578,7 @@ export default {
 //   const botPrefix = getBotPrefix();
 //   const botVersion = getBotVersion();
 //   const botMode = getBotMode();
-//   const deploymentPlatform = getDeploymentPlatform();
+//   const deploymentPlatform = getPlatformInfo();
   
 //   // ========== ADDED HELPER FUNCTIONS FOR SYSTEM METRICS ==========
 //   const formatUptime = (seconds) => {
@@ -1415,7 +1416,7 @@ case 1: {
   const botPrefix = getBotPrefix();
   const botVersion = getBotVersion();
   const botMode = getBotMode();
-  const deploymentPlatform = getDeploymentPlatform();
+  const deploymentPlatform = getPlatformInfo();
   
   // ========== IMPROVED REAL-TIME SYSTEM METRICS ==========
   const formatUptime = (seconds) => {
@@ -2898,7 +2899,7 @@ case 3: {
   const botPrefix = getBotPrefix();
   const botVersion = getBotVersion();
   const botMode = getBotMode();
-  const deploymentPlatform = getDeploymentPlatform();
+  const deploymentPlatform = getPlatformInfo();
   
   // Add info section only if any field is enabled
   const fieldsStatus = getAllFieldsStatus(style);
@@ -3991,7 +3992,7 @@ case 4: {
   const botPrefix = getBotPrefix();
   const botVersion = getBotVersion();
   const botMode = getBotMode();
-  const deploymentPlatform = getDeploymentPlatform();
+  const deploymentPlatform = getPlatformInfo();
   
   // ========== ADDED HELPER FUNCTIONS FOR SYSTEM METRICS ==========
   const formatUptime = (seconds) => {
@@ -4891,7 +4892,7 @@ case 4: {
 //   const botPrefix = getBotPrefix();
 //   const botVersion = getBotVersion();
 //   const botMode = getBotMode();
-//   const deploymentPlatform = getDeploymentPlatform();
+//   const deploymentPlatform = getPlatformInfo();
   
 //   // ========== IMPROVED REAL-TIME SYSTEM METRICS ==========
 //   const formatUptime = (seconds) => {
@@ -5696,7 +5697,7 @@ case 5: {
   const botPrefix = getBotPrefix();
   const botVersion = getBotVersion();
   const botMode = getBotMode();
-  const deploymentPlatform = getDeploymentPlatform();
+  const deploymentPlatform = getPlatformInfo();
   
   // ========== IMPROVED REAL-TIME SYSTEM METRICS ==========
   const formatUptime = (seconds) => {
@@ -6930,7 +6931,7 @@ case 6: {
   const botPrefix = getBotPrefix();
   const botVersion = getBotVersion();
   const botMode = getBotMode();
-  const deploymentPlatform = getDeploymentPlatform();
+  const deploymentPlatform = getPlatformInfo();
   
   // ========== UPDATED HEADER FORMAT ==========
   // ┌──⌈ WOLFBOT ⌋ 〘SW〙
@@ -8063,7 +8064,7 @@ case 6: {
 //   const botPrefix = getBotPrefix();
 //   const botVersion = getBotVersion();
 //   const botMode = getBotMode();
-//   const deploymentPlatform = getDeploymentPlatform();
+//   const deploymentPlatform = getPlatformInfo();
   
 //   // Add bot name header before the info section
 //   let infoSection = `┌────────────────
@@ -8853,7 +8854,7 @@ case 7: {
   const botPrefix = getBotPrefix();
   const botVersion = getBotVersion();
   const botMode = getBotMode();
-  const deploymentPlatform = getDeploymentPlatform();
+  const deploymentPlatform = getPlatformInfo();
   
 //   // Add bot name header before the info section
 //   let infoSection = `┌────────────────

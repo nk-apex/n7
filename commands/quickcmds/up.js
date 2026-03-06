@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getBotName } from '../../lib/botname.js';
 import os from "os";
+import { detectPlatform } from '../../lib/platformDetect.js';
 
 export default {
   name: "up",
@@ -48,8 +49,6 @@ export default {
         minute: '2-digit'
       });
       
-      const platform = os.platform();
-      const arch = os.arch();
       const cpus = os.cpus();
       const cpuCores = cpus.length;
       const cpuModel = cpus[0]?.model || "Unknown";
@@ -81,7 +80,7 @@ export default {
 ┃
 ┃  ⏱️ *Uptime:* ${days}d ${hours}h ${minutes}m ${seconds}s
 ┃  💾 *Memory:* ${usedMemory.toFixed(1)}/${totalMemory.toFixed(1)} MB (${memoryPercent}%)
-┃  💻 *Platform:* ${platform} (${arch})
+┃  💻 *Platform:* ${detectPlatform()}
 ┃  🔧 *CPU:* ${cpuCores} cores
 ┃  🕐 *Started:* ${startTimeFormatted}
 ┃  🐺 *Developer:* ${githubName}

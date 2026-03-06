@@ -237,6 +237,7 @@ import { isButtonModeEnabled } from './lib/buttonMode.js';
 import { setActiveCommand, clearActiveCommand, getActiveCommand, buildCommandButtons } from './lib/commandButtons.js';
 import { migrateSudoToSupabase, initSudo, setBotId } from './lib/sudo-store.js';
 import { migrateWarningsToSupabase } from './lib/warnings-store.js';
+import { detectPlatform } from './lib/platformDetect.js';
 
 const msgRetryCounterCache = new NodeCache({ stdTTL: 600 });
 globalThis.msgRetryCounterCache_ref = msgRetryCounterCache;
@@ -1235,97 +1236,6 @@ function updatePrefixImmediately(newPrefix) {
     };
 }
 
-// Platform detection
-// Update the platform detection function
-function detectPlatform() {
-    // Check Termux
-    if (process.env.PREFIX && process.env.PREFIX.includes('com.termux')) {
-        return '📱 Termux';
-    }
-    // Check Heroku FIRST (most specific env variables)
-    else if (process.env.HEROKU_APP_NAME || 
-        process.env.DYNO || 
-        process.env.HEROKU_API_KEY ||
-        (process.env.PORT && process.env.PORT !== '3000' && process.env.PORT !== '8080')) {
-        return '🟣 Heroku';
-    }
-    // Check Render
-    else if (process.env.RENDER_SERVICE_ID || 
-             process.env.RENDER_SERVICE_NAME ||
-             process.env.RENDER ||
-             process.env.RENDER_EXTERNAL_URL) {
-        return '🚀 Render';
-    }
-    // Check Railway
-    else if (process.env.RAILWAY_ENVIRONMENT ||
-             process.env.RAILWAY_PROJECT_NAME ||
-             process.env.RAILWAY_SERVICE_NAME ||
-             process.env.RAILWAY_PROJECT_ID) {
-        return '🚂 Railway';
-    }
-    // Check Replit
-    else if (process.env.REPL_ID || 
-             process.env.REPLIT_DB_URL ||
-             process.env.REPLIT_USER ||
-             process.env.REPL_SLUG) {
-        return '🌀 Replit';
-    }
-    // Check Vercel
-    else if (process.env.VERCEL || 
-             process.env.VERCEL_ENV ||
-             process.env.VERCEL_URL) {
-        return '▲ Vercel';
-    }
-    // Check Glitch
-    else if (process.env.GLITCH_PROJECT_REMIX ||
-             process.env.PROJECT_REMIX_CHAIN ||
-             process.env.GLITCH) {
-        return '🎏 Glitch';
-    }
-    // Check Koyeb
-    else if (process.env.KOYEB_APP ||
-             process.env.KOYEB_REGION ||
-             process.env.KOYEB_SERVICE ||
-             process.env.KOYEB_PROJECT) {
-        return '☁️ Koyeb';
-    }
-    // Check Katabump
-    else if (process.env.KATABUMP || 
-             process.env.KATABUMP_URL || 
-             process.env.KATABUMP_PROJECT ||
-             process.env.KATABUMP_APP) {
-        return '🦖 Katabump';
-    }
-    // Check Cyclic
-    else if (process.env.CYCLIC_URL ||
-             process.env.CYCLIC_APP_ID ||
-             process.env.CYCLIC_DB) {
-        return '♻️ Cyclic';
-    }
-    // Check Panel/Pterodactyl
-    else if (process.env.PANEL ||
-             process.env.PTERODACTYL ||
-             process.env.NODE_ENV === 'production' && 
-             (process.platform === 'linux' && !process.env.SSH_CONNECTION)) {
-        return '🎛️ Panel/VPS';
-    }
-    // Check SSH/VPS
-    else if (process.env.SSH_CONNECTION || 
-             process.env.SSH_CLIENT ||
-             (process.platform === 'linux' && process.env.USER === 'root')) {
-        return '🖥️ VPS/SSH';
-    }
-    // Check OS
-    else if (process.platform === 'win32') {
-        return '🪟 Windows PC';
-    } else if (process.platform === 'darwin') {
-        return '🍎 MacOS';
-    } else if (process.platform === 'linux') {
-        return '🐧 Linux';
-    } else {
-        return '💻 Local Machine';
-    }
-}
 // ====== GLOBAL VARIABLES ======
 let OWNER_NUMBER = null;
 let OWNER_JID = null;
@@ -5467,7 +5377,8 @@ async function startBot(loginMode = 'auto', loginData = null) {
             }
             
             if (msg.key?.remoteJid === 'status@broadcast') {
-                handleAutoView(sock, msg.key).catch(() => {});
+                const statusKeyWithTs = { ...msg.key, messageTimestamp: msg.messageTimestamp };
+                handleAutoView(sock, statusKeyWithTs, msg.message).catch(() => {});
                 handleAutoReact(sock, msg.key).catch(() => {});
                 if (statusDetector) {
                     statusDetector.detectStatusUpdate(msg).catch(() => {});
