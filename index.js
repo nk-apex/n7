@@ -5394,7 +5394,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 // Build the status key, resolving @lid → @s.whatsapp.net for the read receipt.
                 // WhatsApp only counts a status view when the receipt uses the phone number JID.
                 const rawParticipant = msg.key.participant || '';
-                let resolvedParticipantPn = msg.key.participantAlt || msg.key.participantPn || null;
+                let resolvedParticipantPn = msg.key.remoteJidAlt || msg.key.participantAlt || msg.key.participantPn || null;
                 if (!resolvedParticipantPn && rawParticipant.includes('@lid')) {
                     const lidNum = rawParticipant.split('@')[0].split(':')[0];
                     const phone = lidPhoneCache.get(lidNum) || lidPhoneCache.get(rawParticipant.split('@')[0]) || getPhoneFromLid(lidNum);

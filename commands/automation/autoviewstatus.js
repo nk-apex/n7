@@ -170,16 +170,17 @@ class AutoViewManager {
     }
 
     async _sendReceipt(sock, statusKey, displayId) {
-        // Priority: participantAlt (Baileys-set PN from stanza's participant_pn attr)
-        //        → participantPn (our LID-cache resolved PN)
-        //        → participant (raw, may be @lid — WhatsApp won't count it as a view)
-        // When participant is @lid format, WhatsApp does NOT count the receipt as a view.
-        const participantToUse = statusKey.participantAlt || statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
+        // For status@broadcast, Baileys puts the sender's phone JID in remoteJidAlt
+        // (not participantAlt — that's only populated for @g.us group messages).
+        // Priority: remoteJidAlt → participantPn (LID cache) → participant (raw @lid fallback)
+        const participantToUse = statusKey.remoteJidAlt || statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
+
+        console.log(`[ST-VIEW-DBG] participant=${statusKey.participant} | remoteJidAlt=${statusKey.remoteJidAlt} | participantPn=${statusKey.participantPn} | fromMe=${statusKey.fromMe} | id=${statusKey.id} | using=${participantToUse}`);
 
         const readKey = {
             remoteJid: statusKey.remoteJid,
             id: statusKey.id,
-            fromMe: statusKey.fromMe,
+            fromMe: false,
             participant: participantToUse
         };
 
