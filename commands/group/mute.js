@@ -83,17 +83,6 @@ export default {
         return;
       }
 
-      // Check if bot is admin (normalize numeric parts for LID compatibility)
-      const botIdClean = (sock.user.id || '').split(':')[0].split('@')[0];
-      const botParticipant = groupMetadata.participants.find(p => {
-        const pClean = p.id.split(':')[0].split('@')[0];
-        return pClean === botIdClean;
-      });
-      if (!botParticipant || (botParticipant.admin !== 'admin' && botParticipant.admin !== 'superadmin')) {
-        await sock.sendMessage(sender, { text: '⚠️ I need to be an admin to do this.' }, { quoted: msg });
-        return;
-      }
-
       // Check if already muted
       const currentSetting = groupMetadata.announce;
       if (currentSetting) {
