@@ -1,6 +1,12 @@
+import { createRequire } from 'module';
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
 import { getBotName } from '../../lib/botname.js';
 import db from '../../lib/supabase.js';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+
+const _requireAds = createRequire(import.meta.url);
+let giftedBtnsAds;
+try { giftedBtnsAds = _requireAds('gifted-btns'); } catch (e) {}
 
 const CACHE_CLEAN_INTERVAL = 1 * 60 * 60 * 1000;
 const MAX_CACHE_AGE = 3 * 60 * 60 * 1000;
@@ -938,10 +944,26 @@ export default {
                 break;
             }
 
-            default:
-                await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🔍 *STATUS ANTIDELETE* ⌋\n├─⊷ Usage: *${prefix}ads private/public/off*\n├─⊷ *${prefix}ads help*\n╰───`
-                }, { quoted: msg });
+            default: {
+                const modeNow = statusAntideleteState.enabled ? (statusAntideleteState.mode || 'private').toUpperCase() : 'OFF';
+                const helpText = `╭─⌈ 🔍 *STATUS ANTIDELETE* ⌋\n├─⊷ *Mode:* ${modeNow}\n├─⊷ *${prefix}ads on*\n│  └⊷ Enable tracking\n├─⊷ *${prefix}ads off*\n│  └⊷ Disable tracking\n├─⊷ *${prefix}ads status*\n│  └⊷ View stats\n╰───`;
+                if (isButtonModeEnabled() && giftedBtnsAds?.sendInteractiveMessage) {
+                    try {
+                        await giftedBtnsAds.sendInteractiveMessage(sock, chatId, {
+                            body: { text: helpText },
+                            footer: { text: `Current: ${modeNow}` },
+                            interactiveButtons: [
+                                { type: 'quick_reply', display_text: '✅ Enable', id: `${prefix}ads on` },
+                                { type: 'quick_reply', display_text: '❌ Disable', id: `${prefix}ads off` },
+                                { type: 'quick_reply', display_text: '📊 Status', id: `${prefix}ads status` }
+                            ]
+                        }, { quoted: msg });
+                        break;
+                    } catch (e) {}
+                }
+                await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
+                break;
+            }
         }
     }
 };

@@ -1,7 +1,13 @@
 
+import { createRequire } from 'module';
 import axios from "axios";
 import { downloadMediaFromMessage } from "@whiskeysockets/baileys";
 import db from '../../lib/supabase.js';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+
+const _requireCb = createRequire(import.meta.url);
+let giftedBtnsCb;
+try { giftedBtnsCb = _requireCb('gifted-btns'); } catch (e) {}
 
 const availableVoices = [
   "alloy", "echo", "fable", "onyx", "nova", "shimmer", "adam", "antoni",
@@ -307,26 +313,10 @@ export default {
     const value = args.slice(1).join(" ");
 
     if (!subcommand) {
-      const statusMap = {
-        'on': '✅ ON',
-        'off': '❌ OFF'
-      };
-
-      const modeMap = {
-        'private': '🔒 Private Only',
-        'group': '👥 Group Only', 
-        'both': '🌐 Both'
-      };
-
-      const triggerMap = {
-        'dm': '📨 DM Trigger',
-        'all': '🔊 All Messages'
-      };
-
-      const responseMap = {
-        'text': '📝 Text',
-        'audio': '🎵 Audio'
-      };
+      const statusMap = { 'on': '✅ ON', 'off': '❌ OFF' };
+      const modeMap = { 'private': '🔒 Private Only', 'group': '👥 Group Only', 'both': '🌐 Both' };
+      const triggerMap = { 'dm': '📨 DM Trigger', 'all': '🔊 All Messages' };
+      const responseMap = { 'text': '📝 Text', 'audio': '🎵 Audio' };
 
       const helpText = `*🤖 Chatbot Settings*\n\n` +
         `🔹 *Status:* ${statusMap[settings.status]}\n` +
@@ -334,28 +324,36 @@ export default {
         `🔹 *Trigger:* ${triggerMap[settings.trigger]}\n` +
         `🔹 *Default Response:* ${responseMap[settings.default_response]}\n` +
         `🔹 *Voice:* ${settings.voice}\n\n` +
-        `*🎯 Response Types:*\n` +
-        `▸ *Text* - Normal AI conversation\n` +
-        `▸ *Audio* - Add "audio" to get voice response\n` +
-        `▸ *Video* - Add "video" to generate videos\n` +
-        `▸ *Image* - Add "image" to generate images\n` +
-        `▸ *Vision* - Send image + "analyze this"\n\n` +
-        `*Usage Examples:*\n` +
-        `▸ @bot hello how are you? (Text)\n` +
-        `▸ @bot audio tell me a story (Audio response)\n` +
-        `▸ @bot video a cat running (Video generation)\n` +
-        `▸ @bot image a beautiful sunset (Image generation)\n` +
-        `▸ [Send image] "analyze this" (Vision analysis)\n\n` +
         `*Commands:*\n` +
         `▸ chatbot on/off\n` +
         `▸ chatbot mode private/group/both\n` +
         `▸ chatbot trigger dm/all\n` +
         `▸ chatbot response text/audio\n` +
         `▸ chatbot voice <name>\n` +
-        `▸ chatbot voices\n` +
-        `▸ chatbot clear\n` +
-        `▸ chatbot status\n` +
-        `▸ chatbot test <type> <message>`;
+        `▸ chatbot voices | chatbot clear | chatbot status`;
+
+      if (isButtonModeEnabled() && giftedBtnsCb?.sendInteractiveMessage) {
+        try {
+          const prefix = m.text?.trim()[0] || '.';
+          const toggleBtn = settings.status === 'on'
+            ? { type: 'quick_reply', display_text: '❌ Turn Off', id: `${prefix}chatbot off` }
+            : { type: 'quick_reply', display_text: '✅ Turn On', id: `${prefix}chatbot on` };
+          const modeLabel = settings.mode === 'both' ? '👥 Group Only' : settings.mode === 'group' ? '🔒 Private Only' : '🌐 Both';
+          const modeNext = settings.mode === 'both' ? 'group' : settings.mode === 'group' ? 'private' : 'both';
+          const respLabel = settings.default_response === 'text' ? '🎵 Audio Response' : '📝 Text Response';
+          const respNext = settings.default_response === 'text' ? 'audio' : 'text';
+          await giftedBtnsCb.sendInteractiveMessage(sock, jid, {
+            body: { text: helpText },
+            footer: { text: 'Chatbot Controls' },
+            interactiveButtons: [
+              toggleBtn,
+              { type: 'quick_reply', display_text: `🔄 Mode: ${modeLabel}`, id: `${prefix}chatbot mode ${modeNext}` },
+              { type: 'quick_reply', display_text: `🔄 ${respLabel}`, id: `${prefix}chatbot response ${respNext}` }
+            ]
+          }, { quoted: m });
+          return;
+        } catch (e) {}
+      }
 
       await sock.sendMessage(jid, { text: helpText }, { quoted: m });
       return;

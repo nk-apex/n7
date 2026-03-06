@@ -1,3 +1,10 @@
+import { createRequire } from 'module';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+
+const _requireAl = createRequire(import.meta.url);
+let giftedBtnsAl;
+try { giftedBtnsAl = _requireAl('gifted-btns'); } catch (e) {}
+
 const URL_PATTERNS = [
     /https?:\/\/[^\s<>]+/gi,
     /www\.[^\s<>]+\.[a-zA-Z]{2,}/gi,
@@ -379,9 +386,24 @@ export default {
             return sock.sendMessage(chatId, { text: result }, { quoted: msg });
         }
 
-        return sock.sendMessage(chatId, {
-            text: `╭─⌈ 🔗 *ANTI-LINK* ⌋\n│\n├─⊷ *${PREFIX}antilink on [mode]*\n│  └⊷ warn / delete / kick\n├─⊷ *${PREFIX}antilink off*\n│  └⊷ Disable protection\n├─⊷ *${PREFIX}antilink status*\n│  └⊷ View current status\n├─⊷ *${PREFIX}antilink allow [link]*\n│  └⊷ Whitelist a link\n├─⊷ *${PREFIX}antilink disallow [link]*\n│  └⊷ Remove from whitelist\n├─⊷ *${PREFIX}antilink list*\n│  └⊷ View allowed links\n├─⊷ *${PREFIX}antilink exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *${PREFIX}antilink test [text]*\n│  └⊷ Test link detection\n╰───`
-        }, { quoted: msg });
+        const gc = config[chatId];
+        const currentStatus = gc?.enabled ? `✅ ${gc.mode.toUpperCase()}` : '❌ OFF';
+        const helpText = `╭─⌈ 🔗 *ANTI-LINK* ⌋\n├─⊷ *Status:* ${currentStatus}\n│\n├─⊷ *${PREFIX}antilink on [mode]*\n│  └⊷ warn / delete / kick\n├─⊷ *${PREFIX}antilink off*\n│  └⊷ Disable protection\n├─⊷ *${PREFIX}antilink status*\n│  └⊷ View current status\n├─⊷ *${PREFIX}antilink allow [link]*\n│  └⊷ Whitelist a link\n╰───`;
+        if (isButtonModeEnabled() && giftedBtnsAl?.sendInteractiveMessage) {
+            try {
+                await giftedBtnsAl.sendInteractiveMessage(sock, chatId, {
+                    body: { text: helpText },
+                    footer: { text: `Status: ${currentStatus}` },
+                    interactiveButtons: [
+                        { type: 'quick_reply', display_text: '⚠️ Warn Mode', id: `${PREFIX}antilink on warn` },
+                        { type: 'quick_reply', display_text: '🗑️ Delete Mode', id: `${PREFIX}antilink on delete` },
+                        { type: 'quick_reply', display_text: '👢 Kick Mode', id: `${PREFIX}antilink on kick` }
+                    ]
+                }, { quoted: msg });
+                return;
+            } catch (e) {}
+        }
+        return sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
     }
 };
 

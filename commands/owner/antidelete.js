@@ -1,6 +1,12 @@
+import { createRequire } from 'module';
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
 import { getBotName } from '../../lib/botname.js';
 import db from '../../lib/supabase.js';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+
+const _require = createRequire(import.meta.url);
+let giftedBtns;
+try { giftedBtns = _require('gifted-btns'); } catch (e) {}
 
 const CACHE_CLEAN_INTERVAL = 2 * 60 * 60 * 1000;
 const MAX_MESSAGE_CACHE = 500;
@@ -1103,10 +1109,26 @@ export default {
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
                 
-            default:
-                await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF'}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰───`
-                }, { quoted: msg });
+            default: {
+                const modeNow = antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF';
+                const helpText = `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${modeNow}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰───`;
+                if (isButtonModeEnabled() && giftedBtns?.sendInteractiveMessage) {
+                    try {
+                        await giftedBtns.sendInteractiveMessage(sock, chatId, {
+                            body: { text: helpText },
+                            footer: { text: `Current: ${modeNow}` },
+                            interactiveButtons: [
+                                { type: 'quick_reply', display_text: '🔒 Private Mode', id: `${prefix}antidelete private` },
+                                { type: 'quick_reply', display_text: '📢 Public Mode', id: `${prefix}antidelete public` },
+                                { type: 'quick_reply', display_text: '❌ Turn Off', id: `${prefix}antidelete off` }
+                            ]
+                        }, { quoted: msg });
+                        break;
+                    } catch (e) {}
+                }
+                await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
+                break;
+            }
         }
     }
 };

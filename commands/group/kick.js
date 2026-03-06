@@ -1,3 +1,11 @@
+import { createRequire } from 'module';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+import { setActionSession } from '../../lib/actionSession.js';
+
+const _requireKick = createRequire(import.meta.url);
+let giftedBtnsKick;
+try { giftedBtnsKick = _requireKick('gifted-btns'); } catch (e) {}
+
 export default {
   name: 'kick',
   description: 'Removes mentioned members or specified numbers from the group.',
@@ -98,6 +106,24 @@ export default {
     if (toKick.length === 0) {
       let reason = skipped.length > 0 ? 'Cannot kick admins or the bot itself.' : 'No valid users to kick.';
       return sock.sendMessage(chatId, { text: `❌ ${reason}` }, { quoted: msg });
+    }
+
+    if (isButtonModeEnabled() && giftedBtnsKick?.sendInteractiveMessage) {
+      try {
+        const sessionKey = `kick:${senderClean}:${chatId.split('@')[0]}`;
+        setActionSession(sessionKey, { action: 'remove', targets: toKick, chatId });
+        const targetNames = toKick.map(j => `@${j.split('@')[0].split(':')[0]}`).join(', ');
+        const confirmText = `╭─⌈ 👢 *KICK CONFIRM* ⌋\n├─⊷ About to kick ${toKick.length} user(s):\n├─⊷ ${targetNames}\n├─⊷ Press Confirm to proceed.\n╰───`;
+        await giftedBtnsKick.sendInteractiveMessage(sock, chatId, {
+          body: { text: confirmText },
+          footer: { text: 'Action expires in 5 minutes' },
+          interactiveButtons: [
+            { type: 'quick_reply', display_text: '✅ Confirm Kick', id: `${PREFIX}kickconfirm` },
+            { type: 'quick_reply', display_text: '❌ Cancel', id: `${PREFIX}kickcancel` }
+          ]
+        }, { quoted: msg });
+        return;
+      } catch (e) {}
     }
 
     try {

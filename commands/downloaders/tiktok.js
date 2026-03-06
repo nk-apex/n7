@@ -1,9 +1,16 @@
+import { createRequire } from 'module';
 import axios from 'axios';
 import { createWriteStream, existsSync } from 'fs';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import fs from 'fs';
 import { getBotName } from '../../lib/botname.js';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+import { setActionSession } from '../../lib/actionSession.js';
+
+const _requireTt = createRequire(import.meta.url);
+let giftedBtnsTt;
+try { giftedBtnsTt = _requireTt('gifted-btns'); } catch (e) {}
 
 const execAsync = promisify(exec);
 
@@ -34,6 +41,29 @@ export default {
       }
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
+
+      if (isButtonModeEnabled() && giftedBtnsTt?.sendInteractiveMessage) {
+        try {
+          const meta = await fetchTikTokMeta(url);
+          if (meta.success) {
+            const senderClean = (m.key.participant || m.key.remoteJid).split(':')[0].split('@')[0];
+            const sessionKey = `tiktok:${senderClean}:${jid.split('@')[0]}`;
+            setActionSession(sessionKey, { url, play: meta.play, wmplay: meta.wmplay });
+            const cardText = `╭─⌈ 🎵 *TIKTOK* ⌋\n├─⊷ *${meta.title || 'TikTok Video'}*\n├─⊷ By: ${meta.author || 'Unknown'}\n├─⊷ Duration: ${meta.duration || '?'}s\n╰───`;
+            await giftedBtnsTt.sendInteractiveMessage(sock, jid, {
+              image: meta.cover ? { url: meta.cover } : undefined,
+              body: { text: cardText },
+              footer: { text: getBotName() },
+              interactiveButtons: [
+                { type: 'quick_reply', display_text: '⬇️ Download (No Watermark)', id: `ttdlget` },
+                { type: 'quick_reply', display_text: '💧 With Watermark', id: `ttdlwm` }
+              ]
+            }, { quoted: m });
+            await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+            return;
+          }
+        } catch (e) {}
+      }
 
       const result = await downloadTikTok(url);
 
@@ -73,6 +103,25 @@ export function setUserCaption(userId, caption) {
 
 export function getUserCaptionMap() {
   return globalUserCaptions;
+}
+
+async function fetchTikTokMeta(url) {
+  try {
+    const response = await axios.get(`https://tikwm.com/api/?url=${encodeURIComponent(url)}`, { timeout: 15000 });
+    const data = response.data?.data;
+    if (!data) return { success: false };
+    return {
+      success: true,
+      title: data.title || '',
+      cover: data.cover || data.origin_cover || '',
+      author: data.author?.nickname || data.author?.unique_id || '',
+      duration: data.duration || 0,
+      play: data.play || '',
+      wmplay: data.wmplay || data.play || ''
+    };
+  } catch (e) {
+    return { success: false };
+  }
 }
 
 function isValidTikTokUrl(url) {
