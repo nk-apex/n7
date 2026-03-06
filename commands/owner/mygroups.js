@@ -29,18 +29,44 @@ export default {
             }, { quoted: msg });
         }
 
-        // Sort alphabetically by group subject (name)
-        entries.sort((a, b) => (a.subject || '').localeCompare(b.subject || ''));
+        // Resolve the best available name for each group.
+        // groupFetchAllParticipating() sometimes returns a blank or stale subject,
+        // so we also check the live groupMetadataCache and fall back to a direct
+        // sock.groupMetadata() fetch for any group still missing a name.
+        const metaCache = globalThis.groupMetadataCache;
 
-        // Split into pages of 20 so the message doesn't get too long
+        const resolved = await Promise.all(entries.map(async (g) => {
+            let name = (g.subject || '').trim();
+
+            // Check the live metadata cache first
+            if (!name && metaCache) {
+                const cached = metaCache.get(g.id);
+                if (cached?.data?.subject) name = cached.data.subject.trim();
+            }
+
+            // If still missing, do a direct fetch for this group
+            if (!name) {
+                try {
+                    const meta = await sock.groupMetadata(g.id);
+                    if (meta?.subject) name = meta.subject.trim();
+                } catch {}
+            }
+
+            return { id: g.id, name: name || 'Unnamed Group' };
+        }));
+
+        // Sort alphabetically
+        resolved.sort((a, b) => a.name.localeCompare(b.name));
+
+        // Paginate at 20 per page
         const PAGE_SIZE = 20;
         const page = Math.max(1, parseInt(args[0]) || 1);
-        const totalPages = Math.ceil(entries.length / PAGE_SIZE);
+        const totalPages = Math.ceil(resolved.length / PAGE_SIZE);
         const pageIndex = Math.min(page, totalPages) - 1;
-        const slice = entries.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE);
+        const slice = resolved.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE);
 
         let text = `╭─⌈ 👥 *MY GROUPS* ⌋\n│\n`;
-        text += `│  📊 Total: *${entries.length}* group${entries.length !== 1 ? 's' : ''}\n`;
+        text += `│  📊 Total: *${resolved.length}* group${resolved.length !== 1 ? 's' : ''}\n`;
 
         if (totalPages > 1) {
             text += `│  📄 Page: *${pageIndex + 1}/${totalPages}*\n`;
@@ -49,9 +75,8 @@ export default {
         text += `│\n`;
 
         slice.forEach((g, i) => {
-            const num  = pageIndex * PAGE_SIZE + i + 1;
-            const name = g.subject || 'Unnamed Group';
-            text += `├─⊷ *${num}.* ${name}\n`;
+            const num = pageIndex * PAGE_SIZE + i + 1;
+            text += `├─⊷ *${num}.* ${g.name}\n`;
         });
 
         text += `│\n`;
