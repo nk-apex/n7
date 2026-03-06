@@ -86,7 +86,7 @@ export const getBoxStyleCommands = () => {
 │  • setpp
 │  • repo
 │  • ownermenu
-│  • panel
+│  • platform
 │  • disp
 │  • shutdown
 │
@@ -468,7 +468,7 @@ export const getTextOnlyCommands = (botMode) => {
 > • setpp — set bot profile
 > • repo — repository info
 > • ownermenu — owner menu
-> • panel — control panel
+> • platform — deployment platform
 > • disp — display stats
 > • shutdown — shutdown bot
 
@@ -804,7 +804,7 @@ export const getQuotedBoxCommands = () => {
 > │ • setpp
 > │ • repo
 > │ • ownermenu
-> │ • panel
+> │ • platform
 > │ • disp
 > │ • shutdown
 > ├────────────────
@@ -1215,7 +1215,7 @@ export const getPlainBoxCommands = () => {
 │ setpp
 │ repo
 │ ownermenu
-│ panel
+│ platform
 │ disp
 │ shutdown
 ├────────────────

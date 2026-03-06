@@ -1,6 +1,7 @@
 import { createRequire } from 'module';
-import { getBotName } from '../../lib/menuHelper.js';
+import { getBotName, getOwnerName, getBotMode, getBotVersion, formatUptime, getRAMUsage, getMenuMedia } from '../../lib/menuHelper.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+import { getPlatformInfo } from '../../lib/platformDetect.js';
 
 const require = createRequire(import.meta.url);
 
@@ -36,7 +37,6 @@ export default {
       { name: 'mediamenu', icon: '🔄', desc: 'Media conversion' },
       { name: 'musicmenu', icon: '🎵', desc: 'Music & audio' },
       { name: 'ownermenu', icon: '👑', desc: 'Owner controls' },
-      { name: 'photofunia', icon: '📸', desc: 'PhotoFunia effects' },
       { name: 'securitymenu', icon: '🛡️', desc: 'Security & hacking' },
       { name: 'stalkermenu', icon: '🕵️', desc: 'Stalker commands' },
       { name: 'sportsmenu', icon: '🏆', desc: 'Live sports scores' },
@@ -98,20 +98,51 @@ export default {
           footer: `🐺 ${botName}`,
           interactiveButtons
         });
-        console.log('[Menu2] ✅ Sent with gifted-btns buttons');
         return;
       } catch (err) {
-        console.log('[Menu2] gifted-btns failed:', err?.message || err);
+        // fall through to default below
       }
     }
 
-    let fallback = `╭─⌈ 📋 *${botName} CATEGORY MENUS* ⌋\n│\n`;
-    categories.forEach(cat => {
-      fallback += `├─⊷ *${prefix}${cat.name}*\n│  └⊷ ${cat.icon} ${cat.desc}\n`;
-    });
-    fallback += `│\n│ Type any menu name to see\n│ its full list of commands\n│\n╰─⊷ *🐺 ${botName}*`;
+    // ── Default mode: ┃ box style header + image + category list ──
+    const platform = getPlatformInfo();
+    const ramUsage = getRAMUsage();
+    const ownerName = getOwnerName();
+    const botMode = getBotMode();
+    const botVersion = getBotVersion();
 
-    await sock.sendMessage(chatId, { text: fallback }, { quoted: m });
-    console.log('[Menu2] Sent as plain text (default mode)');
+    const barLength = 10;
+    const filledBars = Math.round((ramUsage.percent / 100) * barLength);
+    const ramBar = '█'.repeat(filledBars) + '░'.repeat(barLength - filledBars);
+
+    const infoHeader = `╭─⌈ \`${botName}\` ⌋
+┃ Owner: ${ownerName}
+┃ Mode: ${botMode}
+┃ Prefix: [ ${prefix} ]
+┃ Version: ${botVersion}
+┃ Platform: ${platform.icon} ${platform.name}
+┃ Status: ${platform.status}
+┃ Uptime: ${formatUptime(process.uptime())}
+┃ RAM: ${ramBar} ${ramUsage.percent}%
+┃ Memory: ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB
+╰─⊷`;
+
+    let catList = '';
+    categories.forEach(cat => {
+      catList += `├─⊷ *${prefix}${cat.name}*\n│  └⊷ ${cat.icon} ${cat.desc}\n`;
+    });
+
+    const caption = `${infoHeader}\n\n╭─⌈ 📋 *CATEGORY MENUS* ⌋\n│\n${catList}│\n╰─⊷ *🐺 ${botName}*`;
+
+    const media = getMenuMedia();
+    if (media) {
+      if (media.type === 'gif' && media.mp4Buffer) {
+        await sock.sendMessage(chatId, { video: media.mp4Buffer, gifPlayback: true, caption, mimetype: 'video/mp4' }, { quoted: m });
+      } else {
+        await sock.sendMessage(chatId, { image: media.buffer, caption, mimetype: 'image/jpeg' }, { quoted: m });
+      }
+    } else {
+      await sock.sendMessage(chatId, { text: caption }, { quoted: m });
+    }
   }
 };
