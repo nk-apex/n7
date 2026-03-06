@@ -95,25 +95,26 @@ export default {
     const targetNames = toKick.map(j => `@${j.split('@')[0].split(':')[0]}`).join(', ');
     const confirmText = `╭─⌈ 👢 *KICK CONFIRM* ⌋\n├─⊷ About to kick ${toKick.length} user(s):\n├─⊷ ${targetNames}\n├─⊷ Tap *Confirm Kick* to proceed.\n╰───`;
 
-    // Try interactive button first
+    // Try interactive button first (flat format, no quoted arg — matches the working auto-wrapper call)
     if (isButtonModeEnabled() && giftedBtnsKick?.sendInteractiveMessage) {
       try {
         await giftedBtnsKick.sendInteractiveMessage(sock, chatId, {
-          body: { text: confirmText },
-          footer: { text: 'Session expires in 5 minutes' },
+          text: confirmText,
+          footer: '⏳ Session expires in 5 minutes',
           interactiveButtons: [
-            { type: 'quick_reply', display_text: '✅ Confirm Kick', id: `${PREFIX}kickconfirm` }
+            { type: 'quick_reply', display_text: '✅ Confirm Kick', id: `${PREFIX}kickconfirm` },
+            { type: 'quick_reply', display_text: '❌ Cancel', id: `${PREFIX}kickcancel` }
           ]
-        }, { quoted: msg });
+        });
         return;
       } catch (e) {
-        console.log('[kick] Interactive button failed, using plain text confirm:', e.message);
+        // silent — fallback below
       }
     }
 
-    // Fallback: plain text confirm — session is already saved, kickconfirm will execute
+    // Fallback: plain text — session already saved, auto-wrapper will add Confirm Kick button
     await sock.sendMessage(chatId, {
-      text: `${confirmText}\n\nReply *${PREFIX}kickconfirm* to confirm.`,
+      text: confirmText,
       mentions: toKick
     }, { quoted: msg });
   },
