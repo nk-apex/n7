@@ -170,84 +170,25 @@ class AutoViewManager {
     }
 
     async _sendReceipt(sock, statusKey, displayId) {
-        let success = false;
-        let method  = '';
+        // Use participantPn (phone number JID @s.whatsapp.net) if available.
+        // When participant is in @lid format, WhatsApp does NOT count it as a view.
+        // participantPn is the resolved phone number JID which is what the receipt needs.
+        const participantToUse = statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
 
-        const participant = statusKey.participant || statusKey.remoteJid;
-        const messageTimestamp = statusKey.messageTimestamp || Math.floor(Date.now() / 1000);
+        const readKey = {
+            remoteJid: statusKey.remoteJid,
+            id: statusKey.id,
+            fromMe: statusKey.fromMe,
+            participant: participantToUse
+        };
 
-        // Subscribe to the poster's presence first.
-        // Newer WhatsApp requires this to register a status view on the sender's side.
         try {
-            if (sock.presenceSubscribe && participant && !participant.includes('broadcast')) {
-                await sock.presenceSubscribe(participant);
-                await new Promise(r => setTimeout(r, 300));
-            }
-        } catch {}
-
-        // Method 1: readMessages with the raw key as-is
-        try {
-            await sock.readMessages([statusKey]);
-            success = true;
-            method  = 'readMessages';
-        } catch (e1) {
-
-            // Method 2: readMessages with a clean key (no extra fields that may confuse Baileys)
-            try {
-                await sock.readMessages([{
-                    remoteJid: 'status@broadcast',
-                    id: statusKey.id,
-                    fromMe: false,
-                    participant
-                }]);
-                success = true;
-                method  = 'readMessages-clean';
-            } catch (e2) {
-
-                // Method 3: chatModify to mark status chat as read
-                try {
-                    await sock.chatModify(
-                        { markRead: true, lastMessages: [{ key: statusKey, messageTimestamp }] },
-                        'status@broadcast'
-                    );
-                    success = true;
-                    method  = 'chatModify';
-                } catch (e3) {
-
-                    // Method 4: sendReadReceipt to status@broadcast with participant
-                    try {
-                        await sock.sendReadReceipt('status@broadcast', participant, [statusKey.id]);
-                        success = true;
-                        method  = 'sendReadReceipt';
-                    } catch (e4) {
-
-                        // Method 5: sendReadReceipt directly to the participant's JID
-                        try {
-                            if (participant && !participant.includes('broadcast')) {
-                                await sock.sendReadReceipt(participant, 'status@broadcast', [statusKey.id]);
-                                success = true;
-                                method  = 'directParticipantReceipt';
-                            } else {
-                                throw new Error('no valid participant');
-                            }
-                        } catch (e5) {
-                            console.log(`${R}${B}❌ ALL METHODS FAILED for ${displayId}${X}`);
-                            console.log(`${R}   readMessages        : ${e1.message}${X}`);
-                            console.log(`${R}   readMessages-clean  : ${e2.message}${X}`);
-                            console.log(`${R}   chatModify          : ${e3.message}${X}`);
-                            console.log(`${R}   sendReadReceipt     : ${e4.message}${X}`);
-                            console.log(`${R}   directParticipant   : ${e5.message}${X}`);
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (success) {
+            await sock.readMessages([readKey]);
             this.lastViewTime = Date.now();
             this.addLog(displayId);
-            console.log(`${G}${B}✅ VIEWED${X}${G} [${method}] → ${displayId}${X}`);
+            console.log(`${G}${B}✅ VIEWED${X}${G} [participantPn=${participantToUse?.split('@')[1] || '?'}] → ${displayId}${X}`);
+        } catch (err) {
+            console.log(`${R}${B}❌ VIEW FAILED for ${displayId}: ${err.message}${X}`);
         }
     }
 

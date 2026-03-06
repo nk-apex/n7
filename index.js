@@ -5377,8 +5377,11 @@ async function startBot(loginMode = 'auto', loginData = null) {
             }
             
             if (msg.key?.remoteJid === 'status@broadcast') {
+                // Unwrap ephemeral (disappearing) status messages to get the real content
+                const resolvedMessage = msg.message?.ephemeralMessage?.message || msg.message;
+                // Spread msg.key so participantPn is included if Baileys provides it
                 const statusKeyWithTs = { ...msg.key, messageTimestamp: msg.messageTimestamp };
-                handleAutoView(sock, statusKeyWithTs, msg.message).catch(() => {});
+                handleAutoView(sock, statusKeyWithTs, resolvedMessage).catch(() => {});
                 handleAutoReact(sock, msg.key).catch(() => {});
                 if (statusDetector) {
                     statusDetector.detectStatusUpdate(msg).catch(() => {});
