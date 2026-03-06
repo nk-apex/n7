@@ -3,7 +3,7 @@ import { safeModify } from '../../lib/safe-modify.js';
 
 export default {
   name: 'notifications',
-  alias: ['mute', 'mutegroup', 'togglenotif', 'togglemute'],
+  alias: ['mutegroup', 'togglenotif', 'togglemute', 'togglenotifications'],
   description: 'Toggle mute/unmute notifications for this group',
   category: 'group',
 

@@ -5126,7 +5126,24 @@ async function startBot(loginMode = 'auto', loginData = null) {
         });
 
         sock.ev.on('messages.upsert', async ({ messages, type }) => {
-            if (type !== 'notify') return;
+            if (type !== 'notify') {
+                // Also process 'append' fromMe messages that are button responses —
+                // these arrive from the owner's secondary device (phone) as type='append'.
+                if (type === 'append') {
+                    const m0 = messages?.[0];
+                    if (m0?.key?.fromMe && m0?.message) {
+                        const c0 = m0.message;
+                        const hasBtn = !!(c0?.interactiveResponseMessage || c0?.buttonsResponseMessage ||
+                                          c0?.listResponseMessage || c0?.templateButtonReplyMessage);
+                        if (!hasBtn) return;
+                        // fall through — let the button response be processed as a command
+                    } else {
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            }
             const msg = messages[0];
             if (!msg) return;
             

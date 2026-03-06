@@ -44,7 +44,7 @@ export default {
   description: 'Unmute the group (allow everyone to speak)',
   category: 'group',
   alias: ['unlock', 'speak'],
-  async execute(sock, msg, args) {
+  async execute(sock, msg, args, prefix, extra) {
     const sender = msg.key.remoteJid;
     const isGroup = sender.endsWith('@g.us');
 
@@ -58,15 +58,19 @@ export default {
     try {
       // Get group metadata
       const groupMetadata = await sock.groupMetadata(sender);
-      
-      // Get the user who sent the message
-      const user = msg.key.participant || msg.key.remoteJid;
-      
-      // Check if user is an admin
-      const participant = groupMetadata.participants.find(p => p.id === user);
-      const isAdmin = participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
 
-      if (!isAdmin) {
+      // Normalize to numeric part to handle LID ↔ phone JID mismatch
+      const userRaw = msg.key.participant || msg.key.remoteJid;
+      const userClean = userRaw.split(':')[0].split('@')[0];
+
+      const participant = groupMetadata.participants.find(p => {
+        const pClean = p.id.split(':')[0].split('@')[0];
+        return pClean === userClean;
+      });
+      const isAdmin = participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
+      const isOwner = typeof extra?.isOwner === 'function' ? extra.isOwner() : false;
+
+      if (!isAdmin && !isOwner) {
         await sock.sendMessage(sender, { 
           text: '⛔ Only the Alpha wolves (admins) can unleash the pack.' 
         }, { quoted: msg });

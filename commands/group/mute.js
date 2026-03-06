@@ -63,12 +63,16 @@ export default {
     try {
       // Get group metadata
       const groupMetadata = extra?.groupMetadata || await sock.groupMetadata(sender);
-      
-      // Get the user who sent the message
-      const user = msg.key.participant || msg.key.remoteJid;
-      
-      // Check if user is an admin
-      const participant = groupMetadata.participants.find(p => p.id === user);
+
+      // Get the user who sent the message — normalize to numeric part to handle LID vs phone JID
+      const userRaw = msg.key.participant || msg.key.remoteJid;
+      const userClean = userRaw.split(':')[0].split('@')[0];
+
+      // Check if user is an admin (compare numeric parts to handle LID ↔ phone JID mismatch)
+      const participant = groupMetadata.participants.find(p => {
+        const pClean = p.id.split(':')[0].split('@')[0];
+        return pClean === userClean;
+      });
       const isAdmin = participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
       const isOwner = typeof extra?.isOwner === 'function' ? extra.isOwner() : extra?.isOwner;
 
@@ -79,16 +83,15 @@ export default {
         return;
       }
 
-      // Check if bot is admin
-      const botIsAdmin = extra?.isBotAdmin || false;
-      if (!botIsAdmin) {
-        // Fallback check
-        const botId = sock.user.id.replace(/:.*$/, '') + '@s.whatsapp.net';
-        const botParticipant = groupMetadata.participants.find(p => p.id === botId);
-        if (!botParticipant || (botParticipant.admin !== 'admin' && botParticipant.admin !== 'superadmin')) {
-          await sock.sendMessage(sender, { text: '⚠️ I need to be an admin to do this.' }, { quoted: msg });
-          return;
-        }
+      // Check if bot is admin (normalize numeric parts for LID compatibility)
+      const botIdClean = (sock.user.id || '').split(':')[0].split('@')[0];
+      const botParticipant = groupMetadata.participants.find(p => {
+        const pClean = p.id.split(':')[0].split('@')[0];
+        return pClean === botIdClean;
+      });
+      if (!botParticipant || (botParticipant.admin !== 'admin' && botParticipant.admin !== 'superadmin')) {
+        await sock.sendMessage(sender, { text: '⚠️ I need to be an admin to do this.' }, { quoted: msg });
+        return;
       }
 
       // Check if already muted
