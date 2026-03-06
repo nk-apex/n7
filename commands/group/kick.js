@@ -43,8 +43,6 @@ export default {
       }, { quoted: msg });
     }
 
-    const botJid = sock.user?.id;
-    const botClean = botJid?.split(':')[0]?.split('@')[0];
     const senderJid = msg.key.participant || chatId;
 
     let groupMeta;
@@ -52,16 +50,6 @@ export default {
       groupMeta = await sock.groupMetadata(chatId);
     } catch {
       return sock.sendMessage(chatId, { text: '❌ Failed to fetch group info.' }, { quoted: msg });
-    }
-
-    const botParticipant = groupMeta.participants.find(p => {
-      const pClean = p.id.split(':')[0].split('@')[0];
-      return pClean === botClean;
-    });
-    const botIsAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
-
-    if (!botIsAdmin) {
-      return sock.sendMessage(chatId, { text: '❌ I need admin permissions to kick members.' }, { quoted: msg });
     }
 
     const senderClean = senderJid.split(':')[0].split('@')[0];
@@ -83,11 +71,6 @@ export default {
     for (const jid of participants) {
       const jidClean = jid.split(':')[0].split('@')[0];
 
-      if (jidClean === botClean) {
-        skipped.push(jid);
-        continue;
-      }
-
       const targetP = groupMeta.participants.find(p => {
         const pClean = p.id.split(':')[0].split('@')[0];
         return pClean === jidClean;
@@ -104,7 +87,7 @@ export default {
     }
 
     if (toKick.length === 0) {
-      let reason = skipped.length > 0 ? 'Cannot kick admins or the bot itself.' : 'No valid users to kick.';
+      let reason = skipped.length > 0 ? 'Cannot kick admins.' : 'No valid users to kick.';
       return sock.sendMessage(chatId, { text: `❌ ${reason}` }, { quoted: msg });
     }
 
@@ -118,8 +101,7 @@ export default {
           body: { text: confirmText },
           footer: { text: 'Action expires in 5 minutes' },
           interactiveButtons: [
-            { type: 'quick_reply', display_text: '✅ Confirm Kick', id: `${PREFIX}kickconfirm` },
-            { type: 'quick_reply', display_text: '❌ Cancel', id: `${PREFIX}kickcancel` }
+            { type: 'quick_reply', display_text: '✅ Confirm Kick', id: `${PREFIX}kickconfirm` }
           ]
         }, { quoted: msg });
         return;
@@ -131,7 +113,7 @@ export default {
       const kickedNames = toKick.map(j => `@${j.split('@')[0].split(':')[0]}`).join(', ');
       let text = `👢 Kicked ${toKick.length} user(s): ${kickedNames}`;
       if (skipped.length > 0) {
-        text += `\n⚠️ Skipped ${skipped.length} (admins/bot)`;
+        text += `\n⚠️ Skipped ${skipped.length} (admins)`;
       }
       await sock.sendMessage(chatId, {
         text,
