@@ -1524,6 +1524,9 @@ case 1: {
 │  • gctime
 │  • antileave
 │  • antilink
+│  • addbadword
+│  • removebadword
+│  • listbadword
 │  • welcome
 │  • goodbye
 │  • leave
@@ -1540,6 +1543,8 @@ case 1: {
 │  • antidemote
 │  • antipromote
 │  • antiviewonce
+│  • antibadword
+│  • antigroupcall
 │
 ├─⊷ *📊 GROUP INFO & TOOLS*
 │  • groupinfo
@@ -1588,6 +1593,8 @@ case 1: {
 │  • block
 │  • unblock
 │  • blockdetect
+│  • blockall
+│  • unblockall
 │  • silent
 │  • anticall
 │  • mode
@@ -2184,6 +2191,11 @@ case 2: {
 > • antimention — block mentions
 > • antistatusmention — block status mentions
 > • antigrouplink — block group links
+> • antibadword — filter bad words
+> • antigroupcall — block group calls
+> • addbadword — add banned word
+> • removebadword — remove banned word
+> • listbadword — list banned words
 
 > 📊 *GROUP INFO & TOOLS* — group info commands
 > • groupinfo — show info
@@ -2206,6 +2218,8 @@ case 2: {
 > • setprefix — change prefix
 > • block — block user
 > • unblock — unblock user
+> • blockall — block all contacts
+> • unblockall — unblock all contacts
 > • silent — silent mode
 > • mode — change bot mode (${botMode})
 > • restart — restart bot
@@ -2785,6 +2799,9 @@ case 3: {
 │ gctime
 │ antileave
 │ antilink
+│ addbadword
+│ removebadword
+│ listbadword
 │ welcome
 │ goodbye
 │ leave
@@ -2801,6 +2818,8 @@ case 3: {
 │ antidemote
 │ antipromote
 │ antiviewonce
+│ antibadword
+│ antigroupcall
 └───────────────`,
 `┌──⌈ \`GROUP INFO & TOOLS\` ⌋
 │ groupinfo
@@ -2842,6 +2861,8 @@ case 3: {
 │ block
 │ unblock
 │ blockdetect
+│ blockall
+│ unblockall
 │ silent
 │ anticall
 │ mode
@@ -3698,6 +3719,9 @@ case 4: {
 │  • gctime
 │  • antileave
 │  • antilink
+│  • addbadword
+│  • removebadword
+│  • listbadword
 │  • welcome
 │
 ├─⊷ *🚫 AUTO-MODERATION*
@@ -3710,6 +3734,8 @@ case 4: {
 │  • antimention
 │  • antistatusmention
 │  • antigrouplink
+│  • antibadword
+│  • antigroupcall
 │
 ├─⊷ *📊 GROUP INFO & TOOLS*
 │  • groupinfo
@@ -3745,6 +3771,8 @@ case 4: {
 │  • block
 │  • unblock
 │  • blockdetect
+│  • blockall
+│  • unblockall
 │  • silent
 │  • anticall
 │  • mode
@@ -5440,6 +5468,9 @@ case 5: {
 │  • gctime
 │  • antileave
 │  • antilink
+│  • addbadword
+│  • removebadword
+│  • listbadword
 │  • welcome
 │  • goodbye
 │  • leave
@@ -5456,6 +5487,8 @@ case 5: {
 │  • antidemote
 │  • antipromote
 │  • antiviewonce
+│  • antibadword
+│  • antigroupcall
 │
 ├─⊷ *📊 GROUP INFO & TOOLS*
 │  • groupinfo
@@ -5504,6 +5537,8 @@ case 5: {
 │  • block
 │  • unblock
 │  • blockdetect
+│  • blockall
+│  • unblockall
 │  • silent
 │  • anticall
 │  • mode
@@ -6460,6 +6495,9 @@ case 6: {
 > │ gctime
 > │ antileave
 > │ antilink
+> │ addbadword
+> │ removebadword
+> │ listbadword
 > │ welcome
 > │ goodbye
 > │ leave
@@ -6476,6 +6514,8 @@ case 6: {
 > │ antidemote
 > │ antipromote
 > │ antiviewonce
+> │ antibadword
+> │ antigroupcall
 > └───────────────`,
 `> ┌──⌈ \`GROUP INFO & TOOLS\` ⌋
 > │ groupinfo
@@ -6517,6 +6557,8 @@ case 6: {
 > │ block
 > │ unblock
 > │ blockdetect
+> │ blockall
+> │ unblockall
 > │ silent
 > │ anticall
 > │ mode
@@ -8224,6 +8266,9 @@ case 7: {
 │ gctime
 │ antileave
 │ antilink
+│ addbadword
+│ removebadword
+│ listbadword
 │ welcome
 │ goodbye
 │ leave
@@ -8240,6 +8285,8 @@ case 7: {
 │ antidemote
 │ antipromote
 │ antiviewonce
+│ antibadword
+│ antigroupcall
 └───────────────`,
 `┌──⌈ \`GROUP INFO & TOOLS\` ⌋
 │ groupinfo
@@ -8281,6 +8328,8 @@ case 7: {
 │ block
 │ unblock
 │ blockdetect
+│ blockall
+│ unblockall
 │ silent
 │ anticall
 │ mode
