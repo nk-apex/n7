@@ -4454,15 +4454,11 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 );
                 if (requiresPatch) {
                     message = {
-                        viewOnceMessage: {
-                            message: {
-                                messageContextInfo: {
-                                    deviceListMetadataVersion: 2,
-                                    deviceListMetadata: {},
-                                },
-                                ...message,
-                            },
+                        messageContextInfo: {
+                            deviceListMetadataVersion: 2,
+                            deviceListMetadata: {},
                         },
+                        ...message,
                     };
                 }
                 return message;

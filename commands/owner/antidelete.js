@@ -755,6 +755,19 @@ async function sendToChat(messageData, chatJid, deletedByNumber) {
         let detailsText = `\n\n✧ ${getBotName()} antidelete🐺\n`;
         detailsText += `✧ 𝙳𝚎𝚕𝚎𝚝𝚎𝚍 𝙱𝚢 : ${deletedByNumber}\n`;
         detailsText += `✧ 𝚂𝚎𝚗𝚝 𝚋𝚢 : ${senderNumber} (${messageData.pushName})\n`;
+        if (chatJid?.endsWith('@g.us')) {
+            let groupName = getGroupName(chatJid);
+            if (groupName === chatJid.split('@')[0] && antideleteState.sock) {
+                try {
+                    const meta = await antideleteState.sock.groupMetadata(chatJid);
+                    if (meta?.subject) {
+                        groupName = meta.subject;
+                        antideleteState.groupCache.set(chatJid, { name: meta.subject, subject: meta.subject, id: chatJid, size: meta.participants?.length || 0, cachedAt: Date.now() });
+                    }
+                } catch {}
+            }
+            detailsText += `✧ 𝙶𝚛𝚘𝚞𝚙 : ${groupName}\n`;
+        }
         detailsText += `✧ 𝚃𝚒𝚖𝚎 : ${time}\n`;
         detailsText += `✧ 𝚃𝚢𝚙𝚎 : ${messageData.type.toUpperCase()}\n`;
         

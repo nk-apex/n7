@@ -3,6 +3,7 @@ import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from
 import { getBotName } from '../../lib/botname.js';
 import db from '../../lib/supabase.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+import { getPhoneFromLid } from '../../lib/sudo-store.js';
 
 const _requireAds = createRequire(import.meta.url);
 let giftedBtnsAds;
@@ -225,6 +226,21 @@ function getRealWhatsAppNumber(jid) {
 
     try {
         const numberPart = jid.split('@')[0];
+
+        if (jid.endsWith('@lid')) {
+            const resolved = getPhoneFromLid(numberPart);
+            if (resolved) return `+${resolved.replace(/^\+/, '')}`;
+            if (global.contactNames) {
+                for (const [contactJid] of Object.entries(global.contactNames)) {
+                    const cPart = contactJid.split('@')[0];
+                    if (cPart.endsWith(numberPart.slice(-6)) && /^\d+$/.test(cPart) && cPart.length >= 10 && cPart.length <= 15) {
+                        return `+${cPart}`;
+                    }
+                }
+            }
+            return numberPart;
+        }
+
         let cleanNumber = numberPart.replace(/:/g, '').replace(/[^\d]/g, '');
 
         if (cleanNumber.length >= 10 && cleanNumber.length <= 15) {
@@ -316,7 +332,7 @@ function isStatusMessage(message) {
 function extractStatusInfo(message) {
     try {
         const msgKey = message.key;
-        const senderJid = msgKey.participant || msgKey.remoteJid;
+        const senderJid = msgKey.participantAlt || msgKey.participant || msgKey.remoteJid;
         const pushName = message.pushName || 'Unknown';
         const timestamp = message.messageTimestamp * 1000 || Date.now();
 
