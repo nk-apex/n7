@@ -367,9 +367,17 @@
 
 
 
+import { createRequire } from 'module';
 import axios from 'axios';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import fs from 'fs';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+import { setActionSession } from '../../lib/actionSession.js';
+import { getBotName } from '../../lib/botname.js';
+
+const _requireFb = createRequire(import.meta.url);
+let giftedBtnsFb;
+try { giftedBtnsFb = _requireFb('gifted-btns'); } catch (e) {}
 
 // Store processed message IDs to prevent duplicates
 const processedMessages = new Set();
@@ -380,7 +388,8 @@ export default {
   description: 'Download Facebook videos',
   category: 'downloader',
 
-  async execute(sock, m, args) {
+  async execute(sock, m, args, PREFIX) {
+    PREFIX = PREFIX || '.';
     console.log('📘 [FACEBOOK] Command triggered');
     
     const jid = m.key.remoteJid;
@@ -436,6 +445,28 @@ export default {
       } catch (e) {
         console.log(`📘 [FACEBOOK] Could not resolve share link:`, e.message);
       }
+    }
+
+    // Button mode preview card
+    if (isButtonModeEnabled() && giftedBtnsFb) {
+      const isReel = cleanUrl.includes('/reel/');
+      const isWatch = cleanUrl.includes('/watch') || cleanUrl.includes('fb.watch');
+      const mediaType = isReel ? 'Reel' : isWatch ? 'Watch Video' : 'Video';
+      const shortUrl = cleanUrl.replace(/^https?:\/\/(www\.)?(facebook\.com|fb\.com|fb\.watch)/, '').split('?')[0].slice(0, 40) || cleanUrl.slice(0, 40);
+      const senderClean = (m.key.participant || m.key.remoteJid).split(':')[0].split('@')[0];
+      setActionSession(`fb:${senderClean}:${jid.split('@')[0]}`, { url: cleanUrl, mediaType }, 10 * 60 * 1000);
+      const cardText = `📘 *Facebook ${mediaType} Found*\n\n🔗 ${shortUrl}\n\n▸ Tap Download to get the video`;
+      try {
+        await giftedBtnsFb.sendInteractiveMessage(sock, jid, {
+          body: { text: cardText },
+          footer: { text: getBotName() },
+          interactiveButtons: [
+            { type: 'quick_reply', display_text: '⬇️ Download', id: `${PREFIX}fbdlget` }
+          ]
+        }, { quoted: m });
+        await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+        return;
+      } catch (e) {}
     }
 
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
@@ -758,6 +789,8 @@ async function downloadFacebook(url) {
     };
   }
 }
+
+export { downloadFacebook, downloadToFile };
 
 // Function to download file
 async function downloadToFile(url, filePath) {

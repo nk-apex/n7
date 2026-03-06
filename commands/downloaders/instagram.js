@@ -1,8 +1,15 @@
+import { createRequire } from 'module';
 import axios from 'axios';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import fs from 'fs';
 import path from 'path';
 import { getBotName } from '../../lib/botname.js';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+import { setActionSession } from '../../lib/actionSession.js';
+
+const _requireIg = createRequire(import.meta.url);
+let giftedBtnsIg;
+try { giftedBtnsIg = _requireIg('gifted-btns'); } catch (e) {}
 
 // Store processed message IDs to prevent duplicates
 const processedMessages = new Set();
@@ -32,6 +39,28 @@ export default {
           text: `❌ Invalid Instagram URL\n\nValid formats:\n• instagram.com/p/...\n• instagram.com/reel/...` 
         }, { quoted: m });
         return;
+      }
+
+      // Button mode preview card
+      if (isButtonModeEnabled() && giftedBtnsIg) {
+        const isReel = url.includes('/reel/');
+        const isTV = url.includes('/tv/');
+        const mediaType = isReel ? 'Reel' : isTV ? 'IGTV' : 'Post';
+        const shortUrl = url.replace(/^https?:\/\/(www\.)?instagram\.com/, '').split('?')[0].slice(0, 40);
+        const senderClean = (m.key.participant || m.key.remoteJid).split(':')[0].split('@')[0];
+        setActionSession(`ig:${senderClean}:${jid.split('@')[0]}`, { url, mediaType }, 10 * 60 * 1000);
+        const cardText = `📷 *Instagram ${mediaType} Found*\n\n🔗 ${shortUrl}\n\n▸ Tap Download to get the media`;
+        try {
+          await giftedBtnsIg.sendInteractiveMessage(sock, jid, {
+            body: { text: cardText },
+            footer: { text: getBotName() },
+            interactiveButtons: [
+              { type: 'quick_reply', display_text: '⬇️ Download', id: `${PREFIX}igdlget` }
+            ]
+          }, { quoted: m });
+          await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+          return;
+        } catch (e) {}
       }
 
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
@@ -146,6 +175,8 @@ async function downloadInstagram(url) {
     return { success: false, error: error.message };
   }
 }
+
+export { downloadInstagram };
 
 async function downloadFile(url, filePath) {
   const writer = createWriteStream(filePath);

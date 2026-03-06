@@ -55,8 +55,8 @@ export default {
               body: { text: cardText },
               footer: { text: getBotName() },
               interactiveButtons: [
-                { type: 'quick_reply', display_text: '⬇️ Download (No Watermark)', id: `ttdlget` },
-                { type: 'quick_reply', display_text: '💧 With Watermark', id: `ttdlwm` }
+                { type: 'quick_reply', display_text: '⬇️ Download (No Watermark)', id: `${PREFIX}ttdlget` },
+                { type: 'quick_reply', display_text: '💧 With Watermark', id: `${PREFIX}ttdlwm` }
               ]
             }, { quoted: m });
             await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
