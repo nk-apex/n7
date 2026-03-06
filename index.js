@@ -650,6 +650,7 @@ import { initializeAutoJoin } from './commands/group/add.js';
 import antidemote from './commands/group/antidemote.js';
 import { isBugMessage as antibugCheck, isEnabled as antibugEnabled, getAction as antibugGetAction } from './commands/group/antibug.js';
 import { checkMessageForLinks as antilinkCheck, isEnabled as antilinkEnabled, getMode as antilinkGetMode, getGroupConfig as antilinkGetConfig, isLinkExempt as antilinkIsExempt } from './commands/group/antilink.js';
+import { checkMessageForBadWord, isGroupEnabled as isBadWordEnabled, getGroupAction as getBadWordAction } from './lib/badwords-store.js';
 import banCommand from './commands/group/ban.js';
 
 // Pre-imported group event modules (avoids dynamic import disk I/O in hot event handlers)
@@ -5267,6 +5268,44 @@ async function startBot(loginMode = 'auto', loginData = null) {
                                     return;
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            if (msg.message && msg.key?.remoteJid && !msg.key.fromMe) {
+                const _bwJid = msg.key.remoteJid;
+                const _bwIsGroup = _bwJid.endsWith('@g.us');
+                const _bwScope = _bwIsGroup ? _bwJid : 'global';
+                if (isBadWordEnabled(_bwScope)) {
+                    const _bwSenderJid = msg.key.participant || _bwJid;
+                    const _bwIsOwner = jidManager.isOwner(msg);
+                    if (!_bwIsOwner) {
+                        const _bwMsg = msg.message;
+                        const _bwText = _bwMsg?.conversation || _bwMsg?.extendedTextMessage?.text || _bwMsg?.imageMessage?.caption || _bwMsg?.videoMessage?.caption || '';
+                        const _bwFound = checkMessageForBadWord(_bwText);
+                        if (_bwFound) {
+                            const _bwAction = getBadWordAction(_bwScope);
+                            const _bwSenderNum = _bwSenderJid.split('@')[0].split(':')[0];
+                            try { await sock.sendMessage(_bwJid, { delete: msg.key }); } catch {}
+                            if (_bwAction === 'kick' && _bwIsGroup) {
+                                try {
+                                    await sock.sendMessage(_bwJid, { text: `🚫 *Bad Word Filter:* @${_bwSenderNum} removed for using a banned word.`, mentions: [_bwSenderJid] });
+                                    await sock.groupParticipantsUpdate(_bwJid, [_bwSenderJid], 'remove');
+                                } catch {}
+                            } else if (_bwAction === 'block') {
+                                try {
+                                    await sock.updateBlockStatus(_bwSenderJid, 'block');
+                                    if (_bwIsGroup) await sock.groupParticipantsUpdate(_bwJid, [_bwSenderJid], 'remove');
+                                    await sock.sendMessage(_bwJid, { text: `🚫 *Bad Word Filter:* @${_bwSenderNum} has been blocked for using a banned word.`, mentions: [_bwSenderJid] });
+                                } catch {}
+                            } else if (_bwAction === 'warn') {
+                                try {
+                                    await sock.sendMessage(_bwJid, { text: `⚠️ *Bad Word Warning:* @${_bwSenderNum} please avoid using banned words!\n\n🚫 Detected word removed.`, mentions: [_bwSenderJid] });
+                                } catch {}
+                            } else if (_bwAction === 'delete') {
+                            }
+                            return;
                         }
                     }
                 }
