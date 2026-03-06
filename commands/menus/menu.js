@@ -979,7 +979,6 @@ export default {
 //   console.log(`✅ ${currentBotName} menu sent with faded effect, box style, and "Read more" effect`);
 //   break;
 // }
-
 case 1: {
   const currentBotName = _getBotName();
   
@@ -1484,19 +1483,18 @@ case 1: {
   // Get real RAM usage
   const ramUsage = getRAMUsage();
   
-  // ========== UPDATED MENU WITH CURVED FORMAT ==========
+  // ========== UPDATED MENU WITH NEW BOX STYLE ==========
   let infoSection = `╭─⌈ \`${currentBotName}\` ⌋
-│  ╭⊷ *User:* ${m.pushName || "Anonymous"}
-│  ├⊷ *Owner:* ${ownerName}
-│  ├⊷ *Mode:* ${botMode}
-│  ├⊷ *Prefix:* [ ${botPrefix} ]
-│  ├⊷ *Version:* ${botVersion}
-│  ├⊷ *Platform:* ${deploymentPlatform.name}
-│  ├⊷ *Status:* ${deploymentPlatform.status}
-│  ├⊷ *Uptime:* ${formatUptime(process.uptime())}
-│  ├⊷ *RAM Usage:* ${ramUsage.percent}%
-│  │  ${ramUsage.bar}
-│  ╰⊷ *Memory:* ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB
+┃ Menu: PhotoFunia Menu
+┃ Owner: ${ownerName}
+┃ Mode: ${botMode}
+┃ Prefix: [ ${botPrefix} ]
+┃ Version: ${botVersion}
+┃ Platform: ${deploymentPlatform.name}
+┃ Status: ${deploymentPlatform.status}
+┃ Uptime: ${formatUptime(process.uptime())}
+┃ RAM: ${ramUsage.bar} ${ramUsage.percent}%
+┃ Memory: ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB
 ╰─⊷`;
 
   // Apply faded effect to the info section
@@ -2283,11 +2281,9 @@ case 1: {
     await sock.sendMessage(jid, { image: media.buffer, caption: finalCaption, mimetype: "image/jpeg" }, { quoted: fkontak });
   }
   
-  console.log(`✅ ${currentBotName} menu sent with faded effect, box style, and "Read more" effect`);
+  console.log(`✅ ${currentBotName} menu sent with new box style, faded effect, and "Read more" effect`);
   break;
 }
-
-
 
 
 
@@ -2949,7 +2945,7 @@ case 3: {
     if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`┃ Prefix: [ ${botPrefix} ]`);
     if ((fieldsStatus && fieldsStatus.version) || (!fieldsStatus)) infoLines.push(`┃ Version: ${botVersion}`);
     if ((fieldsStatus && fieldsStatus.host) || (!fieldsStatus)) {
-      infoLines.push(`┃ Panel: ${deploymentPlatform.name}`);
+      infoLines.push(`┃ Platform: ${deploymentPlatform.name}`);
       infoLines.push(`┃ Status: ${deploymentPlatform.status}`);
     }
     if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`┃ Uptime: ${uptimeStr}`);
@@ -8903,7 +8899,7 @@ case 7: {
     if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`┃ Prefix: [ ${botPrefix} ]`);
     if ((fieldsStatus && fieldsStatus.version) || (!fieldsStatus)) infoLines.push(`┃ Version: ${botVersion}`);
     if ((fieldsStatus && fieldsStatus.host) || (!fieldsStatus)) {
-      infoLines.push(`┃ Panel: ${deploymentPlatform.name}`);
+      infoLines.push(`┃ Platform: ${deploymentPlatform.name}`);
       infoLines.push(`┃ Status: ${deploymentPlatform.status}`);
     }
     if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`┃ Uptime: ${uptimeStr}`);
