@@ -5379,8 +5379,22 @@ async function startBot(loginMode = 'auto', loginData = null) {
             if (msg.key?.remoteJid === 'status@broadcast') {
                 // Unwrap ephemeral (disappearing) status messages to get the real content
                 const resolvedMessage = msg.message?.ephemeralMessage?.message || msg.message;
-                // Spread msg.key so participantPn is included if Baileys provides it
-                const statusKeyWithTs = { ...msg.key, messageTimestamp: msg.messageTimestamp };
+
+                // Build the status key, resolving @lid → @s.whatsapp.net for the read receipt.
+                // WhatsApp only counts a status view when the receipt uses the phone number JID.
+                const rawParticipant = msg.key.participant || '';
+                let resolvedParticipantPn = msg.key.participantAlt || msg.key.participantPn || null;
+                if (!resolvedParticipantPn && rawParticipant.includes('@lid')) {
+                    const lidNum = rawParticipant.split('@')[0].split(':')[0];
+                    const phone = lidPhoneCache.get(lidNum) || lidPhoneCache.get(rawParticipant.split('@')[0]) || getPhoneFromLid(lidNum);
+                    if (phone) resolvedParticipantPn = `${phone}@s.whatsapp.net`;
+                }
+
+                const statusKeyWithTs = {
+                    ...msg.key,
+                    messageTimestamp: msg.messageTimestamp,
+                    ...(resolvedParticipantPn ? { participantPn: resolvedParticipantPn } : {})
+                };
                 handleAutoView(sock, statusKeyWithTs, resolvedMessage).catch(() => {});
                 handleAutoReact(sock, msg.key).catch(() => {});
                 if (statusDetector) {

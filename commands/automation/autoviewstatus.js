@@ -170,10 +170,11 @@ class AutoViewManager {
     }
 
     async _sendReceipt(sock, statusKey, displayId) {
-        // Use participantPn (phone number JID @s.whatsapp.net) if available.
-        // When participant is in @lid format, WhatsApp does NOT count it as a view.
-        // participantPn is the resolved phone number JID which is what the receipt needs.
-        const participantToUse = statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
+        // Priority: participantAlt (Baileys-set PN from stanza's participant_pn attr)
+        //        → participantPn (our LID-cache resolved PN)
+        //        → participant (raw, may be @lid — WhatsApp won't count it as a view)
+        // When participant is @lid format, WhatsApp does NOT count the receipt as a view.
+        const participantToUse = statusKey.participantAlt || statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
 
         const readKey = {
             remoteJid: statusKey.remoteJid,
