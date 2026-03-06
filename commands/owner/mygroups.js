@@ -52,15 +52,13 @@ export default {
             const num    = pageIndex * PAGE_SIZE + i + 1;
             const name   = g.subject || 'Unnamed Group';
             const count  = g.participants?.length ?? '?';
-            const gid    = g.id?.split('@')[0] || g.id || '?';
             const isAdmin = (g.participants || []).some(p =>
                 (p.id === sock.user?.id || p.id?.split(':')[0] === sock.user?.id?.split(':')[0])
                 && (p.admin === 'admin' || p.admin === 'superadmin')
             );
             const role = isAdmin ? ' 👑' : '';
 
-            text += `├─⊷ *${num}.* ${name}${role}\n`;
-            text += `│    👥 ${count} members  •  \`${gid}\`\n`;
+            text += `├─⊷ *${num}.* ${name}${role}  👥 ${count}\n`;
         });
 
         text += `│\n`;
