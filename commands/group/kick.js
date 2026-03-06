@@ -24,11 +24,9 @@ export default {
                         msg.message?.stickerMessage?.contextInfo || {};
 
     const mentionedUsers = contextInfo.mentionedJid || [];
-
     const numbersFromArgs = args.filter(arg => /^\d{7,15}$/.test(arg)).map(num => `${num}@s.whatsapp.net`);
 
     let participants = [];
-
     if (mentionedUsers.length > 0) {
       participants = mentionedUsers;
     } else if (numbersFromArgs.length > 0) {
@@ -70,7 +68,6 @@ export default {
 
     for (const jid of participants) {
       const jidClean = jid.split(':')[0].split('@')[0];
-
       const targetP = groupMeta.participants.find(p => {
         const pClean = p.id.split(':')[0].split('@')[0];
         return pClean === jidClean;
@@ -87,42 +84,37 @@ export default {
     }
 
     if (toKick.length === 0) {
-      let reason = skipped.length > 0 ? 'Cannot kick admins.' : 'No valid users to kick.';
+      const reason = skipped.length > 0 ? 'Cannot kick admins.' : 'No valid users to kick.';
       return sock.sendMessage(chatId, { text: `❌ ${reason}` }, { quoted: msg });
     }
 
+    // Always save session first — kick NEVER happens here
+    const sessionKey = `kick:${senderClean}:${chatId.split('@')[0]}`;
+    setActionSession(sessionKey, { action: 'remove', targets: toKick, chatId });
+
+    const targetNames = toKick.map(j => `@${j.split('@')[0].split(':')[0]}`).join(', ');
+    const confirmText = `╭─⌈ 👢 *KICK CONFIRM* ⌋\n├─⊷ About to kick ${toKick.length} user(s):\n├─⊷ ${targetNames}\n├─⊷ Tap *Confirm Kick* to proceed.\n╰───`;
+
+    // Try interactive button first
     if (isButtonModeEnabled() && giftedBtnsKick?.sendInteractiveMessage) {
       try {
-        const sessionKey = `kick:${senderClean}:${chatId.split('@')[0]}`;
-        setActionSession(sessionKey, { action: 'remove', targets: toKick, chatId });
-        const targetNames = toKick.map(j => `@${j.split('@')[0].split(':')[0]}`).join(', ');
-        const confirmText = `╭─⌈ 👢 *KICK CONFIRM* ⌋\n├─⊷ About to kick ${toKick.length} user(s):\n├─⊷ ${targetNames}\n├─⊷ Press Confirm to proceed.\n╰───`;
         await giftedBtnsKick.sendInteractiveMessage(sock, chatId, {
           body: { text: confirmText },
-          footer: { text: 'Action expires in 5 minutes' },
+          footer: { text: 'Session expires in 5 minutes' },
           interactiveButtons: [
             { type: 'quick_reply', display_text: '✅ Confirm Kick', id: `${PREFIX}kickconfirm` }
           ]
         }, { quoted: msg });
         return;
-      } catch (e) {}
+      } catch (e) {
+        console.log('[kick] Interactive button failed, using plain text confirm:', e.message);
+      }
     }
 
-    try {
-      await sock.groupParticipantsUpdate(chatId, toKick, 'remove');
-      const kickedNames = toKick.map(j => `@${j.split('@')[0].split(':')[0]}`).join(', ');
-      let text = `👢 Kicked ${toKick.length} user(s): ${kickedNames}`;
-      if (skipped.length > 0) {
-        text += `\n⚠️ Skipped ${skipped.length} (admins)`;
-      }
-      await sock.sendMessage(chatId, {
-        text,
-        mentions: toKick
-      }, { quoted: msg });
-    } catch (err) {
-      await sock.sendMessage(chatId, {
-        text: '❌ Failed to kick user(s). Check my permissions.'
-      }, { quoted: msg });
-    }
+    // Fallback: plain text confirm — session is already saved, kickconfirm will execute
+    await sock.sendMessage(chatId, {
+      text: `${confirmText}\n\nReply *${PREFIX}kickconfirm* to confirm.`,
+      mentions: toKick
+    }, { quoted: msg });
   },
 };
