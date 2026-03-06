@@ -48,36 +48,54 @@ export default {
     const buttonMode = isButtonModeEnabled();
 
     if (buttonMode && giftedBtns?.sendInteractiveMessage) {
-      const menuText = `🐺 *WOLFBOT CATEGORY MENU*`;
+      const mid = Math.ceil(categories.length / 2);
+      const sections = [
+        {
+          title: '📂 Categories (1)',
+          rows: categories.slice(0, mid).map(cat => ({
+            id: `${prefix}${cat.name}`,
+            title: `${cat.icon} ${cat.name.replace('menu', '').charAt(0).toUpperCase() + cat.name.replace('menu', '').slice(1)}`,
+            description: cat.desc
+          }))
+        },
+        {
+          title: '📂 Categories (2)',
+          rows: categories.slice(mid).map(cat => ({
+            id: `${prefix}${cat.name}`,
+            title: `${cat.icon} ${cat.name.replace('menu', '').charAt(0).toUpperCase() + cat.name.replace('menu', '').slice(1)}`,
+            description: cat.desc
+          }))
+        }
+      ];
 
-      const interactiveButtons = categories.map(cat => ({
-        name: 'quick_reply',
-        buttonParamsJson: JSON.stringify({
-          display_text: `${cat.icon} ${cat.name.replace('menu', '').charAt(0).toUpperCase() + cat.name.replace('menu', '').slice(1)}`,
-          id: `${prefix}${cat.name}`
-        })
-      }));
-
-      interactiveButtons.push({
-        name: 'quick_reply',
-        buttonParamsJson: JSON.stringify({
-          display_text: '🐺 Main Menu',
-          id: `${prefix}menu`
-        })
-      });
-
-      interactiveButtons.push({
-        name: 'quick_reply',
-        buttonParamsJson: JSON.stringify({
-          display_text: '🏓 Ping',
-          id: `${prefix}ping`
-        })
-      });
+      const interactiveButtons = [
+        {
+          name: 'single_select',
+          buttonParamsJson: JSON.stringify({
+            title: '📋 Browse Categories',
+            sections
+          })
+        },
+        {
+          name: 'quick_reply',
+          buttonParamsJson: JSON.stringify({
+            display_text: '🐺 Main Menu',
+            id: `${prefix}menu`
+          })
+        },
+        {
+          name: 'quick_reply',
+          buttonParamsJson: JSON.stringify({
+            display_text: '🏓 Ping',
+            id: `${prefix}ping`
+          })
+        }
+      ];
 
       try {
         await giftedBtns.sendInteractiveMessage(sock, chatId, {
-          text: menuText,
-          footer: '',
+          text: `🐺 *${botName} CATEGORY MENU*\n\nSelect a category from the list below to explore its commands.`,
+          footer: `🐺 ${botName}`,
           interactiveButtons
         });
         console.log('[Menu2] ✅ Sent with gifted-btns buttons');
