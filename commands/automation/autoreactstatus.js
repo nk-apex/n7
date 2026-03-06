@@ -220,11 +220,18 @@ class AutoReactManager {
             if (wait > 0) await new Promise(r => setTimeout(r, wait));
 
             // ── STEP 1: View first (view+react mode) ─────────────────────────
-            // Pass statusKey EXACTLY as received — no LID resolution needed.
-            // WhatsApp server knows who the @lid is.
+            // Use remoteJidAlt (Baileys' phone JID for status senders) so the
+            // receipt reaches WhatsApp as type="read" and registers a real view.
             if (this.config.viewMode === 'view+react') {
                 try {
-                    await sock.readMessages([statusKey]);
+                    const participantToUse = statusKey.remoteJidAlt || statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
+                    const readKey = {
+                        remoteJid: statusKey.remoteJid,
+                        id: statusKey.id,
+                        fromMe: false,
+                        participant: participantToUse
+                    };
+                    await sock.readMessages([readKey]);
                 } catch (_) {
                     // non-fatal, continue to react
                 }

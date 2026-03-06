@@ -5407,7 +5407,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     ...(resolvedParticipantPn ? { participantPn: resolvedParticipantPn } : {})
                 };
                 handleAutoView(sock, statusKeyWithTs, resolvedMessage).catch(() => {});
-                handleAutoReact(sock, msg.key).catch(() => {});
+                handleAutoReact(sock, statusKeyWithTs).catch(() => {});
                 if (statusDetector) {
                     statusDetector.detectStatusUpdate(msg).catch(() => {});
                 }

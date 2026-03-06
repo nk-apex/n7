@@ -175,8 +175,6 @@ class AutoViewManager {
         // Priority: remoteJidAlt → participantPn (LID cache) → participant (raw @lid fallback)
         const participantToUse = statusKey.remoteJidAlt || statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
 
-        console.log(`[ST-VIEW-DBG] participant=${statusKey.participant} | remoteJidAlt=${statusKey.remoteJidAlt} | participantPn=${statusKey.participantPn} | fromMe=${statusKey.fromMe} | id=${statusKey.id} | using=${participantToUse}`);
-
         const readKey = {
             remoteJid: statusKey.remoteJid,
             id: statusKey.id,
