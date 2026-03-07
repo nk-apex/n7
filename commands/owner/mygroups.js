@@ -39,12 +39,21 @@ export default {
             const sessionKey = `mygroup:${senderJid?.split('@')[0]}`;
             setActionSession(sessionKey, { id: group.id, name: group.name });
 
+            // Try to get the group invite link so the Visit button opens it directly
+            let inviteUrl = null;
+            try {
+                const code = await sock.groupInviteCode(group.id);
+                if (code) inviteUrl = `https://chat.whatsapp.com/${code}`;
+            } catch {}
+
             // Send plain text — the auto-wrapper (button mode) will attach
-            // Visit / Leave buttons via the COMMAND_BUTTONS 'mygroups' entry
+            // Visit (URL) + Leave (quick_reply) buttons via COMMAND_BUTTONS 'mygroups' entry.
+            // The invite URL embedded in the text is what the auto-wrapper extracts for the button.
             return sock.sendMessage(chatId, {
                 text:
                     `╭─⌈ 👥 *GROUP* ⌋\n│\n` +
                     `│  ${group.name}\n│\n` +
+                    (inviteUrl ? `│  🔗 ${inviteUrl}\n│\n` : '') +
                     `╰───`
             }, { quoted: msg });
         }
