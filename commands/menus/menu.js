@@ -7077,18 +7077,37 @@ case 6: {
     await sock.sendMessage(jid, {
       video: media.mp4Buffer,
       gifPlayback: true,
-      caption: menulist,
+      caption: "",
       mimetype: "video/mp4"
     }, { quoted: fkontak });
   } else {
     await sock.sendMessage(jid, {
       image: media.buffer,
-      caption: menulist,
+      caption: "",
       mimetype: "image/jpeg"
     }, { quoted: fkontak });
   }
 
-  console.log(`✅ ${currentBotName} menu sent as image + faded caption`);
+  try {
+    let interactiveMsg = generateWAMessageFromContent(jid, {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage: {
+            body: { text: null },
+            footer: { text: menulist },
+            nativeFlowMessage: { buttons: [{ text: null }] },
+          },
+        },
+      },
+    }, { quoted: fkontak, userJid: sock.user?.id || jid });
+    await sock.relayMessage(jid, interactiveMsg.message, { messageId: interactiveMsg.key.id });
+    console.log(`✅ ${currentBotName} menu sent as image + faded interactive text`);
+  } catch (error) {
+    console.error("Error sending faded menu:", error);
+    await sock.sendMessage(jid, { text: menulist }, { quoted: fkontak });
+    console.log(`✅ ${currentBotName} menu sent as image + text (fallback)`);
+  }
+
   break;
 }
 
