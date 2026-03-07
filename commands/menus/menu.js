@@ -7067,26 +7067,28 @@ case 6: {
   // Combine info section and commands with read more effect
   const menulist = `${infoSection}${readMoreSep}\n${commandsText}`;
 
-  try {
-    let interactiveMsg = generateWAMessageFromContent(jid, {
-      viewOnceMessage: {
-        message: {
-          interactiveMessage: {
-            body: { text: null },
-            footer: { text: menulist },
-            nativeFlowMessage: { buttons: [{ text: null }] },
-          },
-        },
-      },
-    }, { quoted: fkontak, userJid: sock.user?.id || jid });
-    await sock.relayMessage(jid, interactiveMsg.message, { messageId: interactiveMsg.key.id });
-    console.log(`✅ ${currentBotName} menu sent as interactive message`);
-  } catch (error) {
-    console.error("Error sending interactive menu:", error);
-    await sock.sendMessage(jid, { text: menulist }, { quoted: fkontak });
-    console.log(`✅ ${currentBotName} menu sent as text (fallback from interactive)`);
+  const media = getMenuMedia();
+  if (!media) {
+    await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: fkontak });
+    return;
   }
-  
+
+  if (media.type === 'gif' && media.mp4Buffer) {
+    await sock.sendMessage(jid, {
+      video: media.mp4Buffer,
+      gifPlayback: true,
+      caption: menulist,
+      mimetype: "video/mp4"
+    }, { quoted: fkontak });
+  } else {
+    await sock.sendMessage(jid, {
+      image: media.buffer,
+      caption: menulist,
+      mimetype: "image/jpeg"
+    }, { quoted: fkontak });
+  }
+
+  console.log(`✅ ${currentBotName} menu sent as image + faded caption`);
   break;
 }
 
