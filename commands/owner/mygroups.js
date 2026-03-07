@@ -1,5 +1,6 @@
 import { createRequire } from 'module';
 import { setActionSession } from '../../lib/actionSession.js';
+import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 
 const _require = createRequire(import.meta.url);
 let giftedBtns;
@@ -10,14 +11,6 @@ try { giftedBtns = _require('gifted-btns'); } catch {}
 const groupListCache = new Map();
 globalThis.groupListCache = groupListCache;
 const MAX_CACHE = 50;
-
-function isButtonModeEnabled() {
-    try {
-        const { readFileSync } = _require('fs');
-        const cfg = JSON.parse(readFileSync('./data/botSettings.json', 'utf8'));
-        return cfg?.buttonMode === true;
-    } catch { return false; }
-}
 
 export default {
     name: 'mygroups',
