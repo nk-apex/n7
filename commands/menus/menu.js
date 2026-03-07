@@ -2417,12 +2417,35 @@ case 3: {
   // ========== LOADING MESSAGE ==========
   const loadingMessage = `⚡ ${currentBotName} menu loading...`;
   
-  // Send loading message with fake contact
-  await sock.sendMessage(jid, { 
-    text: loadingMessage 
-  }, { 
-    quoted: fkontak 
-  });
+  try {
+    let loadingInteractiveMsg = generateWAMessageFromContent(jid, {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage: {
+            body: {
+              text: null,
+            },
+            footer: {
+              text: loadingMessage,
+            },
+            nativeFlowMessage: {
+              buttons: [{
+                text: null
+              }],
+            },
+          },
+        },
+      },
+    }, {
+      quoted: fkontak,
+      userJid: sock.user?.id || jid
+    });
+    await sock.relayMessage(jid, loadingInteractiveMsg.message, {
+      messageId: loadingInteractiveMsg.key.id
+    });
+  } catch (e) {
+    await sock.sendMessage(jid, { text: loadingMessage }, { quoted: fkontak });
+  }
   
   // Add a small delay
   await new Promise(resolve => setTimeout(resolve, 800));
