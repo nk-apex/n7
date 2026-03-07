@@ -10,7 +10,17 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
 
-    const commandsText = `╭─⊷ *🔍 INFO & SEARCH*
+    const commandsText = `╭─⊷ *📰 NEWS*
+│
+│  • citizennews
+│  • bbcnews
+│  • ntvnews
+│  • kbcnews
+│  • technews
+│
+╰─⊷
+
+╭─⊷ *🔍 INFO & SEARCH*
 │
 │  • alive
 │  • ping

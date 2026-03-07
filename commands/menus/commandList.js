@@ -268,6 +268,11 @@ export const getBoxStyleCommands = () => {
 │  • inspect
 │  • iplookup
 │  • news
+│  • citizennews
+│  • bbcnews
+│  • ntvnews
+│  • kbcnews
+│  • technews
 │  • prefixinfo
 │  • qrencode
 │  • resetwarn
@@ -610,6 +615,11 @@ export const getTextOnlyCommands = (botMode) => {
 > • inspect — inspect content
 > • iplookup — IP lookup
 > • news — latest news
+> • citizennews — Citizen Digital Kenya
+> • bbcnews — BBC News headlines
+> • ntvnews — NTV Kenya news
+> • kbcnews — KBC Kenya news
+> • technews — latest tech news
 > • prefixinfo — prefix info
 > • qrencode — QR encode
 > • resetwarn — reset warnings
@@ -1409,6 +1419,11 @@ export const getPlainBoxCommands = () => {
 │ inspect
 │ iplookup
 │ news
+│ citizennews
+│ bbcnews
+│ ntvnews
+│ kbcnews
+│ technews
 │ prefixinfo
 │ qrencode
 │ resetwarn
