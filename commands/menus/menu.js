@@ -1629,6 +1629,7 @@ case 1: {
 │  • receipt
 │  • profilepic
 │  • viewer
+│  • lastseen
 │
 ╰─⊷
 
@@ -2943,6 +2944,7 @@ case 3: {
 │ receipt
 │ profilepic
 │ viewer
+│ lastseen
 └───────────────`,
 `┌──⌈ \`GENERAL UTILITIES\` ⌋
 │ alive
@@ -5631,6 +5633,7 @@ case 5: {
 │  • receipt
 │  • profilepic
 │  • viewer
+│  • lastseen
 │
 ╰─⊷
 
@@ -6674,6 +6677,7 @@ case 6: {
 > │ receipt
 > │ profilepic
 > │ viewer
+> │ lastseen
 > └───────────────`,
 `> ┌──⌈ \`GENERAL UTILITIES\` ⌋
 > │ alive
@@ -8445,6 +8449,7 @@ case 7: {
 │ receipt
 │ profilepic
 │ viewer
+│ lastseen
 └───────────────`,
 `┌──⌈ \`GENERAL UTILITIES\` ⌋
 │ alive
