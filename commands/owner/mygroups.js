@@ -1,10 +1,4 @@
-import { createRequire } from 'module';
 import { setActionSession } from '../../lib/actionSession.js';
-import { isButtonModeEnabled } from '../../lib/buttonMode.js';
-
-const _require = createRequire(import.meta.url);
-let giftedBtns;
-try { giftedBtns = _require('gifted-btns'); } catch {}
 
 // Tracks sent group lists: messageId → sorted array of { id, name }
 // Exposed on globalThis so index.js can route plain-number replies to this handler
@@ -45,31 +39,13 @@ export default {
             const sessionKey = `mygroup:${senderJid?.split('@')[0]}`;
             setActionSession(sessionKey, { id: group.id, name: group.name });
 
-            const detailText =
-                `╭─⌈ 👥 *GROUP* ⌋\n│\n` +
-                `│  ${group.name}\n│\n` +
-                `╰───`;
-
-            if (isButtonModeEnabled() && giftedBtns?.sendInteractiveMessage) {
-                try {
-                    await giftedBtns.sendInteractiveMessage(sock, chatId, {
-                        text: detailText,
-                        footer: '⏳ Session expires in 5 minutes',
-                        interactiveButtons: [
-                            { type: 'quick_reply', display_text: '🔗 Visit Group',  id: `${PREFIX}mygroupvisit` },
-                            { type: 'quick_reply', display_text: '🚪 Leave Group',  id: `${PREFIX}mygroupleave` }
-                        ]
-                    });
-                    return;
-                } catch {}
-            }
-
-            // Plain-text fallback when button mode is off or fails
+            // Send plain text — the auto-wrapper (button mode) will attach
+            // Visit / Leave buttons via the COMMAND_BUTTONS 'mygroups' entry
             return sock.sendMessage(chatId, {
                 text:
-                    detailText + '\n\n' +
-                    `▸ *${PREFIX}mygroupvisit* — get invite link\n` +
-                    `▸ *${PREFIX}mygroupleave* — leave this group`
+                    `╭─⌈ 👥 *GROUP* ⌋\n│\n` +
+                    `│  ${group.name}\n│\n` +
+                    `╰───`
             }, { quoted: msg });
         }
 
