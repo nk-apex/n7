@@ -693,7 +693,8 @@ global.BOT_NAME = BOT_NAME;
 function getCurrentBotName() { return _getBotName(); }
 const VERSION = '1.1.5';
 global.VERSION = VERSION;
-const DEFAULT_PREFIX = process.env.PREFIX || '.';
+const _rawEnvPrefix = process.env.BOT_PREFIX || process.env.PREFIX || '';
+const DEFAULT_PREFIX = (_rawEnvPrefix && _rawEnvPrefix.length <= 5) ? _rawEnvPrefix : '.';
 const OWNER_FILE = './owner.json';
 const PREFIX_CONFIG_FILE = './prefix_config.json';
 const BOT_SETTINGS_FILE = './bot_settings.json';
