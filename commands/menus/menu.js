@@ -6096,11 +6096,45 @@ case 5: {
 case 6: {
   const currentBotName = _getBotName();
   
+  // ========== CREATE FAKE CONTACT FUNCTION ==========
+  const createFakeContact = (message) => {
+    const jid = message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0];
+    return {
+      key: {
+        remoteJid: "status@broadcast",
+        fromMe: false,
+        id: "WOLF-X"
+      },
+      message: {
+        contactMessage: {
+          displayName: currentBotName,
+          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${currentBotName}\nitem1.TEL;waid=${jid}:${jid}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+        }
+      },
+      participant: "0@s.whatsapp.net"
+    };
+  };
+  const fkontak = createFakeContact(m);
+
   // ========== LOADING MESSAGE ==========
   const loadingMessage = `⚡ ${currentBotName} menu loading...`;
   
-  // Send loading message
-  await sock.sendMessage(jid, { text: loadingMessage }, { quoted: m });
+  try {
+    let loadingInteractiveMsg = generateWAMessageFromContent(jid, {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage: {
+            body: { text: null },
+            footer: { text: loadingMessage },
+            nativeFlowMessage: { buttons: [{ text: null }] },
+          },
+        },
+      },
+    }, { quoted: fkontak, userJid: sock.user?.id || jid });
+    await sock.relayMessage(jid, loadingInteractiveMsg.message, { messageId: loadingInteractiveMsg.key.id });
+  } catch (e) {
+    await sock.sendMessage(jid, { text: loadingMessage }, { quoted: fkontak });
+  }
   
   // Add a small delay
   await new Promise(resolve => setTimeout(resolve, 800));
@@ -6475,7 +6509,7 @@ case 6: {
   
   // ========== UPDATED HEADER FORMAT ==========
   // ┌──⌈ WOLFBOT ⌋ 〘SW〙
-  let infoSection = `> ┌──⌈ ${currentBotName} ⌋ 〘SW〙\n\n`;
+  let infoSection = `┌──⌈ ${currentBotName} ⌋ 〘SW〙\n\n`;
   
   // Add info section only if any field is enabled
   const fieldsStatus = getAllFieldsStatus(style);
@@ -6511,20 +6545,20 @@ case 6: {
     const infoLines = [];
     
     // Only include these fields (removed time, speed, status)
-    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`> ┃ User: ▣ ${m.pushName || "Anonymous"}`);
-    if ((fieldsStatus && fieldsStatus.owner) || (!fieldsStatus)) infoLines.push(`> ┃ Owner: ${ownerName}`);
-    if ((fieldsStatus && fieldsStatus.mode) || (!fieldsStatus)) infoLines.push(`> ┃ Mode: ${botMode}`);
-    if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`> ┃ Prefix: [ ${botPrefix} ]`);
-    if ((fieldsStatus && fieldsStatus.version) || (!fieldsStatus)) infoLines.push(`> ┃ Version: ${botVersion}`);
+    if ((fieldsStatus && fieldsStatus.user) || (!fieldsStatus)) infoLines.push(`┃ User: ▣ ${m.pushName || "Anonymous"}`);
+    if ((fieldsStatus && fieldsStatus.owner) || (!fieldsStatus)) infoLines.push(`┃ Owner: ${ownerName}`);
+    if ((fieldsStatus && fieldsStatus.mode) || (!fieldsStatus)) infoLines.push(`┃ Mode: ${botMode}`);
+    if ((fieldsStatus && fieldsStatus.prefix) || (!fieldsStatus)) infoLines.push(`┃ Prefix: [ ${botPrefix} ]`);
+    if ((fieldsStatus && fieldsStatus.version) || (!fieldsStatus)) infoLines.push(`┃ Version: ${botVersion}`);
     if ((fieldsStatus && fieldsStatus.host) || (!fieldsStatus)) {
-      infoLines.push(`> ┃ Platform: ${deploymentPlatform.icon} ${deploymentPlatform.name}`);
+      infoLines.push(`┃ Platform: ${deploymentPlatform.icon} ${deploymentPlatform.name}`);
     }
-    if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`> ┃ Uptime: ${uptimeStr}`);
-    if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) infoLines.push(`> ┃ RAM: ${memBar} ${memPercentDisplay}%`);
-    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`> ┃ Memory: ${usedMem}MB / ${totalMem}MB`);
+    if ((fieldsStatus && fieldsStatus.uptime) || (!fieldsStatus)) infoLines.push(`┃ Uptime: ${uptimeStr}`);
+    if ((fieldsStatus && fieldsStatus.ram) || (!fieldsStatus)) infoLines.push(`┃ RAM: ${memBar} ${memPercentDisplay}%`);
+    if ((fieldsStatus && fieldsStatus.usage) || (!fieldsStatus)) infoLines.push(`┃ Memory: ${usedMem}MB / ${totalMem}MB`);
 
     if (infoLines.length > 0) {
-      const infoCaption = `> ┌────────────────\n${infoLines.join('\n')}\n> └────────────────\n\n`;
+      const infoCaption = `┌────────────────\n${infoLines.join('\n')}\n└────────────────\n\n`;
       infoSection += infoCaption;
     }
   } else {
@@ -6534,494 +6568,494 @@ case 6: {
 
   // ========== COMMAND SECTIONS WITH > PREFIX ==========
   const categorySections = [
-`> ┌──⌈ \`GROUP MANAGEMENT\` ⌋
-> │ add
-> │ promote
-> │ promoteall
-> │ demote
-> │ demoteall
-> │ kick
-> │ kickall
-> │ ban
-> │ unban
-> │ clearbanlist
-> │ warn
-> │ resetwarn
-> │ setwarn
-> │ warnings
-> │ mute
-> │ unmute
-> │ gctime
-> │ antileave
-> │ antilink
-> │ addbadword
-> │ removebadword
-> │ listbadword
-> │ welcome
-> │ goodbye
-> │ leave
-> │ creategroup
-> └───────────────`,
-`> ┌──⌈ \`AUTO MODERATION\` ⌋
-> │ antisticker
-> │ antiimage
-> │ antivideo
-> │ antiaudio
-> │ antimention
-> │ antistatusmention
-> │ antigrouplink
-> │ antidemote
-> │ antipromote
-> │ antiviewonce
-> │ antibadword
-> │ antigroupcall
-> └───────────────`,
-`> ┌──⌈ \`GROUP INFO & TOOLS\` ⌋
-> │ groupinfo
-> │ grouplink
-> │ tagadmin
-> │ tagall
-> │ hidetag
-> │ link
-> │ invite
-> │ revoke
-> │ setdesc
-> │ fangtrace
-> │ getgpp
-> │ togstatus
-> │ getparticipants
-> │ listonline
-> │ listinactive
-> │ approveall
-> │ rejectall
-> └───────────────`,
-`> ┌──⌈ \`MENU SETTINGS\` ⌋
-> │ menu
-> │ menu2
-> │ menustyle
-> │ togglemenuinfo
-> │ setmenuimage
-> │ restoremenuimage
-> └───────────────`,
-`> ┌──⌈ \`OWNER CONTROLS\` ⌋
-> │ setbotname
-> │ resetbotname
-> │ setowner
-> │ resetowner
-> │ setprefix
-> │ prefix
-> │ iamowner
-> │ about
-> │ owner
-> │ block
-> │ unblock
-> │ blockdetect
-> │ blockall
-> │ unblockall
-> │ silent
-> │ anticall
-> │ mode
-> │ setpp
-> │ setfooter
-> │ repo
-> │ pair
-> │ antidelete
-> │ antideletestatus
-> │ antiedit
-> │ chatbot
-> │ shutdown
-> └───────────────`,
-`> ┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
-> │ restart
-> │ workingreload
-> │ reloadenv
-> │ getsettings
-> │ setsetting
-> │ test
-> │ disk
-> │ hostip
-> │ findcommands
-> │ latestupdates
-> │ panel
-> │ debugchat
-> └───────────────`,
-`> ┌──⌈ \`SUDO\` ⌋
-> │ addsudo
-> │ delsudo
-> │ listsudo
-> │ checksudo
-> │ clearsudo
-> │ sudomode
-> │ sudoinfo
-> │ mysudo
-> │ sudodebug
-> │ linksudo
-> └───────────────`,
-`> ┌──⌈ \`AUTOMATION\` ⌋
-> │ autoread
-> │ autotyping
-> │ autorecording
-> │ autoreact
-> │ autoreactstatus
-> │ autoviewstatus
-> │ autobio
-> │ autorec
-> │ reactowner
-> └───────────────`,
-`> ┌──⌈ \`PRIVACY CONTROLS\` ⌋
-> │ online
-> │ privacy
-> │ receipt
-> │ profilepic
-> │ viewer
-> └───────────────`,
-`> ┌──⌈ \`GENERAL UTILITIES\` ⌋
-> │ alive
-> │ ping
-> │ ping2
-> │ time
-> │ uptime
-> │ define
-> │ news
-> │ covid
-> │ weather
-> │ wiki
-> │ translate
-> │ iplookup
-> │ getip
-> │ getpp
-> │ getgpp
-> │ prefixinfo
-> │ platform
-> └───────────────`,
-`> ┌──⌈ \`CONVERSION & MEDIA\` ⌋
-> │ shorturl
-> │ url
-> │ fetch
-> │ qrencode
-> │ take
-> │ imgbb
-> │ save
-> │ screenshot
-> │ inspect
-> │ toimage
-> │ tosticker
-> │ toaudio
-> │ tovoice
-> │ tts
-> │ trebleboost
-> │ jarvis
-> └───────────────`,
-`> ┌──⌈ \`CONTACT TOOLS\` ⌋
-> │ vcf
-> │ viewvcf
-> │ vv
-> │ vv2
-> └───────────────`,
-`> ┌──⌈ \`MUSIC\` ⌋
-> │ play
-> │ song
-> │ video
-> │ videodoc
-> │ lyrics
-> │ shazam
-> │ spotify
-> └───────────────`,
-`> ┌──⌈ \`MEDIA DOWNLOADS\` ⌋
-> │ tiktok
-> │ instagram
-> │ facebook
-> │ snapchat
-> │ apk
-> │ yts
-> │ ytplay
-> │ ytmp3
-> │ ytv
-> │ ytmp4
-> │ ytvdoc
-> │ videodl
-> │ playlist
-> └───────────────`,
-`> ┌──⌈ \`AI COMMANDS\` ⌋
-> │ gpt
-> │ chatgpt
-> │ copilot
-> │ bing
-> │ bard
-> │ claudeai
-> │ grok
-> │ blackbox
-> │ mistral
-> │ metai
-> │ perplexity
-> │ qwenai
-> │ ilama
-> │ venice
-> │ wormgpt
-> │ deepseek+
-> │ chatbot
-> └───────────────`,
-`> ┌──⌈ \`AI GENERATION\` ⌋
-> │ imagine
-> │ imagegen
-> │ flux
-> │ analyze
-> │ suno
-> │ speechwriter
-> │ humanizer
-> │ summarize
-> │ totext
-> │ removebg
-> │ vision
-> └───────────────`,
-`> ┌──⌈ \`AI TOOLS\` ⌋
-> │ videogen
-> │ aiscanner
-> │ aimenu
-> │ brandlogo
-> │ companylogo
-> │ logoai
-> └───────────────`,
-`> ┌──⌈ \`AI VIDEO EFFECTS\` ⌋
-> │ tigervideo
-> │ introvideo
-> │ lightningpubg
-> │ lovevideo
-> │ videogen
-> └───────────────`,
-`> ┌──⌈ \`IMAGE TOOLS\` ⌋
-> │ image
-> │ imagegen
-> │ imagine
-> │ anime
-> │ art
-> │ real
-> │ remini
-> │ vision
-> └───────────────`,
-`> ┌──⌈ \`SPORTS\` ⌋
-> │ football
-> │ matchstats
-> │ sportsnews
-> │ teamnews
-> │ basketball
-> │ cricket
-> │ f1
-> │ nfl
-> │ mma
-> │ tennis
-> │ baseball
-> │ hockey
-> │ golf
-> │ sportsmenu
-> └───────────────`,
-`> ┌──⌈ \`ETHICAL HACKING\` ⌋
-> │ whois
-> │ dnslookup
-> │ subdomain
-> │ reverseip
-> │ geoip
-> │ portscan
-> │ headers
-> │ traceroute
-> │ asnlookup
-> │ shodan
-> │ pinghost
-> │ latency
-> │ sslcheck
-> │ tlsinfo
-> │ openports
-> │ firewallcheck
-> │ maclookup
-> │ bandwidthtest
-> │ securityheaders
-> │ wafdetect
-> │ robotscheck
-> │ sitemap
-> │ cmsdetect
-> │ techstack
-> │ cookiescan
-> │ redirectcheck
-> │ xsscheck
-> │ sqlicheck
-> │ csrfcheck
-> │ clickjackcheck
-> │ directoryscan
-> │ exposedfiles
-> │ misconfigcheck
-> │ cvecheck
-> │ hashidentify
-> │ hashcheck
-> │ bcryptcheck
-> │ passwordstrength
-> │ leakcheck
-> │ metadata
-> │ filehash
-> │ malwarecheck
-> │ urlscan
-> │ phishcheck
-> │ nmap
-> │ ipinfo
-> │ nglattack
-> │ securitymenu
-> └───────────────`,
-`> ┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
-> │ goldlogo
-> │ silverlogo
-> │ platinumlogo
-> │ chromelogo
-> │ diamondlogo
-> │ bronzelogo
-> │ steellogo
-> │ copperlogo
-> │ titaniumlogo
-> │ firelogo
-> │ icelogo
-> │ iceglowlogo
-> │ lightninglogo
-> │ aqualogo
-> │ rainbowlogo
-> │ sunlogo
-> │ moonlogo
-> │ dragonlogo
-> │ phoenixlogo
-> │ wizardlogo
-> │ crystallogo
-> │ darkmagiclogo
-> │ shadowlogo
-> │ smokelogo
-> │ bloodlogo
-> │ neonlogo
-> │ glowlogo
-> │ gradientlogo
-> │ matrixlogo
-> └───────────────`,
-`> ┌──⌈ \`GITHUB TOOLS\` ⌋
-> │ gitclone
-> │ gitinfo
-> │ repanalyze
-> │ zip
-> │ update
-> │ repo
-> └───────────────`,
-`> ┌──⌈ \`ANIME REACTIONS\` ⌋
-> │ animemenu
-> │ awoo
-> │ bully
-> │ cringe
-> │ cry
-> │ cuddle
-> │ dance
-> │ glomp
-> │ highfive
-> │ hug
-> │ kill
-> │ kiss
-> │ lick
-> │ megumin
-> │ neko
-> │ pat
-> │ shinobu
-> │ trap
-> │ trap2
-> │ waifu
-> │ wink
-> │ yeet
-> └───────────────`,
-`> ┌──⌈ \`GAMES\` ⌋
-> │ coinflip
-> │ dare
-> │ dice
-> │ emojimix
-> │ joke
-> │ quiz
-> │ rps
-> │ snake
-> │ tetris
-> │ truth
-> │ tictactoe
-> │ quote
-> └───────────────`,
-`> ┌──⌈ \`FUN & TOOLS\` ⌋
-> │ bf
-> │ gf
-> │ couple
-> │ gay
-> │ getjid
-> │ movie
-> │ trailer
-> │ goodmorning
-> │ goodnight
-> │ channelstatus
-> │ hack
-> └───────────────`,
-`> ┌──⌈ \`QUICK COMMANDS\` ⌋
-> │ p
-> │ up
-> └───────────────`,
-`> ┌──⌈ \`EPHOTO TEXT EFFECTS\` ⌋
-> │ neon
-> │ colorfulglow
-> │ advancedglow
-> │ neononline
-> │ blueneon
-> │ neontext
-> │ neonlight
-> │ greenneon
-> │ greenlightneon
-> │ blueneonlogo
-> │ galaxyneon
-> │ retroneon
-> │ multicolorneon
-> │ hackerneon
-> │ devilwings
-> │ glowtext
-> │ blackpinkneon
-> │ neonglitch
-> │ colorfulneonlight
-> │ wooden3d
-> │ cubic3d
-> │ wooden3donline
-> │ water3d
-> │ cuongthi3d
-> │ text3d
-> │ graffiti3d
-> │ silver3d
-> │ style3d
-> │ metal3d
-> │ ruby3d
-> │ birthday3d
-> │ metallogo3d
-> │ pig3d
-> │ avengers3d
-> │ hologram3d
-> │ gradient3d
-> │ stone3d
-> │ space3d
-> │ sand3d
-> │ gradienttext3d
-> │ lightbulb3d
-> │ snow3d
-> │ papercut3d
-> │ underwater3d
-> │ shinymetallic3d
-> │ gradientstyle3d
-> │ beach3d
-> │ crack3d
-> │ wood3d
-> │ americanflag3d
-> │ christmas3d
-> │ nigeriaflag3d
-> │ christmassnow3d
-> │ goldenchristmas3d
-> │ decorativemetal3d
-> │ colorfulpaint3d
-> │ glossysilver3d
-> │ balloon3d
-> │ comic3d
-> │ ephotomenu
-> └───────────────`,
-`> 🐺 *POWERED BY WOLFTECH* 🐺`
+`┌──⌈ \`GROUP MANAGEMENT\` ⌋
+│ add
+│ promote
+│ promoteall
+│ demote
+│ demoteall
+│ kick
+│ kickall
+│ ban
+│ unban
+│ clearbanlist
+│ warn
+│ resetwarn
+│ setwarn
+│ warnings
+│ mute
+│ unmute
+│ gctime
+│ antileave
+│ antilink
+│ addbadword
+│ removebadword
+│ listbadword
+│ welcome
+│ goodbye
+│ leave
+│ creategroup
+└───────────────`,
+`┌──⌈ \`AUTO MODERATION\` ⌋
+│ antisticker
+│ antiimage
+│ antivideo
+│ antiaudio
+│ antimention
+│ antistatusmention
+│ antigrouplink
+│ antidemote
+│ antipromote
+│ antiviewonce
+│ antibadword
+│ antigroupcall
+└───────────────`,
+`┌──⌈ \`GROUP INFO & TOOLS\` ⌋
+│ groupinfo
+│ grouplink
+│ tagadmin
+│ tagall
+│ hidetag
+│ link
+│ invite
+│ revoke
+│ setdesc
+│ fangtrace
+│ getgpp
+│ togstatus
+│ getparticipants
+│ listonline
+│ listinactive
+│ approveall
+│ rejectall
+└───────────────`,
+`┌──⌈ \`MENU SETTINGS\` ⌋
+│ menu
+│ menu2
+│ menustyle
+│ togglemenuinfo
+│ setmenuimage
+│ restoremenuimage
+└───────────────`,
+`┌──⌈ \`OWNER CONTROLS\` ⌋
+│ setbotname
+│ resetbotname
+│ setowner
+│ resetowner
+│ setprefix
+│ prefix
+│ iamowner
+│ about
+│ owner
+│ block
+│ unblock
+│ blockdetect
+│ blockall
+│ unblockall
+│ silent
+│ anticall
+│ mode
+│ setpp
+│ setfooter
+│ repo
+│ pair
+│ antidelete
+│ antideletestatus
+│ antiedit
+│ chatbot
+│ shutdown
+└───────────────`,
+`┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
+│ restart
+│ workingreload
+│ reloadenv
+│ getsettings
+│ setsetting
+│ test
+│ disk
+│ hostip
+│ findcommands
+│ latestupdates
+│ panel
+│ debugchat
+└───────────────`,
+`┌──⌈ \`SUDO\` ⌋
+│ addsudo
+│ delsudo
+│ listsudo
+│ checksudo
+│ clearsudo
+│ sudomode
+│ sudoinfo
+│ mysudo
+│ sudodebug
+│ linksudo
+└───────────────`,
+`┌──⌈ \`AUTOMATION\` ⌋
+│ autoread
+│ autotyping
+│ autorecording
+│ autoreact
+│ autoreactstatus
+│ autoviewstatus
+│ autobio
+│ autorec
+│ reactowner
+└───────────────`,
+`┌──⌈ \`PRIVACY CONTROLS\` ⌋
+│ online
+│ privacy
+│ receipt
+│ profilepic
+│ viewer
+└───────────────`,
+`┌──⌈ \`GENERAL UTILITIES\` ⌋
+│ alive
+│ ping
+│ ping2
+│ time
+│ uptime
+│ define
+│ news
+│ covid
+│ weather
+│ wiki
+│ translate
+│ iplookup
+│ getip
+│ getpp
+│ getgpp
+│ prefixinfo
+│ platform
+└───────────────`,
+`┌──⌈ \`CONVERSION & MEDIA\` ⌋
+│ shorturl
+│ url
+│ fetch
+│ qrencode
+│ take
+│ imgbb
+│ save
+│ screenshot
+│ inspect
+│ toimage
+│ tosticker
+│ toaudio
+│ tovoice
+│ tts
+│ trebleboost
+│ jarvis
+└───────────────`,
+`┌──⌈ \`CONTACT TOOLS\` ⌋
+│ vcf
+│ viewvcf
+│ vv
+│ vv2
+└───────────────`,
+`┌──⌈ \`MUSIC\` ⌋
+│ play
+│ song
+│ video
+│ videodoc
+│ lyrics
+│ shazam
+│ spotify
+└───────────────`,
+`┌──⌈ \`MEDIA DOWNLOADS\` ⌋
+│ tiktok
+│ instagram
+│ facebook
+│ snapchat
+│ apk
+│ yts
+│ ytplay
+│ ytmp3
+│ ytv
+│ ytmp4
+│ ytvdoc
+│ videodl
+│ playlist
+└───────────────`,
+`┌──⌈ \`AI COMMANDS\` ⌋
+│ gpt
+│ chatgpt
+│ copilot
+│ bing
+│ bard
+│ claudeai
+│ grok
+│ blackbox
+│ mistral
+│ metai
+│ perplexity
+│ qwenai
+│ ilama
+│ venice
+│ wormgpt
+│ deepseek+
+│ chatbot
+└───────────────`,
+`┌──⌈ \`AI GENERATION\` ⌋
+│ imagine
+│ imagegen
+│ flux
+│ analyze
+│ suno
+│ speechwriter
+│ humanizer
+│ summarize
+│ totext
+│ removebg
+│ vision
+└───────────────`,
+`┌──⌈ \`AI TOOLS\` ⌋
+│ videogen
+│ aiscanner
+│ aimenu
+│ brandlogo
+│ companylogo
+│ logoai
+└───────────────`,
+`┌──⌈ \`AI VIDEO EFFECTS\` ⌋
+│ tigervideo
+│ introvideo
+│ lightningpubg
+│ lovevideo
+│ videogen
+└───────────────`,
+`┌──⌈ \`IMAGE TOOLS\` ⌋
+│ image
+│ imagegen
+│ imagine
+│ anime
+│ art
+│ real
+│ remini
+│ vision
+└───────────────`,
+`┌──⌈ \`SPORTS\` ⌋
+│ football
+│ matchstats
+│ sportsnews
+│ teamnews
+│ basketball
+│ cricket
+│ f1
+│ nfl
+│ mma
+│ tennis
+│ baseball
+│ hockey
+│ golf
+│ sportsmenu
+└───────────────`,
+`┌──⌈ \`ETHICAL HACKING\` ⌋
+│ whois
+│ dnslookup
+│ subdomain
+│ reverseip
+│ geoip
+│ portscan
+│ headers
+│ traceroute
+│ asnlookup
+│ shodan
+│ pinghost
+│ latency
+│ sslcheck
+│ tlsinfo
+│ openports
+│ firewallcheck
+│ maclookup
+│ bandwidthtest
+│ securityheaders
+│ wafdetect
+│ robotscheck
+│ sitemap
+│ cmsdetect
+│ techstack
+│ cookiescan
+│ redirectcheck
+│ xsscheck
+│ sqlicheck
+│ csrfcheck
+│ clickjackcheck
+│ directoryscan
+│ exposedfiles
+│ misconfigcheck
+│ cvecheck
+│ hashidentify
+│ hashcheck
+│ bcryptcheck
+│ passwordstrength
+│ leakcheck
+│ metadata
+│ filehash
+│ malwarecheck
+│ urlscan
+│ phishcheck
+│ nmap
+│ ipinfo
+│ nglattack
+│ securitymenu
+└───────────────`,
+`┌──⌈ \`LOGO DESIGN STUDIO\` ⌋
+│ goldlogo
+│ silverlogo
+│ platinumlogo
+│ chromelogo
+│ diamondlogo
+│ bronzelogo
+│ steellogo
+│ copperlogo
+│ titaniumlogo
+│ firelogo
+│ icelogo
+│ iceglowlogo
+│ lightninglogo
+│ aqualogo
+│ rainbowlogo
+│ sunlogo
+│ moonlogo
+│ dragonlogo
+│ phoenixlogo
+│ wizardlogo
+│ crystallogo
+│ darkmagiclogo
+│ shadowlogo
+│ smokelogo
+│ bloodlogo
+│ neonlogo
+│ glowlogo
+│ gradientlogo
+│ matrixlogo
+└───────────────`,
+`┌──⌈ \`GITHUB TOOLS\` ⌋
+│ gitclone
+│ gitinfo
+│ repanalyze
+│ zip
+│ update
+│ repo
+└───────────────`,
+`┌──⌈ \`ANIME REACTIONS\` ⌋
+│ animemenu
+│ awoo
+│ bully
+│ cringe
+│ cry
+│ cuddle
+│ dance
+│ glomp
+│ highfive
+│ hug
+│ kill
+│ kiss
+│ lick
+│ megumin
+│ neko
+│ pat
+│ shinobu
+│ trap
+│ trap2
+│ waifu
+│ wink
+│ yeet
+└───────────────`,
+`┌──⌈ \`GAMES\` ⌋
+│ coinflip
+│ dare
+│ dice
+│ emojimix
+│ joke
+│ quiz
+│ rps
+│ snake
+│ tetris
+│ truth
+│ tictactoe
+│ quote
+└───────────────`,
+`┌──⌈ \`FUN & TOOLS\` ⌋
+│ bf
+│ gf
+│ couple
+│ gay
+│ getjid
+│ movie
+│ trailer
+│ goodmorning
+│ goodnight
+│ channelstatus
+│ hack
+└───────────────`,
+`┌──⌈ \`QUICK COMMANDS\` ⌋
+│ p
+│ up
+└───────────────`,
+`┌──⌈ \`EPHOTO TEXT EFFECTS\` ⌋
+│ neon
+│ colorfulglow
+│ advancedglow
+│ neononline
+│ blueneon
+│ neontext
+│ neonlight
+│ greenneon
+│ greenlightneon
+│ blueneonlogo
+│ galaxyneon
+│ retroneon
+│ multicolorneon
+│ hackerneon
+│ devilwings
+│ glowtext
+│ blackpinkneon
+│ neonglitch
+│ colorfulneonlight
+│ wooden3d
+│ cubic3d
+│ wooden3donline
+│ water3d
+│ cuongthi3d
+│ text3d
+│ graffiti3d
+│ silver3d
+│ style3d
+│ metal3d
+│ ruby3d
+│ birthday3d
+│ metallogo3d
+│ pig3d
+│ avengers3d
+│ hologram3d
+│ gradient3d
+│ stone3d
+│ space3d
+│ sand3d
+│ gradienttext3d
+│ lightbulb3d
+│ snow3d
+│ papercut3d
+│ underwater3d
+│ shinymetallic3d
+│ gradientstyle3d
+│ beach3d
+│ crack3d
+│ wood3d
+│ americanflag3d
+│ christmas3d
+│ nigeriaflag3d
+│ christmassnow3d
+│ goldenchristmas3d
+│ decorativemetal3d
+│ colorfulpaint3d
+│ glossysilver3d
+│ balloon3d
+│ comic3d
+│ ephotomenu
+└───────────────`,
+`🐺 *POWERED BY WOLFTECH* 🐺`
   ];
 
   // Create the read more separator
@@ -7031,30 +7065,28 @@ case 6: {
   const commandsText = categorySections.join(`\n${readMoreSep}\n`);
   
   // Combine info section and commands with read more effect
-  finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
+  const menulist = `${infoSection}${readMoreSep}\n${commandsText}`;
 
-  const media = getMenuMedia();
-  if (!media) {
-    await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: m });
-    return;
+  try {
+    let interactiveMsg = generateWAMessageFromContent(jid, {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage: {
+            body: { text: null },
+            footer: { text: menulist },
+            nativeFlowMessage: { buttons: [{ text: null }] },
+          },
+        },
+      },
+    }, { quoted: fkontak, userJid: sock.user?.id || jid });
+    await sock.relayMessage(jid, interactiveMsg.message, { messageId: interactiveMsg.key.id });
+    console.log(`✅ ${currentBotName} menu sent as interactive message`);
+  } catch (error) {
+    console.error("Error sending interactive menu:", error);
+    await sock.sendMessage(jid, { text: menulist }, { quoted: fkontak });
+    console.log(`✅ ${currentBotName} menu sent as text (fallback from interactive)`);
   }
   
-  if (media.type === 'gif' && media.mp4Buffer) {
-    await sock.sendMessage(jid, { 
-      video: media.mp4Buffer, 
-      gifPlayback: true, 
-      caption: finalCaption, 
-      mimetype: "video/mp4" 
-    }, { quoted: m });
-  } else {
-    await sock.sendMessage(jid, { 
-      image: media.buffer, 
-      caption: finalCaption, 
-      mimetype: "image/jpeg" 
-    }, { quoted: m });
-  }
-  
-  console.log(`✅ ${currentBotName} menu sent with "Read more" effect`);
   break;
 }
 
