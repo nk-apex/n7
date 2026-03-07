@@ -6,8 +6,9 @@ let giftedBtns;
 try { giftedBtns = _require('gifted-btns'); } catch {}
 
 // Tracks sent group lists: messageId → sorted array of { id, name }
-// Used to resolve a reply-with-number back to the correct group
+// Exposed on globalThis so index.js can route plain-number replies to this handler
 const groupListCache = new Map();
+globalThis.groupListCache = groupListCache;
 const MAX_CACHE = 50;
 
 function isButtonModeEnabled() {

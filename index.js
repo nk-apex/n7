@@ -6561,6 +6561,16 @@ async function handleIncomingMessage(sock, msg) {
             }
         }
         
+        // If the user replied to a mygroups list message with a plain number,
+        // route it to the mygroups command even though it has no prefix
+        if (!commandName && /^\d+$/.test(textMsg.trim())) {
+            const stanzaId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
+            if (stanzaId && globalThis.groupListCache?.has(stanzaId)) {
+                commandName = 'mygroups';
+                args = [textMsg.trim()];
+            }
+        }
+
         if (!commandName) {
             if (jidManager.isOwner(msg) && textMsg && textMsg.trim().length > 0) {
                 if (senderJid.includes('@lid')) resolvePhoneFromLid(senderJid);
