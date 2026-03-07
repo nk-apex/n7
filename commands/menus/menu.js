@@ -26,6 +26,7 @@ import { getCurrentMenuStyle } from "./menustyle.js";
 import { setLastMenu, getAllFieldsStatus } from "../menus/menuToggles.js";
 import { getBotName as _getBotName } from '../../lib/botname.js';
 import { getPlatformInfo } from '../../lib/platformDetect.js';
+import { generateWAMessageFromContent } from '@whiskeysockets/baileys';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -3271,15 +3272,50 @@ case 3: {
 
   const readMoreSep = Array.from({ length: 550 }, (_, i) => ['\u200E','\u200F','\u200B','\u200C','\u200D','\u2060','\uFEFF'][i % 7]).join('');
   const commandsText = categorySections.join(`\n${readMoreSep}\n`);
-  finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
-
-  await sock.sendMessage(jid, { 
-    text: finalCaption
-  }, { 
-    quoted: fkontak 
-  });
   
-  console.log(`✅ ${currentBotName} menu sent as text-only with per-category "Read more" effect`);
+  const menulist = `${infoSection}${readMoreSep}\n${commandsText}`;
+
+  try {
+    let interactiveMsg = generateWAMessageFromContent(jid, {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage: {
+            body: {
+              text: null,
+            },
+            footer: {
+              text: menulist,
+            },
+            nativeFlowMessage: {
+              buttons: [{
+                text: null
+              }],
+            },
+          },
+        },
+      },
+    }, { 
+      quoted: fkontak,
+      userJid: sock.user?.id || jid
+    });
+
+    await sock.relayMessage(jid, interactiveMsg.message, {
+      messageId: interactiveMsg.key.id
+    });
+
+    console.log(`✅ ${currentBotName} menu sent as interactive message`);
+  } catch (error) {
+    console.error("Error sending interactive menu:", error);
+    
+    await sock.sendMessage(jid, { 
+      text: menulist
+    }, { 
+      quoted: fkontak 
+    });
+    
+    console.log(`✅ ${currentBotName} menu sent as text (fallback from interactive)`);
+  }
+  
   break;
 }
 

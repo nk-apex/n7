@@ -227,7 +227,7 @@ import chalk from 'chalk';
 import readline from 'readline';
 import { exec, execSync } from 'child_process';
 import axios from "axios";
-import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessage, jidNormalizedUser } from '@whiskeysockets/baileys';
+import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessage, jidNormalizedUser, generateWAMessageFromContent } from '@whiskeysockets/baileys';
 import NodeCache from 'node-cache';
 import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList } from './lib/sudo-store.js';
 import supabaseDb, { setConfigBotId } from './lib/supabase.js';
