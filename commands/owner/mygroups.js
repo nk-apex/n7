@@ -1,3 +1,23 @@
+import { createRequire } from 'module';
+import { setActionSession } from '../../lib/actionSession.js';
+
+const _require = createRequire(import.meta.url);
+let giftedBtns;
+try { giftedBtns = _require('gifted-btns'); } catch {}
+
+// Tracks sent group lists: messageId → sorted array of { id, name }
+// Used to resolve a reply-with-number back to the correct group
+const groupListCache = new Map();
+const MAX_CACHE = 50;
+
+function isButtonModeEnabled() {
+    try {
+        const { readFileSync } = _require('fs');
+        const cfg = JSON.parse(readFileSync('./data/botSettings.json', 'utf8'));
+        return cfg?.buttonMode === true;
+    } catch { return false; }
+}
+
 export default {
     name: 'mygroups',
     alias: ['grouplist', 'listgroups', 'groups'],
@@ -5,13 +25,61 @@ export default {
     category: 'owner',
     ownerOnly: true,
 
-    async execute(sock, msg, args) {
+    async execute(sock, msg, args, PREFIX) {
         const chatId = msg.key.remoteJid;
+        const senderJid = msg.key.participant || (msg.key.fromMe ? sock.user?.id : chatId);
 
-        await sock.sendMessage(chatId, {
-            text: `╭─⌈ 👥 *MY GROUPS* ⌋\n│\n├─⊷ 🔄 Fetching group list...\n╰───`
-        }, { quoted: msg });
+        // ── Reply-with-number handler ─────────────────────────────────────────
+        // If the user replied to a mygroups list message with a plain number,
+        // look up that group and show it with Leave / Visit buttons.
+        const quotedId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
+        const input    = (args[0] || '').trim();
 
+        if (quotedId && groupListCache.has(quotedId) && /^\d+$/.test(input)) {
+            const groups = groupListCache.get(quotedId);
+            const idx    = parseInt(input) - 1;
+            const group  = groups[idx];
+
+            if (!group) {
+                return sock.sendMessage(chatId, {
+                    text: `❌ No group at position *${input}*. The list has *${groups.length}* groups.`
+                }, { quoted: msg });
+            }
+
+            // Store the selected group in the action session so mygroupleave /
+            // mygroupvisit can retrieve it when the button is tapped
+            const sessionKey = `mygroup:${senderJid?.split('@')[0]}`;
+            setActionSession(sessionKey, { id: group.id, name: group.name });
+
+            const detailText =
+                `╭─⌈ 👥 *GROUP* ⌋\n│\n` +
+                `│  ${group.name}\n│\n` +
+                `╰───`;
+
+            if (isButtonModeEnabled() && giftedBtns?.sendInteractiveMessage) {
+                try {
+                    await giftedBtns.sendInteractiveMessage(sock, chatId, {
+                        text: detailText,
+                        footer: '⏳ Session expires in 5 minutes',
+                        interactiveButtons: [
+                            { type: 'quick_reply', display_text: '🔗 Visit Group',  id: `${PREFIX}mygroupvisit` },
+                            { type: 'quick_reply', display_text: '🚪 Leave Group',  id: `${PREFIX}mygroupleave` }
+                        ]
+                    });
+                    return;
+                } catch {}
+            }
+
+            // Plain-text fallback when button mode is off or fails
+            return sock.sendMessage(chatId, {
+                text:
+                    detailText + '\n\n' +
+                    `▸ *${PREFIX}mygroupvisit* — get invite link\n` +
+                    `▸ *${PREFIX}mygroupleave* — leave this group`
+            }, { quoted: msg });
+        }
+
+        // ── Main list ─────────────────────────────────────────────────────────
         let groups;
         try {
             groups = await sock.groupFetchAllParticipating();
@@ -29,22 +97,17 @@ export default {
             }, { quoted: msg });
         }
 
-        // Resolve the best available name for each group.
-        // groupFetchAllParticipating() sometimes returns a blank or stale subject,
-        // so we also check the live groupMetadataCache and fall back to a direct
-        // sock.groupMetadata() fetch for any group still missing a name.
+        // Resolve best available name: groupFetchAllParticipating → metaCache → direct fetch
         const metaCache = globalThis.groupMetadataCache;
 
         const resolved = await Promise.all(entries.map(async (g) => {
             let name = (g.subject || '').trim();
 
-            // Check the live metadata cache first
             if (!name && metaCache) {
                 const cached = metaCache.get(g.id);
                 if (cached?.data?.subject) name = cached.data.subject.trim();
             }
 
-            // If still missing, do a direct fetch for this group
             if (!name) {
                 try {
                     const meta = await sock.groupMetadata(g.id);
@@ -55,38 +118,40 @@ export default {
             return { id: g.id, name: name || 'Unnamed Group' };
         }));
 
-        // Sort alphabetically
         resolved.sort((a, b) => a.name.localeCompare(b.name));
 
         // Paginate at 20 per page
         const PAGE_SIZE = 20;
-        const page = Math.max(1, parseInt(args[0]) || 1);
+        const page       = Math.max(1, parseInt(input) || 1);
         const totalPages = Math.ceil(resolved.length / PAGE_SIZE);
-        const pageIndex = Math.min(page, totalPages) - 1;
-        const slice = resolved.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE);
+        const pageIndex  = Math.min(page, totalPages) - 1;
+        const slice      = resolved.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE);
 
         let text = `╭─⌈ 👥 *MY GROUPS* ⌋\n│\n`;
         text += `│  📊 Total: *${resolved.length}* group${resolved.length !== 1 ? 's' : ''}\n`;
-
-        if (totalPages > 1) {
-            text += `│  📄 Page: *${pageIndex + 1}/${totalPages}*\n`;
-        }
-
+        if (totalPages > 1) text += `│  📄 Page: *${pageIndex + 1}/${totalPages}*\n`;
         text += `│\n`;
 
         slice.forEach((g, i) => {
-            const num = pageIndex * PAGE_SIZE + i + 1;
-            text += `├─⊷ *${num}.* ${g.name}\n`;
+            text += `├─⊷ *${pageIndex * PAGE_SIZE + i + 1}.* ${g.name}\n`;
         });
 
         text += `│\n`;
-
         if (totalPages > 1) {
-            text += `├─⊷ Next page: *.mygroups ${pageIndex + 2 <= totalPages ? pageIndex + 2 : 1}*\n`;
+            text += `├─⊷ Next page: *${PREFIX}mygroups ${pageIndex + 2 <= totalPages ? pageIndex + 2 : 1}*\n`;
+            text += `│\n`;
         }
+        text += `╰─ Reply with a number to select a group`;
 
-        text += `╰───`;
-
-        return sock.sendMessage(chatId, { text }, { quoted: msg });
+        // Send and store the message ID so reply-with-number works
+        const sent = await sock.sendMessage(chatId, { text }, { quoted: msg });
+        const sentId = sent?.key?.id;
+        if (sentId) {
+            groupListCache.set(sentId, resolved);
+            // Trim cache to avoid memory growth
+            if (groupListCache.size > MAX_CACHE) {
+                groupListCache.delete(groupListCache.keys().next().value);
+            }
+        }
     }
 };
