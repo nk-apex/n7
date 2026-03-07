@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getMusicSession, clearMusicSession } from '../../lib/musicSession.js';
 import { getBotName } from '../../lib/botname.js';
+import { queryXWolfVideo } from '../../lib/xwolfApi.js';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
 const VIDEO_ENDPOINTS = ['ytv', 'dlmp4', 'ytmp4'];
@@ -59,7 +60,8 @@ export default {
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
     try {
-      const result = await queryAPI(v.url, VIDEO_ENDPOINTS);
+      let result = await queryAPI(v.url, VIDEO_ENDPOINTS);
+      if (!result.success) result = await queryXWolfVideo(v.url);
       if (!result.success) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         return sock.sendMessage(jid, { text: '❌ Video download failed. All services unavailable. Try again later.' }, { quoted: m });

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getMusicSession, clearMusicSession } from '../../lib/musicSession.js';
 import { getBotName } from '../../lib/botname.js';
+import { queryXWolfAudio } from '../../lib/xwolfApi.js';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
 const AUDIO_ENDPOINTS = ['ytmp3', 'yta', 'dlmp3'];
@@ -56,7 +57,8 @@ export default {
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
     try {
-      const result = await queryAPI(v.url, AUDIO_ENDPOINTS);
+      let result = await queryAPI(v.url, AUDIO_ENDPOINTS);
+      if (!result.success) result = await queryXWolfAudio(v.url);
       if (!result.success) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         return sock.sendMessage(jid, { text: '❌ Download failed. All services unavailable. Try again later.' }, { quoted: m });

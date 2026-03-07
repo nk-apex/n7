@@ -4,6 +4,7 @@ import yts from 'yt-search';
 import { getBotName } from '../../lib/botname.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { setMusicSession } from '../../lib/musicSession.js';
+import { queryXWolfAudio } from '../../lib/xwolfApi.js';
 
 const require = createRequire(import.meta.url);
 let giftedBtns;
@@ -124,7 +125,8 @@ export default {
 
       await sock.sendMessage(jid, { react: { text: '📥', key: m.key } });
 
-      const result = await queryAPI(videoUrl, AUDIO_ENDPOINTS);
+      let result = await queryAPI(videoUrl, AUDIO_ENDPOINTS);
+      if (!result.success) result = await queryXWolfAudio(videoUrl);
       if (!result.success) {
         await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
         return sock.sendMessage(jid, { text: `❌ All download services unavailable. Try again later.` }, { quoted: m });

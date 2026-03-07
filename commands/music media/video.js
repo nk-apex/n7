@@ -1,5 +1,6 @@
 import axios from "axios";
 import yts from "yt-search";
+import { queryXWolfVideo } from "../../lib/xwolfApi.js";
 
 const WOLF_API = "https://apis.xwolf.space/download/mp4";
 const WOLF_STREAM = "https://apis.xwolf.space/download/stream/mp4";
@@ -104,6 +105,20 @@ export default {
         } catch (err) {
           console.log(`🎬 [VIDEO] ${source.label} failed: ${err.message}`);
           continue;
+        }
+      }
+
+      if (!videoBuffer) {
+        console.log(`🎬 [VIDEO] Primary sources failed, trying xwolf ytmp4/video fallback`);
+        const xwolfResult = await queryXWolfVideo(searchQuery);
+        if (xwolfResult.success) {
+          try {
+            videoBuffer = await downloadAndValidate(xwolfResult.data.download_url);
+            sourceUsed  = xwolfResult.endpoint;
+            if (!videoTitle || videoTitle === 'YouTube Video') videoTitle = xwolfResult.data.title || videoTitle;
+          } catch (err) {
+            console.log(`🎬 [VIDEO] xwolf fallback failed: ${err.message}`);
+          }
         }
       }
 
