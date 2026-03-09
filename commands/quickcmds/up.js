@@ -1,0 +1,137 @@
+import axios from "axios";
+import { getBotName } from '../../lib/botname.js';
+import os from "os";
+import { detectPlatform } from '../../lib/platformDetect.js';
+
+export default {
+  name: "up",
+  description: "Check bot uptime and system status",
+
+  async execute(sock, m, args, PREFIX) {
+    try {
+      const jid = m.key.remoteJid;
+      const sender = m.key.participant || m.key.remoteJid;
+
+      function createFakeContact(message) {
+        return {
+          key: {
+            participants: "0@s.whatsapp.net",
+            remoteJid: "status@broadcast",
+            fromMe: false,
+            id: getBotName()
+          },
+          message: {
+            contactMessage: {
+              vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${getBotName()}\nitem1.TEL;waid=${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}:${message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+            }
+          },
+          participant: "0@s.whatsapp.net"
+        };
+      }
+
+      const fkontak = createFakeContact(m);
+
+      const uptime = process.uptime();
+      const days = Math.floor(uptime / (3600 * 24));
+      const hours = Math.floor((uptime % (3600 * 24)) / 3600);
+      const minutes = Math.floor((uptime % 3600) / 60);
+      const seconds = Math.floor(uptime % 60);
+      
+      const usedMemory = process.memoryUsage().heapUsed / 1024 / 1024;
+      const totalMemory = process.memoryUsage().heapTotal / 1024 / 1024;
+      const memoryPercent = ((usedMemory / totalMemory) * 100).toFixed(1);
+      
+      const startTime = new Date(Date.now() - (uptime * 1000));
+      const startTimeFormatted = startTime.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const cpus = os.cpus();
+      const cpuCores = cpus.length;
+      const cpuModel = cpus[0]?.model || "Unknown";
+      
+      let githubAvatar = "https://avatars.githubusercontent.com/u/10639145";
+      let githubName = "7silent-wolf";
+      let githubUrl = "https://github.com/7silent-wolf/silentwolf.git";
+      
+      try {
+        const { data: githubData } = await axios.get(
+          "https://api.github.com/users/7silent-wolf",
+          { 
+            headers: { 
+              "User-Agent": "Silent-Wolf-Bot",
+              "Accept": "application/vnd.github.v3+json"
+            },
+            timeout: 3000
+          }
+        );
+        githubAvatar = githubData.avatar_url;
+        githubName = githubData.name || "7silent-wolf";
+        githubUrl = "https://github.com/7silent-wolf/silentwolf.git";
+      } catch (githubErr) {
+        console.log("GitHub API failed, using defaults");
+      }
+      
+      const text = `
+╭━━⏱️ *BOT UPTIME* ⏱️━━╮
+┃
+┃  ⏱️ *Uptime:* ${days}d ${hours}h ${minutes}m ${seconds}s
+┃  💾 *Memory:* ${usedMemory.toFixed(1)}/${totalMemory.toFixed(1)} MB (${memoryPercent}%)
+┃  💻 *Platform:* ${detectPlatform()}
+┃  🔧 *CPU:* ${cpuCores} cores
+┃  🕐 *Started:* ${startTimeFormatted}
+┃  🐺 *Developer:* ${githubName}
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯
+`.trim();
+
+      await sock.sendMessage(
+        jid,
+        {
+          text,
+          contextInfo: {
+            mentionedJid: [sender],
+            externalAdReply: {
+              title: `🐺 ${getBotName()} Uptime`,
+              body: `Uptime: ${days}d ${hours}h ${minutes}m`,
+              mediaType: 1,
+              thumbnailUrl: githubAvatar,
+              sourceUrl: githubUrl,
+              renderLargerThumbnail: true,
+              showAdAttribution: false
+            },
+          },
+        },
+        { quoted: fkontak }
+      );
+
+      console.log(`✅ Uptime command executed - Running for ${days}d ${hours}h ${minutes}m`);
+
+    } catch (err) {
+      console.error("❌ Uptime command error:", err.message || err);
+      
+      const uptime = process.uptime();
+      const days = Math.floor(uptime / (3600 * 24));
+      const hours = Math.floor((uptime % (3600 * 24)) / 3600);
+      const minutes = Math.floor((uptime % 3600) / 60);
+      
+      const fallbackText = `
+╭━━⏱️ *BOT UPTIME* ⏱️━━╮
+┃
+┃  ⏱️ Uptime: ${days}d ${hours}h ${minutes}m
+┃  👋 Bot is running!
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯
+`.trim();
+      
+      await sock.sendMessage(
+        m.key.remoteJid,
+        { text: fallbackText },
+        { quoted: m }
+      );
+    }
+  },
+};
