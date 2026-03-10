@@ -3637,13 +3637,22 @@ function checkBotMode(msg, commandName, isSudoOverride = false) {
     }
 }
 
+function isPresenceEnabled() {
+    try {
+        const cfg = JSON.parse(fs.readFileSync('./data/presence/config.json', 'utf8'));
+        return cfg?.enabled === true;
+    } catch {
+        return false;
+    }
+}
+
 function startHeartbeat(sock) {
     if (heartbeatInterval) {
         clearInterval(heartbeatInterval);
     }
     
     heartbeatInterval = setInterval(() => {
-        if (isConnected && sock) {
+        if (isConnected && sock && isPresenceEnabled()) {
             const presenceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
             Promise.race([sock.sendPresenceUpdate('available'), presenceTimeout])
                 .then(() => { lastActivityTime = Date.now(); })
