@@ -1,7 +1,5 @@
 import axios from "axios";
 import { getBotName } from '../../lib/botname.js';
-import os from "os";
-import { detectPlatform } from '../../lib/platformDetect.js';
 
 export default {
   name: "up",
@@ -31,61 +29,34 @@ export default {
 
       const fkontak = createFakeContact(m);
 
+      const pingStartTime = Date.now();
+
       const uptime = process.uptime();
       const days = Math.floor(uptime / (3600 * 24));
       const hours = Math.floor((uptime % (3600 * 24)) / 3600);
       const minutes = Math.floor((uptime % 3600) / 60);
       const seconds = Math.floor(uptime % 60);
-      
-      const usedMemory = process.memoryUsage().heapUsed / 1024 / 1024;
-      const totalMemory = process.memoryUsage().heapTotal / 1024 / 1024;
-      const memoryPercent = ((usedMemory / totalMemory) * 100).toFixed(1);
-      
-      const startTime = new Date(Date.now() - (uptime * 1000));
-      const startTimeFormatted = startTime.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      const cpus = os.cpus();
-      const cpuCores = cpus.length;
-      const cpuModel = cpus[0]?.model || "Unknown";
-      
+
       let githubAvatar = "https://avatars.githubusercontent.com/u/10639145";
-      let githubName = "7silent-wolf";
-      let githubUrl = "https://github.com/7silent-wolf/silentwolf.git";
-      
+      let githubUrl = "https://github.com/7silent-wolf/silentwolf";
+
       try {
         const { data: githubData } = await axios.get(
           "https://api.github.com/users/7silent-wolf",
-          { 
-            headers: { 
+          {
+            headers: {
               "User-Agent": "Silent-Wolf-Bot",
               "Accept": "application/vnd.github.v3+json"
             },
-            timeout: 3000
+            timeout: 5000
           }
         );
         githubAvatar = githubData.avatar_url;
-        githubName = githubData.name || "7silent-wolf";
-        githubUrl = "https://github.com/7silent-wolf/silentwolf.git";
-      } catch (githubErr) {
-        console.log("GitHub API failed, using defaults");
-      }
-      
+      } catch {}
+
+      const pingTime = Date.now() - pingStartTime;
+
       const text = `
-╭━━⏱️ *BOT UPTIME* ⏱️━━╮
-┃
-┃  ⏱️ *Uptime:* ${days}d ${hours}h ${minutes}m ${seconds}s
-┃  💾 *Memory:* ${usedMemory.toFixed(1)}/${totalMemory.toFixed(1)} MB (${memoryPercent}%)
-┃  💻 *Platform:* ${detectPlatform()}
-┃  🔧 *CPU:* ${cpuCores} cores
-┃  🕐 *Started:* ${startTimeFormatted}
-┃  🐺 *Developer:* ${githubName}
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯
 `.trim();
 
       await sock.sendMessage(
@@ -93,45 +64,43 @@ export default {
         {
           text,
           contextInfo: {
-            mentionedJid: [sender],
+            mentionedJid: sender ? [sender] : [],
             externalAdReply: {
               title: `🐺 ${getBotName()} Uptime`,
-              body: `Uptime: ${days}d ${hours}h ${minutes}m`,
+              body: `${days}d ${hours}h ${minutes}m ${seconds}s • Ping: ${pingTime}ms`,
               mediaType: 1,
               thumbnailUrl: githubAvatar,
               sourceUrl: githubUrl,
-              renderLargerThumbnail: true,
-              showAdAttribution: false
+              mediaUrl: githubUrl,
+              renderLargerThumbnail: true
             },
           },
         },
         { quoted: fkontak }
       );
 
-      console.log(`✅ Uptime command executed - Running for ${days}d ${hours}h ${minutes}m`);
-
     } catch (err) {
-      console.error("❌ Uptime command error:", err.message || err);
-      
-      const uptime = process.uptime();
-      const days = Math.floor(uptime / (3600 * 24));
-      const hours = Math.floor((uptime % (3600 * 24)) / 3600);
-      const minutes = Math.floor((uptime % 3600) / 60);
-      
-      const fallbackText = `
-╭━━⏱️ *BOT UPTIME* ⏱️━━╮
-┃
-┃  ⏱️ Uptime: ${days}d ${hours}h ${minutes}m
-┃  👋 Bot is running!
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯
-`.trim();
-      
-      await sock.sendMessage(
-        m.key.remoteJid,
-        { text: fallbackText },
-        { quoted: m }
-      );
+      console.error("❌ [UP] Command error:", err.message || err);
+      try {
+        await sock.sendMessage(
+          m.key.remoteJid,
+          {
+            text: ``,
+            contextInfo: {
+              externalAdReply: {
+                title: `${getBotName()} Uptime`,
+                body: "Bot is online",
+                mediaType: 1,
+                thumbnailUrl: "https://avatars.githubusercontent.com/u/10639145",
+                sourceUrl: "https://github.com/7silent-wolf/silentwolf"
+              }
+            }
+          },
+          { quoted: m }
+        );
+      } catch (sendError) {
+        console.error("❌ [UP] Failed to send fallback:", sendError.message);
+      }
     }
   },
 };
