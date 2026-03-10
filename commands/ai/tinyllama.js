@@ -2,9 +2,9 @@ import axios from 'axios';
 
 export default {
   name: 'tinyllama',
-  description: 'TinyLlama AI - Compact and efficient small language model',
+  description: 'TinyLlama compact model',
   category: 'ai',
-  aliases: ['tiny', 'tinyai', 'tllama'],
+  aliases: ["tiny","tinyai"],
   usage: 'tinyllama [question]',
 
   async execute(sock, m, args, PREFIX) {
@@ -13,21 +13,20 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🐭 *TINYLLAMA AI* ⌋\n├─⊷ *${PREFIX}tinyllama <question>*\n│  └⊷ Fast compact AI model\n├─⊷ *${PREFIX}tiny <question>*\n│  └⊷ Alias for tinyllama\n╰───`
+        text: `╭─⌈ 🐭 *TINYLLAMA AI* ⌋\n├─⊷ *${PREFIX}tinyllama <question>*\n│  └⊷ TinyLlama compact model\n╰───`
       }, { quoted: m });
     }
 
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      const res = await axios.get(`https://apis.wolf.space/api/ai/tinyllama?q=${encodeURIComponent(query)}`, {
-        timeout: 25000,
-        headers: { 'User-Agent': 'WolfBot/1.0', 'Accept': 'application/json' }
+      const res = await axios.post('https://apis.xwolf.space/api/ai/tinyllama', { prompt: query }, {
+        timeout: 30000,
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      const data = res.data;
-      const text = data?.result || data?.response || data?.answer || data?.text || data?.content;
-      if (!text || !text.trim()) throw new Error('Empty response from TinyLlama');
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from tinyllama');
 
       let reply = text.trim();
       if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
@@ -40,7 +39,7 @@ export default {
     } catch (err) {
       console.error('[TINYLLAMA] Error:', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      await sock.sendMessage(jid, { text: `❌ *TinyLlama Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
+      await sock.sendMessage(jid, { text: `❌ *tinyllama AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };

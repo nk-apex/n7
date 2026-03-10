@@ -1,113 +1,45 @@
 import axios from 'axios';
 
-const WOLF_API = 'https://apis.wolf.space/api/ai/cohere';
-
 export default {
   name: 'cohere',
-  description: 'Cohere AI - Smart AI assistant powered by WOLF API',
+  description: 'Cohere AI language model',
   category: 'ai',
-  aliases: ['coherai', 'cohai'],
-  usage: 'cohere [your question]',
+  aliases: ["coherai","cohai"],
+  usage: 'cohere [question]',
 
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
+    let query = args.length > 0 ? args.join(' ') : (m.quoted?.text || '');
 
-    let query = '';
-    if (args.length > 0) {
-      query = args.join(' ');
-    } else if (m.quoted?.text) {
-      query = m.quoted.text;
-    } else {
+    if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🤖 *COHERE AI* ⌋\n├─⊷ *${PREFIX}cohere <question>*\n│  └⊷ Ask Cohere anything\n├─⊷ *${PREFIX}coherai <question>*\n│  └⊷ Alias for cohere\n├─⊷ *${PREFIX}cohai <question>*\n│  └⊷ Alias for cohere\n╰───`
+        text: `╭─⌈ 🎯 *COHERE AI* ⌋\n├─⊷ *${PREFIX}cohere <question>*\n│  └⊷ Cohere AI language model\n╰───`
       }, { quoted: m });
     }
-
-    console.log(`🤖 [COHERE] Query: "${query}"`);
 
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      const response = await axios({
-        method: 'POST',
-        url: WOLF_API,
-        data: { prompt: query },
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 40000,
-        validateStatus: (status) => status >= 200 && status < 500
+      const res = await axios.post('https://apis.xwolf.space/api/ai/cohere', { prompt: query }, {
+        timeout: 30000,
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      console.log(`✅ [COHERE] Response status: ${response.status}`);
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from cohere');
 
-      let aiResponse = '';
-      let model = 'Cohere';
+      let reply = text.trim();
+      if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
 
-      if (response.data && typeof response.data === 'object') {
-        const data = response.data;
-
-        if (data.success && data.response) {
-          aiResponse = data.response;
-          model = data.model || data.provider || 'Cohere';
-        } else if (data.result) {
-          aiResponse = data.result;
-        } else if (data.response) {
-          aiResponse = data.response;
-        } else if (data.answer) {
-          aiResponse = data.answer;
-        } else if (data.text) {
-          aiResponse = data.text;
-        } else if (data.message) {
-          aiResponse = data.message;
-        } else if (data.error) {
-          throw new Error(data.error);
-        } else {
-          aiResponse = JSON.stringify(data, null, 2);
-        }
-      } else if (typeof response.data === 'string') {
-        aiResponse = response.data;
-      } else {
-        throw new Error('Invalid API response');
-      }
-
-      if (!aiResponse || aiResponse.trim() === '') {
-        throw new Error('Cohere returned empty response');
-      }
-
-      aiResponse = aiResponse.trim();
-
-      if (aiResponse.length > 3000) {
-        aiResponse = aiResponse.substring(0, 3000) + '\n\n... _(response truncated)_';
-      }
-
-      const displayQuery = query.length > 80 ? query.substring(0, 80) + '...' : query;
-
-      let resultText = `🤖 *COHERE AI*\n\n`;
-      resultText += `💭 *Query:* ${displayQuery}\n\n`;
-      resultText += `${aiResponse}\n\n`;
-      resultText += `⚡ _Powered by WOLF API • ${model}_`;
-
-      await sock.sendMessage(jid, { text: resultText }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+      await sock.sendMessage(jid, {
+        text: `🎯 *COHERE AI*\n━━━━━━━━━━━━━━━━━\n${reply}\n━━━━━━━━━━━━━━━━━\n🐺 _Powered by WOLF AI_`
+      }, { quoted: m });
 
-      console.log(`✅ [COHERE] Response sent (${aiResponse.length} chars)`);
-
-    } catch (error) {
-      console.error('❌ [COHERE] ERROR:', error.message);
+    } catch (err) {
+      console.error('[COHERE] Error:', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-
-      let errorMessage = `❌ *Cohere AI Error*\n\n`;
-
-      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
-        errorMessage += `Request timed out. Try a shorter query.`;
-      } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-        errorMessage += `API server unreachable. Try again later.`;
-      } else if (error.response?.status === 429) {
-        errorMessage += `Rate limit exceeded. Wait a moment.`;
-      } else {
-        errorMessage += `${error.message}\n\nTry: \`${PREFIX}gpt\`, \`${PREFIX}blackbox\`, or \`${PREFIX}grok\``;
-      }
-
-      await sock.sendMessage(jid, { text: errorMessage }, { quoted: m });
+      await sock.sendMessage(jid, { text: `❌ *cohere AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };

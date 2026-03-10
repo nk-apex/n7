@@ -2,9 +2,9 @@ import axios from 'axios';
 
 export default {
   name: 'openchat',
-  description: 'OpenChat AI - Open-source conversational AI model',
+  description: 'OpenChat AI model',
   category: 'ai',
-  aliases: ['openchatai', 'oc', 'ochat'],
+  aliases: ["openchatai","oc","ochat"],
   usage: 'openchat [question]',
 
   async execute(sock, m, args, PREFIX) {
@@ -13,21 +13,20 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 💬 *OPENCHAT AI* ⌋\n├─⊷ *${PREFIX}openchat <question>*\n│  └⊷ Open-source chat AI\n├─⊷ *${PREFIX}ochat <question>*\n│  └⊷ Alias for openchat\n╰───`
+        text: `╭─⌈ 💬 *OPENCHAT AI* ⌋\n├─⊷ *${PREFIX}openchat <question>*\n│  └⊷ OpenChat AI model\n╰───`
       }, { quoted: m });
     }
 
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      const res = await axios.get(`https://apis.wolf.space/api/ai/openchat?q=${encodeURIComponent(query)}`, {
+      const res = await axios.post('https://apis.xwolf.space/api/ai/openchat', { prompt: query }, {
         timeout: 30000,
-        headers: { 'User-Agent': 'WolfBot/1.0', 'Accept': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      const data = res.data;
-      const text = data?.result || data?.response || data?.answer || data?.text || data?.content;
-      if (!text || !text.trim()) throw new Error('Empty response from OpenChat');
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from openchat');
 
       let reply = text.trim();
       if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
@@ -40,7 +39,7 @@ export default {
     } catch (err) {
       console.error('[OPENCHAT] Error:', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      await sock.sendMessage(jid, { text: `❌ *OpenChat AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
+      await sock.sendMessage(jid, { text: `❌ *openchat AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };

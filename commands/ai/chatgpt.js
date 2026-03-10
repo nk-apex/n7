@@ -1,116 +1,45 @@
-// commands/ai/chatgpt.js
-import fetch from "node-fetch";
-import axios from "axios";
+import axios from 'axios';
 
 export default {
-  name: "chatgpt",
-  alias: ["gpt", "gpt4", "openai"],
-  desc: "Chat with OpenAI GPT models (GPT-3.5 to GPT-4) 🤖",
-  category: "AI",
-  usage: ".chatgpt <your question>",
-  async execute(sock, m, args) {
+  name: 'chatgpt',
+  description: 'ChatGPT via Wolf API',
+  category: 'ai',
+  aliases: ["gpt4","openai"],
+  usage: 'chatgpt [question]',
+
+  async execute(sock, m, args, PREFIX) {
+    const jid = m.key.remoteJid;
+    let query = args.length > 0 ? args.join(' ') : (m.quoted?.text || '');
+
+    if (!query) {
+      return sock.sendMessage(jid, {
+        text: `╭─⌈ 🤖 *CHATGPT AI* ⌋\n├─⊷ *${PREFIX}chatgpt <question>*\n│  └⊷ ChatGPT via Wolf API\n╰───`
+      }, { quoted: m });
+    }
+
     try {
-      const query = args.join(" ");
-      if (!query) {
-        return sock.sendMessage(m.key.remoteJid, {
-          text: `╭─⌈ 🤖 *CHATGPT AI* ⌋\n├─⊷ *.chatgpt <question>*\n│  └⊷ Chat with GPT models\n├─⊷ *.gpt <question>*\n│  └⊷ Alias for chatgpt\n├─⊷ *.gpt4 <question>*\n│  └⊷ Alias for chatgpt\n╰───`
-        }, { quoted: m });
-      }
+      await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      // Get API key from environment
-      const apiKey = process.env.OPENAI_API_KEY;
-      
-      if (!apiKey || apiKey.includes('sk-proj-')) {
-        return sock.sendMessage(m.key.remoteJid, {
-          text: "🔑 *OpenAI API Key Missing*\n━━━━━━━━━━━━━━━━━\nSet OPENAI_API_KEY in your panel environment.\n\n*Note:* The example key won't work!"
-        }, { quoted: m });
-      }
-
-      await sock.sendPresenceUpdate('composing', m.key.remoteJid);
-
-      // Call OpenAI API directly
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-          "User-Agent": "WolfBot/1.0"
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini", // Or "gpt-4-turbo", "gpt-3.5-turbo"
-          messages: [
-            {
-              role: "system",
-              content: `You are Silent Wolf, a helpful AI assistant with a wolf-themed personality. You're wise, mysterious, and helpful. Provide accurate answers with a touch of wolf/wilderness metaphors when appropriate. Keep responses concise.`
-            },
-            {
-              role: "user",
-              content: query
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 1500
-        })
+      const res = await axios.post('https://apis.xwolf.space/api/ai/gpt', { prompt: query }, {
+        timeout: 30000,
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        
-        // Handle common errors
-        if (response.status === 401) {
-          return sock.sendMessage(m.key.remoteJid, {
-            text: "🔐 *Invalid OpenAI Key*\nCheck your OPENAI_API_KEY.\nGet keys: https://platform.openai.com/api-keys"
-          }, { quoted: m });
-        }
-        
-        if (response.status === 429) {
-          return sock.sendMessage(m.key.remoteJid, {
-            text: "⏳ *Rate Limited*\nOpenAI has rate limits. Wait 20 seconds."
-          }, { quoted: m });
-        }
-        
-        throw new Error(`API Error: ${error.error?.message || response.statusText}`);
-      }
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from chatgpt');
 
-      const data = await response.json();
-      let reply = data.choices[0]?.message?.content || "No response.";
-      
-      // Format response
-      const usage = data.usage || {};
-      const formattedReply = `
-🤖 *ChatGPT Response* 
-━━━━━━━━━━━━━━━━━
-${reply}
-━━━━━━━━━━━━━━━━━
-📊 *Tokens:* ${usage.total_tokens || 'N/A'}
-💡 *Model:* ${data.model || 'gpt-4'}
-🕒 *Created:* ${new Date(data.created * 1000).toLocaleTimeString()}
-`;
+      let reply = text.trim();
+      if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
 
-      await sock.sendMessage(m.key.remoteJid, { text: formattedReply }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+      await sock.sendMessage(jid, {
+        text: `🤖 *CHATGPT AI*\n━━━━━━━━━━━━━━━━━\n${reply}\n━━━━━━━━━━━━━━━━━\n🐺 _Powered by WOLF AI_`
+      }, { quoted: m });
 
     } catch (err) {
-      try {
-        const endpoints = [
-          `https://apis.wolf.space/api/ai/gpt?q=${encodeURIComponent(query)}`,
-          `https://apis.wolf.space/api/ai/gpt4?q=${encodeURIComponent(query)}`,
-          `https://apis.wolf.space/api/ai/gpt4o?q=${encodeURIComponent(query)}`
-        ];
-        for (const url of endpoints) {
-          const wolfRes = await axios.get(url, { timeout: 25000, headers: { 'User-Agent': 'WolfBot/1.0' } });
-          const wolfData = wolfRes.data;
-          const wolfText = wolfData?.result || wolfData?.response || wolfData?.answer || wolfData?.text;
-          if (wolfText && wolfText.trim()) {
-            return await sock.sendMessage(m.key.remoteJid, {
-              text: `🤖 *ChatGPT Response*\n━━━━━━━━━━━━━━━━━\n${wolfText.trim()}\n━━━━━━━━━━━━━━━━━\n🐺 _Powered by WOLF AI_`
-            }, { quoted: m });
-          }
-        }
-      } catch {}
-      console.error("ChatGPT Error:", err);
-      await sock.sendMessage(m.key.remoteJid, {
-        text: `❌ *ChatGPT Error*\n━━━━━━━━━━━━━━━━━\n${err.message}\n\n*Check:*\n1. OpenAI API key validity\n2. Account balance at platform.openai.com\n3. Network connectivity`
-      }, { quoted: m });
+      console.error('[CHATGPT] Error:', err.message);
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+      await sock.sendMessage(jid, { text: `❌ *chatgpt AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };

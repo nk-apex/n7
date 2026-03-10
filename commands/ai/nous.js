@@ -2,9 +2,9 @@ import axios from 'axios';
 
 export default {
   name: 'nous',
-  description: 'Nous AI - Nous Research\'s powerful open-source language model',
+  description: 'Nous Research AI model',
   category: 'ai',
-  aliases: ['nousai', 'noushermes', 'nhr'],
+  aliases: ["nousai","noushermes"],
   usage: 'nous [question]',
 
   async execute(sock, m, args, PREFIX) {
@@ -13,21 +13,20 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 📚 *NOUS AI* ⌋\n├─⊷ *${PREFIX}nous <question>*\n│  └⊷ Nous Research AI model\n├─⊷ *${PREFIX}nousai <question>*\n│  └⊷ Alias for nous\n╰───`
+        text: `╭─⌈ 📚 *NOUS AI* ⌋\n├─⊷ *${PREFIX}nous <question>*\n│  └⊷ Nous Research AI model\n╰───`
       }, { quoted: m });
     }
 
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      const res = await axios.get(`https://apis.wolf.space/api/ai/nous?q=${encodeURIComponent(query)}`, {
+      const res = await axios.post('https://apis.xwolf.space/api/ai/nous', { prompt: query }, {
         timeout: 30000,
-        headers: { 'User-Agent': 'WolfBot/1.0', 'Accept': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      const data = res.data;
-      const text = data?.result || data?.response || data?.answer || data?.text || data?.content;
-      if (!text || !text.trim()) throw new Error('Empty response from Nous');
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from nous');
 
       let reply = text.trim();
       if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
@@ -40,7 +39,7 @@ export default {
     } catch (err) {
       console.error('[NOUS] Error:', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      await sock.sendMessage(jid, { text: `❌ *Nous AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
+      await sock.sendMessage(jid, { text: `❌ *nous AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };

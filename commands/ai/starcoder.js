@@ -2,10 +2,10 @@ import axios from 'axios';
 
 export default {
   name: 'starcoder',
-  description: 'StarCoder AI - HuggingFace\'s code-focused large language model',
+  description: 'StarCoder code model',
   category: 'ai',
-  aliases: ['starcoderx', 'star', 'starcode', 'starcoder2'],
-  usage: 'starcoder [coding question or request]',
+  aliases: ["star","starcode"],
+  usage: 'starcoder [question]',
 
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
@@ -13,21 +13,20 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ ⭐ *STARCODER AI* ⌋\n├─⊷ *${PREFIX}starcoder <request>*\n│  └⊷ Advanced code generation\n├─⊷ *${PREFIX}star <request>*\n│  └⊷ Alias for starcoder\n╰───`
+        text: `╭─⌈ ⭐ *STARCODER AI* ⌋\n├─⊷ *${PREFIX}starcoder <question>*\n│  └⊷ StarCoder code model\n╰───`
       }, { quoted: m });
     }
 
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      const res = await axios.get(`https://apis.wolf.space/api/ai/starcoder?q=${encodeURIComponent(query)}`, {
-        timeout: 35000,
-        headers: { 'User-Agent': 'WolfBot/1.0', 'Accept': 'application/json' }
+      const res = await axios.post('https://apis.xwolf.space/api/ai/starcoder', { prompt: query }, {
+        timeout: 30000,
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      const data = res.data;
-      const text = data?.result || data?.response || data?.answer || data?.text || data?.content;
-      if (!text || !text.trim()) throw new Error('Empty response from StarCoder');
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from starcoder');
 
       let reply = text.trim();
       if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
@@ -40,7 +39,7 @@ export default {
     } catch (err) {
       console.error('[STARCODER] Error:', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      await sock.sendMessage(jid, { text: `❌ *StarCoder AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
+      await sock.sendMessage(jid, { text: `❌ *starcoder AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };

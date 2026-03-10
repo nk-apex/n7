@@ -2,9 +2,9 @@ import axios from 'axios';
 
 export default {
   name: 'mixtral',
-  description: 'Mixtral AI - Mixture of Experts language model by Mistral AI',
+  description: 'Mixtral Mixture of Experts',
   category: 'ai',
-  aliases: ['mixtralai', 'moe', 'mix'],
+  aliases: ["mixtralai","moe","mix"],
   usage: 'mixtral [question]',
 
   async execute(sock, m, args, PREFIX) {
@@ -13,21 +13,20 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔀 *MIXTRAL AI* ⌋\n├─⊷ *${PREFIX}mixtral <question>*\n│  └⊷ Mixture of Experts AI\n├─⊷ *${PREFIX}moe <question>*\n│  └⊷ Alias for mixtral\n╰───`
+        text: `╭─⌈ 🔀 *MIXTRAL AI* ⌋\n├─⊷ *${PREFIX}mixtral <question>*\n│  └⊷ Mixtral Mixture of Experts\n╰───`
       }, { quoted: m });
     }
 
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      const res = await axios.get(`https://apis.wolf.space/api/ai/mixtral?q=${encodeURIComponent(query)}`, {
+      const res = await axios.post('https://apis.xwolf.space/api/ai/mixtral', { prompt: query }, {
         timeout: 30000,
-        headers: { 'User-Agent': 'WolfBot/1.0', 'Accept': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      const data = res.data;
-      const text = data?.result || data?.response || data?.answer || data?.text || data?.content;
-      if (!text || !text.trim()) throw new Error('Empty response from Mixtral');
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from mixtral');
 
       let reply = text.trim();
       if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
@@ -40,7 +39,7 @@ export default {
     } catch (err) {
       console.error('[MIXTRAL] Error:', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      await sock.sendMessage(jid, { text: `❌ *Mixtral AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
+      await sock.sendMessage(jid, { text: `❌ *mixtral AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };

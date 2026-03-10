@@ -2,9 +2,9 @@ import axios from 'axios';
 
 export default {
   name: 'falcon',
-  description: 'Falcon AI - Technology Innovation Institute open-source LLM',
+  description: 'Falcon open-source LLM',
   category: 'ai',
-  aliases: ['falconai', 'falcon40b', 'tii'],
+  aliases: ["falconai","falcon40b"],
   usage: 'falcon [question]',
 
   async execute(sock, m, args, PREFIX) {
@@ -13,21 +13,20 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🦅 *FALCON AI* ⌋\n├─⊷ *${PREFIX}falcon <question>*\n│  └⊷ Ask Falcon AI anything\n├─⊷ *${PREFIX}falconai <question>*\n│  └⊷ Alias for falcon\n╰───`
+        text: `╭─⌈ 🦅 *FALCON AI* ⌋\n├─⊷ *${PREFIX}falcon <question>*\n│  └⊷ Falcon open-source LLM\n╰───`
       }, { quoted: m });
     }
 
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      const res = await axios.get(`https://apis.wolf.space/api/ai/falcon?q=${encodeURIComponent(query)}`, {
+      const res = await axios.post('https://apis.xwolf.space/api/ai/falcon', { prompt: query }, {
         timeout: 30000,
-        headers: { 'User-Agent': 'WolfBot/1.0', 'Accept': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      const data = res.data;
-      const text = data?.result || data?.response || data?.answer || data?.text || data?.content;
-      if (!text || !text.trim()) throw new Error('Empty response from Falcon');
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from falcon');
 
       let reply = text.trim();
       if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
@@ -40,7 +39,7 @@ export default {
     } catch (err) {
       console.error('[FALCON] Error:', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      await sock.sendMessage(jid, { text: `❌ *Falcon AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
+      await sock.sendMessage(jid, { text: `❌ *falcon AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };

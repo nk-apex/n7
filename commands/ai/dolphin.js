@@ -2,9 +2,9 @@ import axios from 'axios';
 
 export default {
   name: 'dolphin',
-  description: 'Dolphin AI - Uncensored and helpful open-source AI model',
+  description: 'Dolphin uncensored AI',
   category: 'ai',
-  aliases: ['dolphinai', 'dolph', 'dolphin25'],
+  aliases: ["dolphinai","dolph"],
   usage: 'dolphin [question]',
 
   async execute(sock, m, args, PREFIX) {
@@ -13,21 +13,20 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🐬 *DOLPHIN AI* ⌋\n├─⊷ *${PREFIX}dolphin <question>*\n│  └⊷ Helpful uncensored AI\n├─⊷ *${PREFIX}dolph <question>*\n│  └⊷ Alias for dolphin\n╰───`
+        text: `╭─⌈ 🐬 *DOLPHIN AI* ⌋\n├─⊷ *${PREFIX}dolphin <question>*\n│  └⊷ Dolphin uncensored AI\n╰───`
       }, { quoted: m });
     }
 
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      const res = await axios.get(`https://apis.wolf.space/api/ai/dolphin?q=${encodeURIComponent(query)}`, {
+      const res = await axios.post('https://apis.xwolf.space/api/ai/dolphin', { prompt: query }, {
         timeout: 30000,
-        headers: { 'User-Agent': 'WolfBot/1.0', 'Accept': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      const data = res.data;
-      const text = data?.result || data?.response || data?.answer || data?.text || data?.content;
-      if (!text || !text.trim()) throw new Error('Empty response from Dolphin');
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from dolphin');
 
       let reply = text.trim();
       if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
@@ -40,7 +39,7 @@ export default {
     } catch (err) {
       console.error('[DOLPHIN] Error:', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      await sock.sendMessage(jid, { text: `❌ *Dolphin AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
+      await sock.sendMessage(jid, { text: `❌ *dolphin AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };

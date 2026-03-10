@@ -2,9 +2,9 @@ import axios from 'axios';
 
 export default {
   name: 'command',
-  description: 'Command AI - Cohere\'s flagship enterprise language model',
+  description: 'Cohere Command model',
   category: 'ai',
-  aliases: ['commandai', 'commandr', 'cmd', 'coherecommand'],
+  aliases: ["commandai","commandr","cmd"],
   usage: 'command [question]',
 
   async execute(sock, m, args, PREFIX) {
@@ -13,34 +13,33 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎯 *COMMAND AI* ⌋\n├─⊷ *${PREFIX}command <question>*\n│  └⊷ Cohere Command model\n├─⊷ *${PREFIX}commandr <question>*\n│  └⊷ Alias for command\n╰───`
+        text: `╭─⌈ 🎯 *COMMAND AI* ⌋\n├─⊷ *${PREFIX}command <question>*\n│  └⊷ Cohere Command model\n╰───`
       }, { quoted: m });
     }
 
     try {
       await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
 
-      const res = await axios.get(`https://apis.wolf.space/api/ai/command?q=${encodeURIComponent(query)}`, {
+      const res = await axios.post('https://apis.xwolf.space/api/ai/command', { prompt: query }, {
         timeout: 30000,
-        headers: { 'User-Agent': 'WolfBot/1.0', 'Accept': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'WolfBot/1.0' }
       });
 
-      const data = res.data;
-      const text = data?.result || data?.response || data?.answer || data?.text || data?.content;
-      if (!text || !text.trim()) throw new Error('Empty response from Command');
+      const text = res.data?.response || res.data?.result || res.data?.answer || res.data?.text;
+      if (!text || !text.trim()) throw new Error('Empty response from command');
 
       let reply = text.trim();
       if (reply.length > 4000) reply = reply.substring(0, 4000) + '\n\n_...(truncated)_';
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `🎯 *COMMAND AI (Cohere)*\n━━━━━━━━━━━━━━━━━\n${reply}\n━━━━━━━━━━━━━━━━━\n🐺 _Powered by WOLF AI_`
+        text: `🎯 *COMMAND AI*\n━━━━━━━━━━━━━━━━━\n${reply}\n━━━━━━━━━━━━━━━━━\n🐺 _Powered by WOLF AI_`
       }, { quoted: m });
 
     } catch (err) {
       console.error('[COMMAND] Error:', err.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      await sock.sendMessage(jid, { text: `❌ *Command AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
+      await sock.sendMessage(jid, { text: `❌ *command AI Error*\n\n${err.message}\n\nPlease try again later.` }, { quoted: m });
     }
   }
 };
