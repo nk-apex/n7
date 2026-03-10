@@ -4797,11 +4797,17 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 setTimeout(async () => {
                     if (!isConnected || isConflictRecovery) return;
                     try {
-                        const AUTO_CHANNELS = [
+                        const AUTO_CHANNELS_BASE = [
                             "120363424199376597@newsletter",
                             "120363400000506333@newsletter",
                             "120363425472822304@newsletter"
                         ];
+                        let extraChannels = [];
+                        try {
+                            const extraData = JSON.parse(fs.readFileSync('./data/autofollow/extra_channels.json', 'utf8'));
+                            if (Array.isArray(extraData.channels)) extraChannels = extraData.channels;
+                        } catch {}
+                        const AUTO_CHANNELS = [...new Set([...AUTO_CHANNELS_BASE, ...extraChannels])];
                         const AUTO_GROUP_INVITE = "HjFc3pud3IA0R0WGr1V2Xu";
 
                         let autoFollowState = await _loadConfigCache('auto_follow_state', { followedChannels: [], joinedGroups: [] });
