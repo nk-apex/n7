@@ -177,9 +177,9 @@ import { getBotName } from '../../lib/botname.js';
 export default {
   name: "take",
   alias: ["steal", "copysticker"],
-  description: "Take a sticker and add custom metadata (Owner Only)",
-  category: "owner",
-  ownerOnly: true,
+  description: "Take a sticker and add custom metadata",
+  category: "utility",
+  ownerOnly: false,
   usage: ".take <emoji>\nReply to a sticker with .take to customize its emoji",
   
   async execute(sock, m, args, PREFIX, extra) {
@@ -189,13 +189,6 @@ export default {
     const sendMessage = async (text) => {
       return await sock.sendMessage(chatId, { text }, { quoted: m });
     };
-    
-    // Owner check
-    if (!jidManager.isOwner(m)) {
-      return sock.sendMessage(chatId, {
-        text: `❌ *Owner Only Command!*\n\nOnly the bot owner can use the take command.`
-      }, { quoted: m });
-    }
     
     try {
       // Get pushname (user's display name)

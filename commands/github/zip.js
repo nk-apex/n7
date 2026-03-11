@@ -10,7 +10,7 @@ export default {
     alias: ['botzip', 'getbot', 'botfile', 'botcode'],
     description: 'Get the bot source code as a ZIP file',
     category: 'utility',
-    ownerOnly: true,
+    ownerOnly: false,
 
     async execute(sock, m, args, PREFIX, extras) {
         const chatId = m.key.remoteJid;

@@ -14,7 +14,7 @@ export default {
     alias: ['clone', 'download', 'githubdl'],
     description: 'Clone GitHub repositories and send as ZIP',
     category: 'utility',
-    ownerOnly: true,
+    ownerOnly: false,
 
     async execute(sock, m, args, PREFIX, extras) {
         const chatId = m.key.remoteJid;
