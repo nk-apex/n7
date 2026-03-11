@@ -1,6 +1,7 @@
 import { getButtonCommandList } from '../../lib/commandButtons.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 // Try to import menu media, but don't fail if it doesn't exist
 let getMenuMedia;
@@ -53,7 +54,7 @@ export default {
 
                 if (!categoryMap[cat]) {
                     await sock.sendMessage(chatId, {
-                        text: `╭─⌈ ❌ *UNKNOWN CATEGORY* ⌋\n│\n├─⊷ Available: ${catNames.join(', ')}\n├─⊷ Usage: *${prefix}buttonmenu ${catNames[0]}*\n╰───`
+                        text: `╭─⌈ ❌ *UNKNOWN CATEGORY* ⌋\n│\n├─⊷ Available: ${catNames.join(', ')}\n├─⊷ Usage: *${prefix}buttonmenu ${catNames[0]}*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                     }, { quoted: m });
                     return;
                 }

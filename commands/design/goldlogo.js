@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "goldlogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 💰 *GOLD LOGO* ⌋\n│\n├─⊷ *goldlogo*\n│  └⊷ ${global.prefix}goldlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ ${global.prefix}goldlogo WOLF\n│  └⊷ ${global.prefix}goldlogo ROYAL\n│  └⊷ ${global.prefix}goldlogo LUXURY\n│\n╰───` 
+          text: `╭─⌈ 💰 *GOLD LOGO* ⌋\n│\n├─⊷ *goldlogo*\n│  └⊷ ${global.prefix}goldlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ ${global.prefix}goldlogo WOLF\n│  └⊷ ${global.prefix}goldlogo ROYAL\n│  └⊷ ${global.prefix}goldlogo LUXURY\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

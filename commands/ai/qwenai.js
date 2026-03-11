@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'qwenai',
@@ -13,7 +14,7 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🌏 *QWENAI AI* ⌋\n├─⊷ *${PREFIX}qwenai <question>*\n│  └⊷ Qwen AI by Alibaba\n╰───`
+        text: `╭─⌈ 🌏 *QWENAI AI* ⌋\n├─⊷ *${PREFIX}qwenai <question>*\n│  └⊷ Qwen AI by Alibaba\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -33,7 +34,7 @@ export default {
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `🌏 *QWENAI AI*\n━━━━━━━━━━━━━━━━━\n${reply}\n━━━━━━━━━━━━━━━━━\n🐺 _Powered by WOLF AI_`
+        text: `🌏 *QWENAI AI*\n━━━━━━━━━━━━━━━━━\n${reply}\n━━━━━━━━━━━━━━━━━\n🐺 _Powered by ${getOwnerName().toUpperCase()} TECH_`
       }, { quoted: m });
 
     } catch (err) {

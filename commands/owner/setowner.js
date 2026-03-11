@@ -30,7 +30,7 @@
 //             const originalOwner = this.getOriginalOwner();
             
 //             return sock.sendMessage(chatId, {
-//                 text: `╭─⌈ 👑 *SET OWNER* ⌋\n╰───`
+//                 text: `╭─⌈ 👑 *SET OWNER* ⌋\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
 //             }, { quoted: msg });
 //         }
         
@@ -198,6 +198,7 @@
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -226,7 +227,7 @@ export default {
             const originalOwner = this.getOriginalOwner();
             
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 👑 *SET OWNER* ⌋\n│\n├─⊷ *${PREFIX}setowner <name>*\n│  └⊷ Set owner name\n╰───`
+                text: `╭─⌈ 👑 *SET OWNER* ⌋\n│\n├─⊷ *${PREFIX}setowner <name>*\n│  └⊷ Set owner name\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
         

@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import os from "os";
 import { scheduleJob, cancelJob, scheduledJobs } from "node-schedule";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -1075,7 +1076,7 @@ async function handleHelp(sock, m, args, editMessage) {
     `├─⊷ *!shutdown resume <id>*\n│  └⊷ Resume paused shutdown\n` +
     `├─⊷ *!shutdown stats*\n│  └⊷ Show shutdown statistics\n` +
     `├─⊷ *!shutdown help*\n│  └⊷ This help menu\n` +
-    `╰───`;
+    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
   
   await editMessage(helpText);
 }

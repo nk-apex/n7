@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'sitemap',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🗺️ *SITEMAP CHECKER* ⌋\n│\n├─⊷ *${PREFIX}sitemap <url>*\n│  └⊷ Check sitemap.xml of a website\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}sitemap google.com\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🗺️ *SITEMAP CHECKER* ⌋\n│\n├─⊷ *${PREFIX}sitemap <url>*\n│  └⊷ Check sitemap.xml of a website\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}sitemap google.com\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -40,7 +41,7 @@ export default {
       }
 
       if (!sitemapData) {
-        const result = `╭─⌈ 🗺️ *SITEMAP CHECK* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ❌ No sitemap.xml found\n│\n├─⊷ Checked: ${paths.join(', ')}\n╰───────────────\n> *${getBotName()}*`;
+        const result = `╭─⌈ 🗺️ *SITEMAP CHECK* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ❌ No sitemap.xml found\n│\n├─⊷ Checked: ${paths.join(', ')}\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
         await sock.sendMessage(jid, { text: result }, { quoted: m });
         await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
         return;
@@ -72,7 +73,7 @@ export default {
       const sizeKB = (Buffer.byteLength(sitemapData, 'utf8') / 1024).toFixed(1);
       output += `├─⊷ 📦 *File Size:* ${sizeKB} KB\n│\n`;
 
-      output += `╰───────────────\n> *${getBotName()}*`;
+      output += `╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: output }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
 import supabase from '../../lib/supabase.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const DATA_DIR = './data/chatbot';
 const CONVERSATIONS_DIR = path.join(DATA_DIR, 'conversations');
@@ -763,7 +764,7 @@ export default {
       };
 
       return sock.sendMessage(jid, {
-        text: `🐺 *W.O.L.F*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${modeDescriptions[subCommand]}\n\n🤖 *Model:* ${(AI_MODELS[config.preferredModel] || AI_MODELS.gpt).name}\n⚡ *Powered by WolfTech*`
+        text: `🐺 *W.O.L.F*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${modeDescriptions[subCommand]}\n\n🤖 *Model:* ${(AI_MODELS[config.preferredModel] || AI_MODELS.gpt).name}\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -796,7 +797,7 @@ export default {
 
       const model = AI_MODELS[modelName];
       return sock.sendMessage(jid, {
-        text: `🐺 *W.O.L.F*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${model.icon} Now using: *${model.name}*\n\nAuto-fallback enabled if unavailable.\n⚡ *Powered by WolfTech*`
+        text: `🐺 *W.O.L.F*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${model.icon} Now using: *${model.name}*\n\nAuto-fallback enabled if unavailable.\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -826,7 +827,7 @@ export default {
         }
       }
 
-      statsText += `\n⚡ *Powered by WolfTech*`;
+      statsText += `\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
       return sock.sendMessage(jid, { text: statsText }, { quoted: m });
     }
@@ -869,7 +870,7 @@ export default {
         whitelistSection + `\n` +
         `🤖 *Models (${Object.keys(AI_MODELS).length}):*\n` +
         Object.entries(AI_MODELS).map(([k, v]) => `  ${v.icon} ${v.name} (\`${k}\`)`).join('\n') +
-        `\n\n⚡ *Powered by WolfTech*`;
+        `\n\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
       return sock.sendMessage(jid, { text: settingsText }, { quoted: m });
     }

@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "sunlogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ ☀️ *SUN LOGO* ⌋\n│\n├─⊷ *sunlogo*\n│  └⊷ sunlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ sunlogo SUN\n│  └⊷ sunlogo LIGHT\n│  └⊷ sunlogo SOLAR\n│\n╰───` 
+          text: `╭─⌈ ☀️ *SUN LOGO* ⌋\n│\n├─⊷ *sunlogo*\n│  └⊷ sunlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ sunlogo SUN\n│  └⊷ sunlogo LIGHT\n│  └⊷ sunlogo SOLAR\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

@@ -65,6 +65,7 @@
 
 
 import fs from 'fs';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const exFile = './lib/exlist.json';
 
@@ -211,7 +212,7 @@ export default {
         // Method 4: Show help
         else {
             return sock.sendMessage(chatId, { 
-                text: `╭─⌈ ⚡ *EX COMMAND* ⌋\n│\n├─⊷ *.ex @user*\n│  └⊷ Ban & kick user\n├─⊷ *.ex 947xxxxxxxx*\n│  └⊷ Use number\n├─⊷ *.ex* (reply)\n│  └⊷ Reply to user\n╰───`
+                text: `╭─⌈ ⚡ *EX COMMAND* ⌋\n│\n├─⊷ *.ex @user*\n│  └⊷ Ban & kick user\n├─⊷ *.ex 947xxxxxxxx*\n│  └⊷ Use number\n├─⊷ *.ex* (reply)\n│  └⊷ Reply to user\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

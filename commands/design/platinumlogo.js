@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "platinumlogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🔷 *PLATINUM LOGO* ⌋\n│\n├─⊷ *platinumlogo*\n│  └⊷ platinumlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ platinumlogo WOLF\n│  └⊷ platinumlogo PLATINUM\n│  └⊷ platinumlogo ELITE\n│\n╰───` 
+          text: `╭─⌈ 🔷 *PLATINUM LOGO* ⌋\n│\n├─⊷ *platinumlogo*\n│  └⊷ platinumlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ platinumlogo WOLF\n│  └⊷ platinumlogo PLATINUM\n│  └⊷ platinumlogo ELITE\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

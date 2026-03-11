@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 
@@ -15,7 +16,7 @@ export default {
 
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎾 *TENNIS* ⌋\n├─⊷ *${PREFIX}tennis scores*\n│  └⊷ Live tennis scores\n├─⊷ *${PREFIX}tennis rankings*\n│  └⊷ ATP/WTA rankings\n├─⊷ *${PREFIX}atp scores*\n│  └⊷ Alias for tennis\n╰───`
+        text: `╭─⌈ 🎾 *TENNIS* ⌋\n├─⊷ *${PREFIX}tennis scores*\n│  └⊷ Live tennis scores\n├─⊷ *${PREFIX}tennis rankings*\n│  └⊷ ATP/WTA rankings\n├─⊷ *${PREFIX}atp scores*\n│  └⊷ Alias for tennis\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -45,7 +46,7 @@ export default {
           text += `│  └⊷ ${status}\n`;
         }
       });
-      text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
+      text += `╰───\n\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
@@ -53,7 +54,7 @@ export default {
       console.error('❌ [TENNIS]', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *TENNIS ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰───`
+        text: `╭─⌈ ❌ *TENNIS ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
   }

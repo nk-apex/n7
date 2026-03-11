@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'csrfcheck',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *CSRF VULNERABILITY CHECKER* ⌋\n│\n├─⊷ *${PREFIX}csrfcheck <url>*\n│  └⊷ Check a website for CSRF protection\n│\n├─⊷ *Checks:*\n│  ├⊷ CSRF tokens in forms\n│  ├⊷ SameSite cookie attributes\n│  ├⊷ Custom header requirements\n│  └⊷ Referer/Origin validation\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *CSRF VULNERABILITY CHECKER* ⌋\n│\n├─⊷ *${PREFIX}csrfcheck <url>*\n│  └⊷ Check a website for CSRF protection\n│\n├─⊷ *Checks:*\n│  ├⊷ CSRF tokens in forms\n│  ├⊷ SameSite cookie attributes\n│  ├⊷ Custom header requirements\n│  └⊷ Referer/Origin validation\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
 
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
@@ -135,7 +136,7 @@ export default {
       result += `├─⊷ Set SameSite=Strict or Lax on session cookies\n`;
       result += `├─⊷ Validate Origin/Referer headers server-side\n`;
       result += `├─⊷ Use anti-CSRF tokens for state-changing operations\n`;
-      result += `│\n╰───────────────\n> *${getBotName()}*`;
+      result += `│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

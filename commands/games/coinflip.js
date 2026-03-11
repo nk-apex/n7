@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const userBalances = new Map();
 const coinStats = new Map();
@@ -705,7 +706,7 @@ async function showHelp(sock, m, chatId, userData) {
 ├─⊷ *.coinflip balance*
 │  └⊷ Check balance
 │
-╰───`;
+╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
     
     await sock.sendMessage(chatId, {
         text: helpText,

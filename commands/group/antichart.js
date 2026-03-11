@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const configFile = path.join(__dirname, '../../data/antichart/config.json');
@@ -121,7 +122,7 @@ export default {
 
             if (!target) {
                 return sock.sendMessage(chatId, {
-                    text: `╭─⌈ ❌ *ANTI-CHART* ⌋\n│\n├─⊷ *${PREFIX}antichart restrict* (reply)\n│  └⊷ Reply to restrict\n├─⊷ *${PREFIX}antichart restrict @user*\n│  └⊷ Mention to restrict\n╰───`
+                    text: `╭─⌈ ❌ *ANTI-CHART* ⌋\n│\n├─⊷ *${PREFIX}antichart restrict* (reply)\n│  └⊷ Reply to restrict\n├─⊷ *${PREFIX}antichart restrict @user*\n│  └⊷ Mention to restrict\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
             }
 
@@ -194,7 +195,7 @@ export default {
         const restricted = config[chatId]?.restricted || [];
 
         return sock.sendMessage(chatId, {
-            text: `╭─⌈ 📊 *ANTI-CHART* ⌋\n│\n├─⊷ *${PREFIX}antichart on*\n│  └⊷ Enable protection\n├─⊷ *${PREFIX}antichart off*\n│  └⊷ Disable protection\n├─⊷ *${PREFIX}antichart action <warn|delete|kick>*\n│  └⊷ Set action mode\n├─⊷ *${PREFIX}antichart restrict* (reply)\n│  └⊷ Restrict a user\n├─⊷ *${PREFIX}antichart unrestrict* (reply)\n│  └⊷ Unrestrict a user\n├─⊷ *${PREFIX}antichart list*\n│  └⊷ List restricted users\n╰───`
+            text: `╭─⌈ 📊 *ANTI-CHART* ⌋\n│\n├─⊷ *${PREFIX}antichart on*\n│  └⊷ Enable protection\n├─⊷ *${PREFIX}antichart off*\n│  └⊷ Disable protection\n├─⊷ *${PREFIX}antichart action <warn|delete|kick>*\n│  └⊷ Set action mode\n├─⊷ *${PREFIX}antichart restrict* (reply)\n│  └⊷ Restrict a user\n├─⊷ *${PREFIX}antichart unrestrict* (reply)\n│  └⊷ Unrestrict a user\n├─⊷ *${PREFIX}antichart list*\n│  └⊷ List restricted users\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: msg });
     }
 };

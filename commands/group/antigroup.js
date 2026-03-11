@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const antiGroupLinkFile = './antigrouplink.json';
 
@@ -511,7 +512,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `╭─⌈ 🚫 *ANTI-GROUP-LINK* ⌋\n│\n├─⊷ *.antigrouplink on <warn|delete|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antigrouplink off*\n│  └⊷ Disable protection\n├─⊷ *.antigrouplink getlink*\n│  └⊷ Show invite link\n├─⊷ *.antigrouplink resetlink*\n│  └⊷ Reset invite link\n├─⊷ *.antigrouplink exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *.antigrouplink status*\n│  └⊷ View current status\n╰───`;
+            const helpText = `╭─⌈ 🚫 *ANTI-GROUP-LINK* ⌋\n│\n├─⊷ *.antigrouplink on <warn|delete|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antigrouplink off*\n│  └⊷ Disable protection\n├─⊷ *.antigrouplink getlink*\n│  └⊷ Show invite link\n├─⊷ *.antigrouplink resetlink*\n│  └⊷ Reset invite link\n├─⊷ *.antigrouplink exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *.antigrouplink status*\n│  └⊷ View current status\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

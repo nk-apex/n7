@@ -1,4 +1,5 @@
 import { delay } from '@whiskeysockets/baileys';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'blockall',
@@ -25,12 +26,12 @@ export default {
 
         if (jidList.length === 0) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 🚫 *BLOCK ALL* ⌋\n│\n├─⊷ ⚠️ No contacts found to block.\n│  Contacts are loaded as the bot receives\n│  messages. Try again after chatting.\n╰───`,
+                text: `╭─⌈ 🚫 *BLOCK ALL* ⌋\n│\n├─⊷ ⚠️ No contacts found to block.\n│  Contacts are loaded as the bot receives\n│  messages. Try again after chatting.\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
             }, { quoted: msg });
         }
 
         await sock.sendMessage(chatId, {
-            text: `╭─⌈ 🚫 *BLOCK ALL* ⌋\n│\n├─⊷ 🔄 Blocking *${jidList.length}* contacts...\n├─⊷ ⚠️ This may take a moment\n╰───`,
+            text: `╭─⌈ 🚫 *BLOCK ALL* ⌋\n│\n├─⊷ 🔄 Blocking *${jidList.length}* contacts...\n├─⊷ ⚠️ This may take a moment\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
         }, { quoted: msg });
 
         let blocked = 0;
@@ -47,7 +48,7 @@ export default {
         }
 
         return sock.sendMessage(chatId, {
-            text: `╭─⌈ 🚫 *BLOCK ALL - DONE* ⌋\n│\n├─⊷ ✅ Blocked: *${blocked}*\n├─⊷ ❌ Failed: *${failed}*\n╰───`,
+            text: `╭─⌈ 🚫 *BLOCK ALL - DONE* ⌋\n│\n├─⊷ ✅ Blocked: *${blocked}*\n├─⊷ ❌ Failed: *${failed}*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
         }, { quoted: msg });
     }
 };

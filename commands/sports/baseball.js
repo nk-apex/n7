@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 
@@ -15,7 +16,7 @@ export default {
 
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ ⚾ *MLB BASEBALL* ⌋\n├─⊷ *${PREFIX}baseball scores*\n│  └⊷ Today's MLB scores\n├─⊷ *${PREFIX}baseball standings*\n│  └⊷ MLB standings\n├─⊷ *${PREFIX}mlb scores*\n│  └⊷ Alias for baseball\n╰───`
+        text: `╭─⌈ ⚾ *MLB BASEBALL* ⌋\n├─⊷ *${PREFIX}baseball scores*\n│  └⊷ Today's MLB scores\n├─⊷ *${PREFIX}baseball standings*\n│  └⊷ MLB standings\n├─⊷ *${PREFIX}mlb scores*\n│  └⊷ Alias for baseball\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -44,7 +45,7 @@ export default {
             });
           }
         }
-        text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
+        text += `╰───\n\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
         await sock.sendMessage(jid, { text }, { quoted: m });
       } else {
         const res = await axios.get(`${ESPN_BASE}/baseball/mlb/scoreboard`, { timeout: 15000 });
@@ -61,7 +62,7 @@ export default {
           text += `├─⊷ ${away?.team?.abbreviation || '???'} *${away?.score || '0'}* @ ${home?.team?.abbreviation || '???'} *${home?.score || '0'}*\n`;
           text += `│  └⊷ ${status}\n`;
         });
-        text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
+        text += `╰───\n\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
         await sock.sendMessage(jid, { text }, { quoted: m });
       }
 
@@ -70,7 +71,7 @@ export default {
       console.error('❌ [BASEBALL]', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *BASEBALL ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰───`
+        text: `╭─⌈ ❌ *BASEBALL ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
   }

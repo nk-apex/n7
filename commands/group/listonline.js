@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 export default {
   name: 'listonline',
   aliases: ['whoonline', 'onlinelist', 'activeusers'],
@@ -107,7 +108,7 @@ export default {
             `│ • \`${PREFIX}listinactive\` - Find inactive members\n` +
             `│ • \`${PREFIX}tagall\` - Tag everyone\n` +
             `│\n` +
-            `╰───`
+            `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: msg });
         try { await sock.sendMessage(jid, { react: { text: '😴', key: msg.key } }); } catch {}
         return;
@@ -149,7 +150,7 @@ export default {
         `│ • \`${PREFIX}listinactive\` - Find inactive members\n` +
         `│ • \`${PREFIX}tagall\` - Tag everyone\n` +
         `│\n` +
-        `╰───`;
+        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
       const mentions = allActive.map(m => m.id);
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'mistral',
@@ -13,7 +14,7 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🌀 *MISTRAL AI* ⌋\n├─⊷ *${PREFIX}mistral <question>*\n│  └⊷ Mistral AI open-source model\n╰───`
+        text: `╭─⌈ 🌀 *MISTRAL AI* ⌋\n├─⊷ *${PREFIX}mistral <question>*\n│  └⊷ Mistral AI open-source model\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -33,7 +34,7 @@ export default {
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `🌀 *MISTRAL AI*\n━━━━━━━━━━━━━━━━━\n${reply}\n━━━━━━━━━━━━━━━━━\n🐺 _Powered by WOLF AI_`
+        text: `🌀 *MISTRAL AI*\n━━━━━━━━━━━━━━━━━\n${reply}\n━━━━━━━━━━━━━━━━━\n🐺 _Powered by ${getOwnerName().toUpperCase()} TECH_`
       }, { quoted: m });
 
     } catch (err) {

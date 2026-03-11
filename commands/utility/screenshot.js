@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'screenshot',
@@ -13,7 +14,7 @@ export default {
     
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 📸 *WEBSITE SCREENSHOT* ⌋\n│\n├─⊷ *${PREFIX}screenshot <URL>*\n│  └⊷ Take a screenshot of any website\n│\n├─⊷ *${PREFIX}ss google.com*\n│  └⊷ Also works without https://\n│\n╰───────────────\n> *${getBotName()}*`
+        text: `╭─⌈ 📸 *WEBSITE SCREENSHOT* ⌋\n│\n├─⊷ *${PREFIX}screenshot <URL>*\n│  └⊷ Take a screenshot of any website\n│\n├─⊷ *${PREFIX}ss google.com*\n│  └⊷ Also works without https://\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -125,7 +126,7 @@ export default {
 
       await sock.sendMessage(jid, {
         image: screenshotBuffer,
-        caption: `📸 *${domain}*\n🔗 ${url}\n💾 ${fileSize}KB\n\n> *${getBotName()}*`,
+        caption: `📸 *${domain}*\n🔗 ${url}\n💾 ${fileSize}KB\n\n> *${getOwnerName().toUpperCase()} TECH*`,
         mimetype: 'image/png'
       }, { quoted: m });
 

@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const activeGames = new Map();
 const snakeStats = new Map();
@@ -694,7 +695,7 @@ async function showHelp(sock, m, chatId) {
 ├─⊷ 🎮 Eat 🍎 to grow, avoid walls & yourself
 ├─⊷ 📌 Snake moves every 1.5s, can't turn 180°
 │
-╰───`;
+╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }

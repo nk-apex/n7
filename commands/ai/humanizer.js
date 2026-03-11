@@ -1224,6 +1224,7 @@
 
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'humanizer',
@@ -1238,7 +1239,7 @@ export default {
     // Help section
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ ✍️ *TEXT HUMANIZER* ⌋\n├─⊷ *${PREFIX}humanizer <text>*\n│  └⊷ Humanize AI-generated text\n├─⊷ *${PREFIX}humanizer <text> <style>*\n│  └⊷ casual, professional, creative,\n│  └⊷ academic, social, email, blog\n├─⊷ Reply to message with *${PREFIX}humanizer*\n│  └⊷ Humanize quoted text\n╰───`
+        text: `╭─⌈ ✍️ *TEXT HUMANIZER* ⌋\n├─⊷ *${PREFIX}humanizer <text>*\n│  └⊷ Humanize AI-generated text\n├─⊷ *${PREFIX}humanizer <text> <style>*\n│  └⊷ casual, professional, creative,\n│  └⊷ academic, social, email, blog\n├─⊷ Reply to message with *${PREFIX}humanizer*\n│  └⊷ Humanize quoted text\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -1268,7 +1269,7 @@ export default {
 
     if (!text || text.length < 10) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *TEXT TOO SHORT* ⌋\n├─⊷ Provide at least 10 characters\n╰───`
+        text: `╭─⌈ ❌ *TEXT TOO SHORT* ⌋\n├─⊷ Provide at least 10 characters\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

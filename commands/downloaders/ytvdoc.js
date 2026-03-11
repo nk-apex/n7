@@ -185,7 +185,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 📁 *YTVDOC DOWNLOADER* ⌋\n│\n├─⊷ *ytvdoc <video name>*\n│  └⊷ Download video as document\n├─⊷ *ytvdoc <quality> <name>*\n│  └⊷ Quality: 144/240/360/480/720/1080\n├─⊷ *ytvdoc <YouTube URL>*\n│  └⊷ Download from link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
+          text: `╭─⌈ 📁 *YTVDOC DOWNLOADER* ⌋\n│\n├─⊷ *ytvdoc <video name>*\n│  └⊷ Download video as document\n├─⊷ *ytvdoc <quality> <name>*\n│  └⊷ Quality: 144/240/360/480/720/1080\n├─⊷ *ytvdoc <YouTube URL>*\n│  └⊷ Download from link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
         return;
       }
@@ -200,7 +200,7 @@ export default {
         
         if (!searchQuery) {
           await sock.sendMessage(jid, { 
-            text: `╭─⌈ ❌ *MISSING INPUT* ⌋\n│\n├─⊷ *ytvdoc <quality> <name>*\n│  └⊷ Provide name or URL after quality\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
+            text: `╭─⌈ ❌ *MISSING INPUT* ⌋\n│\n├─⊷ *ytvdoc <quality> <name>*\n│  └⊷ Provide name or URL after quality\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
           }, { quoted: m });
           return;
         }

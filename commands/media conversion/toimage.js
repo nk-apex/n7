@@ -3,6 +3,7 @@ let sharp;
 try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 import fs from 'fs';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'toimage',
@@ -17,7 +18,7 @@ export default {
     
     if (!m.message?.extendedTextMessage?.contextInfo?.quotedMessage?.stickerMessage) {
       await sock.sendMessage(jid, { 
-        text: `╭─⌈ 🖼️ *STICKER TO IMAGE* ⌋\n│\n├─⊷ *${prefix}toimage*\n│  └⊷ Reply to a sticker to convert it to image\n│\n╰───` 
+        text: `╭─⌈ 🖼️ *STICKER TO IMAGE* ⌋\n│\n├─⊷ *${prefix}toimage*\n│  └⊷ Reply to a sticker to convert it to image\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
       }, { quoted: m });
       return;
     }

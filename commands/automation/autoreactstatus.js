@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import supabase from '../../lib/supabase.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -508,7 +509,7 @@ export default {
                 }
 
                 default:
-                    await reply(`╭─⌈ ❓ *AUTOREACTSTATUS* ⌋\n│\n├─⊷ *${prefix}sr on / off*\n├─⊷ *${prefix}sr exclude <number>*\n├─⊷ *${prefix}sr include <number>*\n├─⊷ *${prefix}sr excluded*\n├─⊷ *${prefix}sr view+react*\n├─⊷ *${prefix}sr react-only*\n├─⊷ *${prefix}sr random / fixed*\n├─⊷ *${prefix}sr emoji 🐺*\n├─⊷ *${prefix}sr stats*\n╰───`);
+                    await reply(`╭─⌈ ❓ *AUTOREACTSTATUS* ⌋\n│\n├─⊷ *${prefix}sr on / off*\n├─⊷ *${prefix}sr exclude <number>*\n├─⊷ *${prefix}sr include <number>*\n├─⊷ *${prefix}sr excluded*\n├─⊷ *${prefix}sr view+react*\n├─⊷ *${prefix}sr react-only*\n├─⊷ *${prefix}sr random / fixed*\n├─⊷ *${prefix}sr emoji 🐺*\n├─⊷ *${prefix}sr stats*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`);
             }
 
         } catch (error) {

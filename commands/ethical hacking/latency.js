@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'latency',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ ⏱️ *LATENCY CHECK* ⌋\n│\n├─⊷ *${PREFIX}latency <url>*\n│  └⊷ Check website response time\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}latency google.com\n│  └⊷ ${PREFIX}latency https://example.com\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ ⏱️ *LATENCY CHECK* ⌋\n│\n├─⊷ *${PREFIX}latency <url>*\n│  └⊷ Check website response time\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}latency google.com\n│  └⊷ ${PREFIX}latency https://example.com\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -67,7 +68,7 @@ export default {
       else if (avgTime > 500) rating = '🟠 Fair';
       else if (avgTime > 200) rating = '🟡 Good';
 
-      const result = `╭─⌈ ⏱️ *LATENCY CHECK RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${results[0].statusCode}\n├─⊷ *Rating:* ${rating}\n│\n├─⊷ *── Response Times ──*\n├─⊷ *Request 1:* ${results[0].totalTime}ms\n├─⊷ *Request 2:* ${results[1].totalTime}ms\n├─⊷ *Request 3:* ${results[2].totalTime}ms\n│\n├─⊷ *── Statistics ──*\n├─⊷ *Average:* ${avgTime}ms\n├─⊷ *Minimum:* ${minTime}ms\n├─⊷ *Maximum:* ${maxTime}ms\n├─⊷ *Jitter:* ${jitter}ms\n│\n├─⊷ *── Server Info ──*\n├─⊷ *Server:* ${server}\n├─⊷ *Content-Type:* ${contentType}\n│\n╰───────────────\n> *${getBotName()}*`;
+      const result = `╭─⌈ ⏱️ *LATENCY CHECK RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${results[0].statusCode}\n├─⊷ *Rating:* ${rating}\n│\n├─⊷ *── Response Times ──*\n├─⊷ *Request 1:* ${results[0].totalTime}ms\n├─⊷ *Request 2:* ${results[1].totalTime}ms\n├─⊷ *Request 3:* ${results[2].totalTime}ms\n│\n├─⊷ *── Statistics ──*\n├─⊷ *Average:* ${avgTime}ms\n├─⊷ *Minimum:* ${minTime}ms\n├─⊷ *Maximum:* ${maxTime}ms\n├─⊷ *Jitter:* ${jitter}ms\n│\n├─⊷ *── Server Info ──*\n├─⊷ *Server:* ${server}\n├─⊷ *Content-Type:* ${contentType}\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

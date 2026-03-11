@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const API_BASE = 'https://apiskeith.vercel.app';
 
@@ -16,7 +17,7 @@ export default {
 
         if (!args.length && !hasImage) {
             return await sock.sendMessage(chatId, {
-                text: `╭─⌈ 💝 *VALENTINE'S DAY* ⌋\n│\n│ Create a Valentine's Day effect\n│ with text and image\n│\n├─⊷ *Usage:*\n│ ${global.prefix || '.'}valentine <text>\n│ _(reply to an image)_\n│\n├─⊷ *Example:*\n│ ${global.prefix || '.'}valentine I Love You\n╰───`
+                text: `╭─⌈ 💝 *VALENTINE'S DAY* ⌋\n│\n│ Create a Valentine's Day effect\n│ with text and image\n│\n├─⊷ *Usage:*\n│ ${global.prefix || '.'}valentine <text>\n│ _(reply to an image)_\n│\n├─⊷ *Example:*\n│ ${global.prefix || '.'}valentine I Love You\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

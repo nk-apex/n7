@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "darkmagiclogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🔮 *DARK MAGIC LOGO* ⌋\n│\n├─⊷ *darkmagiclogo*\n│  └⊷ darkmagiclogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ darkmagiclogo SHADOW\n│  └⊷ darkmagiclogo VOID\n│  └⊷ darkmagiclogo CURSED\n│\n╰───` 
+          text: `╭─⌈ 🔮 *DARK MAGIC LOGO* ⌋\n│\n├─⊷ *darkmagiclogo*\n│  └⊷ darkmagiclogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ darkmagiclogo SHADOW\n│  └⊷ darkmagiclogo VOID\n│  └⊷ darkmagiclogo CURSED\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

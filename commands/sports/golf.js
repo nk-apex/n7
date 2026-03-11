@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 
@@ -15,7 +16,7 @@ export default {
 
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ ⛳ *PGA GOLF* ⌋\n├─⊷ *${PREFIX}golf leaderboard*\n│  └⊷ Current tournament leaderboard\n├─⊷ *${PREFIX}golf schedule*\n│  └⊷ Upcoming tournaments\n├─⊷ *${PREFIX}pga leaderboard*\n│  └⊷ Alias for golf\n╰───`
+        text: `╭─⌈ ⛳ *PGA GOLF* ⌋\n├─⊷ *${PREFIX}golf leaderboard*\n│  └⊷ Current tournament leaderboard\n├─⊷ *${PREFIX}golf schedule*\n│  └⊷ Upcoming tournaments\n├─⊷ *${PREFIX}pga leaderboard*\n│  └⊷ Alias for golf\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -47,7 +48,7 @@ export default {
           });
         }
       });
-      text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
+      text += `╰───\n\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
@@ -55,7 +56,7 @@ export default {
       console.error('❌ [GOLF]', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *GOLF ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰───`
+        text: `╭─⌈ ❌ *GOLF ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
   }

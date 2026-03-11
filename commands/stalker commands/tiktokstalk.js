@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const API_PRIMARY  = 'https://apis.xwolf.space/api/stalk/tiktok';
 const API_FALLBACK = 'https://api.giftedtech.co.ke/api/stalk/tiktokstalk';
@@ -96,7 +97,7 @@ export default {
             lines.push(`├─⊷ *✅ Verified:* ${d.verified ? 'Yes ✔️' : 'No'}`);
             lines.push(`├─⊷ *🔒 Private:* ${d.private ? 'Yes' : 'No'}`);
             if (d.profileUrl) lines.push(`├─⊷ *🔗 Profile:* ${d.profileUrl}`);
-            lines.push(`│`, `╰───────────────`, `> 🐺 *${getBotName()} STALKER*`);
+            lines.push(`│`, `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`, `> 🐺 *${getBotName()} STALKER*`);
 
             const caption = lines.join('\n');
 

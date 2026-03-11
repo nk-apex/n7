@@ -2,6 +2,7 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,7 +48,7 @@ export default {
         try {
             if (args.length === 0) {
                 return sock.sendMessage(jid, {
-                    text: `╭─⌈ 💖 *LOVE VIDEO CARD* ⌋\n│\n├─⊷ *${prefix}lovevideo <text>*\n│  └⊷ Create sweet love video card (max 50 chars)\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}lovevideo I love Silent Wolf\n│\n╰───`
+                    text: `╭─⌈ 💖 *LOVE VIDEO CARD* ⌋\n│\n├─⊷ *${prefix}lovevideo <text>*\n│  └⊷ Create sweet love video card (max 50 chars)\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}lovevideo I love Silent Wolf\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: m });
             }
 

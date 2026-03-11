@@ -1,5 +1,6 @@
 // commands/utility/iplookup.js
 import fetch from 'node-fetch';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'iplookup',
@@ -12,7 +13,7 @@ export default {
     const jid = typeof from === 'string' ? from : m.key.remoteJid;
 
     if (!args.length) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🌐 *IP LOOKUP* ⌋\n│\n├─⊷ *iplookup <IP>*\n│  └⊷ Lookup details of an IP address\n│\n├─⊷ *Example:*\n│  └⊷ \`.iplookup 8.8.8.8\`\n│\n╰───` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🌐 *IP LOOKUP* ⌋\n│\n├─⊷ *iplookup <IP>*\n│  └⊷ Lookup details of an IP address\n│\n├─⊷ *Example:*\n│  └⊷ \`.iplookup 8.8.8.8\`\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
 
     const ip = args[0];

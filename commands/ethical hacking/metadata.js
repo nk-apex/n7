@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'metadata',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔍 *URL METADATA ANALYZER* ⌋\n│\n├─⊷ *${PREFIX}metadata <url>*\n│  └⊷ Analyze HTTP headers and\n│     metadata of any URL\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔍 *URL METADATA ANALYZER* ⌋\n│\n├─⊷ *${PREFIX}metadata <url>*\n│  └⊷ Analyze HTTP headers and\n│     metadata of any URL\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -88,7 +89,7 @@ export default {
         }
       }
 
-      result += `│\n╰───────────────\n> *${getBotName()}*`;
+      result += `│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

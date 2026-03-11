@@ -1,5 +1,6 @@
 import axios from 'axios';
 import moment from 'moment';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'gitinfo',
@@ -186,7 +187,7 @@ export default {
         text += `│  • \`${prefix}gitclone ${repo.full_name}\`\n`;
         text += `│  • \`${prefix}repanalyze ${repo.full_name}\`\n`;
         text += `│\n`;
-        text += `╰───────────────`;
+        text += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
         
         return text;
     },

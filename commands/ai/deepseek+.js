@@ -2,6 +2,7 @@
 import fetch from "node-fetch";
 import { downloadMediaMessage } from "@whiskeysockets/baileys";
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "deepseek+",
@@ -21,7 +22,7 @@ export default {
       
       if (!query && !quoted) {
         return sock.sendMessage(jid, {
-          text: `╭─⌈ 📎 *DEEPSEEK+ AI* 🧠 ⌋\n├─⊷ *.deepseek+ <question> (reply to file)*\n│  └⊷ Analyze file with DeepSeek\n├─⊷ *.ds+ <question> (reply to file)*\n│  └⊷ Alias for deepseek+\n├─⊷ *.deepseek+ --code <question>*\n│  └⊷ Use DeepSeek Coder model\n├─⊷ *.deepseek+ --vision <question>*\n│  └⊷ Use Gemini Pro Vision model\n╰───`
+          text: `╭─⌈ 📎 *DEEPSEEK+ AI* 🧠 ⌋\n├─⊷ *.deepseek+ <question> (reply to file)*\n│  └⊷ Analyze file with DeepSeek\n├─⊷ *.ds+ <question> (reply to file)*\n│  └⊷ Alias for deepseek+\n├─⊷ *.deepseek+ --code <question>*\n│  └⊷ Use DeepSeek Coder model\n├─⊷ *.deepseek+ --vision <question>*\n│  └⊷ Use Gemini Pro Vision model\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
       }
 

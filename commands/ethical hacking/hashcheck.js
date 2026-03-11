@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'hashcheck',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *HASH GENERATOR* ⌋\n│\n├─⊷ *${PREFIX}hashcheck <text>*\n│  └⊷ Generate MD5, SHA1, SHA256,\n│     SHA512, RIPEMD160 hashes\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *HASH GENERATOR* ⌋\n│\n├─⊷ *${PREFIX}hashcheck <text>*\n│  └⊷ Generate MD5, SHA1, SHA256,\n│     SHA512, RIPEMD160 hashes\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -35,7 +36,7 @@ export default {
       result += `├─⊷ *RIPEMD-160:*\n│  └⊷ \`${hashes.ripemd160}\`\n│\n`;
       result += `├─⊷ *HMAC-SHA256:*\n│  └⊷ \`${hmacSha256}\`\n│\n`;
       result += `├─⊷ *Base64:*\n│  └⊷ \`${base64}\`\n│\n`;
-      result += `╰───────────────\n> *${getBotName()}*`;
+      result += `╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

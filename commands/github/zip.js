@@ -3,6 +3,7 @@ import path from 'path';
 import axios from 'axios';
 import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'zip',
@@ -84,7 +85,7 @@ export default {
                     `│ • \`${PREFIX}gitclone user/repo\` - Clone any repo\n` +
                     `│ • \`${PREFIX}gitinfo user/repo\` - Repo details\n` +
                     `│\n` +
-                    `╰───────────────`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
 
             setTimeout(() => {
@@ -105,7 +106,7 @@ export default {
                     `│ 💡 Try again later or use:\n` +
                     `│ • \`${PREFIX}gitclone ${repoFullName}\`\n` +
                     `│\n` +
-                    `╰───────────────`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
 
             try { await sock.sendMessage(chatId, { react: { text: '❌', key: m.key } }); } catch {}

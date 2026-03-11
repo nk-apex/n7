@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const DATA_DIR = './data/antistatusmention';
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
@@ -288,7 +289,7 @@ export default {
 
         if (!action || action === 'help') {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 🚫 *ANTI-STATUS MENTION* ⌋\n│\n├─⊷ *${PREFIX}antistatusmention warn*\n│  └⊷ Warn the person\n├─⊷ *${PREFIX}antistatusmention delete*\n│  └⊷ Notify & warn\n├─⊷ *${PREFIX}antistatusmention kick*\n│  └⊷ Auto-kick after warnings\n├─⊷ *${PREFIX}antistatusmention off*\n│  └⊷ Disable protection\n├─⊷ *${PREFIX}antistatusmention maxwarn <number>*\n│  └⊷ Set max warnings\n├─⊷ *${PREFIX}antistatusmention reset <@user>*\n│  └⊷ Reset user warnings\n├─⊷ *${PREFIX}antistatusmention status*\n│  └⊷ View current settings\n│\n├─⊷ *Aliases:* gsm, asm\n╰───`
+                text: `╭─⌈ 🚫 *ANTI-STATUS MENTION* ⌋\n│\n├─⊷ *${PREFIX}antistatusmention warn*\n│  └⊷ Warn the person\n├─⊷ *${PREFIX}antistatusmention delete*\n│  └⊷ Notify & warn\n├─⊷ *${PREFIX}antistatusmention kick*\n│  └⊷ Auto-kick after warnings\n├─⊷ *${PREFIX}antistatusmention off*\n│  └⊷ Disable protection\n├─⊷ *${PREFIX}antistatusmention maxwarn <number>*\n│  └⊷ Set max warnings\n├─⊷ *${PREFIX}antistatusmention reset <@user>*\n│  └⊷ Reset user warnings\n├─⊷ *${PREFIX}antistatusmention status*\n│  └⊷ View current settings\n│\n├─⊷ *Aliases:* gsm, asm\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

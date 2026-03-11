@@ -1,5 +1,6 @@
 import db from '../../lib/supabase.js';
 import { applyFont, AVAILABLE_FONTS } from '../../lib/fontTransformer.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'setfont',
@@ -47,7 +48,7 @@ export default {
                     `│  └⊷ Switch font style`,
                     `├─⊷ *${PREFIX}setfont default*`,
                     `│  └⊷ Reset to normal text`,
-                    `╰───`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 ].join('\n')
             }, { quoted: msg });
         }

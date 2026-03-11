@@ -5,6 +5,7 @@ import net from 'net';
 import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -492,7 +493,7 @@ export default {
     
     // Show help if no arguments
     if (args.length === 0) {
-      const helpText = `╭─⌈ 🔍 *NETWORK SCANNER (NMAP)* ⌋\n│\n├─⊷ *.nmap <target>*\n│  └⊷ Basic network scan\n│\n├─⊷ *.nmap <target> -f*\n│  └⊷ Fast scan\n│\n├─⊷ *.nmap <target> -p 80,443*\n│  └⊷ Specific ports scan\n│\n├─⊷ *.nmap <target> -s*\n│  └⊷ Stealth/slow scan\n│\n├─⊷ *.nmap <target> -v*\n│  └⊷ Verbose scan\n│\n├─⊷ *What it scans:*\n│  └⊷ DNS records, common ports, security headers, subdomains, WHOIS, vulnerabilities\n│\n├─⊷ ⚠️ *Disclaimer:* Use only on systems you own or have permission to scan!\n│\n╰───`;
+      const helpText = `╭─⌈ 🔍 *NETWORK SCANNER (NMAP)* ⌋\n│\n├─⊷ *.nmap <target>*\n│  └⊷ Basic network scan\n│\n├─⊷ *.nmap <target> -f*\n│  └⊷ Fast scan\n│\n├─⊷ *.nmap <target> -p 80,443*\n│  └⊷ Specific ports scan\n│\n├─⊷ *.nmap <target> -s*\n│  └⊷ Stealth/slow scan\n│\n├─⊷ *.nmap <target> -v*\n│  └⊷ Verbose scan\n│\n├─⊷ *What it scans:*\n│  └⊷ DNS records, common ports, security headers, subdomains, WHOIS, vulnerabilities\n│\n├─⊷ ⚠️ *Disclaimer:* Use only on systems you own or have permission to scan!\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       
       await sendUpdate(helpText);
       return;
@@ -516,7 +517,7 @@ export default {
     
     // Validate target
     if (!isValidHost(target)) {
-      await sendUpdate(`╭─⌈ ❌ *INVALID TARGET* ⌋\n│\n├─⊷ Provide a valid domain or IP address\n│\n├─⊷ *.nmap example.com*\n├─⊷ *.nmap 192.168.1.1*\n├─⊷ *.nmap 8.8.8.8*\n│\n╰───`);
+      await sendUpdate(`╭─⌈ ❌ *INVALID TARGET* ⌋\n│\n├─⊷ Provide a valid domain or IP address\n│\n├─⊷ *.nmap example.com*\n├─⊷ *.nmap 192.168.1.1*\n├─⊷ *.nmap 8.8.8.8*\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`);
       return;
     }
     

@@ -1,4 +1,5 @@
 import { removeSudo } from '../../lib/sudo-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 function resolveRealNumber(jid, sock) {
     if (!jid) return null;
@@ -59,7 +60,7 @@ export default {
 
         if (!targetNumber || targetNumber.length < 7) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📋 *REMOVE SUDO* ⌋\n│\n├─⊷ *${PREFIX}delsudo <number>*\n│  └⊷ Remove by number\n├─⊷ *Reply + ${PREFIX}delsudo*\n│  └⊷ Remove via reply\n╰───`
+                text: `╭─⌈ 📋 *REMOVE SUDO* ⌋\n│\n├─⊷ *${PREFIX}delsudo <number>*\n│  └⊷ Remove by number\n├─⊷ *Reply + ${PREFIX}delsudo*\n│  └⊷ Remove via reply\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

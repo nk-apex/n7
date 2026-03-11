@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 // commands/ai/suno.js - Fixed for WhatsApp Baileys
 
 export default {
@@ -239,7 +240,7 @@ export default {
     },
 
     async showHelp(sock, m) {
-        const helpText = `╭─⌈ 🎵 *SUNO AI MUSIC* ⌋\n├─⊷ *.suno generate <style>*\n│  └⊷ Generate song with style\n├─⊷ *.suno quick <viral|lofi|workout>*\n│  └⊷ Quick song generation\n├─⊷ *.suno templates*\n│  └⊷ View available templates\n├─⊷ *.suno themes*\n│  └⊷ View suggested themes\n├─⊷ *.suno help*\n│  └⊷ Show this help\n╰───`;
+        const helpText = `╭─⌈ 🎵 *SUNO AI MUSIC* ⌋\n├─⊷ *.suno generate <style>*\n│  └⊷ Generate song with style\n├─⊷ *.suno quick <viral|lofi|workout>*\n│  └⊷ Quick song generation\n├─⊷ *.suno templates*\n│  └⊷ View available templates\n├─⊷ *.suno themes*\n│  └⊷ View suggested themes\n├─⊷ *.suno help*\n│  └⊷ Show this help\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
         
         await sock.sendMessage(m.key.remoteJid, { text: helpText }, { quoted: m });
     },

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/stalk/npmstalk';
 
@@ -14,7 +15,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔍 *NPM PACKAGE STALKER* ⌋\n│\n├─⊷ *${prefix}npmstalk <package name>*\n│  └⊷ Look up an NPM package\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}npmstalk express\n│  └⊷ ${prefix}npmstalk gifted-btns\n│\n╰───────────────\n> *${getBotName()} STALKER*`
+        text: `╭─⌈ 🔍 *NPM PACKAGE STALKER* ⌋\n│\n├─⊷ *${prefix}npmstalk <package name>*\n│  └⊷ Look up an NPM package\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}npmstalk express\n│  └⊷ ${prefix}npmstalk gifted-btns\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

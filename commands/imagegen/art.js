@@ -2,6 +2,7 @@ import axios from 'axios';
 import { createWriteStream, existsSync, readFileSync } from 'fs';
 import fs from 'fs';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 let getUserCaption;
 
@@ -35,7 +36,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🎨 *ART IMAGE GEN* ⌋\n│\n├─⊷ *art <prompt>*\n│  └⊷ Generate artistic AI images\n│\n├─⊷ *Examples:*\n│  └⊷ art impressionist painting of a garden\n│  └⊷ art watercolor portrait of a wizard\n│\n├─⊷ 🎭 *Styles:* Impressionism, Surrealism, Watercolor, Digital Art\n├─⊷ 🎨 *Artists:* Van Gogh, Picasso, Monet, Dali\n│\n╰───` 
+          text: `╭─⌈ 🎨 *ART IMAGE GEN* ⌋\n│\n├─⊷ *art <prompt>*\n│  └⊷ Generate artistic AI images\n│\n├─⊷ *Examples:*\n│  └⊷ art impressionist painting of a garden\n│  └⊷ art watercolor portrait of a wizard\n│\n├─⊷ 🎭 *Styles:* Impressionism, Surrealism, Watercolor, Digital Art\n├─⊷ 🎨 *Artists:* Van Gogh, Picasso, Monet, Dali\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

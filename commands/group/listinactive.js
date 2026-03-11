@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 export default {
   name: 'listinactive',
   description: 'Detect inactive members based on presence scan',
@@ -144,7 +145,7 @@ export default {
         `│ • \`${PREFIX}kick @user\` - Remove member\n` +
         `│ • \`${PREFIX}kickall\` - Remove all non-admins\n` +
         `│\n` +
-        `╰───\n` +
+        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` +
         `\n🔒 _Results depend on user privacy settings_`;
 
       const allMentionIds = [...inactiveMembers, ...activeMembers].map(m => m.id);

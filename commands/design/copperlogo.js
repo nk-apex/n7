@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "copperlogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🟠 *COPPER LOGO* ⌋\n│\n├─⊷ *copperlogo*\n│  └⊷ copperlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ copperlogo WOLF\n│  └⊷ copperlogo COPPER\n│  └⊷ copperlogo WARM\n│\n╰───` 
+          text: `╭─⌈ 🟠 *COPPER LOGO* ⌋\n│\n├─⊷ *copperlogo*\n│  └⊷ copperlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ copperlogo WOLF\n│  └⊷ copperlogo COPPER\n│  └⊷ copperlogo WARM\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

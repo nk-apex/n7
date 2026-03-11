@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'xsscheck',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *XSS VULNERABILITY CHECKER* ⌋\n│\n├─⊷ *${PREFIX}xsscheck <url>*\n│  └⊷ Check a website for XSS vulnerability indicators\n│\n├─⊷ *Checks:*\n│  ├⊷ Content-Security-Policy header\n│  ├⊷ X-XSS-Protection header\n│  ├⊷ Inline scripts without nonce\n│  ├⊷ Forms without proper encoding\n│  └⊷ Reflected input in URL params\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *XSS VULNERABILITY CHECKER* ⌋\n│\n├─⊷ *${PREFIX}xsscheck <url>*\n│  └⊷ Check a website for XSS vulnerability indicators\n│\n├─⊷ *Checks:*\n│  ├⊷ Content-Security-Policy header\n│  ├⊷ X-XSS-Protection header\n│  ├⊷ Inline scripts without nonce\n│  ├⊷ Forms without proper encoding\n│  └⊷ Reflected input in URL params\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
 
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
@@ -127,7 +128,7 @@ export default {
       if (!xssProtection) result += `├─⊷ Add X-XSS-Protection: 1; mode=block\n`;
       if (scriptsWithoutNonce > 0) result += `├─⊷ Add nonce attributes to inline scripts\n`;
       if (riskScore < 10) result += `├─⊷ Good security posture detected!\n`;
-      result += `│\n╰───────────────\n> *${getBotName()}*`;
+      result += `│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

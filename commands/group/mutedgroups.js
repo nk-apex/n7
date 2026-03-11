@@ -1,4 +1,5 @@
 import { getMutedList } from '../../lib/chat-state.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'mutedgroups',
@@ -31,7 +32,7 @@ export default {
         text += `├─⊷ ${count}. *${name}*\n`;
       }
 
-      text += `│\n├─⊷ *Total:* ${muted.length} muted group(s)\n╰───`;
+      text += `│\n├─⊷ *Total:* ${muted.length} muted group(s)\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text }, { quoted: msg });
 

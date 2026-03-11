@@ -2,6 +2,7 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -86,7 +87,7 @@ export default {
       searchQuery = quoted.text.trim();
         } else {
       const helpText = 
-        `╭─⌈ 🎬 *MOVIE TRAILER* ⌋\n│\n├─⊷ *.trailer <movie name>*\n│  └⊷ Download official movie trailer\n│\n├─⊷ *.trailer <YouTube URL>*\n│  └⊷ Download trailer from URL\n│\n├─⊷ *Examples:*\n│  └⊷ .trailer Interstellar\n│  └⊷ .trailer John Wick 4\n│\n╰───`;
+        `╭─⌈ 🎬 *MOVIE TRAILER* ⌋\n│\n├─⊷ *.trailer <movie name>*\n│  └⊷ Download official movie trailer\n│\n├─⊷ *.trailer <YouTube URL>*\n│  └⊷ Download trailer from URL\n│\n├─⊷ *Examples:*\n│  └⊷ .trailer Interstellar\n│  └⊷ .trailer John Wick 4\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       
       await sock.sendMessage(jid, { text: helpText }, { quoted: m });
       return;

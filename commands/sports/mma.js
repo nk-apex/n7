@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 
@@ -15,7 +16,7 @@ export default {
 
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🥊 *UFC / MMA* ⌋\n├─⊷ *${PREFIX}mma results*\n│  └⊷ Latest fight results\n├─⊷ *${PREFIX}mma schedule*\n│  └⊷ Upcoming fight cards\n├─⊷ *${PREFIX}ufc results*\n│  └⊷ Alias for mma\n╰───`
+        text: `╭─⌈ 🥊 *UFC / MMA* ⌋\n├─⊷ *${PREFIX}mma results*\n│  └⊷ Latest fight results\n├─⊷ *${PREFIX}mma schedule*\n│  └⊷ Upcoming fight cards\n├─⊷ *${PREFIX}ufc results*\n│  └⊷ Alias for mma\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -44,7 +45,7 @@ export default {
         }
         text += `│  └⊷ ${date} • ${status}\n`;
       });
-      text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
+      text += `╰───\n\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
@@ -52,7 +53,7 @@ export default {
       console.error('❌ [MMA]', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *MMA ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰───`
+        text: `╭─⌈ ❌ *MMA ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
   }

@@ -1,5 +1,6 @@
 import db from '../../lib/supabase.js';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 let prefsCache = null;
 let cacheLoaded = false;
@@ -36,7 +37,7 @@ export default {
             const current = existing?.customCaption || `Retrieved by ${getBotName()}`;
 
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📝 *VIEW-ONCE CAPTION* ⌋\n│\n│  Current: "${current}"\n│\n├─⊷ *${PREFIX}setvvcaption <text>*\n│  └⊷ Set custom caption\n│\n├─⊷ *${PREFIX}setvvcaption reset*\n│  └⊷ Reset to default\n│\n├─⊷ *${PREFIX}setvvcaption none*\n│  └⊷ Disable caption\n│\n╰───`
+                text: `╭─⌈ 📝 *VIEW-ONCE CAPTION* ⌋\n│\n│  Current: "${current}"\n│\n├─⊷ *${PREFIX}setvvcaption <text>*\n│  └⊷ Set custom caption\n│\n├─⊷ *${PREFIX}setvvcaption reset*\n│  └⊷ Reset to default\n│\n├─⊷ *${PREFIX}setvvcaption none*\n│  └⊷ Disable caption\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

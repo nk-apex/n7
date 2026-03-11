@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: "imagegen",
@@ -12,7 +13,7 @@ export default {
         const args = m.message?.conversation?.split(" ").slice(1) || [];
 
         if (!args.length) {
-            return sock.sendMessage(jid, { text: `╭─⌈ 🎨 *IMAGE GENERATOR* ⌋\n│\n├─⊷ *.imagegen <type> <prompt>*\n│  └⊷ Generate images from multiple sources\n│\n├─⊷ *Types:* ai, waifu, neko, meme\n│\n├─⊷ *Example:*\n│  └⊷ .imagegen ai anime wolf\n│\n╰───` }, { quoted: m });
+            return sock.sendMessage(jid, { text: `╭─⌈ 🎨 *IMAGE GENERATOR* ⌋\n│\n├─⊷ *.imagegen <type> <prompt>*\n│  └⊷ Generate images from multiple sources\n│\n├─⊷ *Types:* ai, waifu, neko, meme\n│\n├─⊷ *Example:*\n│  └⊷ .imagegen ai anime wolf\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
         }
 
         const type = args[0].toLowerCase();

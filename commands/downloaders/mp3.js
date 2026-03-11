@@ -50,7 +50,7 @@ export default {
       
       if (!searchQuery) {
         return sock.sendMessage(jid, {
-          text: `╭─⌈ 🎵 *MP3 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}mp3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}mp3 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
+          text: `╭─⌈ 🎵 *MP3 DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}mp3 <song name>*\n│  └⊷ Download audio\n├─⊷ *${prefix}mp3 <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
       }
       console.log(`🎵 [MP3] Request: ${searchQuery}`);

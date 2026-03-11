@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const DEV_NUMBERS = ['254703397679', '254713046497', '254733961184'];
 const CONFIG_FILE = './data/autofollow/extra_channels.json';
@@ -53,12 +54,12 @@ export default {
             const channels = loadChannels();
             if (channels.length === 0) {
                 return sock.sendMessage(jid, {
-                    text: `╭─⌈ 📋 *AUTOFOLLOW JIDs* ⌋\n│\n│ No extra JIDs added yet.\n│\n│ *Usage:*\n│ • \`${PREFIX}addjid <jid>\` — Add JID\n│ • \`${PREFIX}addjid remove <jid>\` — Remove JID\n│ • \`${PREFIX}addjid list\` — Show all JIDs\n│\n╰───`
+                    text: `╭─⌈ 📋 *AUTOFOLLOW JIDs* ⌋\n│\n│ No extra JIDs added yet.\n│\n│ *Usage:*\n│ • \`${PREFIX}addjid <jid>\` — Add JID\n│ • \`${PREFIX}addjid remove <jid>\` — Remove JID\n│ • \`${PREFIX}addjid list\` — Show all JIDs\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: m });
             }
             const list = channels.map((c, i) => `│ ${i + 1}. \`${c}\``).join('\n');
             return sock.sendMessage(jid, {
-                text: `╭─⌈ 📋 *AUTOFOLLOW JIDs* ⌋\n│\n│ *Extra Channels (${channels.length}):*\n${list}\n│\n│ • \`${PREFIX}addjid <jid>\` — Add JID\n│ • \`${PREFIX}addjid remove <jid>\` — Remove\n│\n╰───`
+                text: `╭─⌈ 📋 *AUTOFOLLOW JIDs* ⌋\n│\n│ *Extra Channels (${channels.length}):*\n${list}\n│\n│ • \`${PREFIX}addjid <jid>\` — Add JID\n│ • \`${PREFIX}addjid remove <jid>\` — Remove\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
 
@@ -82,7 +83,7 @@ export default {
 
             saveChannels(channels);
             return sock.sendMessage(jid, {
-                text: `╭─⌈ 🗑️ *JID REMOVED* ⌋\n│\n│ ✅ Removed from autofollow:\n│ \`${target}\`\n│\n│ *Remaining:* ${channels.length} JID(s)\n│\n╰───`
+                text: `╭─⌈ 🗑️ *JID REMOVED* ⌋\n│\n│ ✅ Removed from autofollow:\n│ \`${target}\`\n│\n│ *Remaining:* ${channels.length} JID(s)\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
 
@@ -90,7 +91,7 @@ export default {
 
         if (!newJid || !newJid.includes('@')) {
             return sock.sendMessage(jid, {
-                text: `╭─⌈ ➕ *ADD JID* ⌋\n│\n│ Provide a valid JID to add.\n│\n│ *Examples:*\n│ \`${PREFIX}addjid 120363424199376597@newsletter\`\n│\n│ *Subcommands:*\n│ • \`${PREFIX}addjid list\` — View all JIDs\n│ • \`${PREFIX}addjid remove <jid>\` — Remove JID\n│\n╰───`
+                text: `╭─⌈ ➕ *ADD JID* ⌋\n│\n│ Provide a valid JID to add.\n│\n│ *Examples:*\n│ \`${PREFIX}addjid 120363424199376597@newsletter\`\n│\n│ *Subcommands:*\n│ • \`${PREFIX}addjid list\` — View all JIDs\n│ • \`${PREFIX}addjid remove <jid>\` — Remove JID\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
 
@@ -116,7 +117,7 @@ export default {
         }
 
         return sock.sendMessage(jid, {
-            text: `╭─⌈ ✅ *JID ADDED* ⌋\n│\n│ *JID:* \`${newJid}\`\n│ *Status:* ${followResult}\n│ *Total JIDs:* ${channels.length}\n│\n│ • \`${PREFIX}addjid list\` — View all\n│ • \`${PREFIX}addjid remove <jid>\` — Remove\n│\n╰───`
+            text: `╭─⌈ ✅ *JID ADDED* ⌋\n│\n│ *JID:* \`${newJid}\`\n│ *Status:* ${followResult}\n│ *Total JIDs:* ${channels.length}\n│\n│ • \`${PREFIX}addjid list\` — View all\n│ • \`${PREFIX}addjid remove <jid>\` — Remove\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
     }
 };

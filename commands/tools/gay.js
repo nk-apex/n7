@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getOwnerName } from '../../lib/menuHelper.js';
 let sharp;
 try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 
@@ -16,13 +17,13 @@ export default {
     const hasReply = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     
     if (args.length === 0 && !hasReply) {
-      const helpText = `╭─⌈ 🏳️‍🌈 *RAINBOW PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gay*\n│  └⊷ Reply to any message to get rainbow profile pic\n│\n├─⊷ *Aliases:* rainbow, pride\n│\n╰───`;
+      const helpText = `╭─⌈ 🏳️‍🌈 *RAINBOW PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gay*\n│  └⊷ Reply to any message to get rainbow profile pic\n│\n├─⊷ *Aliases:* rainbow, pride\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
 
     if (args[0]?.toLowerCase() === 'help') {
-      const helpText = `╭─⌈ 🏳️‍🌈 *RAINBOW PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gay*\n│  └⊷ Reply to any message for rainbow effect\n│\n├─⊷ *Aliases:* rainbow, pride\n│\n╰───`;
+      const helpText = `╭─⌈ 🏳️‍🌈 *RAINBOW PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gay*\n│  └⊷ Reply to any message for rainbow effect\n│\n├─⊷ *Aliases:* rainbow, pride\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: "repanalyze",
@@ -239,7 +240,7 @@ export default {
         text += `│  • \`${prefix}gitclone ${repo.full_name}\`\n`;
         text += `│  • \`${prefix}gitinfo ${repo.full_name}\`\n`;
         text += `│\n`;
-        text += `╰───────────────`;
+        text += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
         
         return text;
     },

@@ -1,5 +1,6 @@
 import tls from 'tls';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'sslcheck',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔒 *SSL CERTIFICATE CHECK* ⌋\n│\n├─⊷ *${PREFIX}sslcheck <domain>*\n│  └⊷ Check SSL certificate details\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}sslcheck google.com\n│  └⊷ ${PREFIX}sslcheck github.com\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔒 *SSL CERTIFICATE CHECK* ⌋\n│\n├─⊷ *${PREFIX}sslcheck <domain>*\n│  └⊷ Check SSL certificate details\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}sslcheck google.com\n│  └⊷ ${PREFIX}sslcheck github.com\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -76,7 +77,7 @@ export default {
       if (certInfo.daysRemaining < 0) { statusIcon = '🔴'; statusText = 'Expired'; }
       else if (certInfo.daysRemaining < 30) { statusIcon = '🟠'; statusText = 'Expiring Soon'; }
 
-      const result = `╭─⌈ 🔒 *SSL CERTIFICATE CHECK* ⌋\n│\n├─⊷ *Host:* ${host}\n├─⊷ *Status:* ${statusIcon} ${statusText}\n│\n├─⊷ *── Certificate Details ──*\n├─⊷ *Subject:* ${certInfo.subject}\n├─⊷ *Issuer:* ${certInfo.issuer}\n├─⊷ *Valid From:* ${certInfo.validFrom}\n├─⊷ *Valid To:* ${certInfo.validTo}\n├─⊷ *Days Remaining:* ${certInfo.daysRemaining} days\n├─⊷ *Key Size:* ${certInfo.bits} bits\n│\n├─⊷ *── Connection Info ──*\n├─⊷ *Protocol:* ${certInfo.protocol}\n├─⊷ *Cipher:* ${certInfo.cipher}\n├─⊷ *Trusted:* ${certInfo.authorized ? '✅ Yes' : '❌ No'}\n│\n├─⊷ *── Alt Names ──*\n├─⊷ ${certInfo.altNames || 'None'}\n│\n├─⊷ *Serial:* ${certInfo.serialNumber}\n│\n╰───────────────\n> *${getBotName()}*`;
+      const result = `╭─⌈ 🔒 *SSL CERTIFICATE CHECK* ⌋\n│\n├─⊷ *Host:* ${host}\n├─⊷ *Status:* ${statusIcon} ${statusText}\n│\n├─⊷ *── Certificate Details ──*\n├─⊷ *Subject:* ${certInfo.subject}\n├─⊷ *Issuer:* ${certInfo.issuer}\n├─⊷ *Valid From:* ${certInfo.validFrom}\n├─⊷ *Valid To:* ${certInfo.validTo}\n├─⊷ *Days Remaining:* ${certInfo.daysRemaining} days\n├─⊷ *Key Size:* ${certInfo.bits} bits\n│\n├─⊷ *── Connection Info ──*\n├─⊷ *Protocol:* ${certInfo.protocol}\n├─⊷ *Cipher:* ${certInfo.cipher}\n├─⊷ *Trusted:* ${certInfo.authorized ? '✅ Yes' : '❌ No'}\n│\n├─⊷ *── Alt Names ──*\n├─⊷ ${certInfo.altNames || 'None'}\n│\n├─⊷ *Serial:* ${certInfo.serialNumber}\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

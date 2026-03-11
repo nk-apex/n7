@@ -18,6 +18,7 @@
 
 import fs from "fs";
 import path from "path";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 try {
   const dotenvPath = path.resolve(process.cwd(), ".env");
@@ -56,7 +57,7 @@ export default {
       const lowerArgs = (args || []).map(a => String(a).toLowerCase());
       if (lowerArgs.includes("help") || lowerArgs.includes("menu") || lowerArgs.includes("info")) {
         const menuText =
-          `╭─⌈ 🔐 *SHODAN LOOKUP* ⌋\n│\n├─⊷ *.shodan <ip|host|query> consent*\n│  └⊷ Run a passive lookup\n│\n├─⊷ *.shodan help*\n│  └⊷ Show this menu\n│\n├─⊷ *Note:* Requires SHODAN_API_KEY in env. Returns passive OSINT only.\n│\n╰───`;
+          `╭─⌈ 🔐 *SHODAN LOOKUP* ⌋\n│\n├─⊷ *.shodan <ip|host|query> consent*\n│  └⊷ Run a passive lookup\n│\n├─⊷ *.shodan help*\n│  └⊷ Show this menu\n│\n├─⊷ *Note:* Requires SHODAN_API_KEY in env. Returns passive OSINT only.\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
         return await sock.sendMessage(jid, { text: menuText }, { quoted: m });
       }
 
@@ -124,7 +125,7 @@ export default {
       if (!args || !args.length || !lowerArgs.includes("consent")) {
         return await sock.sendMessage(jid, {
           text:
-            `╭─⌈ ⚠️ *CONSENT REQUIRED* ⌋\n│\n├─⊷ Include the keyword \`consent\` to confirm authorization\n│\n├─⊷ *.shodan 8.8.8.8 consent*\n│  └⊷ Lookup an IP\n│\n├─⊷ *.shodan "apache" consent*\n│  └⊷ Search query\n│\n╰───`
+            `╭─⌈ ⚠️ *CONSENT REQUIRED* ⌋\n│\n├─⊷ Include the keyword \`consent\` to confirm authorization\n│\n├─⊷ *.shodan 8.8.8.8 consent*\n│  └⊷ Lookup an IP\n│\n├─⊷ *.shodan "apache" consent*\n│  └⊷ Search query\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
       }
 
@@ -142,7 +143,7 @@ export default {
       // Build query (remove the 'consent' token)
       const rawQuery = args.filter(a => String(a).toLowerCase() !== "consent").join(" ").trim();
       if (!rawQuery) {
-        return await sock.sendMessage(jid, { text: `╭─⌈ ❗ *MISSING QUERY* ⌋\n│\n├─⊷ *.shodan 8.8.8.8 consent*\n│  └⊷ Provide an IP, hostname, or search query\n│\n╰───` }, { quoted: m });
+        return await sock.sendMessage(jid, { text: `╭─⌈ ❗ *MISSING QUERY* ⌋\n│\n├─⊷ *.shodan 8.8.8.8 consent*\n│  └⊷ Provide an IP, hostname, or search query\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
       }
 
       // Determine endpoint

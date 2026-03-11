@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,7 +64,7 @@ export default {
       // Ask for owner phone verification
       if (!args[0]) {
         await sock.sendMessage(jid, {
-          text: `╭─⌈ 🔐 *VERIFY OWNERSHIP* ⌋\n│\n├─⊷ *.iamowner <full_owner_phone>*\n│  └⊷ Verify with number\n╰───`
+          text: `╭─⌈ 🔐 *VERIFY OWNERSHIP* ⌋\n│\n├─⊷ *.iamowner <full_owner_phone>*\n│  └⊷ Verify with number\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: msg });
         return;
       }

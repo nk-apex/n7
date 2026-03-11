@@ -420,7 +420,7 @@ export default {
        if (!args[0]) {
       const prefix = '.'; // Change this to your bot's prefix
       return await sock.sendMessage(groupId, {
-        text: `╭─⌈ 📋 *ADD* ⌋\n│\n├─⊷ *${prefix}add 2547xxxxxxxx*\n│  └⊷ Add single number\n├─⊷ *${prefix}add 254xxx,254yyy,254zzz*\n│  └⊷ Add multiple numbers\n╰───`
+        text: `╭─⌈ 📋 *ADD* ⌋\n│\n├─⊷ *${prefix}add 2547xxxxxxxx*\n│  └⊷ Add single number\n├─⊷ *${prefix}add 254xxx,254yyy,254zzz*\n│  └⊷ Add multiple numbers\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: msg });
     }
     
@@ -665,6 +665,7 @@ HOW TO USE THIS AUTO-JOIN SYSTEM:
 3. IN YOUR MAIN BOT FILE (index.js/bot.js), add:
 
    import { initializeAutoJoin } from './commands/add.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
    
    // After initializing sock/baileys
    sock.ev.on('connection.update', async (update) => {

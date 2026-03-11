@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 export default {
     name: 'profilepic',
     alias: ['pprivacy', 'dpprivacy', 'profilepicprivacy', 'picprivacy'],
@@ -32,7 +33,7 @@ export default {
                         `│ Anyone can see your\n` +
                         `│ profile picture\n` +
                         `│\n` +
-                        `╰───`
+                        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '🌍', key: msg.key } }); } catch {}
 
@@ -47,7 +48,7 @@ export default {
                         `│ Only your contacts can\n` +
                         `│ see your profile picture\n` +
                         `│\n` +
-                        `╰───`
+                        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '👥', key: msg.key } }); } catch {}
 
@@ -62,7 +63,7 @@ export default {
                             `│\n` +
                             `│ • \`${PREFIX}profilepic except 2547XXXXXXXX\`\n` +
                             `│\n` +
-                            `╰───`
+                            `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                     }, { quoted: msg });
                 }
                 await sock.updateProfilePicturePrivacy('contact_blacklist');
@@ -79,7 +80,7 @@ export default {
                         `│ ⚠️ Full blacklist management\n` +
                         `│ requires WhatsApp app settings\n` +
                         `│\n` +
-                        `╰───`
+                        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '🚫', key: msg.key } }); } catch {}
 
@@ -94,7 +95,7 @@ export default {
                         `│ No one can see your\n` +
                         `│ profile picture\n` +
                         `│\n` +
-                        `╰───`
+                        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '🔒', key: msg.key } }); } catch {}
 
@@ -122,7 +123,7 @@ export default {
                         `│ • \`${PREFIX}profilepic except <number>\`\n` +
                         `│ • \`${PREFIX}profilepic nobody\`\n` +
                         `│\n` +
-                        `╰───`
+                        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '📋', key: msg.key } }); } catch {}
             }

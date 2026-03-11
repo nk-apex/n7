@@ -1,4 +1,5 @@
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'prefixinfo',
@@ -19,7 +20,7 @@ export default {
         const text = `╭─⌈ 🐺 *BOT PREFIX* ⌋\n` +
                      `├─⊷ Your prefix: *${currentPrefix}*\n` +
                      `╰───────────────\n` +
-                     `> *${getBotName()}*`;
+                     `> *${getOwnerName().toUpperCase()} TECH*`;
 
         await sock.sendMessage(remoteJid, { text }, { quoted: msg });
     }

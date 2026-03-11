@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/stalk/wachannel';
 
@@ -14,7 +15,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔍 *WHATSAPP CHANNEL STALKER* ⌋\n│\n├─⊷ *${prefix}wachannel <channel URL>*\n│  └⊷ Stalk a WhatsApp channel\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}wachannel https://whatsapp.com/channel/...\n│\n╰───────────────\n> *${getBotName()} STALKER*`
+        text: `╭─⌈ 🔍 *WHATSAPP CHANNEL STALKER* ⌋\n│\n├─⊷ *${prefix}wachannel <channel URL>*\n│  └⊷ Stalk a WhatsApp channel\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}wachannel https://whatsapp.com/channel/...\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

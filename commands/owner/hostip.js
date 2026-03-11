@@ -4,6 +4,7 @@ import os from 'os';
 import dns from 'dns';
 import util from 'util';
 import { existsSync, readFileSync } from 'fs';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const dnsLookup = util.promisify(dns.lookup);
 const dnsResolve = util.promisify(dns.resolve);
@@ -510,7 +511,7 @@ export default {
                     response += `├─⊷ *${PREFIX}hostip test*\n│  └⊷ Connection test\n`;
                     response += `├─⊷ *${PREFIX}hostip scan [host]*\n│  └⊷ Port scan\n`;
                     response += `├─⊷ *${PREFIX}hostip dns [domain]*\n│  └⊷ DNS lookup\n`;
-                    response += `├─⊷ *${PREFIX}hostip whois [ip]*\n│  └⊷ WHOIS lookup\n╰───`;
+                    response += `├─⊷ *${PREFIX}hostip whois [ip]*\n│  └⊷ WHOIS lookup\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
                     
                     await sock.sendMessage(chatId, {
                         text: response
@@ -951,7 +952,7 @@ export default {
                 
                 if (!domain) {
                     return sock.sendMessage(chatId, {
-                        text: `╭─⌈ ❌ *HOSTIP DNS* ⌋\n│\n├─⊷ *${PREFIX}hostip dns <domain>*\n│  └⊷ DNS lookup\n╰───`
+                        text: `╭─⌈ ❌ *HOSTIP DNS* ⌋\n│\n├─⊷ *${PREFIX}hostip dns <domain>*\n│  └⊷ DNS lookup\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                     }, { quoted: msg });
                 }
                 
@@ -1047,7 +1048,7 @@ export default {
                 
                 if (!query) {
                     return sock.sendMessage(chatId, {
-                        text: `╭─⌈ ❌ *HOSTIP WHOIS* ⌋\n│\n├─⊷ *${PREFIX}hostip whois <ip_or_domain>*\n│  └⊷ WHOIS lookup\n╰───`
+                        text: `╭─⌈ ❌ *HOSTIP WHOIS* ⌋\n│\n├─⊷ *${PREFIX}hostip whois <ip_or_domain>*\n│  └⊷ WHOIS lookup\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                     }, { quoted: msg });
                 }
                 
@@ -1218,7 +1219,7 @@ export default {
                 
             default:
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ❌ *HOSTIP* ⌋\n│\n├─⊷ *${PREFIX}hostip help*\n│  └⊷ Show all commands\n╰───`
+                    text: `╭─⌈ ❌ *HOSTIP* ⌋\n│\n├─⊷ *${PREFIX}hostip help*\n│  └⊷ Show all commands\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
         }
     }

@@ -3,6 +3,7 @@ import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from
 import { getBotName } from '../../lib/botname.js';
 import db from '../../lib/supabase.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const _require = createRequire(import.meta.url);
 let giftedBtns;
@@ -928,7 +929,7 @@ export default {
                 antideleteState.mode = 'public';
                 await saveData();
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ✅ *ANTIDELETE: PUBLIC* ⌋\n├─⊷ Deleted messages will be resent\n│  └⊷ In the original chat\n╰───`
+                    text: `╭─⌈ ✅ *ANTIDELETE: PUBLIC* ⌋\n├─⊷ Deleted messages will be resent\n│  └⊷ In the original chat\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
                 
@@ -939,7 +940,7 @@ export default {
                 antideleteState.mode = 'private';
                 await saveData();
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ✅ *ANTIDELETE: PRIVATE* ⌋\n├─⊷ Deleted messages will be\n│  └⊷ Sent to your DM only\n╰───`
+                    text: `╭─⌈ ✅ *ANTIDELETE: PRIVATE* ⌋\n├─⊷ Deleted messages will be\n│  └⊷ Sent to your DM only\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
                 
@@ -948,7 +949,7 @@ export default {
                 antideleteState.enabled = false;
                 await saveData();
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ❌ *ANTIDELETE: OFF* ⌋\n├─⊷ Antidelete is now disabled\n│  └⊷ Deleted messages will not be tracked\n╰───`
+                    text: `╭─⌈ ❌ *ANTIDELETE: OFF* ⌋\n├─⊷ Antidelete is now disabled\n│  └⊷ Deleted messages will not be tracked\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
                 
@@ -956,7 +957,7 @@ export default {
             case 'stats':
                 const statusIcon = antideleteState.enabled ? '✅' : '❌';
                 const statusLabel = antideleteState.enabled ? 'ACTIVE' : 'OFF';
-                const statsText = `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF'}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰───`;
+                const statsText = `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF'}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
                 
                 await sock.sendMessage(chatId, { text: statsText }, { quoted: msg });
                 break;
@@ -1001,7 +1002,7 @@ export default {
                 const subCommand = args[1]?.toLowerCase();
                 
                 if (!subCommand) {
-                    const settingsText = `╭─⌈ ⚙️ *ANTIDELETE SETTINGS* ⌋\n│\n│ ✅ System: ALWAYS ACTIVE\n│ Mode: ${antideleteState.mode.toUpperCase()} | Storage: DB\n│\n│ 🔧 Auto-clean: ${antideleteState.settings.autoCleanEnabled ? '✅' : '❌'}\n│ 🔧 Clean Retrieved: ${antideleteState.settings.autoCleanRetrieved ? '✅' : '❌'}\n│ 🔧 Max Age: ${antideleteState.settings.maxAgeHours}h | Max Storage: ${antideleteState.settings.maxStorageMB}MB\n│ 🔧 Group Names: ${antideleteState.settings.showGroupNames ? '✅' : '❌'}\n│\n├─⊷ *${prefix}antidelete settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}antidelete settings cleanretrieved on/off*\n│  └⊷ Toggle clean retrieved\n├─⊷ *${prefix}antidelete settings maxage <hours>*\n│  └⊷ Set max cache age\n├─⊷ *${prefix}antidelete settings maxstorage <MB>*\n│  └⊷ Set max storage\n├─⊷ *${prefix}antidelete settings groupnames on/off*\n│  └⊷ Toggle group names\n├─⊷ *${prefix}antidelete settings save*\n│  └⊷ Save settings\n│\n╰───`;
+                    const settingsText = `╭─⌈ ⚙️ *ANTIDELETE SETTINGS* ⌋\n│\n│ ✅ System: ALWAYS ACTIVE\n│ Mode: ${antideleteState.mode.toUpperCase()} | Storage: DB\n│\n│ 🔧 Auto-clean: ${antideleteState.settings.autoCleanEnabled ? '✅' : '❌'}\n│ 🔧 Clean Retrieved: ${antideleteState.settings.autoCleanRetrieved ? '✅' : '❌'}\n│ 🔧 Max Age: ${antideleteState.settings.maxAgeHours}h | Max Storage: ${antideleteState.settings.maxStorageMB}MB\n│ 🔧 Group Names: ${antideleteState.settings.showGroupNames ? '✅' : '❌'}\n│\n├─⊷ *${prefix}antidelete settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}antidelete settings cleanretrieved on/off*\n│  └⊷ Toggle clean retrieved\n├─⊷ *${prefix}antidelete settings maxage <hours>*\n│  └⊷ Set max cache age\n├─⊷ *${prefix}antidelete settings maxstorage <MB>*\n│  └⊷ Set max storage\n├─⊷ *${prefix}antidelete settings groupnames on/off*\n│  └⊷ Toggle group names\n├─⊷ *${prefix}antidelete settings save*\n│  └⊷ Save settings\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
                     await sock.sendMessage(chatId, { text: settingsText }, { quoted: msg });
                     return;
                 }
@@ -1117,14 +1118,14 @@ export default {
                 break;
                 
             case 'help':
-                const helpText = `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF'}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰───`;
+                const helpText = `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF'}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
                 
                 await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
                 break;
                 
             default: {
                 const modeNow = antideleteState.enabled ? antideleteState.mode.toUpperCase() : 'OFF';
-                const helpText = `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${modeNow}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰───`;
+                const helpText = `╭─⌈ 📊 *ANTIDELETE* ⌋\n├─⊷ *Mode:* ${modeNow}\n├─⊷ *${prefix}antidelete on*\n│  └⊷ Enable (private mode)\n├─⊷ *${prefix}antidelete off*\n│  └⊷ Disable antidelete\n├─⊷ *${prefix}antidelete public*\n│  └⊷ Show in chat\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
                 if (isButtonModeEnabled() && giftedBtns?.sendInteractiveMessage) {
                     try {
                         await giftedBtns.sendInteractiveMessage(sock, chatId, {

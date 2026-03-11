@@ -1,4 +1,5 @@
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 export default {
     name: 'latestupdates',
     alias: ['updates', 'newcommands', 'changelog', 'whatsnew', 'latestcmds'],
@@ -73,7 +74,7 @@ export default {
         text += `│ • Menu styles: 6\n`;
         text += `│ • Ethical Hacking tools: 44+\n│\n`;
         text += `╰───────────────\n`;
-        text += `> *${getBotName()}*`;
+        text += `> *${getOwnerName().toUpperCase()} TECH*`;
 
         await sock.sendMessage(chatId, { text }, { quoted: msg });
     }

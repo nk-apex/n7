@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const API_BASE = 'https://apiskeith.vercel.app';
 
@@ -16,7 +17,7 @@ export default {
 
         if (!args.length && !hasImage) {
             return await sock.sendMessage(chatId, {
-                text: `╭─⌈ 🌹 *ROSE VINE* ⌋\n│\n│ Create a rose vine effect\n│ with text and image\n│\n├─⊷ *Usage:*\n│ ${global.prefix || '.'}rosevine <text1> | <text2>\n│ _(reply to an image)_\n│\n├─⊷ *Example:*\n│ ${global.prefix || '.'}rosevine I Love You | Forever\n╰───`
+                text: `╭─⌈ 🌹 *ROSE VINE* ⌋\n│\n│ Create a rose vine effect\n│ with text and image\n│\n├─⊷ *Usage:*\n│ ${global.prefix || '.'}rosevine <text1> | <text2>\n│ _(reply to an image)_\n│\n├─⊷ *Example:*\n│ ${global.prefix || '.'}rosevine I Love You | Forever\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

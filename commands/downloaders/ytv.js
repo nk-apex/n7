@@ -39,7 +39,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🎬 *YTV DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}ytv <video name>*\n│  └⊷ Download video\n├─⊷ *${prefix}ytv <YouTube URL>*\n│  └⊷ Download from link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
+          text: `╭─⌈ 🎬 *YTV DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}ytv <video name>*\n│  └⊷ Download video\n├─⊷ *${prefix}ytv <YouTube URL>*\n│  └⊷ Download from link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
         return;
       }

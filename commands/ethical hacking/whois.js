@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 async function whoisLookup(domain) {
     const apis = [
@@ -88,7 +89,7 @@ export default {
     async execute(sock, m, args, PREFIX) {
         const jid = m.key.remoteJid;
         if (!args[0]) {
-            return sock.sendMessage(jid, { text: `╭─⌈ 🔍 *WHOIS LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}whois <domain>*\n│  └⊷ Get domain registration info\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}whois google.com\n│  └⊷ ${PREFIX}whois github.com\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+            return sock.sendMessage(jid, { text: `╭─⌈ 🔍 *WHOIS LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}whois <domain>*\n│  └⊷ Get domain registration info\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}whois google.com\n│  └⊷ ${PREFIX}whois github.com\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
         }
         await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
         try {
@@ -114,7 +115,7 @@ export default {
                 info.status.forEach(s => { result += `│  └⊷ ${s}\n`; });
             }
             result += `│\n├─⊷ _Source: ${info.source}_\n`;
-            result += `╰───────────────\n> *${getBotName()}*`;
+            result += `╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
             await sock.sendMessage(jid, { text: result }, { quoted: m });
             await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

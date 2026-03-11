@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 // commands/group/setdesc.js
 
 export default {
@@ -11,7 +12,7 @@ export default {
     }
 
     if (!text) {
-      return sock.sendMessage(jid, { text: '╭─⌈ ✏️ *SETDESC* ⌋\n│\n├─⊷ *.setdesc Your new group description*\n│  └⊷ Set description\n╰───' }, { quoted: msg });
+      return sock.sendMessage(jid, { text: `╭─⌈ ✏️ *SETDESC* ⌋\n│\n├─⊷ *.setdesc Your new group description*\n│  └⊷ Set description\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` }, { quoted: msg });
     }
 
     try {

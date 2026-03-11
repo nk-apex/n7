@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "titaniumlogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🔘 *TITANIUM LOGO* ⌋\n│\n├─⊷ *titaniumlogo*\n│  └⊷ titaniumlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ titaniumlogo WOLF\n│  └⊷ titaniumlogo TITANIUM\n│  └⊷ titaniumlogo ELITE\n│\n╰───` 
+          text: `╭─⌈ 🔘 *TITANIUM LOGO* ⌋\n│\n├─⊷ *titaniumlogo*\n│  └⊷ titaniumlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ titaniumlogo WOLF\n│  └⊷ titaniumlogo TITANIUM\n│  └⊷ titaniumlogo ELITE\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

@@ -35,7 +35,7 @@ export default {
                     `│  └⊷ ${PREFIX}xnxx https://www.xnxx.com/video-abc123/title\n` +
                     `├⊷ *Aliases:* xnxxdl, xnx\n` +
                     `│\n` +
-                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
 
@@ -76,7 +76,7 @@ export default {
                 `├⊷ 📌 *Title:* ${title || 'Unknown'}\n` +
                 `├⊷ ⏱️ *Duration:* ${formatDuration(duration)}\n` +
                 `├⊷ ℹ️ *Info:* ${(info || 'N/A').replace(/\n/g, ' | ')}\n` +
-                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`;
+                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
             const thumbUrl = image || files?.thumb;
             if (thumbUrl) {

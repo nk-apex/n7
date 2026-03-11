@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'wafdetect',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔥 *WAF DETECTOR* ⌋\n│\n├─⊷ *${PREFIX}wafdetect <url>*\n│  └⊷ Detect Web Application Firewall\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}wafdetect google.com\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔥 *WAF DETECTOR* ⌋\n│\n├─⊷ *${PREFIX}wafdetect <url>*\n│  └⊷ Detect Web Application Firewall\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}wafdetect google.com\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -60,7 +61,7 @@ export default {
       if (h['x-powered-by']) extra += `├─⊷ *X-Powered-By:* ${h['x-powered-by']}\n│\n`;
       if (h['via']) extra += `├─⊷ *Via:* ${h['via']}\n│\n`;
 
-      const result = `╭─⌈ 🔥 *WAF DETECTION RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${res.status}\n├─⊷ *WAFs Found:* ${detected.length}\n│\n${lines}${extra}╰───────────────\n> *${getBotName()}*`;
+      const result = `╭─⌈ 🔥 *WAF DETECTION RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${res.status}\n├─⊷ *WAFs Found:* ${detected.length}\n│\n${lines}${extra}╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

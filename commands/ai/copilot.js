@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'copilot',
@@ -15,7 +16,7 @@ export default {
       // ====== HELP SECTION ======
       if (args.length === 0) {
         return sock.sendMessage(jid, {
-          text: `╭─⌈ 🤖 *COPILOT AI* ⌋\n├─⊷ *${PREFIX}copilot <question>*\n│  └⊷ Ask Copilot anything\n╰───`
+          text: `╭─⌈ 🤖 *COPILOT AI* ⌋\n├─⊷ *${PREFIX}copilot <question>*\n│  └⊷ Ask Copilot anything\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
       }
 
@@ -111,7 +112,7 @@ export default {
     //   resultText += `• Try creative or technical topics\n`;
     //   resultText += `• Use \`${PREFIX}copilot\` for anything!\n\n`;
       
-      resultText += `⚡ *Powered by WolfTech*`;
+      resultText += `⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       
       // ====== SEND FINAL ANSWER ======
       await sock.sendMessage(jid, { text: resultText }, { quoted: m });

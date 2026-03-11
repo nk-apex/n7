@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -74,7 +75,7 @@ export default {
         }
 
         text += `│\n`;
-        text += `╰───────────────`;
+        text += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
         await sock.sendMessage(chatId, { text }, { quoted: msg });
     }

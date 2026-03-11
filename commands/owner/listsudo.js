@@ -1,4 +1,5 @@
 import { getSudoList, getSudoMode } from '../../lib/sudo-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'listsudo',
@@ -15,7 +16,7 @@ export default {
 
         if (sudoers.length === 0) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📋 *SUDO LIST* ⌋\n│\n├─⊷ *${PREFIX}addsudo <number>*\n│  └⊷ Add sudo user\n╰───`
+                text: `╭─⌈ 📋 *SUDO LIST* ⌋\n│\n├─⊷ *${PREFIX}addsudo <number>*\n│  └⊷ Add sudo user\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

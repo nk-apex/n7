@@ -1,5 +1,6 @@
 import { exec } from 'child_process';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const TIMEOUT_MS = 120000;
 const MAX_OUTPUT = 3000;
@@ -23,7 +24,7 @@ export default {
 
         if (!args.length) {
             return await sock.sendMessage(chatId, {
-                text: `╭─⌈ 📦 *NPM PACKAGE MANAGER* ⌋\n│\n├─⊷ *${PREFIX}npm install*\n│  └⊷ Install all dependencies\n├─⊷ *${PREFIX}npm install <pkg>*\n│  └⊷ Install a specific package\n├─⊷ *${PREFIX}npm install <p1> <p2>*\n│  └⊷ Install multiple packages\n├─⊷ *${PREFIX}npm uninstall <pkg>*\n│  └⊷ Remove a package\n├─⊷ *${PREFIX}npm update*\n│  └⊷ Update all packages\n├─⊷ *${PREFIX}npm update <pkg>*\n│  └⊷ Update a specific package\n├─⊷ *${PREFIX}npm list*\n│  └⊷ Show installed packages\n├─⊷ *${PREFIX}npm outdated*\n│  └⊷ Check for outdated packages\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}npm install dotenv\n│  └⊷ ${PREFIX}npm install mumaker axios\n│  └⊷ ${PREFIX}npm uninstall chalk\n│  └⊷ ${PREFIX}npm list\n│\n╰───────────────\n> *${getBotName()}*`
+                text: `╭─⌈ 📦 *NPM PACKAGE MANAGER* ⌋\n│\n├─⊷ *${PREFIX}npm install*\n│  └⊷ Install all dependencies\n├─⊷ *${PREFIX}npm install <pkg>*\n│  └⊷ Install a specific package\n├─⊷ *${PREFIX}npm install <p1> <p2>*\n│  └⊷ Install multiple packages\n├─⊷ *${PREFIX}npm uninstall <pkg>*\n│  └⊷ Remove a package\n├─⊷ *${PREFIX}npm update*\n│  └⊷ Update all packages\n├─⊷ *${PREFIX}npm update <pkg>*\n│  └⊷ Update a specific package\n├─⊷ *${PREFIX}npm list*\n│  └⊷ Show installed packages\n├─⊷ *${PREFIX}npm outdated*\n│  └⊷ Check for outdated packages\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}npm install dotenv\n│  └⊷ ${PREFIX}npm install mumaker axios\n│  └⊷ ${PREFIX}npm uninstall chalk\n│  └⊷ ${PREFIX}npm list\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

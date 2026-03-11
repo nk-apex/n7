@@ -1,4 +1,5 @@
 import { addSudo, mapLidToPhone, getSudoList } from '../../lib/sudo-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 function resolveRealNumber(jid, sock) {
     if (!jid) return null;
@@ -52,7 +53,7 @@ export default {
                 targetNumber = args[0].replace(/[^0-9]/g, '');
             } else {
                 return sock.sendMessage(chatId, {
-                    text: `╭─⌈ ⚠️ *ADD SUDO* ⌋\n│\n├─⊷ *${PREFIX}addsudo <phone number>*\n│  └⊷ Reply with number\n╰───`
+                    text: `╭─⌈ ⚠️ *ADD SUDO* ⌋\n│\n├─⊷ *${PREFIX}addsudo <phone number>*\n│  └⊷ Reply with number\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
             }
         } else if (mentioned) {
@@ -68,7 +69,7 @@ export default {
 
         if (!targetNumber || targetNumber.length < 7) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📋 *ADD SUDO* ⌋\n│\n├─⊷ *${PREFIX}addsudo <number>*\n│  └⊷ Add by number\n├─⊷ *Reply + ${PREFIX}addsudo*\n│  └⊷ Add via reply\n╰───`
+                text: `╭─⌈ 📋 *ADD SUDO* ⌋\n│\n├─⊷ *${PREFIX}addsudo <number>*\n│  └⊷ Add by number\n├─⊷ *Reply + ${PREFIX}addsudo*\n│  └⊷ Add via reply\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

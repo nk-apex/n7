@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const antiMentionFile = './antimention.json';
 
@@ -530,7 +531,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `╭─⌈ 👥 *ANTI-MENTION* ⌋\n│\n├─⊷ *.antimention on <warn|delete|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antimention off*\n│  └⊷ Disable protection\n├─⊷ *.antimention types [add/remove/list]*\n│  └⊷ Manage mention types\n├─⊷ *.antimention exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *.antimention status*\n│  └⊷ View current status\n╰───`;
+            const helpText = `╭─⌈ 👥 *ANTI-MENTION* ⌋\n│\n├─⊷ *.antimention on <warn|delete|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antimention off*\n│  └⊷ Disable protection\n├─⊷ *.antimention types [add/remove/list]*\n│  └⊷ Manage mention types\n├─⊷ *.antimention exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *.antimention status*\n│  └⊷ View current status\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

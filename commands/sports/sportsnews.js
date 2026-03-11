@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const API_BASE = 'https://apis.xcasper.space/api/sports';
 
@@ -39,7 +40,7 @@ export default {
         if (shortSummary) text += `│  └⊷ ${shortSummary}\n`;
         if (source || dateStr) text += `│  └⊷ ${source}${source && dateStr ? ' │ ' : ''}${dateStr}\n`;
       });
-      text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
+      text += `╰───\n\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       await sock.sendMessage(jid, { text }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       console.log('📰 [SPORTSNEWS] News fetched successfully');
@@ -48,7 +49,7 @@ export default {
       console.error('❌ [SPORTSNEWS]', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *SPORTS NEWS ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰───`
+        text: `╭─⌈ ❌ *SPORTS NEWS ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Try again later\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
   }

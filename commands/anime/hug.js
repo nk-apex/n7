@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const HUG_TYPES = {
     'random': 'hug',
@@ -219,7 +220,7 @@ export default {
         } catch (error) {
             console.error("Hug command error:", error);
             await sock.sendMessage(m.key.remoteJid, {
-                text: `╭─⌈ ❌ *HUG ERROR* ⌋\n│\n├─⊷ ${error.message}\n│  └⊷ Use *.hug help* for instructions\n│\n╰───`
+                text: `╭─⌈ ❌ *HUG ERROR* ⌋\n│\n├─⊷ ${error.message}\n│  └⊷ Use *.hug help* for instructions\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
     }

@@ -1,4 +1,5 @@
 import { getActionSession } from '../../lib/actionSession.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'mygroupvisit',
@@ -34,7 +35,7 @@ export default {
                 `╭─⌈ 🔗 *VISIT GROUP* ⌋\n│\n` +
                 `│  *${session.name}*\n│\n` +
                 `│  https://chat.whatsapp.com/${inviteCode}\n│\n` +
-                `╰───`
+                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: msg });
     }
 };

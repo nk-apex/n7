@@ -1,4 +1,5 @@
 import { getSudoList, mapLidToPhone, isSudoNumber } from '../../lib/sudo-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 function resolveRealNumber(participant, sock) {
     if (!participant) return null;
@@ -83,14 +84,14 @@ export default {
                     }
                 }
                 return sock.sendMessage(chatId, {
-                    text: `╭─⌈ ⚠️ *LINK SUDO* ⌋\n│\n├─⊷ *Reply + ${PREFIX}linksudo <number>*\n│  └⊷ Link sudo number\n╰───`
+                    text: `╭─⌈ ⚠️ *LINK SUDO* ⌋\n│\n├─⊷ *Reply + ${PREFIX}linksudo <number>*\n│  └⊷ Link sudo number\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
             }
         }
 
         if (!isGroup) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📋 *LINK SUDO* ⌋\n│\n├─⊷ *${PREFIX}linksudo*\n│  └⊷ Auto-scan members\n├─⊷ *Reply + ${PREFIX}linksudo*\n│  └⊷ Link specific sudo user\n╰───`
+                text: `╭─⌈ 📋 *LINK SUDO* ⌋\n│\n├─⊷ *${PREFIX}linksudo*\n│  └⊷ Auto-scan members\n├─⊷ *Reply + ${PREFIX}linksudo*\n│  └⊷ Link specific sudo user\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

@@ -4,6 +4,7 @@ import moment from 'moment-timezone';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -136,7 +137,7 @@ export default {
           `│ Hey ${mentionTag}! 👋\n` +
           `│ _This repository is clean and optimized!_\n` +
           `│ *Be the first to star it!* ⭐\n` +
-          `╰───`;
+          `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
         await sock.sendMessage(jid, {
           ...imagePayload,

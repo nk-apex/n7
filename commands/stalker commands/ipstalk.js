@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/stalk/ipstalk';
 
@@ -14,7 +15,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔍 *IP STALKER* ⌋\n│\n├─⊷ *${prefix}ipstalk <IP address>*\n│  └⊷ Look up IP address info\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}ipstalk 41.90.70.195\n│\n╰───────────────\n> *${getBotName()} STALKER*`
+        text: `╭─⌈ 🔍 *IP STALKER* ⌋\n│\n├─⊷ *${prefix}ipstalk <IP address>*\n│  └⊷ Look up IP address info\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}ipstalk 41.90.70.195\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

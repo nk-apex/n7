@@ -1,6 +1,7 @@
 import { createRequire } from 'module';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { setActionSession } from '../../lib/actionSession.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const _requireKick = createRequire(import.meta.url);
 let giftedBtnsKick;
@@ -37,7 +38,7 @@ export default {
 
     if (!participants.length) {
       return sock.sendMessage(chatId, {
-        text: `╭─⌈ 👢 *KICK* ⌋\n│\n├─⊷ *${PREFIX}kick @user*\n│  └⊷ Kick mentioned user\n├─⊷ *${PREFIX}kick* (reply to msg)\n│  └⊷ Kick replied user\n├─⊷ *${PREFIX}kick 1234567890*\n│  └⊷ Kick by phone number\n╰───`
+        text: `╭─⌈ 👢 *KICK* ⌋\n│\n├─⊷ *${PREFIX}kick @user*\n│  └⊷ Kick mentioned user\n├─⊷ *${PREFIX}kick* (reply to msg)\n│  └⊷ Kick replied user\n├─⊷ *${PREFIX}kick 1234567890*\n│  └⊷ Kick by phone number\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: msg });
     }
 
@@ -93,7 +94,7 @@ export default {
     setActionSession(sessionKey, { action: 'remove', targets: toKick, chatId });
 
     const targetNames = toKick.map(j => `@${j.split('@')[0].split(':')[0]}`).join(', ');
-    const confirmText = `╭─⌈ 👢 *KICK CONFIRM* ⌋\n├─⊷ About to kick ${toKick.length} user(s):\n├─⊷ ${targetNames}\n├─⊷ Tap *Confirm Kick* to proceed.\n╰───`;
+    const confirmText = `╭─⌈ 👢 *KICK CONFIRM* ⌋\n├─⊷ About to kick ${toKick.length} user(s):\n├─⊷ ${targetNames}\n├─⊷ Tap *Confirm Kick* to proceed.\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
     // Try interactive button first (flat format, no quoted arg — matches the working auto-wrapper call)
     if (isButtonModeEnabled() && giftedBtnsKick?.sendInteractiveMessage) {

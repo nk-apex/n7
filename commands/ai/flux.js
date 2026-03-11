@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +20,7 @@ export default {
     // Check if query is provided
     if (args.length === 0) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎨 *FLUX AI* ⌋\n├─⊷ *${PREFIX}flux <prompt>*\n│  └⊷ Generate AI image from text\n├─⊷ *${PREFIX}fluxai <prompt>*\n│  └⊷ Alias for flux\n╰───`
+        text: `╭─⌈ 🎨 *FLUX AI* ⌋\n├─⊷ *${PREFIX}flux <prompt>*\n│  └⊷ Generate AI image from text\n├─⊷ *${PREFIX}fluxai <prompt>*\n│  └⊷ Alias for flux\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

@@ -1,4 +1,5 @@
 import { getBotName, saveBotName, clearBotNameCache } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'setbotname',
@@ -21,7 +22,7 @@ export default {
         if (!args[0]) {
             const currentName = getBotName();
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 🤖 *SET BOT NAME* ⌋\n│\n│ 📝 Current: *${currentName}*\n├─⊷ *${PREFIX}setbotname <new_name>*\n│  └⊷ Change bot name\n╰───`
+                text: `╭─⌈ 🤖 *SET BOT NAME* ⌋\n│\n│ 📝 Current: *${currentName}*\n├─⊷ *${PREFIX}setbotname <new_name>*\n│  └⊷ Change bot name\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
         

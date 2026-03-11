@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const EPHOTO_EFFECTS = {
   neon: { id: 68, name: 'Neon Text', url: 'https://en.ephoto360.com/tao-hieu-ung-chu-neon-dep-68.html', emoji: '💡' },
@@ -137,7 +138,7 @@ function createEphotoCommand(effectKey) {
 
       if (!text) {
         return await sock.sendMessage(chatId, {
-          text: `╭─⌈ ${effect.emoji} *${effect.name.toUpperCase()}* ⌋\n│\n├─⊷ *Usage:* ${PREFIX}${effectKey} <text>\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}${effectKey} ${getBotName()}\n│\n├─⊷ *Aliases:* ephoto${effect.id}, ep${effect.id}\n│\n╰───────────────\n> *${getBotName()} EPHOTO*`
+          text: `╭─⌈ ${effect.emoji} *${effect.name.toUpperCase()}* ⌋\n│\n├─⊷ *Usage:* ${PREFIX}${effectKey} <text>\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}${effectKey} ${getBotName()}\n│\n├─⊷ *Aliases:* ephoto${effect.id}, ep${effect.id}\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: msg });
       }
 

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import supabase from '../../lib/supabase.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const CONFIG_FILE = './data/autotyping/config.json';
 
@@ -197,7 +198,7 @@ export default {
                 };
 
                 return sock.sendMessage(targetJid, {
-                    text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n│ Mode: ${modeLabels[mode] || mode}\n│ Duration: ${autoTypingConfig.duration}s\n│ Active: ${autoTypingConfig.activeTypers.size}\n│\n├─⊷ *${PREFIX}autotyping <number>*\n│  └⊷ Type only in that person's DM\n│  └⊷ e.g. ${PREFIX}autotyping 254703397679\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ All DMs\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ All groups\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ DMs + Groups\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n╰───`
+                    text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n│ Mode: ${modeLabels[mode] || mode}\n│ Duration: ${autoTypingConfig.duration}s\n│ Active: ${autoTypingConfig.activeTypers.size}\n│\n├─⊷ *${PREFIX}autotyping <number>*\n│  └⊷ Type only in that person's DM\n│  └⊷ e.g. ${PREFIX}autotyping 254703397679\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ All DMs\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ All groups\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ DMs + Groups\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: m });
             }
 
@@ -262,7 +263,7 @@ export default {
             }
 
             return sock.sendMessage(targetJid, {
-                text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n├─⊷ *${PREFIX}autotyping <number>*\n│  └⊷ Target one specific chat\n│  └⊷ e.g. ${PREFIX}autotyping 254703397679\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ All DMs\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ All groups\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ DMs + Groups\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n╰───`
+                text: `╭─⌈ 🤖 *AUTO-TYPING* ⌋\n│\n├─⊷ *${PREFIX}autotyping <number>*\n│  └⊷ Target one specific chat\n│  └⊷ e.g. ${PREFIX}autotyping 254703397679\n├─⊷ *${PREFIX}autotyping dm*\n│  └⊷ All DMs\n├─⊷ *${PREFIX}autotyping groups*\n│  └⊷ All groups\n├─⊷ *${PREFIX}autotyping both*\n│  └⊷ DMs + Groups\n├─⊷ *${PREFIX}autotyping off*\n│  └⊷ Disable\n├─⊷ *${PREFIX}autotyping <1-60>*\n│  └⊷ Set duration\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
 
         } catch (err) {

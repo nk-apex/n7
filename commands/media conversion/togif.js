@@ -5,6 +5,7 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'togif',
@@ -33,7 +34,7 @@ export default {
 
       if (!stickerMessage && !videoMessage) {
         await sock.sendMessage(jid, {
-          text: `╭─⌈ 🎞️ *TO GIF CONVERTER* ⌋\n│\n├─ Reply to a *sticker* or *video* to convert it to GIF\n│\n├─ *Usage:*\n│  ?togif\n│\n├─ *Aliases:* togif, stickertogif, gif, videotogif, vid2gif\n│\n├─ *Tips:*\n│  • Works on both static & animated stickers\n│  • Converts videos to GIF (max ~30s recommended)\n│  • Static stickers become a single-frame GIF\n│\n╰───`
+          text: `╭─⌈ 🎞️ *TO GIF CONVERTER* ⌋\n│\n├─ Reply to a *sticker* or *video* to convert it to GIF\n│\n├─ *Usage:*\n│  ?togif\n│\n├─ *Aliases:* togif, stickertogif, gif, videotogif, vid2gif\n│\n├─ *Tips:*\n│  • Works on both static & animated stickers\n│  • Converts videos to GIF (max ~30s recommended)\n│  • Static stickers become a single-frame GIF\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
         return;
       }

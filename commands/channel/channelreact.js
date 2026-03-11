@@ -317,7 +317,7 @@
 //                 text += `├─⊷ *${prefix}channelreact delay <min> <max>*\n│  └⊷ Set delay in seconds (min 300s/5min)\n`;
 //                 text += `├─⊷ *${prefix}channelreact channels*\n│  └⊷ List known channels\n`;
 //                 text += `├─⊷ *${prefix}channelreact stats*\n│  └⊷ View statistics\n`;
-//                 text += `╰───`;
+//                 text += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
 //                 await sock.sendMessage(chatId, { text }, { quoted: m });
 //                 return;
@@ -405,7 +405,7 @@
 //                     text += `│\n`;
 //                     text += `├─⊷ *${prefix}channelreact add <jid>*\n│  └⊷ Add a channel JID manually\n`;
 //                     text += `├─⊷ *${prefix}channelreact remove <jid>*\n│  └⊷ Remove a channel JID\n`;
-//                     text += `╰───`;
+//                     text += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
 //                     await sock.sendMessage(chatId, { text }, { quoted: m });
 //                     break;
@@ -540,6 +540,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const CONFIG_FILE = './data/channelReactConfig.json';
 
@@ -873,7 +874,7 @@ export default {
                 text += `├─⊷ *${prefix}channelreact delay <min> <max>*\n│  └⊷ Set delay range in seconds (min 300s/5min)\n`;
                 text += `├─⊷ *${prefix}channelreact channels*\n│  └⊷ List known channels\n`;
                 text += `├─⊷ *${prefix}channelreact stats*\n│  └⊷ View statistics\n`;
-                text += `╰───`;
+                text += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
                 await sock.sendMessage(chatId, { text }, { quoted: m });
                 return;
@@ -961,7 +962,7 @@ export default {
                     text += `│\n`;
                     text += `├─⊷ *${prefix}channelreact add <jid>*\n│  └⊷ Add a channel JID manually\n`;
                     text += `├─⊷ *${prefix}channelreact remove <jid>*\n│  └⊷ Remove a channel JID\n`;
-                    text += `╰───`;
+                    text += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
                     await sock.sendMessage(chatId, { text }, { quoted: m });
                     break;

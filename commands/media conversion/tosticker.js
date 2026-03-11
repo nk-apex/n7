@@ -22,6 +22,7 @@ try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 import webp from 'node-webpmux';
 import crypto from 'crypto';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'tosticker',
@@ -64,7 +65,7 @@ export default {
       
       if (!imageMessage) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🎨 *IMAGE TO STICKER* ⌋\n│\n├─⊷ *${prefix}tosticker*\n│  └⊷ Reply to an image to convert to sticker\n│\n├─⊷ *Send image with caption ${prefix}tosticker*\n│  └⊷ Supported: JPG, PNG, GIF, WebP (max 3MB)\n│\n╰───`
+          text: `╭─⌈ 🎨 *IMAGE TO STICKER* ⌋\n│\n├─⊷ *${prefix}tosticker*\n│  └⊷ Reply to an image to convert to sticker\n│\n├─⊷ *Send image with caption ${prefix}tosticker*\n│  └⊷ Supported: JPG, PNG, GIF, WebP (max 3MB)\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
         return;
       }

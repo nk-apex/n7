@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 export default {
     name: 'join',
     alias: ['joingroup'],
@@ -21,7 +22,7 @@ export default {
 
         if (!linkText) {
             return sock.sendMessage(chatId, {
-                text: '╭─⌈ 🔗 *JOIN GROUP* ⌋\n│\n├─⊷ Reply to a WhatsApp group\n│  └⊷ invite link with *.join*\n├─⊷ Or: *.join [link]*\n╰───'
+                text: `╭─⌈ 🔗 *JOIN GROUP* ⌋\n│\n├─⊷ Reply to a WhatsApp group\n│  └⊷ invite link with *.join*\n├─⊷ Or: *.join [link]*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

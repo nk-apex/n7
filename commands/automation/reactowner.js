@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_FILE = path.join(__dirname, '..', '..', 'data', 'reactowner_config.json');
@@ -70,7 +71,7 @@ export default {
             const status = config.enabled ? '✅ ON' : '❌ OFF';
             const emoji = config.emoji || '🐺';
             return await sock.sendMessage(chatId, {
-                text: `╭─⌈ 🐺 *REACT OWNER* ⌋\n│\n│ Status: ${status}\n│ Emoji: ${emoji}\n│\n├─⊷ *reactowner on*\n│  └⊷ Enable auto-react\n├─⊷ *reactowner off*\n│  └⊷ Disable auto-react\n├─⊷ *reactowner emoji <emoji>*\n│  └⊷ Change emoji\n╰───`
+                text: `╭─⌈ 🐺 *REACT OWNER* ⌋\n│\n│ Status: ${status}\n│ Emoji: ${emoji}\n│\n├─⊷ *reactowner on*\n│  └⊷ Enable auto-react\n├─⊷ *reactowner off*\n│  └⊷ Disable auto-react\n├─⊷ *reactowner emoji <emoji>*\n│  └⊷ Change emoji\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             });
         }
 
@@ -96,7 +97,7 @@ export default {
             const newEmoji = args.slice(1).join(' ').trim();
             if (!newEmoji) {
                 return await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ⚠️ *REACT OWNER* ⌋\n│\n├─⊷ *reactowner emoji 🐺*\n│  └⊷ Provide an emoji\n╰───`
+                    text: `╭─⌈ ⚠️ *REACT OWNER* ⌋\n│\n├─⊷ *reactowner emoji 🐺*\n│  └⊷ Provide an emoji\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 });
             }
             config.emoji = newEmoji;
@@ -107,7 +108,7 @@ export default {
         }
 
         return await sock.sendMessage(chatId, {
-            text: `╭─⌈ ⚠️ *REACT OWNER* ⌋\n│\n├─⊷ *reactowner on*\n│  └⊷ Enable\n├─⊷ *reactowner off*\n│  └⊷ Disable\n├─⊷ *reactowner emoji <emoji>*\n│  └⊷ Change emoji\n╰───`
+            text: `╭─⌈ ⚠️ *REACT OWNER* ⌋\n│\n├─⊷ *reactowner on*\n│  └⊷ Enable\n├─⊷ *reactowner off*\n│  └⊷ Disable\n├─⊷ *reactowner emoji <emoji>*\n│  └⊷ Change emoji\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         });
     }
 };

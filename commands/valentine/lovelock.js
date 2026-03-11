@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const API_BASE = 'https://apiskeith.vercel.app';
 
@@ -14,7 +15,7 @@ export default {
 
         if (!args.length) {
             return await sock.sendMessage(chatId, {
-                text: `╭─⌈ 🔒 *LOVE LOCK* ⌋\n│\n│ Create a love lock effect\n│ with your text\n│\n├─⊷ *Usage:*\n│ ${global.prefix || '.'}lovelock <text>\n│\n├─⊷ *Example:*\n│ ${global.prefix || '.'}lovelock John & Jane\n╰───`
+                text: `╭─⌈ 🔒 *LOVE LOCK* ⌋\n│\n│ Create a love lock effect\n│ with your text\n│\n├─⊷ *Usage:*\n│ ${global.prefix || '.'}lovelock <text>\n│\n├─⊷ *Example:*\n│ ${global.prefix || '.'}lovelock John & Jane\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

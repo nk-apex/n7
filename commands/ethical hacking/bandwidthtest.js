@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'bandwidthtest',
@@ -55,7 +56,7 @@ export default {
         `├─⊷ *Test ${r.attempt}:* ${r.speedMbps} Mbps (${r.duration}s)`
       ).join('\n');
 
-      const result = `╭─⌈ 📶 *BANDWIDTH / SPEED TEST* ⌋\n│\n├─⊷ *Test Server:* Cloudflare\n├─⊷ *File Size:* ${fileSizeMB} MB\n├─⊷ *Rating:* ${rating}\n│\n├─⊷ *── Test Results ──*\n${testDetails}\n│\n├─⊷ *── Statistics ──*\n├─⊷ *Average Speed:* ${avgSpeed} Mbps\n├─⊷ *Max Speed:* ${maxSpeed} Mbps\n├─⊷ *Min Speed:* ${minSpeed} Mbps\n├─⊷ *Avg Duration:* ${avgDuration}s\n│\n├─⊷ *── Estimates ──*\n├─⊷ *10 MB file:* ~${(10 / (avgSpeed / 8)).toFixed(1)}s\n├─⊷ *100 MB file:* ~${(100 / (avgSpeed / 8)).toFixed(1)}s\n├─⊷ *1 GB file:* ~${(1024 / (avgSpeed / 8)).toFixed(0)}s\n│\n╰───────────────\n> *${getBotName()}*`;
+      const result = `╭─⌈ 📶 *BANDWIDTH / SPEED TEST* ⌋\n│\n├─⊷ *Test Server:* Cloudflare\n├─⊷ *File Size:* ${fileSizeMB} MB\n├─⊷ *Rating:* ${rating}\n│\n├─⊷ *── Test Results ──*\n${testDetails}\n│\n├─⊷ *── Statistics ──*\n├─⊷ *Average Speed:* ${avgSpeed} Mbps\n├─⊷ *Max Speed:* ${maxSpeed} Mbps\n├─⊷ *Min Speed:* ${minSpeed} Mbps\n├─⊷ *Avg Duration:* ${avgDuration}s\n│\n├─⊷ *── Estimates ──*\n├─⊷ *10 MB file:* ~${(10 / (avgSpeed / 8)).toFixed(1)}s\n├─⊷ *100 MB file:* ~${(100 / (avgSpeed / 8)).toFixed(1)}s\n├─⊷ *1 GB file:* ~${(1024 / (avgSpeed / 8)).toFixed(0)}s\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

@@ -160,7 +160,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🎵 *PLAYLIST DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}playlist <search>*\n│  └⊷ Search playlists\n├─⊷ *${PREFIX}playlist <url>*\n│  └⊷ Download from link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
+          text: `╭─⌈ 🎵 *PLAYLIST DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}playlist <search>*\n│  └⊷ Search playlists\n├─⊷ *${PREFIX}playlist <url>*\n│  └⊷ Download from link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
         return;
       }

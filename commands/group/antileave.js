@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 // // commands/group/antileave.js
 
 // const antiLeaveGroups = new Map(); // Store with group info
@@ -335,7 +336,7 @@ export default {
       const leaveCount = groupData.leaveLogs.length;
       
       return sock.sendMessage(jid, { 
-        text: `╭─⌈ 🛡️ *ANTI-LEAVE* ⌋\n│\n├─⊷ *.antileave on*\n│  └⊷ Enable detection\n├─⊷ *.antileave off*\n│  └⊷ Disable detection\n├─⊷ *.antileave log*\n│  └⊷ View recent leaves\n├─⊷ *.antileave clear*\n│  └⊷ Clear leave logs\n├─⊷ *.antileave status*\n│  └⊷ Check current status\n╰───` 
+        text: `╭─⌈ 🛡️ *ANTI-LEAVE* ⌋\n│\n├─⊷ *.antileave on*\n│  └⊷ Enable detection\n├─⊷ *.antileave off*\n│  └⊷ Disable detection\n├─⊷ *.antileave log*\n│  └⊷ View recent leaves\n├─⊷ *.antileave clear*\n│  └⊷ Clear leave logs\n├─⊷ *.antileave status*\n│  └⊷ Check current status\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
       }, { quoted: msg });
     }
     

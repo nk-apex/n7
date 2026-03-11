@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const API_BASE = 'https://apis.xcasper.space/api/sports';
 
@@ -55,7 +56,7 @@ export default {
         if (shortSummary) text += `│  └⊷ ${shortSummary}\n`;
         if (source || dateStr) text += `│  └⊷ ${source}${source && dateStr ? ' │ ' : ''}${dateStr}\n`;
       });
-      text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
+      text += `╰───\n\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       await sock.sendMessage(jid, { text }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       console.log(`📰 [TEAMNEWS] News for "${team}" fetched successfully`);
@@ -64,7 +65,7 @@ export default {
       console.error('❌ [TEAMNEWS]', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *TEAM NEWS ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Usage: ${PREFIX}teamnews <teamname>\n╰───`
+        text: `╭─⌈ ❌ *TEAM NEWS ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Usage: ${PREFIX}teamnews <teamname>\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
   }

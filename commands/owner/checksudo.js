@@ -1,4 +1,5 @@
 import { isSudoNumber } from '../../lib/sudo-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 function resolveRealNumber(jid, sock) {
     if (!jid) return null;
@@ -51,7 +52,7 @@ export default {
 
         if (!targetNumber || targetNumber.length < 7) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📋 *CHECK SUDO* ⌋\n│\n├─⊷ *${PREFIX}checksudo <number>*\n│  └⊷ Check by number\n├─⊷ *Reply + ${PREFIX}checksudo*\n│  └⊷ Check via reply\n╰───`
+                text: `╭─⌈ 📋 *CHECK SUDO* ⌋\n│\n├─⊷ *${PREFIX}checksudo <number>*\n│  └⊷ Check by number\n├─⊷ *Reply + ${PREFIX}checksudo*\n│  └⊷ Check via reply\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

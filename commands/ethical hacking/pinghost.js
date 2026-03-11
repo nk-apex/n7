@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'pinghost',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🏓 *PING HOST* ⌋\n│\n├─⊷ *${PREFIX}pinghost <host>*\n│  └⊷ Ping a host to check availability\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}pinghost google.com\n│  └⊷ ${PREFIX}pinghost 8.8.8.8\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🏓 *PING HOST* ⌋\n│\n├─⊷ *${PREFIX}pinghost <host>*\n│  └⊷ Ping a host to check availability\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}pinghost google.com\n│  └⊷ ${PREFIX}pinghost 8.8.8.8\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -45,7 +46,7 @@ export default {
       if (packetLoss !== 'N/A' && parseFloat(packetLoss) === 100) status = '🔴 Offline';
       else if (packetLoss !== 'N/A' && parseFloat(packetLoss) > 0) status = '🟡 Partial Loss';
 
-      const result = `╭─⌈ 🏓 *PING HOST RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${status}\n│\n├─⊷ *Min Response:* ${minTime}\n├─⊷ *Avg Response:* ${avgTime}\n├─⊷ *Max Response:* ${maxTime}\n├─⊷ *Packet Loss:* ${packetLoss}\n│\n├─⊷ *Raw Output:*\n${rawLines.slice(0, 10).map(l => `│  ${l}`).join('\n')}\n│\n╰───────────────\n> *${getBotName()}*`;
+      const result = `╭─⌈ 🏓 *PING HOST RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${status}\n│\n├─⊷ *Min Response:* ${minTime}\n├─⊷ *Avg Response:* ${avgTime}\n├─⊷ *Max Response:* ${maxTime}\n├─⊷ *Packet Loss:* ${packetLoss}\n│\n├─⊷ *Raw Output:*\n${rawLines.slice(0, 10).map(l => `│  ${l}`).join('\n')}\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

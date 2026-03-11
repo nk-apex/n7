@@ -2,6 +2,7 @@
 import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "logoai",
@@ -14,7 +15,7 @@ export default {
       const query = args.join(" ");
       if (!query || query.includes("--help")) {
         return sock.sendMessage(m.key.remoteJid, {
-          text: `╭─⌈ 🎨 *AI LOGO GENERATOR* ⌋\n├─⊷ *.logoai <company name>*\n│  └⊷ Generate AI logo\n├─⊷ *.logoai <name> --style=<style>*\n│  └⊷ modern/minimal/vintage/playful\n├─⊷ *.logoai <name> --color=<color>*\n│  └⊷ blue/red/green/purple\n╰───`
+          text: `╭─⌈ 🎨 *AI LOGO GENERATOR* ⌋\n├─⊷ *.logoai <company name>*\n│  └⊷ Generate AI logo\n├─⊷ *.logoai <name> --style=<style>*\n│  └⊷ modern/minimal/vintage/playful\n├─⊷ *.logoai <name> --color=<color>*\n│  └⊷ blue/red/green/purple\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
       }
 

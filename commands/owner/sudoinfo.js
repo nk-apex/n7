@@ -1,4 +1,5 @@
 import { getSudoList, getSudoMode, getSudoCount } from '../../lib/sudo-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'sudoinfo',
@@ -39,7 +40,7 @@ export default {
             info += `│\n`;
         }
 
-        info += `╰───`;
+        info += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
         await sock.sendMessage(chatId, { text: info }, { quoted: msg });
     }

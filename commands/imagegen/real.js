@@ -2,6 +2,7 @@ import axios from 'axios';
 import { createWriteStream, existsSync, readFileSync } from 'fs';
 import fs from 'fs';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 let getUserCaption;
 
@@ -35,7 +36,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 📸 *PHOTOREALISTIC IMAGE GEN* ⌋\n│\n├─⊷ *real <prompt>*\n│  └⊷ Generate photorealistic AI images\n│\n├─⊷ *Examples:*\n│  └⊷ real cyberpunk city at night, 8k\n│  └⊷ real astronaut on mars, photography\n│\n├─⊷ 🎭 *Models:* Realistic Vision, DreamShaper, Deliberate\n│\n╰───` 
+          text: `╭─⌈ 📸 *PHOTOREALISTIC IMAGE GEN* ⌋\n│\n├─⊷ *real <prompt>*\n│  └⊷ Generate photorealistic AI images\n│\n├─⊷ *Examples:*\n│  └⊷ real cyberpunk city at night, 8k\n│  └⊷ real astronaut on mars, photography\n│\n├─⊷ 🎭 *Models:* Realistic Vision, DreamShaper, Deliberate\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }
@@ -45,7 +46,7 @@ export default {
       // Check prompt length
       if (prompt.length < 5) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ ❌ *PROMPT TOO SHORT* ⌋\n│\n├─⊷ *real <detailed prompt>*\n│  └⊷ real photorealistic portrait, 85mm lens, cinematic lighting\n│\n╰───` 
+          text: `╭─⌈ ❌ *PROMPT TOO SHORT* ⌋\n│\n├─⊷ *real <detailed prompt>*\n│  └⊷ real photorealistic portrait, 85mm lens, cinematic lighting\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

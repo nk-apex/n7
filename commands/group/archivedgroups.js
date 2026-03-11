@@ -1,4 +1,5 @@
 import { getArchivedList } from '../../lib/chat-state.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'archivedgroups',
@@ -31,7 +32,7 @@ export default {
         text += `├─⊷ ${count}. *${name}*\n`;
       }
 
-      text += `│\n├─⊷ *Total:* ${archived.length} archived group(s)\n╰───`;
+      text += `│\n├─⊷ *Total:* ${archived.length} archived group(s)\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text }, { quoted: msg });
 

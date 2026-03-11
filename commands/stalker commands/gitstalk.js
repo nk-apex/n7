@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/stalk/gitstalk';
 
@@ -14,7 +15,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔍 *GITHUB STALKER* ⌋\n│\n├─⊷ *${prefix}gitstalk <username>*\n│  └⊷ Stalk a GitHub profile\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}gitstalk mauricegift\n│\n╰───────────────\n> *${getBotName()} STALKER*`
+        text: `╭─⌈ 🔍 *GITHUB STALKER* ⌋\n│\n├─⊷ *${prefix}gitstalk <username>*\n│  └⊷ Stalk a GitHub profile\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}gitstalk mauricegift\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

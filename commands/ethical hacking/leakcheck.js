@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
 import crypto from 'crypto';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'leakcheck',
@@ -11,7 +12,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *LEAK CHECKER* ⌋\n│\n├─⊷ *${PREFIX}leakcheck <email>*\n│  └⊷ Check email in data breaches\n│\n├─⊷ *${PREFIX}leakcheck -p <password>*\n│  └⊷ Check password in breaches\n│     (uses k-anonymity, safe)\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *LEAK CHECKER* ⌋\n│\n├─⊷ *${PREFIX}leakcheck <email>*\n│  └⊷ Check email in data breaches\n│\n├─⊷ *${PREFIX}leakcheck -p <password>*\n│  └⊷ Check password in breaches\n│     (uses k-anonymity, safe)\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -51,7 +52,7 @@ export default {
         }
         result += `│\n├─⊷ *Method:* HIBP k-Anonymity API\n`;
         result += `│  └⊷ Your password was NOT sent\n│     to any server (hash prefix only)\n`;
-        result += `│\n╰───────────────\n> *${getBotName()}*`;
+        result += `│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
       } else {
         let breaches = [];
         let source = '';
@@ -130,7 +131,7 @@ export default {
           result += `│  ├⊷ Enable 2FA on all accounts\n`;
           result += `│  └⊷ Check regularly for new breaches\n`;
         }
-        result += `│\n╰───────────────\n> *${getBotName()}*`;
+        result += `│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
       }
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });

@@ -1,4 +1,5 @@
 import { delay } from '@whiskeysockets/baileys';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'block',
@@ -13,7 +14,7 @@ export default {
       const mentioned = message?.extendedTextMessage?.contextInfo?.mentionedJid;
       if (!mentioned || mentioned.length === 0) {
         return await sock.sendMessage(key.remoteJid, {
-          text: '╭─⌈ 🐺 *BLOCK* ⌋\n│\n├─⊷ *Tag a user*\n│  └⊷ Block via mention\n╰───',
+          text: `╭─⌈ 🐺 *BLOCK* ⌋\n│\n├─⊷ *Tag a user*\n│  └⊷ Block via mention\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
         }, { quoted: msg });
       }
       target = mentioned[0];

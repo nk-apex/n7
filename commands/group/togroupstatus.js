@@ -1,6 +1,7 @@
 import { downloadContentFromMessage, generateWAMessageContent, generateWAMessageFromContent } from '@whiskeysockets/baileys';
 import crypto from 'crypto';
 import { PassThrough } from 'stream';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 async function toVN(inputBuffer) {
     return new Promise((resolve, reject) => {
@@ -142,7 +143,7 @@ export default {
 
             if (!quotedMessage && !textAfterCommand && !messageText.trim()) {
                 return sock.sendMessage(jid, {
-                    text: `╭─⌈ 💡 *GROUP STATUS* ⌋\n│\n├─⊷ *${PREFIX}togstatus* (reply)\n│  └⊷ Reply to media/text\n├─⊷ *${PREFIX}togstatus Your text here*\n│  └⊷ Post text status\n╰───`
+                    text: `╭─⌈ 💡 *GROUP STATUS* ⌋\n│\n├─⊷ *${PREFIX}togstatus* (reply)\n│  └⊷ Reply to media/text\n├─⊷ *${PREFIX}togstatus Your text here*\n│  └⊷ Post text status\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: m });
             }
 
@@ -163,7 +164,7 @@ export default {
             }
             else {
                 return sock.sendMessage(jid, {
-                    text: `╭─⌈ 💡 *GROUP STATUS* ⌋\n│\n├─⊷ *${PREFIX}togstatus Your text*\n│  └⊷ Text or reply media\n╰───`
+                    text: `╭─⌈ 💡 *GROUP STATUS* ⌋\n│\n├─⊷ *${PREFIX}togstatus Your text*\n│  └⊷ Text or reply media\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: m });
             }
 

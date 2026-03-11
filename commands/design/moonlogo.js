@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "moonlogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🌙 *MOON LOGO* ⌋\n│\n├─⊷ *moonlogo*\n│  └⊷ moonlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ moonlogo LUNA\n│  └⊷ moonlogo MOON\n│  └⊷ moonlogo NIGHT\n│\n╰───` 
+          text: `╭─⌈ 🌙 *MOON LOGO* ⌋\n│\n├─⊷ *moonlogo*\n│  └⊷ moonlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ moonlogo LUNA\n│  └⊷ moonlogo MOON\n│  └⊷ moonlogo NIGHT\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

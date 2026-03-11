@@ -675,7 +675,7 @@ export default {
 
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🎵 *YTPLAY COMMAND* ⌋\n│\n├─⊷ *ytplay <song name>*\n│  └⊷ Play audio\n├─⊷ *ytplay <YouTube URL>*\n│  └⊷ Play from link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
+          text: `╭─⌈ 🎵 *YTPLAY COMMAND* ⌋\n│\n├─⊷ *ytplay <song name>*\n│  └⊷ Play audio\n├─⊷ *ytplay <YouTube URL>*\n│  └⊷ Play from link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
         return;
       }

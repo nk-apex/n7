@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'grouplink',
@@ -60,7 +61,7 @@ export default {
         `│ • \`${PREFIX}revoke\` - Reset link\n` +
         `│ • \`${PREFIX}groupinfo\` - Group details\n` +
         `│\n` +
-        `╰───`;
+        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
       try {
         const { createRequire } = await import('module');

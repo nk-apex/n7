@@ -199,6 +199,7 @@ let sharp;
 try { sharp = (await import('sharp')).default; } catch { sharp = null; }
 import webp from 'node-webpmux';
 import crypto from 'crypto';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'emojimix',
@@ -212,7 +213,7 @@ export default {
     
     // ====== HELP SECTION ======
     if (args.length === 0 || args[0].toLowerCase() === 'help') {
-      const helpText = `╭─⌈ 🎭 *${getBotName()} EMOJI MIX* ⌋\n│\n├─⊷ *${PREFIX}emojimix 😂 😭*\n│  └⊷ Get mixed emoji image\n│\n├─⊷ *${PREFIX}emojimix sticker ❤️ ⭐*\n│  └⊷ Get as bot sticker\n│\n├─⊷ *${PREFIX}emojimix 🐱 🐶*\n│  └⊷ Get image\n│\n├─⊷ *${PREFIX}emix -s 🍕 🍔*\n│  └⊷ Sticker with flag\n│\n╰───`;
+      const helpText = `╭─⌈ 🎭 *${getBotName()} EMOJI MIX* ⌋\n│\n├─⊷ *${PREFIX}emojimix 😂 😭*\n│  └⊷ Get mixed emoji image\n│\n├─⊷ *${PREFIX}emojimix sticker ❤️ ⭐*\n│  └⊷ Get as bot sticker\n│\n├─⊷ *${PREFIX}emojimix 🐱 🐶*\n│  └⊷ Get image\n│\n├─⊷ *${PREFIX}emix -s 🍕 🍔*\n│  └⊷ Sticker with flag\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
@@ -232,7 +233,7 @@ export default {
       emoji2 = args[1];
     } else {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *NEED TWO EMOJIS* ⌋\n│\n├─⊷ *${PREFIX}emojimix 😂 😭*\n│  └⊷ Get mixed emoji image\n│\n├─⊷ *${PREFIX}emojimix sticker 😂 😭*\n│  └⊷ Get as sticker\n│\n╰───`
+        text: `╭─⌈ ❌ *NEED TWO EMOJIS* ⌋\n│\n├─⊷ *${PREFIX}emojimix 😂 😭*\n│  └⊷ Get mixed emoji image\n│\n├─⊷ *${PREFIX}emojimix sticker 😂 😭*\n│  └⊷ Get as sticker\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

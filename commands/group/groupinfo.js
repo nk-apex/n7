@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 
 
@@ -313,7 +314,7 @@ export default {
         `┃ 📅 *Created:* ${creationDate}\n` +
         `┃ 🔧 *Mode:* ${groupMode}\n` +
         "┣━━━━━━━━━━━━━━━━━━━━\n" +
-        `┃ > Powered by WolfTech\n` +
+        `┃ > Powered by ${getOwnerName().toUpperCase()} TECH\n` +
         "┗━━━━━━━━━━━━━━━━━━━━";
 
       // Try to get group profile picture (thumbnail)
@@ -363,7 +364,7 @@ export default {
         `┃ Failed to fetch group info.\n` +
         `┃ Please try again.\n` +
         "┣━━━━━━━━━━━━━━━━━━━━━━\n" +
-        `┃ > Powered by WolfTech\n` +
+        `┃ > Powered by ${getOwnerName().toUpperCase()} TECH\n` +
         "┗━━━━━━━━━━━━━━━━━━━━━━┛";
       
       await sock.sendMessage(sender, { 

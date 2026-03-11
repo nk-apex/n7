@@ -5,6 +5,7 @@ import path from 'path';
 import crypto from 'crypto';
 import webp from 'node-webpmux';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'stickertext',
@@ -27,7 +28,7 @@ export default {
 
       if (!stickerMessage) {
         await sock.sendMessage(jid, {
-          text: `╭─⌈ ✏️ *STICKER TEXT* ⌋\n│\n├─ Reply to a sticker with your text\n│\n├─ *Usage:*\n│  ?st Hello World\n│\n├─ *Aliases:* st, stext, editsticker\n│\n├─ *Tips:*\n│  • Text is centered on the sticker\n│  • Works on static & animated stickers\n│\n╰───`
+          text: `╭─⌈ ✏️ *STICKER TEXT* ⌋\n│\n├─ Reply to a sticker with your text\n│\n├─ *Usage:*\n│  ?st Hello World\n│\n├─ *Aliases:* st, stext, editsticker\n│\n├─ *Tips:*\n│  • Text is centered on the sticker\n│  • Works on static & animated stickers\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
         return;
       }

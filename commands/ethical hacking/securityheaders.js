@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'securityheaders',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *SECURITY HEADERS* ⌋\n│\n├─⊷ *${PREFIX}securityheaders <url>*\n│  └⊷ Check website security headers\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}securityheaders google.com\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *SECURITY HEADERS* ⌋\n│\n├─⊷ *${PREFIX}securityheaders <url>*\n│  └⊷ Check website security headers\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}securityheaders google.com\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -59,7 +60,7 @@ export default {
       if (h['server']) extra += `├─⊷ *Server:* ${h['server']}\n│\n`;
       if (h['x-powered-by']) extra += `├─⊷ *X-Powered-By:* ${h['x-powered-by']}\n│\n`;
 
-      const result = `╭─⌈ 🛡️ *SECURITY HEADERS CHECK* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${res.status} ${res.statusText}\n│\n${lines}├─⊷ 📊 *Score:* ${passed}/${checks.length} (${score}%)\n├─⊷ 🏅 *Grade:* ${grade}\n│\n${extra}╰───────────────\n> *${getBotName()}*`;
+      const result = `╭─⌈ 🛡️ *SECURITY HEADERS CHECK* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${res.status} ${res.statusText}\n│\n${lines}├─⊷ 📊 *Score:* ${passed}/${checks.length} (${score}%)\n├─⊷ 🏅 *Grade:* ${grade}\n│\n${extra}╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

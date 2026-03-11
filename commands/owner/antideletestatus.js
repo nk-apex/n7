@@ -4,6 +4,7 @@ import { getBotName } from '../../lib/botname.js';
 import db from '../../lib/supabase.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { getPhoneFromLid } from '../../lib/sudo-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const _requireAds = createRequire(import.meta.url);
 let giftedBtnsAds;
@@ -760,7 +761,7 @@ export default {
                 statusAntideleteState.mode = 'private';
                 await saveStatusData();
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: PRIVATE* ⌋\n├─⊷ Deleted statuses sent to owner DM\n╰───`
+                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: PRIVATE* ⌋\n├─⊷ Deleted statuses sent to owner DM\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
             }
@@ -770,7 +771,7 @@ export default {
                 statusAntideleteState.mode = 'public';
                 await saveStatusData();
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: PUBLIC* ⌋\n├─⊷ Deleted statuses sent to same chat\n╰───`
+                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: PUBLIC* ⌋\n├─⊷ Deleted statuses sent to same chat\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
             }
@@ -781,7 +782,7 @@ export default {
                 await saveStatusData();
                 const currentMode = (statusAntideleteState.mode || 'private').toUpperCase();
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: ON (${currentMode})* ⌋\n╰───`
+                    text: `╭─⌈ ✅ *STATUS ANTIDELETE: ON (${currentMode})* ⌋\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
             }
@@ -791,7 +792,7 @@ export default {
                 statusAntideleteState.enabled = false;
                 await saveStatusData();
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ ❌ *STATUS ANTIDELETE: OFF* ⌋\n╰───`
+                    text: `╭─⌈ ❌ *STATUS ANTIDELETE: OFF* ⌋\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
             }
@@ -875,7 +876,7 @@ export default {
                 const subCommand = args[1]?.toLowerCase();
 
                 if (!subCommand) {
-                    const settingsText = `╭─⌈ ⚙️ *STATUS ANTIDELETE SETTINGS* ⌋\n│\n├─⊷ *${prefix}ads settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}ads settings cleanretrieved on/off*\n│  └⊷ Toggle clean mode\n├─⊷ *${prefix}ads settings maxage <hours>*\n│  └⊷ Set max age\n├─⊷ *${prefix}ads settings maxstorage <MB>*\n│  └⊷ Set max storage\n╰───`;
+                    const settingsText = `╭─⌈ ⚙️ *STATUS ANTIDELETE SETTINGS* ⌋\n│\n├─⊷ *${prefix}ads settings autoclean on/off*\n│  └⊷ Toggle auto-clean\n├─⊷ *${prefix}ads settings cleanretrieved on/off*\n│  └⊷ Toggle clean mode\n├─⊷ *${prefix}ads settings maxage <hours>*\n│  └⊷ Set max age\n├─⊷ *${prefix}ads settings maxstorage <MB>*\n│  └⊷ Set max storage\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
                     await sock.sendMessage(chatId, { text: settingsText }, { quoted: msg });
                     return;
                 }
@@ -962,7 +963,7 @@ export default {
 
             default: {
                 const modeNow = statusAntideleteState.enabled ? (statusAntideleteState.mode || 'private').toUpperCase() : 'OFF';
-                const helpText = `╭─⌈ 🔍 *STATUS ANTIDELETE* ⌋\n├─⊷ *Mode:* ${modeNow}\n├─⊷ *${prefix}ads on*\n│  └⊷ Enable tracking\n├─⊷ *${prefix}ads off*\n│  └⊷ Disable tracking\n├─⊷ *${prefix}ads status*\n│  └⊷ View stats\n╰───`;
+                const helpText = `╭─⌈ 🔍 *STATUS ANTIDELETE* ⌋\n├─⊷ *Mode:* ${modeNow}\n├─⊷ *${prefix}ads on*\n│  └⊷ Enable tracking\n├─⊷ *${prefix}ads off*\n│  └⊷ Disable tracking\n├─⊷ *${prefix}ads status*\n│  └⊷ View stats\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
                 if (isButtonModeEnabled() && giftedBtnsAds?.sendInteractiveMessage) {
                     try {
                         await giftedBtnsAds.sendInteractiveMessage(sock, chatId, {

@@ -1,4 +1,5 @@
 import translate from "@iamtraction/google-translate";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "translate",
@@ -24,7 +25,7 @@ export default {
 
       if (!targetLang || !text) {
         await sock.sendMessage(m.key.remoteJid, {
-          text: `╭─⌈ 🌍 *TRANSLATE* ⌋\n│\n├─⊷ *translate <lang> <text>*\n│  └⊷ Translate text to target language\n│\n├─⊷ *Reply*\n│  └⊷ Reply to a message with .translate <lang>\n│\n╰───`,
+          text: `╭─⌈ 🌍 *TRANSLATE* ⌋\n│\n├─⊷ *translate <lang> <text>*\n│  └⊷ Translate text to target language\n│\n├─⊷ *Reply*\n│  └⊷ Reply to a message with .translate <lang>\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
         });
         return;
       }

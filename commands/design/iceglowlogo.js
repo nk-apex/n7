@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "iceglowlogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 💠 *ICE GLOW LOGO* ⌋\n│\n├─⊷ *iceglowlogo*\n│  └⊷ iceglowlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ iceglowlogo WOLF\n│  └⊷ iceglowlogo GLOW\n│  └⊷ iceglowlogo FROZEN\n│\n╰───` 
+          text: `╭─⌈ 💠 *ICE GLOW LOGO* ⌋\n│\n├─⊷ *iceglowlogo*\n│  └⊷ iceglowlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ iceglowlogo WOLF\n│  └⊷ iceglowlogo GLOW\n│  └⊷ iceglowlogo FROZEN\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

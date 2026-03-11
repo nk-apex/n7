@@ -36,7 +36,7 @@
 
 //     if (!query) {
 //       return sock.sendMessage(jid, {
-//         text: `╭─⌈ 🎵 *SPOTIFY DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}spotify <Spotify URL>*\n│  └⊷ Download from Spotify link\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}spotify https://open.spotify.com/track/...\n│\n├─⊷ *Aliases:* spot, spdl, spotifydl\n│\n╰───────────────\n> *${getBotName()} SPOTIFY*`
+//         text: `╭─⌈ 🎵 *SPOTIFY DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}spotify <Spotify URL>*\n│  └⊷ Download from Spotify link\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}spotify https://open.spotify.com/track/...\n│\n├─⊷ *Aliases:* spot, spdl, spotifydl\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
 //       }, { quoted: m });
 //     }
 
@@ -136,6 +136,7 @@
 
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 // Updated API endpoint to v3
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/spotifydlv3';
@@ -173,7 +174,7 @@ export default {
 
     if (!query) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎵 *SPOTIFY DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}spotify <Spotify URL>*\n│  └⊷ Download from Spotify link\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}spotify https://open.spotify.com/track/...\n│\n├─⊷ *Aliases:* spot, spdl, spotifydl\n│\n╰───────────────\n> *${getBotName()} SPOTIFY*`
+        text: `╭─⌈ 🎵 *SPOTIFY DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}spotify <Spotify URL>*\n│  └⊷ Download from Spotify link\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}spotify https://open.spotify.com/track/...\n│\n├─⊷ *Aliases:* spot, spdl, spotifydl\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

@@ -1,4 +1,5 @@
 import { getPhoneFromLid } from '../../lib/sudo-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const DEV_NUMBERS = ['254703397679', '254713046497', '254733961184'];
 const DEV_EMOJI = '🐺';
@@ -58,7 +59,7 @@ export default {
         const chatId = msg.key.remoteJid;
         const devList = DEV_NUMBERS.map(n => `│ • +${n}`).join('\n');
         return await sock.sendMessage(chatId, {
-            text: `╭─⌈ 🐺 *REACT DEV* ⌋\n│\n│ Status: ✅ ALWAYS ACTIVE\n│ Emoji: ${DEV_EMOJI}\n│\n│ *Developers:*\n${devList}\n│\n│ _Auto-reacts to developer\n│ messages in all DMs & groups_\n╰───`
+            text: `╭─⌈ 🐺 *REACT DEV* ⌋\n│\n│ Status: ✅ ALWAYS ACTIVE\n│ Emoji: ${DEV_EMOJI}\n│\n│ *Developers:*\n${devList}\n│\n│ _Auto-reacts to developer\n│ messages in all DMs & groups_\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         });
     }
 };

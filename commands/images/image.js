@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -159,7 +160,7 @@ export default {
             query = m.quoted.text;
         } else {
             return sock.sendMessage(jid, {
-                text: `╭─⌈ 📸 *IMAGE SEARCH* ⌋\n│\n├─⊷ *${PREFIX}image <query>*\n│  └⊷ Search and download images from the web\n│\n├─⊷ *${PREFIX}image <query> -limit <n>*\n│  └⊷ Set number of results (max 10)\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}image beautiful sunset\n│  └⊷ ${PREFIX}pic cute animals -limit 3\n│\n├─⊷ *Aliases:* img, pic, photo\n│\n╰───`
+                text: `╭─⌈ 📸 *IMAGE SEARCH* ⌋\n│\n├─⊷ *${PREFIX}image <query>*\n│  └⊷ Search and download images from the web\n│\n├─⊷ *${PREFIX}image <query> -limit <n>*\n│  └⊷ Set number of results (max 10)\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}image beautiful sunset\n│  └⊷ ${PREFIX}pic cute animals -limit 3\n│\n├─⊷ *Aliases:* img, pic, photo\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
 

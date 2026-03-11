@@ -2,6 +2,7 @@ import dns from 'dns';
 import { getBotName } from '../../lib/botname.js';
 import { promisify } from 'util';
 import axios from 'axios';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const resolve4 = promisify(dns.resolve4);
 
@@ -61,7 +62,7 @@ export default {
     async execute(sock, m, args, PREFIX) {
         const jid = m.key.remoteJid;
         if (!args[0]) {
-            return sock.sendMessage(jid, { text: `╭─⌈ 🌍 *SUBDOMAIN FINDER* ⌋\n│\n├─⊷ *${PREFIX}subdomain <domain>*\n│  └⊷ Find subdomains via DNS + crt.sh\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}subdomain google.com\n│  └⊷ ${PREFIX}subdomain github.com\n│\n├─⊷ *Methods:*\n│  └⊷ DNS bruteforce (${COMMON_SUBDOMAINS.length} names)\n│  └⊷ Certificate Transparency (crt.sh)\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+            return sock.sendMessage(jid, { text: `╭─⌈ 🌍 *SUBDOMAIN FINDER* ⌋\n│\n├─⊷ *${PREFIX}subdomain <domain>*\n│  └⊷ Find subdomains via DNS + crt.sh\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}subdomain google.com\n│  └⊷ ${PREFIX}subdomain github.com\n│\n├─⊷ *Methods:*\n│  └⊷ DNS bruteforce (${COMMON_SUBDOMAINS.length} names)\n│  └⊷ Certificate Transparency (crt.sh)\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
         }
         await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
         try {
@@ -123,7 +124,7 @@ export default {
             }
 
             result += `│\n├─⊷ 🔍 = DNS bruteforce | 📜 = Certificate Transparency\n`;
-            result += `╰───────────────\n> *${getBotName()}*`;
+            result += `╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
             await sock.sendMessage(jid, { text: result }, { quoted: m });
             await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

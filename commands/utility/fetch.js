@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { promisify } from 'util';
 import { pipeline } from 'stream';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -87,7 +88,7 @@ export default {
     
     // Show help if no arguments
     if (args.length === 0) {
-      await sock.sendMessage(jid, { text: `╭─⌈ 🎯 *FETCH* ⌋\n├─⊷ *.fetch <url>*\n│  └⊷ Fetch data from URL\n├─⊷ *.fetch <url> -d*\n│  └⊷ Download media files\n├─⊷ *.fetch <url> -j*\n│  └⊷ Pretty JSON format\n├─⊷ *.fetch <url> -h*\n│  └⊷ Show response headers\n├─⊷ *.fetch <url> -r*\n│  └⊷ Raw response\n├─⊷ Reply to URL with *.fetch*\n╰─── *${getBotName()}* ───` }, { quoted: m });
+      await sock.sendMessage(jid, { text: `╭─⌈ 🎯 *FETCH* ⌋\n├─⊷ *.fetch <url>*\n│  └⊷ Fetch data from URL\n├─⊷ *.fetch <url> -d*\n│  └⊷ Download media files\n├─⊷ *.fetch <url> -j*\n│  └⊷ Pretty JSON format\n├─⊷ *.fetch <url> -h*\n│  └⊷ Show response headers\n├─⊷ *.fetch <url> -r*\n│  └⊷ Raw response\n├─⊷ Reply to URL with *.fetch*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
       return;
     }
     
@@ -237,7 +238,7 @@ export default {
           } else if (isImage) {
     await sock.sendMessage(jid, {
         image: fileBuffer,
-        caption: `╭─⌈ 🖼️ *FETCH RESULT* ⌋\n├─⊷ *File:* ${filename}\n├─⊷ *Size:* ${formatFileSize(stats.size)}\n├─⊷ *Status:* ${status} ${statusText}\n├─⊷ *Type:* ${contentType.split(';')[0]}\n╰─── *${getBotName()}* ───`
+        caption: `╭─⌈ 🖼️ *FETCH RESULT* ⌋\n├─⊷ *File:* ${filename}\n├─⊷ *Size:* ${formatFileSize(stats.size)}\n├─⊷ *Status:* ${status} ${statusText}\n├─⊷ *Type:* ${contentType.split(';')[0]}\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
     }, { quoted: m });
 } 
           
@@ -310,7 +311,7 @@ export default {
           const bufferSize = buffer.byteLength;
           
           await sock.sendMessage(jid, {
-            text: `╭─⌈ ⚠️ *BINARY RESPONSE* ⌋\n├─⊷ *Status:* ${status} ${statusText}\n├─⊷ *Type:* ${contentType || 'Unknown'}\n├─⊷ *Size:* ${formatFileSize(bufferSize)}\n├─⊷ Use *.fetch <url> -d* to download\n╰─── *${getBotName()}* ───`
+            text: `╭─⌈ ⚠️ *BINARY RESPONSE* ⌋\n├─⊷ *Status:* ${status} ${statusText}\n├─⊷ *Type:* ${contentType || 'Unknown'}\n├─⊷ *Size:* ${formatFileSize(bufferSize)}\n├─⊷ Use *.fetch <url> -d* to download\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
           }, { quoted: m });
         }
         
@@ -320,7 +321,7 @@ export default {
         if (fetchError.name === 'AbortError' || fetchError.message.includes('timeout')) {
           await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
           await sock.sendMessage(jid, {
-            text: `╭─⌈ ⏱️ *TIMEOUT* ⌋\n├─⊷ *URL:* ${url}\n├─⊷ Request timed out (30s)\n╰─── *${getBotName()}* ───`
+            text: `╭─⌈ ⏱️ *TIMEOUT* ⌋\n├─⊷ *URL:* ${url}\n├─⊷ Request timed out (30s)\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
           }, { quoted: m });
         } else {
           throw fetchError;
@@ -332,7 +333,7 @@ export default {
       
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *FETCH FAILED* ⌋\n├─⊷ *URL:* ${url || 'Unknown'}\n├─⊷ *Error:* ${error.message}\n╰─── *${getBotName()}* ───`
+        text: `╭─⌈ ❌ *FETCH FAILED* ⌋\n├─⊷ *URL:* ${url || 'Unknown'}\n├─⊷ *Error:* ${error.message}\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
   }

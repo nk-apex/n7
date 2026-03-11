@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "lightninglogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ ⚡ *LIGHTNING LOGO* ⌋\n│\n├─⊷ *lightninglogo*\n│  └⊷ lightninglogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ lightninglogo BOLT\n│  └⊷ lightninglogo THOR\n│  └⊷ lightninglogo STORM\n│\n╰───` 
+          text: `╭─⌈ ⚡ *LIGHTNING LOGO* ⌋\n│\n├─⊷ *lightninglogo*\n│  └⊷ lightninglogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ lightninglogo BOLT\n│  └⊷ lightninglogo THOR\n│  └⊷ lightninglogo STORM\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

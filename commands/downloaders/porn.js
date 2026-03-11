@@ -106,7 +106,7 @@ export default {
         `│  └⊷ .wolf hunting\n` +
         `│  └⊷ .wolf pack behavior\n` +
         `│  └⊷ .wolf https://youtube.com/...\n│\n` +
-        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`;
+        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       
       await sock.sendMessage(jid, { text: helpText }, { quoted: m });
       return;

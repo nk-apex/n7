@@ -1,5 +1,6 @@
 import { createRequire } from 'module';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const _requireAs = createRequire(import.meta.url);
 let giftedBtnsAs;
@@ -142,7 +143,7 @@ const antispamCommand = {
                 `│  ${prefix}antispam off\n` +
                 `│  ${prefix}antispam threshold <1-10>\n` +
                 `│  ${prefix}antispam reset @user\n` +
-                `╰───`
+                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             );
             return;
         }

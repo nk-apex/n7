@@ -1,4 +1,5 @@
 import { delay } from '@whiskeysockets/baileys';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'unblockall',
@@ -14,18 +15,18 @@ export default {
             blocklist = await sock.fetchBlocklist();
         } catch {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ ✅ *UNBLOCK ALL* ⌋\n│\n├─⊷ ⚠️ Failed to fetch block list.\n╰───`,
+                text: `╭─⌈ ✅ *UNBLOCK ALL* ⌋\n│\n├─⊷ ⚠️ Failed to fetch block list.\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
             }, { quoted: msg });
         }
 
         if (!blocklist || blocklist.length === 0) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ ✅ *UNBLOCK ALL* ⌋\n│\n├─⊷ ✅ No blocked contacts found.\n╰───`,
+                text: `╭─⌈ ✅ *UNBLOCK ALL* ⌋\n│\n├─⊷ ✅ No blocked contacts found.\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
             }, { quoted: msg });
         }
 
         await sock.sendMessage(chatId, {
-            text: `╭─⌈ ✅ *UNBLOCK ALL* ⌋\n│\n├─⊷ 🔄 Unblocking *${blocklist.length}* contacts...\n├─⊷ ⚠️ This may take a moment\n╰───`,
+            text: `╭─⌈ ✅ *UNBLOCK ALL* ⌋\n│\n├─⊷ 🔄 Unblocking *${blocklist.length}* contacts...\n├─⊷ ⚠️ This may take a moment\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
         }, { quoted: msg });
 
         let unblocked = 0;
@@ -42,7 +43,7 @@ export default {
         }
 
         return sock.sendMessage(chatId, {
-            text: `╭─⌈ ✅ *UNBLOCK ALL - DONE* ⌋\n│\n├─⊷ ✅ Unblocked: *${unblocked}*\n├─⊷ ❌ Failed: *${failed}*\n╰───`,
+            text: `╭─⌈ ✅ *UNBLOCK ALL - DONE* ⌋\n│\n├─⊷ ✅ Unblocked: *${unblocked}*\n├─⊷ ❌ Failed: *${failed}*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
         }, { quoted: msg });
     }
 };

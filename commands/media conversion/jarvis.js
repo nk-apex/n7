@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const execAsync = promisify(exec);
 
@@ -168,7 +169,7 @@ export default {
 
             if (args.length === 0) {
                 return await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 🤖 *J.A.R.V.I.S.* ⌋\n│  _Just A Rather Very Intelligent System_\n│\n├─⊷ *.jarvis <message>*\n│  └⊷ Ask anything to the AI assistant\n│\n├─⊷ *Examples:*\n│  └⊷ .jarvis What is quantum computing?\n│  └⊷ .jarvis How does AI work?\n│\n╰───`
+                    text: `╭─⌈ 🤖 *J.A.R.V.I.S.* ⌋\n│  _Just A Rather Very Intelligent System_\n│\n├─⊷ *.jarvis <message>*\n│  └⊷ Ask anything to the AI assistant\n│\n├─⊷ *Examples:*\n│  └⊷ .jarvis What is quantum computing?\n│  └⊷ .jarvis How does AI work?\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: m });
             }
 

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: "bbcnews",
@@ -37,7 +38,7 @@ export default {
                 text += `│   🔗 ${s.url}\n│\n`;
             }
 
-            text += `╰─ _Source: BBC News_ ─`;
+            text += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
             await sock.sendMessage(chatId, { react: { text: '✅', key: msg.key } });
             await sock.sendMessage(chatId, { text }, { quoted: msg });

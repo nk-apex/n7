@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'robotscheck',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🤖 *ROBOTS.TXT CHECKER* ⌋\n│\n├─⊷ *${PREFIX}robotscheck <url>*\n│  └⊷ Check robots.txt file\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}robotscheck google.com\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🤖 *ROBOTS.TXT CHECKER* ⌋\n│\n├─⊷ *${PREFIX}robotscheck <url>*\n│  └⊷ Check robots.txt file\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}robotscheck google.com\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -26,7 +27,7 @@ export default {
       });
 
       if (res.status === 404 || !res.data || typeof res.data !== 'string' || res.data.trim().startsWith('<!')) {
-        const result = `╭─⌈ 🤖 *ROBOTS.TXT CHECK* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ❌ No robots.txt found\n│\n├─⊷ The website does not have a\n│  └⊷ robots.txt file\n╰───────────────\n> *${getBotName()}*`;
+        const result = `╭─⌈ 🤖 *ROBOTS.TXT CHECK* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ❌ No robots.txt found\n│\n├─⊷ The website does not have a\n│  └⊷ robots.txt file\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
         await sock.sendMessage(jid, { text: result }, { quoted: m });
         await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
         return;
@@ -96,7 +97,7 @@ export default {
         output += `├─⊷ ⏱️ *Crawl Delay:* ${crawlDelay}s\n│\n`;
       }
 
-      output += `╰───────────────\n> *${getBotName()}*`;
+      output += `╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: output }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

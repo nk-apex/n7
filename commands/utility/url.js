@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -524,7 +525,7 @@ export default {
                       `├─⊷ *.url <image_url>*\n` +
                       `│  └⊷ Re-upload from URL\n` +
                       `├─⊷ *Supported:* Images, Videos, Docs, Audio\n` +
-                      `╰─── *${getBotName()}* ───`
+                      `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
         
@@ -611,7 +612,7 @@ export default {
                 `├─⊷ *Size:* ${width && height ? `${width} × ${height} • ` : ''}${fileSizeMB.toFixed(2)} MB\n` +
                 `├─⊷ *Service:* ${service}\n` +
                 `├─⊷ *URL:* ${url}\n` +
-                `╰─── *${getBotName()}* ───`;
+                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
             try {
                 const { createRequire } = await import('module');

@@ -1,4 +1,5 @@
 import { setActionSession } from '../../lib/actionSession.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 // Tracks sent group lists: messageId → sorted array of { id, name }
 // Exposed on globalThis so index.js can route plain-number replies to this handler
@@ -64,7 +65,7 @@ export default {
             groups = await sock.groupFetchAllParticipating();
         } catch (err) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ ❌ *MY GROUPS* ⌋\n│\n├─⊷ Failed to fetch groups.\n├─⊷ ${err.message}\n╰───`
+                text: `╭─⌈ ❌ *MY GROUPS* ⌋\n│\n├─⊷ Failed to fetch groups.\n├─⊷ ${err.message}\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 
@@ -72,7 +73,7 @@ export default {
 
         if (!entries.length) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 👥 *MY GROUPS* ⌋\n│\n├─⊷ ℹ️ Not in any groups yet.\n╰───`
+                text: `╭─⌈ 👥 *MY GROUPS* ⌋\n│\n├─⊷ ℹ️ Not in any groups yet.\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

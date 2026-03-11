@@ -2,6 +2,7 @@ import fs from 'fs';
 import { getBotName } from '../../lib/botname.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const footerFile = path.join(__dirname, '../../data/footer.json');
@@ -45,7 +46,7 @@ export default {
         if (args.length === 0 || args[0]?.toLowerCase() === 'help') {
             const current = getFooter();
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📝 *SET FOOTER* ⌋\n│\n│ 📌 Current: ${current}\n├─⊷ *${PREFIX}setfooter <text>*\n│  └⊷ Set footer text\n├─⊷ *${PREFIX}setfooter reset*\n│  └⊷ Reset to default\n╰───`
+                text: `╭─⌈ 📝 *SET FOOTER* ⌋\n│\n│ 📌 Current: ${current}\n├─⊷ *${PREFIX}setfooter <text>*\n│  └⊷ Set footer text\n├─⊷ *${PREFIX}setfooter reset*\n│  └⊷ Reset to default\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

@@ -1,4 +1,5 @@
 import { addBadWord, getBadWords } from '../../lib/badwords-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'addbadword',
@@ -33,7 +34,7 @@ export default {
         let reply = `╭─⌈ 🤬 *BAD WORD FILTER* ⌋\n│\n`;
         if (added.length > 0) reply += `├─⊷ ✅ Added: ${added.map(w => `*${w}*`).join(', ')}\n`;
         if (existing.length > 0) reply += `├─⊷ ⚠️ Already exists: ${existing.map(w => `*${w}*`).join(', ')}\n`;
-        reply += `├─⊷ 📋 Total words: *${total}*\n╰───`;
+        reply += `├─⊷ 📋 Total words: *${total}*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
         return sock.sendMessage(chatId, { text: reply }, { quoted: msg });
     }

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'redirectcheck',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔀 *REDIRECT CHECKER* ⌋\n│\n├─⊷ *${PREFIX}redirectcheck <url>*\n│  └⊷ Check HTTP redirect chain\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}redirectcheck http://google.com\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔀 *REDIRECT CHECKER* ⌋\n│\n├─⊷ *${PREFIX}redirectcheck <url>*\n│  └⊷ Check HTTP redirect chain\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}redirectcheck http://google.com\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -95,7 +96,7 @@ export default {
         output += `├─⊷ 🔒 HTTP→HTTPS upgrade detected\n│\n`;
       }
 
-      output += `╰───────────────\n> *${getBotName()}*`;
+      output += `╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: output }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

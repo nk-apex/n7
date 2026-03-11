@@ -1,6 +1,7 @@
 import { getBotName } from '../../lib/botname.js';
 import { addWatermark } from '../../lib/logo-watermark.js';
 import { createCanvas } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "gradientlogo",
@@ -11,7 +12,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🌈 *GRADIENT LOGO* ⌋\n│\n├─⊷ *gradientlogo*\n│  └⊷ gradientlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ gradientlogo WOLF\n│  └⊷ gradientlogo GRADIENT\n│  └⊷ gradientlogo COLORFUL\n│\n╰───` 
+          text: `╭─⌈ 🌈 *GRADIENT LOGO* ⌋\n│\n├─⊷ *gradientlogo*\n│  └⊷ gradientlogo <text>\n│\n├─⊷ *Example:*\n│  └⊷ gradientlogo WOLF\n│  └⊷ gradientlogo GRADIENT\n│  └⊷ gradientlogo COLORFUL\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` 
         }, { quoted: m });
         return;
       }

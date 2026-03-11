@@ -24,7 +24,7 @@ export default {
           `│  └⊷ ${PREFIX}tiksearch funny cats\n` +
           `│  └⊷ ${PREFIX}ttsearch music trends\n` +
           `│  └⊷ ${PREFIX}tiksearch trending now\n│\n` +
-          `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`;
+          `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
         
         return sock.sendMessage(jid, { text: helpText }, { quoted: m });
       }

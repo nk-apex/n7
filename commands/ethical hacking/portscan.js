@@ -2,6 +2,7 @@ import net from 'net';
 import { getBotName } from '../../lib/botname.js';
 import dns from 'dns';
 import { promisify } from 'util';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const resolve4 = promisify(dns.resolve4);
 
@@ -34,7 +35,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🚪 *PORT SCANNER* ⌋\n│\n├─⊷ *${PREFIX}portscan <ip or domain>*\n│  └⊷ Scan common ports on a target\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}portscan google.com\n│  └⊷ ${PREFIX}portscan 8.8.8.8\n│\n├─⊷ *Ports scanned:* ${PORTS.join(', ')}\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🚪 *PORT SCANNER* ⌋\n│\n├─⊷ *${PREFIX}portscan <ip or domain>*\n│  └⊷ Scan common ports on a target\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}portscan google.com\n│  └⊷ ${PREFIX}portscan 8.8.8.8\n│\n├─⊷ *Ports scanned:* ${PORTS.join(', ')}\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -73,7 +74,7 @@ export default {
         result += `│  └⊷ Port ${p.port} — ${p.service}\n`;
       });
 
-      result += `│\n╰───────────────\n> *${getBotName()}*`;
+      result += `│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

@@ -1,5 +1,6 @@
 // commands/utility/define.js
 import fetch from "node-fetch";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "define",
@@ -20,7 +21,7 @@ export default {
       }
 
       if (!word) {
-        await sock.sendMessage(m.key.remoteJid, { text: `╭─⌈ 🐺💚 *DICTIONARY* ⌋\n│\n├─⊷ *define <word>*\n│  └⊷ Get the definition of a word\n│\n├─⊷ *Reply*\n│  └⊷ Reply to a word with .define\n│\n╰───` }, { quoted: m });
+        await sock.sendMessage(m.key.remoteJid, { text: `╭─⌈ 🐺💚 *DICTIONARY* ⌋\n│\n├─⊷ *define <word>*\n│  └⊷ Get the definition of a word\n│\n├─⊷ *Reply*\n│  └⊷ Reply to a word with .define\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
         return;
       }
 

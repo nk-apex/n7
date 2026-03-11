@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,7 +34,7 @@ export default {
         
         if (args.length < 2) {
             return await sock.sendMessage(remoteJid, {
-                text: `╭─⌈ ⚙️ *SET SETTING* ⌋\n│\n├─⊷ *.setsetting <key> <value>*\n│  └⊷ Update a bot setting\n├─⊷ *.getsettings*\n│  └⊷ See all available settings\n╰───`
+                text: `╭─⌈ ⚙️ *SET SETTING* ⌋\n│\n├─⊷ *.setsetting <key> <value>*\n│  └⊷ Update a bot setting\n├─⊷ *.getsettings*\n│  └⊷ See all available settings\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
         

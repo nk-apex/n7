@@ -3,6 +3,7 @@ import { writeFileSync, unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
 import { randomBytes } from 'crypto';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const TIMEOUT_MS = 15000;
 const MAX_OUTPUT = 3000;
@@ -20,7 +21,7 @@ export default {
 
         if (!args.length) {
             return await sock.sendMessage(chatId, {
-                text: `╭─⌈ 💻 *JAVASCRIPT EXECUTOR* ⌋\n│\n├─⊷ *${PREFIX}js <code>*\n│  └⊷ Run JavaScript code\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}js console.log("Hello World")\n│  └⊷ ${PREFIX}js Math.random()\n│  └⊷ ${PREFIX}js [1,2,3].map(x => x*2)\n│\n├─⊷ *Features:*\n│  └⊷ 15s timeout\n│  └⊷ Auto-prints last expression\n│\n╰───────────────\n> *${getBotName()}*`
+                text: `╭─⌈ 💻 *JAVASCRIPT EXECUTOR* ⌋\n│\n├─⊷ *${PREFIX}js <code>*\n│  └⊷ Run JavaScript code\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}js console.log("Hello World")\n│  └⊷ ${PREFIX}js Math.random()\n│  └⊷ ${PREFIX}js [1,2,3].map(x => x*2)\n│\n├─⊷ *Features:*\n│  └⊷ 15s timeout\n│  └⊷ Auto-prints last expression\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 
@@ -74,7 +75,7 @@ process.stdout.write(__output.join('\\n') + '\\n⏱️ ' + __elapsed + 'ms');
             const header = result.error ? '❌ *ERROR*' : '✅ *OUTPUT*';
 
             await sock.sendMessage(chatId, {
-                text: `╭─⌈ 💻 *JAVASCRIPT* ⌋\n│\n├─ *Input:*\n│ \`\`\`${code.length > 200 ? code.slice(0, 200) + '...' : code}\`\`\`\n│\n├─ ${header}\n│ \`\`\`${output}\`\`\`\n│\n╰───────────────\n> *${getBotName()}*`
+                text: `╭─⌈ 💻 *JAVASCRIPT* ⌋\n│\n├─ *Input:*\n│ \`\`\`${code.length > 200 ? code.slice(0, 200) + '...' : code}\`\`\`\n│\n├─ ${header}\n│ \`\`\`${output}\`\`\`\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
 
             await sock.sendMessage(chatId, { react: { text: emoji, key: msg.key } });

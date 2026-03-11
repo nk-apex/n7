@@ -200,7 +200,7 @@ export default {
     try {
       if (args.length === 0) {
         return sock.sendMessage(msg.key.remoteJid, {
-          text: `╭─⌈ 🔍 *YTS SEARCH* ⌋\n│\n├─⊷ *yts <search query>*\n│  └⊷ Search YouTube videos\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
+          text: `╭─⌈ 🔍 *YTS SEARCH* ⌋\n│\n├─⊷ *yts <search query>*\n│  └⊷ Search YouTube videos\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: msg });
       }
 

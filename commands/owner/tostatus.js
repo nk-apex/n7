@@ -1,4 +1,5 @@
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 // ─── Core poster ─────────────────────────────────────────────────────────────
 // Uses sock.sendMessage (routed to Baileys' originalSendMessage for
@@ -134,7 +135,7 @@ export default {
                     `├─⊷ Reply to video + *${PREFIX}tostatus [caption]*\n│  └⊷ Post a video\n` +
                     `├─⊷ Reply to audio + *${PREFIX}tostatus*\n│  └⊷ Post an audio note\n` +
                     `├─⊷ Send image with caption *${PREFIX}tostatus [caption]*\n│  └⊷ Post that image\n` +
-                    `╰───`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

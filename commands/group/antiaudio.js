@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const antiAudioFile = './antiaudio.json';
 
@@ -371,7 +372,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `╭─⌈ 🎵 *ANTI-AUDIO* ⌋\n│\n├─⊷ *.antiaudio on <warn|delete|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antiaudio off*\n│  └⊷ Disable protection\n├─⊷ *.antiaudio types [add/remove/list]*\n│  └⊷ Manage audio types\n├─⊷ *.antiaudio exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *.antiaudio status*\n│  └⊷ View current status\n╰───`;
+            const helpText = `╭─⌈ 🎵 *ANTI-AUDIO* ⌋\n│\n├─⊷ *.antiaudio on <warn|delete|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antiaudio off*\n│  └⊷ Disable protection\n├─⊷ *.antiaudio types [add/remove/list]*\n│  └⊷ Manage audio types\n├─⊷ *.antiaudio exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *.antiaudio status*\n│  └⊷ View current status\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

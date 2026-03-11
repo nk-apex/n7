@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { createRequire } from 'module';
+import { getOwnerName } from '../../lib/menuHelper.js';
 const require = createRequire(import.meta.url);
 const { sendInteractiveMessage } = require('gifted-btns');
 
@@ -16,7 +17,7 @@ export default {
     if (!args.length) {
       return sock.sendMessage(
         jid,
-        { text: `╭─⌈ 🔗 *URL SHORTENER* ⌋\n│\n├─⊷ *shorturl <URL>*\n│  └⊷ Shorten a long URL\n│\n├─⊷ *Example:*\n│  └⊷ \`.shorturl https://example.com\`\n│\n╰───` },
+        { text: `╭─⌈ 🔗 *URL SHORTENER* ⌋\n│\n├─⊷ *shorturl <URL>*\n│  └⊷ Shorten a long URL\n│\n├─⊷ *Example:*\n│  └⊷ \`.shorturl https://example.com\`\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*` },
         { quoted: m }
       );
     }

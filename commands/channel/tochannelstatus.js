@@ -433,6 +433,7 @@
 import { downloadContentFromMessage, generateWAMessageContent, generateWAMessageFromContent } from '@whiskeysockets/baileys';
 import crypto from 'crypto';
 import { PassThrough } from 'stream';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 // 📌 Convert audio to voice note
 async function toVN(inputBuffer) {
@@ -565,7 +566,7 @@ function isChannelJid(jid) {
 
 // 📌 Get help text
 function getHelpText() {
-    return `╭─⌈ 📢 *CHANNEL STATUS UPDATE* ⌋\n│\n│ Posts to channel status (Updates tab)\n│\n├─⊷ *.channelstatus Your text here*\n│  └⊷ Send text only\n│\n├─⊷ *.channelstatus Caption here* + 📷 Image\n│  └⊷ Send image with caption\n│\n├─⊷ *.channelstatus* + 🎥 Video\n│  └⊷ Send video\n│\n├─⊷ *.channelstatus* + 🎤 Voice note\n│  └⊷ Send voice note\n│\n├─⊷ *.channelstatus* + 😀 Sticker\n│  └⊷ Send sticker\n│\n╰───\n_Bot must be in the channel • Media must be fully loaded_`;
+    return `╭─⌈ 📢 *CHANNEL STATUS UPDATE* ⌋\n│\n│ Posts to channel status (Updates tab)\n│\n├─⊷ *.channelstatus Your text here*\n│  └⊷ Send text only\n│\n├─⊷ *.channelstatus Caption here* + 📷 Image\n│  └⊷ Send image with caption\n│\n├─⊷ *.channelstatus* + 🎥 Video\n│  └⊷ Send video\n│\n├─⊷ *.channelstatus* + 🎤 Voice note\n│  └⊷ Send voice note\n│\n├─⊷ *.channelstatus* + 😀 Sticker\n│  └⊷ Send sticker\n│\n╰───\n_Bot must be in the channel • Media must be fully loaded_\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 }
 
 // 📌 Parse command

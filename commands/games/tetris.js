@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const activeGames = new Map();
 const tetrisStats = new Map();
@@ -1012,7 +1013,7 @@ async function showHelp(sock, m, chatId) {
 │
 ├─⊷ 🎮 🟦I 🟨O 🟪T 🟩S 🟥Z 🟫J 🟧L
 │
-╰───`;
+╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }

@@ -3,6 +3,7 @@ import { getBotName } from '../../lib/botname.js';
 import net from 'net';
 import dns from 'dns';
 import { promisify } from 'util';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const dnsResolve = promisify(dns.resolve4);
 
@@ -35,7 +36,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *SQL INJECTION RISK CHECKER* ⌋\n│\n├─⊷ *${PREFIX}sqlicheck <url>*\n│  └⊷ Analyze a site for SQL injection risk indicators\n│\n├─⊷ *Checks:*\n│  ├⊷ Database error patterns in responses\n│  ├⊷ Exposed database ports\n│  ├⊷ Error page information disclosure\n│  └⊷ Server header analysis\n│\n├─⊷ ⚠️ Does NOT inject payloads\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *SQL INJECTION RISK CHECKER* ⌋\n│\n├─⊷ *${PREFIX}sqlicheck <url>*\n│  └⊷ Analyze a site for SQL injection risk indicators\n│\n├─⊷ *Checks:*\n│  ├⊷ Database error patterns in responses\n│  ├⊷ Exposed database ports\n│  ├⊷ Error page information disclosure\n│  └⊷ Server header analysis\n│\n├─⊷ ⚠️ Does NOT inject payloads\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
 
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
@@ -166,7 +167,7 @@ export default {
       result += `├─⊷ Implement input validation and sanitization\n`;
       result += `├─⊷ Disable detailed error messages in production\n`;
       result += `├─⊷ Restrict database port access with firewall rules\n`;
-      result += `│\n╰───────────────\n> *${getBotName()}*`;
+      result += `│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

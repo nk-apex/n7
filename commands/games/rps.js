@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const rpsActiveGames = new Map();
 const rpsChallenges = new Map();
@@ -1229,7 +1230,7 @@ async function showRPSHelp(sock, m, chatId) {
 ├─⊷ 🎯 Tournament sizes: 4, 8, 16, or 32 players
 ├─⊷ ⏱️ Time: 60s per move, 2min for tournaments
 │
-╰───`;
+╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }
@@ -1256,7 +1257,7 @@ async function showRPSRules(sock, m, chatId) {
 │
 ├─⊷ *Achievements:* 🎮 First Game │ 🏆 10 Wins │ 🔥 5 Streak │ 🎯 100 Games
 │
-╰───`;
+╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
     
     await sock.sendMessage(chatId, { text: rulesText }, { quoted: m });
 }
@@ -1398,7 +1399,7 @@ async function showTournamentHelp(sock, m, chatId) {
 ├─⊷ *Rules:* Single elimination, 2-32 players, 2min per match
 ├─⊷ *Prizes:* 1st 50% │ 2nd 30% │ 3rd-4th 10% each
 │
-╰───`;
+╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
     
     await sock.sendMessage(chatId, { text: helpText }, { quoted: m });
 }

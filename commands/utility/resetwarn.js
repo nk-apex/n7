@@ -1,4 +1,5 @@
 import { resetWarnings, getWarnings, getWarnLimit, resetAllGroupWarnings } from '../../lib/warnings-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'resetwarn',
@@ -48,7 +49,7 @@ export default {
 
         if (!targetUser) {
             return sock.sendMessage(jid, {
-                text: `╭─⌈ ⚠️ *RESET WARNINGS* ⌋\n│\n├─⊷ *${PREFIX}resetwarn*\n│  └⊷ Reply to user to reset their warnings\n│\n├─⊷ *${PREFIX}resetwarn @user*\n│  └⊷ Mention user to reset warnings\n│\n├─⊷ *${PREFIX}resetwarn all*\n│  └⊷ Reset all warnings in group\n│\n╰───`
+                text: `╭─⌈ ⚠️ *RESET WARNINGS* ⌋\n│\n├─⊷ *${PREFIX}resetwarn*\n│  └⊷ Reply to user to reset their warnings\n│\n├─⊷ *${PREFIX}resetwarn @user*\n│  └⊷ Mention user to reset warnings\n│\n├─⊷ *${PREFIX}resetwarn all*\n│  └⊷ Reset all warnings in group\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

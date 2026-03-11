@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { join } from 'path';
 import db from '../../lib/supabase.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const CONFIG_DIR = './data/antiviewonce';
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -63,7 +64,7 @@ export default {
                      `│  └⊷ Send as sticker\n` +
                      `├─⊷ *${prefix}vvmode toggle*\n` +
                      `│  └⊷ Switch between modes\n` +
-                     `╰───`
+                     `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
             return;
         }
@@ -79,7 +80,7 @@ export default {
                          `├─⊷ View-once images will be\n` +
                          `│  sent as *stickers*\n` +
                          `├─⊷ Videos remain as video\n` +
-                         `╰───`
+                         `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
             }
@@ -93,7 +94,7 @@ export default {
                          `├─⊷ View-once images will be\n` +
                          `│  sent as normal *images*\n` +
                          `├─⊷ Videos sent as normal video\n` +
-                         `╰───`
+                         `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
             }
@@ -106,7 +107,7 @@ export default {
                     text: `╭─⌈ 🔄 *MODE SWITCHED* ⌋\n` +
                          `│\n` +
                          `├─⊷ View-once output: *${newMode}*\n` +
-                         `╰───`
+                         `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 break;
             }
@@ -120,7 +121,7 @@ export default {
                          `│  └⊷ Send as sticker\n` +
                          `├─⊷ *${prefix}vvmode toggle*\n` +
                          `│  └⊷ Switch between modes\n` +
-                         `╰───`
+                         `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
             }
         }

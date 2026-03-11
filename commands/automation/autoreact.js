@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 // // commands/owner/autoreact.js
 
 // // AutoReact Manager (State Management)
@@ -1528,7 +1529,7 @@ Use \`${PREFIX}autoreact on\` to enable again.`
         
         // Invalid random command
         await sock.sendMessage(targetJid, {
-          text: `╭─⌈ 🎲 *RANDOM EMOJI* ⌋\n│\n├─⊷ *${PREFIX}autoreact random toggle*\n│  └⊷ Toggle random mode\n├─⊷ *${PREFIX}autoreact random list*\n│  └⊷ Show all emojis\n├─⊷ *${PREFIX}autoreact random add <emoji>*\n│  └⊷ Add emoji to list\n├─⊷ *${PREFIX}autoreact random remove <emoji>*\n│  └⊷ Remove emoji from list\n├─⊷ *${PREFIX}autoreact random clear*\n│  └⊷ Reset to default\n╰───`
+          text: `╭─⌈ 🎲 *RANDOM EMOJI* ⌋\n│\n├─⊷ *${PREFIX}autoreact random toggle*\n│  └⊷ Toggle random mode\n├─⊷ *${PREFIX}autoreact random list*\n│  └⊷ Show all emojis\n├─⊷ *${PREFIX}autoreact random add <emoji>*\n│  └⊷ Add emoji to list\n├─⊷ *${PREFIX}autoreact random remove <emoji>*\n│  └⊷ Remove emoji from list\n├─⊷ *${PREFIX}autoreact random clear*\n│  └⊷ Reset to default\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
         return;
       }
@@ -1721,7 +1722,7 @@ ${ownerOnly ?
         
         // Invalid user command
         await sock.sendMessage(targetJid, {
-          text: `╭─⌈ 👥 *USER MANAGEMENT* ⌋\n│\n├─⊷ *${PREFIX}autoreact users list*\n│  └⊷ Show allowed users\n├─⊷ *${PREFIX}autoreact users add @user*\n│  └⊷ Add allowed user\n├─⊷ *${PREFIX}autoreact users remove @user*\n│  └⊷ Remove allowed user\n├─⊷ *${PREFIX}autoreact users clear*\n│  └⊷ Remove all users\n╰───`
+          text: `╭─⌈ 👥 *USER MANAGEMENT* ⌋\n│\n├─⊷ *${PREFIX}autoreact users list*\n│  └⊷ Show allowed users\n├─⊷ *${PREFIX}autoreact users add @user*\n│  └⊷ Add allowed user\n├─⊷ *${PREFIX}autoreact users remove @user*\n│  └⊷ Remove allowed user\n├─⊷ *${PREFIX}autoreact users clear*\n│  └⊷ Remove all users\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
         return;
       }

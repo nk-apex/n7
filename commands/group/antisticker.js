@@ -243,6 +243,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const antiStickerFile = './antisticker.json';
 
@@ -479,7 +480,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `╭─⌈ 🎭 *ANTI-STICKER* ⌋\n│\n├─⊷ *.antisticker on <warn|delete|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antisticker off*\n│  └⊷ Disable protection\n├─⊷ *.antisticker exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *.antisticker status*\n│  └⊷ View current status\n╰───`;
+            const helpText = `╭─⌈ 🎭 *ANTI-STICKER* ⌋\n│\n├─⊷ *.antisticker on <warn|delete|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antisticker off*\n│  └⊷ Disable protection\n├─⊷ *.antisticker exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n├─⊷ *.antisticker status*\n│  └⊷ View current status\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

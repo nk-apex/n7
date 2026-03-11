@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'asnlookup',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🏢 *ASN LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}asnlookup <ip or ASN>*\n│  └⊷ Get ASN info, network range, organization\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}asnlookup 8.8.8.8\n│  └⊷ ${PREFIX}asnlookup AS15169\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🏢 *ASN LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}asnlookup <ip or ASN>*\n│  └⊷ Get ASN info, network range, organization\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}asnlookup 8.8.8.8\n│  └⊷ ${PREFIX}asnlookup AS15169\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -42,7 +43,7 @@ export default {
         }
       });
 
-      result += `╰───────────────\n> *${getBotName()}*`;
+      result += `╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

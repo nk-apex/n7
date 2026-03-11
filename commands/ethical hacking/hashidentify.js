@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'hashidentify',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *HASH IDENTIFIER* ⌋\n│\n├─⊷ *${PREFIX}hashidentify <hash>*\n│  └⊷ Identify the type of a hash\n│\n├─⊷ *Supported:*\n│  └⊷ MD5, SHA1, SHA256, SHA512\n│  └⊷ bcrypt, NTLM, MySQL, CRC32\n│  └⊷ RIPEMD160, Whirlpool & more\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *HASH IDENTIFIER* ⌋\n│\n├─⊷ *${PREFIX}hashidentify <hash>*\n│  └⊷ Identify the type of a hash\n│\n├─⊷ *Supported:*\n│  └⊷ MD5, SHA1, SHA256, SHA512\n│  └⊷ bcrypt, NTLM, MySQL, CRC32\n│  └⊷ RIPEMD160, Whirlpool & more\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -78,7 +79,7 @@ export default {
         result += `│  ${i + 1}. *${m.type}* [${m.confidence}]\n`;
         result += `│     └⊷ ${m.info}\n`;
       });
-      result += `│\n╰───────────────\n> *${getBotName()}*`;
+      result += `│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

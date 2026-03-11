@@ -57,6 +57,7 @@
 
 // getip.js
 import axios from "axios";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 /**
  * getip.js
@@ -189,7 +190,7 @@ export default {
       const targetArg = args.find(a => !a.startsWith("--")) || null;
       if (!targetArg) {
         return await sock.sendMessage(chatId, {
-          text: `╭─⌈ 🌐 *GET IP INFO* ⌋\n│\n├─⊷ *.getip <ip|domain>*\n│  └⊷ Get IP/domain info\n│\n├─⊷ *.getip @mention*\n│  └⊷ Get safe JID/phone/profile\n│\n│  ⚠️ Will not expose user IPs\n│\n╰───`
+          text: `╭─⌈ 🌐 *GET IP INFO* ⌋\n│\n├─⊷ *.getip <ip|domain>*\n│  └⊷ Get IP/domain info\n│\n├─⊷ *.getip @mention*\n│  └⊷ Get safe JID/phone/profile\n│\n│  ⚠️ Will not expose user IPs\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
       }
 

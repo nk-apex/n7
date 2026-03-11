@@ -2,6 +2,7 @@ import axios from "axios";
 import { getBotName } from '../../lib/botname.js';
 import { downloadMediaMessage } from "@whiskeysockets/baileys";
 import crypto from "crypto";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "imgbb",
@@ -18,7 +19,7 @@ export default {
         return sock.sendMessage(
           jid,
           {
-            text: `╭─⌈ 📸 *IMGBB* ⌋\n│\n├─⊷ *.imgbb* (reply to image)\n│  └⊷ Upload to ImgBB\n╰───`
+            text: `╭─⌈ 📸 *IMGBB* ⌋\n│\n├─⊷ *.imgbb* (reply to image)\n│  └⊷ Upload to ImgBB\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
           },
           { quoted: m }
         );

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/stalk/igstalk';
 
@@ -14,7 +15,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔍 *INSTAGRAM STALKER* ⌋\n│\n├─⊷ *${prefix}igstalk <username>*\n│  └⊷ Stalk an Instagram profile\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}igstalk giftedtechnexus\n│\n╰───────────────\n> *${getBotName()} STALKER*`
+        text: `╭─⌈ 🔍 *INSTAGRAM STALKER* ⌋\n│\n├─⊷ *${prefix}igstalk <username>*\n│  └⊷ Stalk an Instagram profile\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}igstalk giftedtechnexus\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

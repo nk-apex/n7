@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { getArchivedList, getMutedList, getPinnedList, getFavouritesList } from '../../lib/chat-state.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'privacy',
@@ -110,7 +111,7 @@ export default {
             text += `│ • \`${PREFIX}mutedgroups\` - List muted groups\n`;
             text += `│ • \`${PREFIX}archivedgroups\` - List archived groups\n`;
             text += `│ • \`${PREFIX}starredchats\` - List favourite groups\n│\n`;
-            text += `╰───`;
+            text += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
             await sock.sendMessage(chatId, { text }, { quoted: msg });
 

@@ -1,3 +1,4 @@
+import { getOwnerName } from '../../lib/menuHelper.js';
 export default {
     name: 'viewer',
     alias: ['statusviewer', 'statusview', 'statusprivacy', 'viewstatus'],
@@ -24,28 +25,28 @@ export default {
             if (action === 'everyone' || action === 'all') {
                 await sock.updateStatusPrivacy('all');
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 🌍 Everyone\n╰───`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 🌍 Everyone\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '🌍', key: msg.key } }); } catch {}
 
             } else if (action === 'contacts') {
                 await sock.updateStatusPrivacy('contacts');
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 👥 Contacts Only\n╰───`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 👥 Contacts Only\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '👥', key: msg.key } }); } catch {}
 
             } else if (action === 'except') {
                 await sock.updateStatusPrivacy('contact_blacklist');
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 🚫 Contacts Except\n╰───`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 🚫 Contacts Except\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '🚫', key: msg.key } }); } catch {}
 
             } else if (action === 'none' || action === 'nobody') {
                 await sock.updateStatusPrivacy('none');
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 🔒 Nobody\n╰───`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *Set:* 🔒 Nobody\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '🔒', key: msg.key } }); } catch {}
 
@@ -62,7 +63,7 @@ export default {
                 } catch {}
 
                 await sock.sendMessage(chatId, {
-                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *${PREFIX}viewer everyone*\n│  └⊷ Everyone sees\n├─⊷ *${PREFIX}viewer contacts*\n│  └⊷ Contacts only\n├─⊷ *${PREFIX}viewer except*\n│  └⊷ Contacts except\n├─⊷ *${PREFIX}viewer nobody*\n│  └⊷ No one sees\n╰───`
+                    text: `╭─⌈ 📊 *STATUS VIEWER PRIVACY* ⌋\n│\n├─⊷ *${PREFIX}viewer everyone*\n│  └⊷ Everyone sees\n├─⊷ *${PREFIX}viewer contacts*\n│  └⊷ Contacts only\n├─⊷ *${PREFIX}viewer except*\n│  └⊷ Contacts except\n├─⊷ *${PREFIX}viewer nobody*\n│  └⊷ No one sees\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: msg });
                 try { await sock.sendMessage(chatId, { react: { text: '📋', key: msg.key } }); } catch {}
             }

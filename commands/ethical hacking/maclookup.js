@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'maclookup',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔎 *MAC ADDRESS LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}maclookup <mac>*\n│  └⊷ Look up MAC address vendor\n│\n├─⊷ *Formats accepted:*\n│  └⊷ AA:BB:CC:DD:EE:FF\n│  └⊷ AA-BB-CC-DD-EE-FF\n│  └⊷ AABB.CCDD.EEFF\n│  └⊷ AABBCCDDEEFF\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}maclookup 00:1A:2B:3C:4D:5E\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔎 *MAC ADDRESS LOOKUP* ⌋\n│\n├─⊷ *${PREFIX}maclookup <mac>*\n│  └⊷ Look up MAC address vendor\n│\n├─⊷ *Formats accepted:*\n│  └⊷ AA:BB:CC:DD:EE:FF\n│  └⊷ AA-BB-CC-DD-EE-FF\n│  └⊷ AABB.CCDD.EEFF\n│  └⊷ AABBCCDDEEFF\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}maclookup 00:1A:2B:3C:4D:5E\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -33,7 +34,7 @@ export default {
       const vendor = typeof data === 'string' ? data.trim() : 'Unknown';
       const oui = mac.split(':').slice(0, 3).join(':');
 
-      const result = `╭─⌈ 🔎 *MAC ADDRESS LOOKUP* ⌋\n│\n├─⊷ *MAC Address:* ${mac}\n├─⊷ *OUI Prefix:* ${oui}\n├─⊷ *Vendor:* ${vendor}\n│\n├─⊷ *── Details ──*\n├─⊷ *Type:* ${mac.charAt(1) === '2' || mac.charAt(1) === '6' || mac.charAt(1) === 'A' || mac.charAt(1) === 'E' ? 'Locally Administered' : 'Universally Administered'}\n├─⊷ *Cast:* ${parseInt(mac.charAt(1), 16) % 2 === 0 ? 'Unicast' : 'Multicast'}\n│\n╰───────────────\n> *${getBotName()}*`;
+      const result = `╭─⌈ 🔎 *MAC ADDRESS LOOKUP* ⌋\n│\n├─⊷ *MAC Address:* ${mac}\n├─⊷ *OUI Prefix:* ${oui}\n├─⊷ *Vendor:* ${vendor}\n│\n├─⊷ *── Details ──*\n├─⊷ *Type:* ${mac.charAt(1) === '2' || mac.charAt(1) === '6' || mac.charAt(1) === 'A' || mac.charAt(1) === 'E' ? 'Locally Administered' : 'Universally Administered'}\n├─⊷ *Cast:* ${parseInt(mac.charAt(1), 16) % 2 === 0 ? 'Unicast' : 'Multicast'}\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 // Settings file path (auto-created if missing)
 const settingsFile = path.resolve('./disp_settings.json');
@@ -70,7 +71,7 @@ export default {
       const currentDuration = settings[chatId];
       const currentLabel = Object.entries(durationMap).find(([, v]) => v === currentDuration)?.[0] || 'off';
       return sock.sendMessage(chatId, {
-        text: `╭─⌈ 📌 *DISAPPEARING MESSAGES* ⌋\n│\n│ Currently: *${currentLabel}*\n├─⊷ *.disp on [duration]*\n│  └⊷ Enable (24h, week, month)\n├─⊷ *.disp off*\n│  └⊷ Disable disappearing messages\n╰───`,
+        text: `╭─⌈ 📌 *DISAPPEARING MESSAGES* ⌋\n│\n│ Currently: *${currentLabel}*\n├─⊷ *.disp on [duration]*\n│  └⊷ Enable (24h, week, month)\n├─⊷ *.disp off*\n│  └⊷ Disable disappearing messages\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
       }, { quoted: msg });
     }
 

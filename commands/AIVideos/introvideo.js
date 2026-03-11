@@ -2,6 +2,7 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,7 +48,7 @@ export default {
         try {
             if (args.length === 0) {
                 return sock.sendMessage(jid, {
-                    text: `╭─⌈ 🎬 *LOGO INTRO VIDEO* ⌋\n│\n├─⊷ *${prefix}introvideo <text>*\n│  └⊷ Create logo intro video (max 30 chars)\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}introvideo WOLF\n│\n╰───`
+                    text: `╭─⌈ 🎬 *LOGO INTRO VIDEO* ⌋\n│\n├─⊷ *${prefix}introvideo <text>*\n│  └⊷ Create logo intro video (max 30 chars)\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}introvideo WOLF\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
                 }, { quoted: m });
             }
 

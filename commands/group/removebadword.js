@@ -1,4 +1,5 @@
 import { removeBadWord, getBadWords } from '../../lib/badwords-store.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'removebadword',
@@ -10,7 +11,7 @@ export default {
 
         if (!args || args.length === 0) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 🤬 *REMOVE BAD WORD* ⌋\n│\n├─⊷ *Usage:* .removebadword <word>\n├─⊷ *Example:* .removebadword badterm\n│\n├─⊷ Use *.listbadword* to view all words\n╰───`,
+                text: `╭─⌈ 🤬 *REMOVE BAD WORD* ⌋\n│\n├─⊷ *Usage:* .removebadword <word>\n├─⊷ *Example:* .removebadword badterm\n│\n├─⊷ Use *.listbadword* to view all words\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`,
             }, { quoted: msg });
         }
 

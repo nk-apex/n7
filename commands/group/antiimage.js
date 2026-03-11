@@ -623,6 +623,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const antiImageFile = './antiimage.json';
 
@@ -859,7 +860,7 @@ export default {
         }
         else {
             // Show help
-            const helpText = `╭─⌈ 🖼️ *ANTI-IMAGE* ⌋\n│\n├─⊷ *.antiimage on <delete|warn|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antiimage off*\n│  └⊷ Disable protection\n├─⊷ *.antiimage exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n╰───`;
+            const helpText = `╭─⌈ 🖼️ *ANTI-IMAGE* ⌋\n│\n├─⊷ *.antiimage on <delete|warn|kick>*\n│  └⊷ Enable with mode\n├─⊷ *.antiimage off*\n│  └⊷ Disable protection\n├─⊷ *.antiimage exemptadmins [on/off]*\n│  └⊷ Toggle admin exemption\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
             
             await sock.sendMessage(chatId, { text: helpText }, { quoted: msg });
         }

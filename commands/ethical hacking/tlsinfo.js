@@ -1,5 +1,6 @@
 import tls from 'tls';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'tlsinfo',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *TLS INFORMATION* ⌋\n│\n├─⊷ *${PREFIX}tlsinfo <domain>*\n│  └⊷ Check TLS version and cipher details\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}tlsinfo google.com\n│  └⊷ ${PREFIX}tlsinfo github.com\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🔐 *TLS INFORMATION* ⌋\n│\n├─⊷ *${PREFIX}tlsinfo <domain>*\n│  └⊷ Check TLS version and cipher details\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}tlsinfo google.com\n│  └⊷ ${PREFIX}tlsinfo github.com\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -69,7 +70,7 @@ export default {
       if (hasInsecure && hasTls12Plus) securityRating = '🟡 Acceptable (legacy TLS enabled)';
       else if (hasInsecure && !hasTls12Plus) securityRating = '🔴 Insecure (no TLS 1.2+)';
 
-      const result = `╭─⌈ 🔐 *TLS INFORMATION* ⌋\n│\n├─⊷ *Host:* ${host}\n├─⊷ *Security:* ${securityRating}\n│\n├─⊷ *── Active Connection ──*\n├─⊷ *Protocol:* ${mainInfo.protocol}\n├─⊷ *Cipher:* ${mainInfo.cipherName}\n├─⊷ *Cipher Standard:* ${mainInfo.cipherBits}\n├─⊷ *Key Exchange:* ${mainInfo.keyExchange}\n├─⊷ *Cert Key Size:* ${mainInfo.certBits} bits\n│\n├─⊷ *── Supported Versions ──*\n├─⊷ *TLSv1.3:* ${supportedVersions.includes('TLSv1.3') ? '✅ Supported' : '❌ Not Supported'}\n├─⊷ *TLSv1.2:* ${supportedVersions.includes('TLSv1.2') ? '✅ Supported' : '❌ Not Supported'}\n├─⊷ *TLSv1.1:* ${supportedVersions.includes('TLSv1.1') ? '⚠️ Supported (Deprecated)' : '✅ Disabled'}\n├─⊷ *TLSv1.0:* ${supportedVersions.includes('TLSv1') ? '⚠️ Supported (Deprecated)' : '✅ Disabled'}\n│\n├─⊷ *TLS 1.2+ Support:* ${hasTls12Plus ? '✅ Yes' : '❌ No'}\n├─⊷ *Legacy TLS:* ${hasInsecure ? '⚠️ Enabled' : '✅ Disabled'}\n│\n╰───────────────\n> *${getBotName()}*`;
+      const result = `╭─⌈ 🔐 *TLS INFORMATION* ⌋\n│\n├─⊷ *Host:* ${host}\n├─⊷ *Security:* ${securityRating}\n│\n├─⊷ *── Active Connection ──*\n├─⊷ *Protocol:* ${mainInfo.protocol}\n├─⊷ *Cipher:* ${mainInfo.cipherName}\n├─⊷ *Cipher Standard:* ${mainInfo.cipherBits}\n├─⊷ *Key Exchange:* ${mainInfo.keyExchange}\n├─⊷ *Cert Key Size:* ${mainInfo.certBits} bits\n│\n├─⊷ *── Supported Versions ──*\n├─⊷ *TLSv1.3:* ${supportedVersions.includes('TLSv1.3') ? '✅ Supported' : '❌ Not Supported'}\n├─⊷ *TLSv1.2:* ${supportedVersions.includes('TLSv1.2') ? '✅ Supported' : '❌ Not Supported'}\n├─⊷ *TLSv1.1:* ${supportedVersions.includes('TLSv1.1') ? '⚠️ Supported (Deprecated)' : '✅ Disabled'}\n├─⊷ *TLSv1.0:* ${supportedVersions.includes('TLSv1') ? '⚠️ Supported (Deprecated)' : '✅ Disabled'}\n│\n├─⊷ *TLS 1.2+ Support:* ${hasTls12Plus ? '✅ Yes' : '❌ No'}\n├─⊷ *Legacy TLS:* ${hasInsecure ? '⚠️ Enabled' : '✅ Disabled'}\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

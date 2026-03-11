@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const COMMON_PATHS = [
   '/admin', '/login', '/wp-admin', '/phpmyadmin',
@@ -18,7 +19,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *DIRECTORY SCANNER* ⌋\n│\n├─⊷ *${PREFIX}directoryscan <url>*\n│  └⊷ Scan for common sensitive directories and paths\n│\n├─⊷ *Scans ${COMMON_PATHS.length} paths including:*\n│  ├⊷ Admin panels, login pages\n│  ├⊷ Config files, backups\n│  ├⊷ API endpoints, debug consoles\n│  └⊷ Version control, server status\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *DIRECTORY SCANNER* ⌋\n│\n├─⊷ *${PREFIX}directoryscan <url>*\n│  └⊷ Scan for common sensitive directories and paths\n│\n├─⊷ *Scans ${COMMON_PATHS.length} paths including:*\n│  ├⊷ Admin panels, login pages\n│  ├⊷ Config files, backups\n│  ├⊷ API endpoints, debug consoles\n│  └⊷ Version control, server status\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
 
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
@@ -119,7 +120,7 @@ export default {
       result += `├─⊷ Restrict access to admin/config paths\n`;
       result += `├─⊷ Remove or protect sensitive files\n`;
       result += `├─⊷ Use .htaccess or server rules to block access\n`;
-      result += `│\n╰───────────────\n> *${getBotName()}*`;
+      result += `│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

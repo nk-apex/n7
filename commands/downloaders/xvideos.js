@@ -54,7 +54,7 @@ export default {
                     `│  └⊷ ${PREFIX}xvideos sexy massage\n` +
                     `├⊷ *Aliases:* xvdl, xvid\n` +
                     `│\n` +
-                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
 
@@ -101,7 +101,7 @@ export default {
                 `├⊷ 👁️ *Views:* ${views || 'N/A'}\n` +
                 `├⊷ 👍 *Likes:* ${likes || 'N/A'}\n` +
                 `├⊷ 📦 *Size:* ${size || 'N/A'}\n` +
-                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`;
+                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
             if (thumbUrl) {
                 try {

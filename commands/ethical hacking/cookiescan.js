@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'cookiescan',
@@ -10,7 +11,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🍪 *COOKIE SCANNER* ⌋\n│\n├─⊷ *${PREFIX}cookiescan <url>*\n│  └⊷ Scan and analyze website cookies\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}cookiescan google.com\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🍪 *COOKIE SCANNER* ⌋\n│\n├─⊷ *${PREFIX}cookiescan <url>*\n│  └⊷ Scan and analyze website cookies\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}cookiescan google.com\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -26,7 +27,7 @@ export default {
 
       const setCookieHeaders = res.headers['set-cookie'];
       if (!setCookieHeaders || setCookieHeaders.length === 0) {
-        const result = `╭─⌈ 🍪 *COOKIE SCAN* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* No cookies set\n│\n├─⊷ This website did not set any\n│  └⊷ cookies on the initial request\n╰───────────────\n> *${getBotName()}*`;
+        const result = `╭─⌈ 🍪 *COOKIE SCAN* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* No cookies set\n│\n├─⊷ This website did not set any\n│  └⊷ cookies on the initial request\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
         await sock.sendMessage(jid, { text: result }, { quoted: m });
         await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
         return;
@@ -83,7 +84,7 @@ export default {
       const total = secureCount + insecureCount;
       const score = total > 0 ? Math.round((secureCount / total) * 100) : 0;
 
-      let output = `╭─⌈ 🍪 *COOKIE SCAN RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Total Cookies:* ${cookieList.length}\n├─⊷ ✅ *Secure:* ${secureCount}\n├─⊷ ❌ *Insecure:* ${insecureCount}\n├─⊷ 📊 *Security Score:* ${score}%\n│\n${cookieDetails}╰───────────────\n> *${getBotName()}*`;
+      let output = `╭─⌈ 🍪 *COOKIE SCAN RESULTS* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Total Cookies:* ${cookieList.length}\n├─⊷ ✅ *Secure:* ${secureCount}\n├─⊷ ❌ *Insecure:* ${insecureCount}\n├─⊷ 📊 *Security Score:* ${score}%\n│\n${cookieDetails}╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: output }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

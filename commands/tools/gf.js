@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { createCanvas, loadImage, Image } from 'canvas';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'gf',
@@ -15,13 +16,13 @@ export default {
     const hasReply = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     
     if (args.length === 0 && !hasReply) {
-      const helpText = `╭─⌈ 💑 *GIRLFRIEND PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gf*\n│  └⊷ Reply to any message to get girlfriend profile pic\n│\n├─⊷ *Aliases:* girlfriend, couple\n│\n╰───`;
+      const helpText = `╭─⌈ 💑 *GIRLFRIEND PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gf*\n│  └⊷ Reply to any message to get girlfriend profile pic\n│\n├─⊷ *Aliases:* girlfriend, couple\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }
 
     if (args[0]?.toLowerCase() === 'help') {
-      const helpText = `╭─⌈ 💑 *GIRLFRIEND PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gf*\n│  └⊷ Reply to any message to create couple picture\n│\n├─⊷ *Aliases:* girlfriend, couple\n│\n╰───`;
+      const helpText = `╭─⌈ 💑 *GIRLFRIEND PROFILE* ⌋\n│\n├─⊷ *${PREFIX}gf*\n│  └⊷ Reply to any message to create couple picture\n│\n├─⊷ *Aliases:* girlfriend, couple\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       
       return sock.sendMessage(jid, { text: helpText }, { quoted: m });
     }

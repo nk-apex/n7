@@ -1,5 +1,6 @@
 // commands/logo/brandlogo.js
 import fetch from "node-fetch";
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: "brandlogo",
@@ -12,7 +13,7 @@ export default {
       const query = args.join(" ");
       if (!query) {
         return sock.sendMessage(m.key.remoteJid, {
-          text: `╭─⌈ 🏢 *BRAND LOGO* ⌋\n├─⊷ *.brandlogo <domain>*\n│  └⊷ Fetch official brand logo\n├─⊷ *.brandlogo <brand name>*\n│  └⊷ Search by brand name\n╰───`
+          text: `╭─⌈ 🏢 *BRAND LOGO* ⌋\n├─⊷ *.brandlogo <domain>*\n│  └⊷ Fetch official brand logo\n├─⊷ *.brandlogo <brand name>*\n│  └⊷ Search by brand name\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         }, { quoted: m });
       }
 

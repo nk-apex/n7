@@ -1,5 +1,6 @@
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 function parseVcf(vcfText) {
     const contacts = [];
@@ -73,7 +74,7 @@ export default {
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         if (!quoted) {
             return sock.sendMessage(chatId, {
-                text: `╭─⌈ 📇 *VIEW VCF* ⌋\n├─⊷ Reply to a *.vcf* file with\n│  └⊷ *${PREFIX}viewvcf*\n├─⊷ Lists contacts as JSON\n╰─── *${getBotName()}* ───`
+                text: `╭─⌈ 📇 *VIEW VCF* ⌋\n├─⊷ Reply to a *.vcf* file with\n│  └⊷ *${PREFIX}viewvcf*\n├─⊷ Lists contacts as JSON\n╰─── *${getBotName()}* ───\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
         }
 

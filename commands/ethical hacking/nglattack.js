@@ -1,5 +1,6 @@
 import axios from 'axios';
 import crypto from 'crypto';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 function generateDeviceId() {
     return crypto.randomBytes(16).toString('hex').replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
@@ -39,7 +40,7 @@ export default {
 
         if (args.length === 0) {
             return sock.sendMessage(jid, {
-                text: `╭─⌈ 📝 *NGL ATTACK* ⌋\n│\n├─⊷ *.nglattack <username> <count> [message]*\n│  └⊷ Send anonymous NGL messages\n│\n├─⊷ *.nglattack john 5*\n│  └⊷ Sends 5 random positive messages\n│\n├─⊷ *.nglattack john 3 hello there*\n│  └⊷ Sends "hello there" 3 times\n│\n├─⊷ *Max:* 20 messages per run\n├─⊷ *Note:* Username only, not the full link\n│\n╰───`
+                text: `╭─⌈ 📝 *NGL ATTACK* ⌋\n│\n├─⊷ *.nglattack <username> <count> [message]*\n│  └⊷ Send anonymous NGL messages\n│\n├─⊷ *.nglattack john 5*\n│  └⊷ Sends 5 random positive messages\n│\n├─⊷ *.nglattack john 3 hello there*\n│  └⊷ Sends "hello there" 3 times\n│\n├─⊷ *Max:* 20 messages per run\n├─⊷ *Note:* Username only, not the full link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
 

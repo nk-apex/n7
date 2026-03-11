@@ -5,6 +5,7 @@ import path from 'path';
 import axios from 'axios';
 import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const execAsync = promisify(exec);
 
@@ -33,7 +34,7 @@ export default {
                     `│ • \`${PREFIX}zip\` - Get bot source code\n` +
                     `│ • \`${PREFIX}gitinfo\` - Repo info\n` +
                     `│\n` +
-                    `╰───────────────`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
         }
 
@@ -146,7 +147,7 @@ export default {
                     `│\n` +
                     `│ ✅ Clone complete!\n` +
                     `│\n` +
-                    `╰───────────────`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
 
             this.cleanup(tempDir);
@@ -166,7 +167,7 @@ export default {
                     `│ • \`Repo exists and is public\`\n` +
                     `│ • \`URL format is correct\`\n` +
                     `│\n` +
-                    `╰───────────────`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
 
             if (tempDir) this.cleanup(tempDir);

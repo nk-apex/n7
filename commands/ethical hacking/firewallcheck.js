@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const WAF_SIGNATURES = {
   'Cloudflare': {
@@ -61,7 +62,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     if (!args[0]) {
-      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *FIREWALL / WAF CHECK* ⌋\n│\n├─⊷ *${PREFIX}firewallcheck <url>*\n│  └⊷ Detect WAF and firewall\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}firewallcheck google.com\n│  └⊷ ${PREFIX}firewallcheck cloudflare.com\n│\n╰───────────────\n> *${getBotName()}*` }, { quoted: m });
+      return sock.sendMessage(jid, { text: `╭─⌈ 🛡️ *FIREWALL / WAF CHECK* ⌋\n│\n├─⊷ *${PREFIX}firewallcheck <url>*\n│  └⊷ Detect WAF and firewall\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}firewallcheck google.com\n│  └⊷ ${PREFIX}firewallcheck cloudflare.com\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*` }, { quoted: m });
     }
     await sock.sendMessage(jid, { react: { text: '⏳', key: m.key } });
     try {
@@ -120,7 +121,7 @@ export default {
 
       const secHeaders = Object.entries(securityHeaders).map(([k, v]) => `├─⊷ *${k}:* ${v}`).join('\n');
 
-      const result = `╭─⌈ 🛡️ *FIREWALL / WAF DETECTION* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${response.status} ${response.statusText}\n├─⊷ *Server:* ${server}\n├─⊷ *X-Powered-By:* ${poweredBy}\n│\n├─⊷ *── Detected WAF/CDN ──*\n${wafSection}\n│\n${evidenceSection ? `├─⊷ *── Evidence Headers ──*\n${evidenceSection}\n│\n` : ''}├─⊷ *── Security Headers ──*\n${secHeaders}\n│\n├─⊷ *Protection Level:* ${detectedWafs.length > 0 ? '🟢 WAF Detected' : '🔴 No WAF Detected'}\n│\n╰───────────────\n> *${getBotName()}*`;
+      const result = `╭─⌈ 🛡️ *FIREWALL / WAF DETECTION* ⌋\n│\n├─⊷ *Target:* ${target}\n├─⊷ *Status:* ${response.status} ${response.statusText}\n├─⊷ *Server:* ${server}\n├─⊷ *X-Powered-By:* ${poweredBy}\n│\n├─⊷ *── Detected WAF/CDN ──*\n${wafSection}\n│\n${evidenceSection ? `├─⊷ *── Evidence Headers ──*\n${evidenceSection}\n│\n` : ''}├─⊷ *── Security Headers ──*\n${secHeaders}\n│\n├─⊷ *Protection Level:* ${detectedWafs.length > 0 ? '🟢 WAF Detected' : '🔴 No WAF Detected'}\n│\n╰───────────────\n> *${getOwnerName().toUpperCase()} TECH*`;
 
       await sock.sendMessage(jid, { text: result }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });

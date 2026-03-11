@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import supabase from '../../lib/supabase.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -371,7 +372,7 @@ export default {
                 }
 
                 default:
-                    await reply(`╭─⌈ ❓ *AUTOVIEWSTATUS* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on/off*\n├─⊷ *${prefix}autoviewstatus exclude <number>*\n├─⊷ *${prefix}autoviewstatus include <number>*\n├─⊷ *${prefix}autoviewstatus excluded*\n├─⊷ *${prefix}autoviewstatus stats*\n├─⊷ *${prefix}autoviewstatus logs*\n├─⊷ *${prefix}autoviewstatus delay <ms>*\n╰───`);
+                    await reply(`╭─⌈ ❓ *AUTOVIEWSTATUS* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on/off*\n├─⊷ *${prefix}autoviewstatus exclude <number>*\n├─⊷ *${prefix}autoviewstatus include <number>*\n├─⊷ *${prefix}autoviewstatus excluded*\n├─⊷ *${prefix}autoviewstatus stats*\n├─⊷ *${prefix}autoviewstatus logs*\n├─⊷ *${prefix}autoviewstatus delay <ms>*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`);
             }
         } catch (error) {
             console.error('AutoViewStatus error:', error);

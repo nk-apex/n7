@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 // In-memory storage (replace with database in production)
 const userPoints = new Map();
@@ -658,7 +659,7 @@ async function showHelp(sock, m, chatId, userData) {
 ├─⊷ *.dice daily*
 │  └⊷ Daily free points
 │
-╰───`;
+╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
     
     await sock.sendMessage(chatId, {
         text: helpText

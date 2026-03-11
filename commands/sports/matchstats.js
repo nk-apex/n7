@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const API_BASE = 'https://apis.xcasper.space/api/sports';
 
@@ -99,7 +100,7 @@ export default {
         }
       }
 
-      text += `╰───\n\n⚡ *Powered by ${getBotName()}*`;
+      text += `╰───\n\n⚡ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
       await sock.sendMessage(jid, { text }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
       console.log(`📊 [MATCHSTATS] Stats for match ${matchId} fetched`);
@@ -108,7 +109,7 @@ export default {
       console.error('❌ [MATCHSTATS]', error.message);
       await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
       await sock.sendMessage(jid, {
-        text: `╭─⌈ ❌ *MATCH STATS ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Make sure the match ID is correct\n├─⊷ Usage: ${PREFIX}matchstats <matchId>\n╰───`
+        text: `╭─⌈ ❌ *MATCH STATS ERROR* ⌋\n├─⊷ ${error.message}\n├─⊷ Make sure the match ID is correct\n├─⊷ Usage: ${PREFIX}matchstats <matchId>\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
   }

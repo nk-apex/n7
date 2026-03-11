@@ -14,7 +14,7 @@
 
 //         if (!number || number.length < 6 || number.length > 20) {
 //             await sock.sendMessage(chatId, {
-//                 text: `╭─⌈ ⚠️ *PAIR DEVICE* ⌋\n│\n├─⊷ *${PREFIX}pair <number>*\n│  └⊷ Full number, no +\n╰───`
+//                 text: `╭─⌈ ⚠️ *PAIR DEVICE* ⌋\n│\n├─⊷ *${PREFIX}pair <number>*\n│  └⊷ Full number, no +\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
 //             }, { quoted: m });
 //             await sock.sendMessage(chatId, { react: { text: '⚠️', key: m.key } });
 //             return;
@@ -248,6 +248,7 @@
 
 import axios from 'axios';
 import WebSocket from 'ws';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
     name: 'pair',
@@ -262,7 +263,7 @@ export default {
 
         if (!number || number.length < 6 || number.length > 20) {
             await sock.sendMessage(chatId, {
-                text: `╭─⌈ ⚠️ *PAIR DEVICE* ⌋\n│\n├─⊷ *${PREFIX}pair <number>*\n│  └⊷ Full number, no +\n╰───`
+                text: `╭─⌈ ⚠️ *PAIR DEVICE* ⌋\n│\n├─⊷ *${PREFIX}pair <number>*\n│  └⊷ Full number, no +\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: m });
             await sock.sendMessage(chatId, { react: { text: '⚠️', key: m.key } });
             return;
