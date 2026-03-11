@@ -7541,6 +7541,9 @@ process.on('unhandledRejection', (error) => {
     UltraCleanLogger.error(`Unhandled rejection: ${error.message}`);
 });
 
+// Start web server immediately so Heroku/Render/Railway bind PORT before main() runs
+setupWebServer();
+
 // Start the bot
 main().catch((error) => {
     UltraCleanLogger.critical(`Fatal error: ${error.message}`);
