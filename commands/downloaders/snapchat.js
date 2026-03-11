@@ -2,6 +2,7 @@ import axios from 'axios';
 import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'fs';
 import fs from 'fs';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 // Import caption system
 let getUserCaption;
@@ -34,7 +35,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 👻 *SNAPCHAT DOWNLOADER* ⌋\n│\n├─⊷ *snapchat <url>*\n│  └⊷ Download Spotlight videos\n│\n╰⊷ *Powered by ${getBotName()}*` 
+          text: `╭─⌈ 👻 *SNAPCHAT DOWNLOADER* ⌋\n│\n├─⊷ *snapchat <url>*\n│  └⊷ Download Spotlight videos\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*` 
         }, { quoted: m });
         return;
       }

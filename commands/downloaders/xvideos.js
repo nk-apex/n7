@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const GIFTED_DL   = 'https://api.giftedtech.co.ke/api/download/xvideosdl';
 const GIFTED_SRCH = 'https://api.giftedtech.co.ke/api/search/xvideossearch';
@@ -53,7 +54,7 @@ export default {
                     `│  └⊷ ${PREFIX}xvideos sexy massage\n` +
                     `├⊷ *Aliases:* xvdl, xvid\n` +
                     `│\n` +
-                    `╰⊷ *Powered by ${BOT_NAME}*`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
             }, { quoted: m });
         }
 
@@ -100,7 +101,7 @@ export default {
                 `├⊷ 👁️ *Views:* ${views || 'N/A'}\n` +
                 `├⊷ 👍 *Likes:* ${likes || 'N/A'}\n` +
                 `├⊷ 📦 *Size:* ${size || 'N/A'}\n` +
-                `╰⊷ *Powered by ${BOT_NAME}*`;
+                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`;
 
             if (thumbUrl) {
                 try {

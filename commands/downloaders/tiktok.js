@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import fs from 'fs';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { setActionSession } from '../../lib/actionSession.js';
 
@@ -28,7 +29,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, {
-          text: `╭─⌈ 🎵 *TIKTOK DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}tiktok <url>*\n│  └⊷ Download without watermark\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}tiktok https://vt.tiktok.com/xyz\n│  └⊷ ${PREFIX}tt https://www.tiktok.com/@user/video/123\n│\n╰⊷ *Powered by ${getBotName()}*`
+          text: `╭─⌈ 🎵 *TIKTOK DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}tiktok <url>*\n│  └⊷ Download without watermark\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}tiktok https://vt.tiktok.com/xyz\n│  └⊷ ${PREFIX}tt https://www.tiktok.com/@user/video/123\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
         }, { quoted: m });
         return;
       }

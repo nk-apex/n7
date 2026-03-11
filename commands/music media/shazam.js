@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import fs from 'fs';
 import path from 'path';
@@ -148,7 +148,7 @@ export default {
 
             if (!quoted && !hasAudio && !hasVideo && args.length === 0) {
                 return sock.sendMessage(jid, {
-                    text: `╭─⌈ 🎵 *SHAZAM* ⌋\n│\n├─⊷ *shazam*\n│  └⊷ Reply to audio to identify\n├─⊷ *shazam <song name>*\n│  └⊷ Search by text\n│\n╰⊷ *Powered by ${getBotName()}*`
+                    text: `╭─⌈ 🎵 *SHAZAM* ⌋\n│\n├─⊷ *shazam*\n│  └⊷ Reply to audio to identify\n├─⊷ *shazam <song name>*\n│  └⊷ Search by text\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
                 }, { quoted: m });
             }
 

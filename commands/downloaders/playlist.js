@@ -3,7 +3,7 @@ import crypto from "crypto";
 import yts from "yt-search";
 import fs from "fs";
 import path from "path";
-import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -160,7 +160,7 @@ export default {
     try {
       if (args.length === 0) {
         await sock.sendMessage(jid, { 
-          text: `╭─⌈ 🎵 *PLAYLIST DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}playlist <search>*\n│  └⊷ Search playlists\n├─⊷ *${PREFIX}playlist <url>*\n│  └⊷ Download from link\n│\n╰⊷ *Powered by ${getBotName()}*`
+          text: `╭─⌈ 🎵 *PLAYLIST DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}playlist <search>*\n│  └⊷ Search playlists\n├─⊷ *${PREFIX}playlist <url>*\n│  └⊷ Download from link\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
         }, { quoted: m });
         return;
       }

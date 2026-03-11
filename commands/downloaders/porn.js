@@ -2,7 +2,7 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,7 +106,7 @@ export default {
         `│  └⊷ .wolf hunting\n` +
         `│  └⊷ .wolf pack behavior\n` +
         `│  └⊷ .wolf https://youtube.com/...\n│\n` +
-        `╰⊷ *Powered by ${getBotName()}*`;
+        `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`;
       
       await sock.sendMessage(jid, { text: helpText }, { quoted: m });
       return;

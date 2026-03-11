@@ -4,6 +4,7 @@ import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import fs from 'fs';
 import path from 'path';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { setActionSession } from '../../lib/actionSession.js';
 
@@ -27,7 +28,7 @@ export default {
     try {
       if (!args[0]) {
         await sock.sendMessage(jid, {
-          text: `╭─⌈ 📷 *INSTAGRAM DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}instagram <url>*\n│  └⊷ Download reels/posts\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}ig https://instagram.com/reel/xyz\n│  └⊷ ${PREFIX}insta https://instagram.com/p/xyz\n│\n╰⊷ *Powered by ${getBotName()}*`
+          text: `╭─⌈ 📷 *INSTAGRAM DOWNLOADER* ⌋\n│\n├─⊷ *${PREFIX}instagram <url>*\n│  └⊷ Download reels/posts\n│\n├─⊷ *Examples:*\n│  └⊷ ${PREFIX}ig https://instagram.com/reel/xyz\n│  └⊷ ${PREFIX}insta https://instagram.com/p/xyz\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
         }, { quoted: m });
         return;
       }

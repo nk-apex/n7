@@ -2,6 +2,7 @@ import { createRequire } from 'module';
 import axios from 'axios';
 import yts from 'yt-search';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { setMusicSession } from '../../lib/musicSession.js';
 import { queryXWolfAudio } from '../../lib/xwolfApi.js';
@@ -65,7 +66,7 @@ export default {
 
     if (!searchQuery && !flags.list) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎵 *PLAY COMMAND* ⌋\n│\n├─⊷ *${p}play <song name>*\n│  └⊷ Download audio\n├─⊷ *${p}play <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *${p}play list <query>*\n│  └⊷ Search and list results\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n│\n╰⊷ *Powered by ${getBotName()}*`
+        text: `╭─⌈ 🎵 *PLAY COMMAND* ⌋\n│\n├─⊷ *${p}play <song name>*\n│  └⊷ Download audio\n├─⊷ *${p}play <YouTube URL>*\n│  └⊷ Download from link\n├─⊷ *${p}play list <query>*\n│  └⊷ Search and list results\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
       }, { quoted: m });
     }
 

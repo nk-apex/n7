@@ -374,6 +374,7 @@ import fs from 'fs';
 import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { setActionSession } from '../../lib/actionSession.js';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const _requireFb = createRequire(import.meta.url);
 let giftedBtnsFb;
@@ -397,7 +398,7 @@ export default {
     
     if (!args || !args[0]) {
       await sock.sendMessage(jid, { 
-        text: `╭─⌈ 📘 *FACEBOOK DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}facebook <url>*\n│  └⊷ Download video from Facebook\n│\n╰⊷ *Powered by ${getBotName()}*` 
+        text: `╭─⌈ 📘 *FACEBOOK DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}facebook <url>*\n│  └⊷ Download video from Facebook\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*` 
       }, { quoted: m });
       return;
     }

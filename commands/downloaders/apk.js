@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const GIFTED_API = 'https://api.giftedtech.co.ke/api/download/apkdl';
 
@@ -27,7 +28,7 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 📱 *APK DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}apk <app name>*\n│  └⊷ Download APK file\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}apk WhatsApp\n│  └⊷ ${prefix}apk Telegram\n│  └⊷ ${prefix}apk Spotify\n│\n╰⊷ *Powered by ${getBotName()}*`
+        text: `╭─⌈ 📱 *APK DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}apk <app name>*\n│  └⊷ Download APK file\n│\n├─⊷ *Examples:*\n│  └⊷ ${prefix}apk WhatsApp\n│  └⊷ ${prefix}apk Telegram\n│  └⊷ ${prefix}apk Spotify\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
       }, { quoted: m });
     }
 

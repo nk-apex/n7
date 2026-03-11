@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download/xnxxdl';
 const XNXX_REGEX = /xnxx\.(com|health|net|one)/i;
@@ -34,7 +35,7 @@ export default {
                     `│  └⊷ ${PREFIX}xnxx https://www.xnxx.com/video-abc123/title\n` +
                     `├⊷ *Aliases:* xnxxdl, xnx\n` +
                     `│\n` +
-                    `╰⊷ *Powered by ${BOT_NAME}*`
+                    `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
             }, { quoted: m });
         }
 
@@ -75,7 +76,7 @@ export default {
                 `├⊷ 📌 *Title:* ${title || 'Unknown'}\n` +
                 `├⊷ ⏱️ *Duration:* ${formatDuration(duration)}\n` +
                 `├⊷ ℹ️ *Info:* ${(info || 'N/A').replace(/\n/g, ' | ')}\n` +
-                `╰⊷ *Powered by ${BOT_NAME}*`;
+                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`;
 
             const thumbUrl = image || files?.thumb;
             if (thumbUrl) {

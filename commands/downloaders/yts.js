@@ -190,6 +190,7 @@
 import axios from 'axios';
 import yts from 'yt-search';
 import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'yts',
@@ -199,7 +200,7 @@ export default {
     try {
       if (args.length === 0) {
         return sock.sendMessage(msg.key.remoteJid, {
-          text: `╭─⌈ 🔍 *YTS SEARCH* ⌋\n│\n├─⊷ *yts <search query>*\n│  └⊷ Search YouTube videos\n│\n╰⊷ *Powered by ${getBotName()}*`
+          text: `╭─⌈ 🔍 *YTS SEARCH* ⌋\n│\n├─⊷ *yts <search query>*\n│  └⊷ Search YouTube videos\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} Tech*`
         }, { quoted: msg });
       }
 
