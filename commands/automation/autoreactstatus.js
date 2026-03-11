@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import supabase from '../../lib/supabase.js';
-import { getOwnerName } from '../../lib/menuHelper.js';
+import { getBotName } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -334,12 +334,7 @@ export default {
 
             if (args.length === 0) {
                 const s = autoReactManager.getStats();
-                const vmLabel = s.viewMode === 'view+react' ? '👁️ + 🐺 view then react' : '🐺 react only';
                 let text = `╭─⌈ 🐺 *AUTOREACTSTATUS* ⌋\n│\n`;
-                text += `│ Status    : ${s.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}\n`;
-                text += `│ View Mode : ${vmLabel}\n`;
-                text += `│ Emoji Mode: ${s.mode === 'fixed' ? `Fixed (${s.fixedEmoji})` : 'Random'}\n`;
-                text += `│ Excluded  : ${s.excludedCount} contact(s)\n│\n`;
                 text += `├─⊷ *${prefix}sr on / off*\n│  └⊷ Enable or disable\n`;
                 text += `├─⊷ *${prefix}sr exclude <number>*\n│  └⊷ Skip a contact\n`;
                 text += `├─⊷ *${prefix}sr include <number>*\n│  └⊷ Remove from skip list\n`;
@@ -349,7 +344,7 @@ export default {
                 text += `├─⊷ *${prefix}sr random*\n│  └⊷ Random emoji mode\n`;
                 text += `├─⊷ *${prefix}sr emoji <emoji>*\n│  └⊷ Set fixed emoji\n`;
                 text += `├─⊷ *${prefix}sr stats*\n│  └⊷ Statistics\n`;
-                text += `╰───`;
+                text += `╰⊷ *Powered by ${getBotName().toUpperCase()}*`;
                 await reply(text);
                 return;
             }
@@ -509,7 +504,7 @@ export default {
                 }
 
                 default:
-                    await reply(`╭─⌈ ❓ *AUTOREACTSTATUS* ⌋\n│\n├─⊷ *${prefix}sr on / off*\n├─⊷ *${prefix}sr exclude <number>*\n├─⊷ *${prefix}sr include <number>*\n├─⊷ *${prefix}sr excluded*\n├─⊷ *${prefix}sr view+react*\n├─⊷ *${prefix}sr react-only*\n├─⊷ *${prefix}sr random / fixed*\n├─⊷ *${prefix}sr emoji 🐺*\n├─⊷ *${prefix}sr stats*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`);
+                    await reply(`╭─⌈ ❓ *AUTOREACTSTATUS* ⌋\n│\n├─⊷ *${prefix}sr on / off*\n├─⊷ *${prefix}sr exclude <number>*\n├─⊷ *${prefix}sr include <number>*\n├─⊷ *${prefix}sr excluded*\n├─⊷ *${prefix}sr view+react*\n├─⊷ *${prefix}sr react-only*\n├─⊷ *${prefix}sr random / fixed*\n├─⊷ *${prefix}sr emoji 🐺*\n├─⊷ *${prefix}sr stats*\n╰⊷ *Powered by ${getBotName().toUpperCase()}*`);
             }
 
         } catch (error) {

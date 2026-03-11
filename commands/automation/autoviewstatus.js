@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import supabase from '../../lib/supabase.js';
-import { getOwnerName } from '../../lib/menuHelper.js';
+import { getBotName } from '../../lib/botname.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -261,16 +261,13 @@ export default {
             const reply = (text) => sock.sendMessage(m.key.remoteJid, { text }, { quoted: m });
 
             if (args.length === 0) {
-                const s = autoViewManager.getStats();
                 let text = `╭─⌈ 👁️ *AUTOVIEWSTATUS* ⌋\n│\n`;
-                text += `│ Status   : ${s.enabled ? '✅ ACTIVE' : '❌ INACTIVE'}\n`;
-                text += `│ Excluded : ${s.excludedCount} contact(s)\n│\n`;
                 text += `├─⊷ *${prefix}autoviewstatus on/off*\n│  └⊷ Enable / disable\n`;
                 text += `├─⊷ *${prefix}autoviewstatus exclude <number>*\n│  └⊷ Skip a contact\n`;
                 text += `├─⊷ *${prefix}autoviewstatus include <number>*\n│  └⊷ Remove from skip list\n`;
                 text += `├─⊷ *${prefix}autoviewstatus excluded*\n│  └⊷ Show skip list\n`;
                 text += `├─⊷ *${prefix}autoviewstatus stats*\n│  └⊷ Statistics\n`;
-                text += `╰───`;
+                text += `╰⊷ *Powered by ${getBotName().toUpperCase()}*`;
                 await reply(text);
                 return;
             }
@@ -372,7 +369,7 @@ export default {
                 }
 
                 default:
-                    await reply(`╭─⌈ ❓ *AUTOVIEWSTATUS* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on/off*\n├─⊷ *${prefix}autoviewstatus exclude <number>*\n├─⊷ *${prefix}autoviewstatus include <number>*\n├─⊷ *${prefix}autoviewstatus excluded*\n├─⊷ *${prefix}autoviewstatus stats*\n├─⊷ *${prefix}autoviewstatus logs*\n├─⊷ *${prefix}autoviewstatus delay <ms>*\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`);
+                    await reply(`╭─⌈ ❓ *AUTOVIEWSTATUS* ⌋\n│\n├─⊷ *${prefix}autoviewstatus on/off*\n├─⊷ *${prefix}autoviewstatus exclude <number>*\n├─⊷ *${prefix}autoviewstatus include <number>*\n├─⊷ *${prefix}autoviewstatus excluded*\n├─⊷ *${prefix}autoviewstatus stats*\n├─⊷ *${prefix}autoviewstatus logs*\n├─⊷ *${prefix}autoviewstatus delay <ms>*\n╰⊷ *Powered by ${getBotName().toUpperCase()}*`);
             }
         } catch (error) {
             console.error('AutoViewStatus error:', error);
