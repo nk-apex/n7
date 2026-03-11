@@ -5278,7 +5278,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
             if (msg.message && msg.key?.remoteJid && !msg.key.fromMe) {
                 const chatJid = msg.key.remoteJid;
-                if (chatJid.endsWith('@g.us') && antilinkEnabled(chatJid)) {
+                const _alRawText = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
+                const _alIsCmd = !isPrefixless && getCurrentPrefix() && _alRawText.trimStart().startsWith(getCurrentPrefix());
+                if (!_alIsCmd && chatJid.endsWith('@g.us') && antilinkEnabled(chatJid)) {
                     const linkResult = antilinkCheck(msg);
                     if (linkResult.hasLink) {
                         const senderJid = msg.key.participant || chatJid;
@@ -5347,7 +5349,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 const _bwJid = msg.key.remoteJid;
                 const _bwIsGroup = _bwJid.endsWith('@g.us');
                 const _bwScope = _bwIsGroup ? _bwJid : 'global';
-                if (isBadWordEnabled(_bwScope)) {
+                const _bwRawText = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
+                const _bwIsCmd = !isPrefixless && getCurrentPrefix() && _bwRawText.trimStart().startsWith(getCurrentPrefix());
+                if (!_bwIsCmd && isBadWordEnabled(_bwScope)) {
                     const _bwSenderJid = msg.key.participant || _bwJid;
                     const _bwIsOwner = jidManager.isOwner(msg);
                     if (!_bwIsOwner) {
@@ -5383,7 +5387,9 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
             if (msg.message && msg.key?.remoteJid && !msg.key.fromMe) {
                 const _asJid = msg.key.remoteJid;
-                if (antispamEnabled(_asJid)) {
+                const _asRawText = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
+                const _asIsCmd = !isPrefixless && getCurrentPrefix() && _asRawText.trimStart().startsWith(getCurrentPrefix());
+                if (!_asIsCmd && antispamEnabled(_asJid)) {
                     const _asIsGroup = _asJid.endsWith('@g.us');
                     const _asSenderJid = _asIsGroup ? (msg.key.participant || _asJid) : _asJid;
                     const _asIsOwner = jidManager.isOwner(msg);
@@ -6487,7 +6493,9 @@ function extractTextFromMessage(messageObj) {
     return content.conversation ||
            content.extendedTextMessage?.text ||
            content.imageMessage?.caption ||
-           content.videoMessage?.caption || '';
+           content.videoMessage?.caption ||
+           content.documentMessage?.caption ||
+           content.documentWithCaptionMessage?.message?.documentMessage?.caption || '';
 }
 
 async function handleIncomingMessage(sock, msg) {
