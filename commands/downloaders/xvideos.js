@@ -50,7 +50,7 @@ export default {
                     `├─⊷ *By URL:*\n` +
                     `│  └⊷ ${PREFIX}xvideos https://www.xvideos.com/video.abc/title\n` +
                     `├─⊷ *By Name:*\n` +
-                  └⊷ ${PREFIX}xvideos sexy massage\n` +
+                    `│  └⊷ ${PREFIX}xvideos sexy massage\n` +
                     `│\n` +
                     `╰─⊷ *Powered by ${BOT_NAME}*`
             }, { quoted: m });
@@ -96,8 +96,8 @@ export default {
             const caption =
                 `╭─⌈ 🔞 *XVIDEOS* ⌋\n` +
                 `├─⊷ 📌 *Title:* ${title || 'Unknown'}\n` +
-                `├─⊷ 👁️ *Views:* ${views || 'N/A'}\n` +
-                `├─⊷ 👍 *Likes:* ${likes || 'N/A'}\n` +
+                `├⊷ 👁️ *Views:* ${views || 'N/A'}\n` +
+                `├⊷ 👍 *Likes:* ${likes || 'N/A'}\n` +
                 `├─⊷ 📦 *Size:* ${size || 'N/A'}\n` +
                 `╰─⊷ *Powered by ${BOT_NAME}*`;
 
