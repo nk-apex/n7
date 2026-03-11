@@ -148,7 +148,7 @@ export default {
 
 🐺 *POWERED BY ${getBotName()}* 🐺`.trim();
 
-      await sock.sendMessage(jid, { text: platformText }, { quoted: fkontak });
+      await sock.sendMessage(jid, { text: platformText }, { quoted: m });
       
     } catch (err) {
       console.error('[PLATFORM] Error:', err);

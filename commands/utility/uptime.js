@@ -55,7 +55,7 @@ _🐺 The Wolf never sleeps..._
       await sock.sendMessage(jid, {
         text: uptimeText
       }, {
-        quoted: fkontak
+        quoted: m
       });
 
       await sock.sendMessage(jid, {

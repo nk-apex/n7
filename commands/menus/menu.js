@@ -206,7 +206,7 @@ export default {
 //   await sock.sendMessage(jid, { 
 //     text: loadingMessage 
 //   }, { 
-//     quoted: fkontak 
+//     quoted: m 
 //   });
   
 //   // Add a small delay
@@ -964,7 +964,7 @@ export default {
 //   const imagePath = fs.existsSync(imgPath1) ? imgPath1 : fs.existsSync(imgPath2) ? imgPath2 : null;
   
 //   if (!imagePath) {
-//     await sock.sendMessage(jid, { text: "⚠️ Image 'wolfbot.jpg' not found!" }, { quoted: fkontak });
+//     await sock.sendMessage(jid, { text: "⚠️ Image 'wolfbot.jpg' not found!" }, { quoted: m });
 //     return;
 //   }
   
@@ -976,7 +976,7 @@ export default {
 //     caption: finalCaption, 
 //     mimetype: "image/jpeg"
 //   }, { 
-//     quoted: fkontak 
+//     quoted: m 
 //   });
   
 //   console.log(`✅ ${currentBotName} menu sent with faded effect, box style, and "Read more" effect`);
@@ -1014,7 +1014,7 @@ case 1: {
   await sock.sendMessage(jid, { 
     text: loadingMessage 
   }, { 
-    quoted: fkontak 
+    quoted: m 
   });
   
   // Add a small delay
@@ -2104,13 +2104,13 @@ case 1: {
 
   const media = getMenuMedia();
   if (!media) {
-    await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: fkontak });
+    await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: m });
     return;
   }
   if (media.type === 'gif' && media.mp4Buffer) {
-    await sock.sendMessage(jid, { video: media.mp4Buffer, gifPlayback: true, caption: finalCaption, mimetype: "video/mp4" }, { quoted: fkontak });
+    await sock.sendMessage(jid, { video: media.mp4Buffer, gifPlayback: true, caption: finalCaption, mimetype: "video/mp4" }, { quoted: m });
   } else {
-    await sock.sendMessage(jid, { image: media.buffer, caption: finalCaption, mimetype: "image/jpeg" }, { quoted: fkontak });
+    await sock.sendMessage(jid, { image: media.buffer, caption: finalCaption, mimetype: "image/jpeg" }, { quoted: m });
   }
   
   console.log(`✅ ${currentBotName} menu sent with new box style, faded effect, and "Read more" effect`);
@@ -2444,35 +2444,7 @@ case 3: {
   // ========== LOADING MESSAGE ==========
   const loadingMessage = `⚡ ${currentBotName} menu loading...`;
   
-  try {
-    let loadingInteractiveMsg = generateWAMessageFromContent(jid, {
-      viewOnceMessage: {
-        message: {
-          interactiveMessage: {
-            body: {
-              text: null,
-            },
-            footer: {
-              text: loadingMessage,
-            },
-            nativeFlowMessage: {
-              buttons: [{
-                text: null
-              }],
-            },
-          },
-        },
-      },
-    }, {
-      quoted: fkontak,
-      userJid: sock.user?.id || jid
-    });
-    await sock.relayMessage(jid, loadingInteractiveMsg.message, {
-      messageId: loadingInteractiveMsg.key.id
-    });
-  } catch (e) {
-    await sock.sendMessage(jid, { text: loadingMessage }, { quoted: fkontak });
-  }
+  await sock.sendMessage(jid, { text: loadingMessage }, { quoted: m });
   
   // Add a small delay
   await new Promise(resolve => setTimeout(resolve, 800));
@@ -3335,46 +3307,8 @@ case 3: {
   
   const menulist = `${infoSection}${readMoreSep}\n${commandsText}`;
 
-  try {
-    let interactiveMsg = generateWAMessageFromContent(jid, {
-      viewOnceMessage: {
-        message: {
-          interactiveMessage: {
-            body: {
-              text: null,
-            },
-            footer: {
-              text: menulist,
-            },
-            nativeFlowMessage: {
-              buttons: [{
-                text: null
-              }],
-            },
-          },
-        },
-      },
-    }, { 
-      quoted: fkontak,
-      userJid: sock.user?.id || jid
-    });
-
-    await sock.relayMessage(jid, interactiveMsg.message, {
-      messageId: interactiveMsg.key.id
-    });
-
-    console.log(`✅ ${currentBotName} menu sent as interactive message`);
-  } catch (error) {
-    console.error("Error sending interactive menu:", error);
-    
-    await sock.sendMessage(jid, { 
-      text: menulist
-    }, { 
-      quoted: fkontak 
-    });
-    
-    console.log(`✅ ${currentBotName} menu sent as text (fallback from interactive)`);
-  }
+  await sock.sendMessage(jid, { text: menulist }, { quoted: m });
+  console.log(`✅ ${currentBotName} menu sent`);
   
   break;
 }
@@ -3423,7 +3357,7 @@ case 4: {
   await sock.sendMessage(jid, { 
     text: loadingMessage 
   }, { 
-    quoted: fkontak 
+    quoted: m 
   });
   
   // Add a small delay
@@ -4149,7 +4083,7 @@ case 4: {
   await sock.sendMessage(jid, { 
     text: finalText 
   }, { 
-    quoted: fkontak 
+    quoted: m 
   });
   
   console.log(`✅ ${currentBotName} menu sent with faded effect and dot style`);
@@ -4246,7 +4180,7 @@ case 4: {
 //   await sock.sendMessage(jid, { 
 //     text: loadingMessage 
 //   }, { 
-//     quoted: fkontak 
+//     quoted: m 
 //   });
   
 //   // Add a small delay
@@ -5032,7 +4966,7 @@ case 4: {
 //   await sock.sendMessage(jid, { 
 //     text: finalText 
 //   }, { 
-//     quoted: fkontak 
+//     quoted: m 
 //   });
   
 //   console.log(`✅ ${currentBotName} menu sent with faded effect and box style`);
@@ -5081,7 +5015,7 @@ case 5: {
   await sock.sendMessage(jid, { 
     text: loadingMessage 
   }, { 
-    quoted: fkontak 
+    quoted: m 
   });
   
   // Add a small delay
@@ -6147,7 +6081,7 @@ case 5: {
   await sock.sendMessage(jid, { 
     text: finalText 
   }, { 
-    quoted: fkontak 
+    quoted: m 
   });
   
   console.log(`✅ ${currentBotName} menu sent with faded effect and box style`);

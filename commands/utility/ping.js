@@ -92,7 +92,7 @@ _🌕 The Moon Watches..._
       await sock.sendMessage(jid, {
         text: pingText
       }, { 
-        quoted: fkontak 
+        quoted: m 
       });
 
       // Send reaction
@@ -109,7 +109,7 @@ _🌕 The Moon Watches..._
       
       await sock.sendMessage(m.key.remoteJid, {
         text: `🏓 Pong! ${latency}ms\n🐺 ${getBotName()} is online!`,
-        quoted: createFakeContact(m)
+        quoted: m
       });
     }
   }
