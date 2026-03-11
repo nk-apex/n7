@@ -35,7 +35,7 @@ function getRepoImage() {
 
 export default {
   name: "repo",
-  aliases: ["r", "sc", "source", "github", "git", "wolfrepo", "botrepo", "update", "wolf"],
+  aliases: ["r", "sc", "source", "github", "git", "wolfrepo", "botrepo", "wolf"],
   description: "Shows bot GitHub repository information",
 
   async execute(sock, m, args, PREFIX) {

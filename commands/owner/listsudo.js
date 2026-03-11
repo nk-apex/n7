@@ -20,7 +20,7 @@ export default {
             }, { quoted: msg });
         }
 
-        let list = `┌─── *SUDO USERS* ───\n`;
+        let list = `┌─── *SUDO USERS* ───\n`; 
         list += `│\n`;
 
         sudoers.forEach((num, i) => {

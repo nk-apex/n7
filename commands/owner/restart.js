@@ -95,6 +95,42 @@ export default {
         }
       }
 
+      await editStatus('🌐 **Checking for updates...**');
+      try {
+        const GIT_REPO_URL = "https://github.com/nk-apex/n7.git";
+        const oldRev = await run('git rev-parse HEAD').catch(() => 'unknown');
+
+        await run('git prune --expire=now').catch(() => {});
+        await run('git gc --auto').catch(() => {});
+
+        try {
+          await run('git remote get-url n7-upstream');
+        } catch {
+          await run(`git remote add n7-upstream ${GIT_REPO_URL}`);
+        }
+
+        await run('git fetch n7-upstream --depth=20 --prune');
+
+        const currentBranch = await run('git rev-parse --abbrev-ref HEAD').catch(() => 'main');
+        let newRev;
+        try {
+          newRev = await run(`git rev-parse n7-upstream/${currentBranch}`);
+        } catch {
+          newRev = await run('git rev-parse n7-upstream/main');
+        }
+
+        if (oldRev === newRev) {
+          await editStatus(`✅ **Already up to date**\nBranch: ${currentBranch} | Commit: ${newRev?.slice(0, 7) || 'N/A'}`);
+        } else {
+          await run(`git merge --ff-only ${newRev}`);
+          await run('git prune --expire=now').catch(() => {});
+          await run('git gc --aggressive --prune=now').catch(() => {});
+          await editStatus(`✅ **Updated to latest!**\nCommit: ${newRev?.slice(0, 7) || 'N/A'}`);
+        }
+      } catch (gitErr) {
+        await editStatus(`⚠️ **Git update failed:** ${gitErr.message}\nContinuing with current version...`);
+      }
+
       if (installDeps) {
         await editStatus('📦 **Installing dependencies...**');
         try {
@@ -142,10 +178,10 @@ export default {
       }
 
       errorText += '\n**Available Options:**\n';
-      errorText += '`.restart` - Full cleanup + restart\n';
-      errorText += '`.restart fast` - Skip cleanup, restart immediately\n';
-      errorText += '`.restart soft` - Cleanup only, no restart\n';
-      errorText += '`.restart deps` - Install dependencies + restart\n';
+      errorText += '`.restart` - Cleanup + update + restart\n';
+      errorText += '`.restart fast` - Skip cleanup, update + restart\n';
+      errorText += '`.restart soft` - Cleanup + update only, no restart\n';
+      errorText += '`.restart deps` - Cleanup + update + install deps + restart\n';
 
       try {
         if (statusMessage?.key) {
