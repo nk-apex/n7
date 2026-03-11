@@ -96,10 +96,12 @@ const antispamCommand = {
     groupOnly: false,
     adminOnly: false,
 
-    async run({ sock, msg, args, chatJid, senderJid, extra, reply }) {
+    async execute(sock, msg, args, PREFIX, extra) {
+        const chatJid = msg.key.remoteJid;
+        const reply = (text) => sock.sendMessage(chatJid, { text }, { quoted: msg });
         const config = getConfig();
         const gc = config[chatJid] || {};
-        const prefix = extra?.prefix || '.';
+        const prefix = PREFIX || extra?.prefix || '.';
         const BOT_NAME = extra?.BOT_NAME || 'WOLFBOT';
         const subCmd = (args[0] || '').toLowerCase();
         const subArg = (args[1] || '').toLowerCase();
