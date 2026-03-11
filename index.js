@@ -227,7 +227,7 @@ import chalk from 'chalk';
 import readline from 'readline';
 import { exec, execSync } from 'child_process';
 import axios from "axios";
-import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessage, jidNormalizedUser, generateWAMessageFromContent } from '@whiskeysockets/baileys';
+import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessage, jidNormalizedUser, generateWAMessageFromContent, proto } from '@whiskeysockets/baileys';
 import NodeCache from 'node-cache';
 import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList } from './lib/sudo-store.js';
 import supabaseDb, { setConfigBotId } from './lib/supabase.js';
@@ -4480,11 +4480,14 @@ async function startBot(loginMode = 'auto', loginData = null) {
             fireInitQueries: !isConflictRecovery,
             msgRetryCounterCache,
             getMessage: async (key) => {
-                const storeMsg = store?.getMessage(key.remoteJid, key.id);
-                if (storeMsg?.message) {
-                    return storeMsg.message;
-                }
-                return undefined;
+                try {
+                    if (store) {
+                        const storeMsg = store.getMessage(key.remoteJid, key.id);
+                        if (storeMsg?.message) return storeMsg.message;
+                        if (storeMsg && typeof storeMsg === 'object' && !storeMsg.message) return storeMsg;
+                    }
+                } catch {}
+                return proto.Message.fromObject({});
             },
             patchMessageBeforeSending: (message) => {
                 const requiresPatch = !!(
@@ -4553,12 +4556,16 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 }
             }
             // ────────────────────────────────────────────────────────────────
+            const _storeResult = async (r) => {
+                try { if (r?.key?.id && store && jid !== 'status@broadcast' && !content?.react && !content?.delete) store.addMessage(jid, r.key.id, r); } catch {}
+                return r;
+            };
             if (_skipButtonWrap) {
-                return originalSendMessage(jid, content, options, ...rest);
+                return _storeResult(await originalSendMessage(jid, content, options, ...rest));
             }
             const _activeCmd = getActiveCommand(jid);
             if (_activeCmd && _noWrapCommands.has(_activeCmd.command)) {
-                return originalSendMessage(jid, content, options, ...rest);
+                return _storeResult(await originalSendMessage(jid, content, options, ...rest));
             }
             if (isButtonModeEnabled() && _giftedBtns && content) {
                 if (!content.buttons && !content.templateButtons && !content.interactiveButtons && !content.contacts && !content.react) {
@@ -4682,7 +4689,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             const result = await originalSendMessage(jid, content, options, ...rest);
             try {
                 if (result?.key?.id && store) {
-                    store.addSentMessage(jid, result.key.id, content);
+                    store.addMessage(jid, result.key.id, result);
                 }
             } catch {}
             return result;
