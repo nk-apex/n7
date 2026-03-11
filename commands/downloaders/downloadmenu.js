@@ -45,6 +45,7 @@ export default {
 │  • apk
 │  • mp3
 │  • mp4
+│  • mediafire
 │
 ╰─⊷`;
 

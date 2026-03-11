@@ -95,11 +95,11 @@ export default {
 
             const caption =
                 `╭─⌈ 🔞 *XVIDEOS* ⌋\n` +
-                `├─⊷ 📌 *Title:* ${title || 'Unknown'}\n` +
-                `├─⊷ 👁️ *Views:* ${views || 'N/A'}\n` +
-                `├─⊷ 👍 *Likes:* ${likes || 'N/A'}\n` +
-                `├─⊷ 📦 *Size:* ${size || 'N/A'}\n` +
-                `╰─⊷ *Powered by ${BOT_NAME}*`;
+                `├⊷ 📌 *Title:* ${title || 'Unknown'}\n` +
+                `├⊷ 👁️ *Views:* ${views || 'N/A'}\n` +
+                `├⊷ 👍 *Likes:* ${likes || 'N/A'}\n` +
+                `├⊷ 📦 *Size:* ${size || 'N/A'}\n` +
+                `╰⊷ *Powered by ${BOT_NAME}*`;
 
             if (thumbUrl) {
                 try {

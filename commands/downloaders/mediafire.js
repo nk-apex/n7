@@ -30,7 +30,7 @@ export default {
 
     if (!url || !url.includes('mediafire.com')) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 📁 *MEDIAFIRE DOWNLOADER* ⌋\n│\n├─⊷ *${prefix}mediafire <MediaFire URL>*\n│  └⊷ Download file from MediaFire\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}mediafire https://www.mediafire.com/file/...\n│\n├─⊷ *Aliases:* mf, mfdl, mediafiredl\n│\n╰───────────────\n> *${getBotName()} MEDIAFIRE DOWNLOADER*`
+        text: `╭─⌈ 📁 *MEDIAFIRE DOWNLOADER* ⌋\n│\n├⊷ *Usage:* ${prefix}mediafire <url>\n├⊷ *Example:*\n│  └⊷ ${prefix}mediafire https://www.mediafire.com/file/abc123/file.zip/file\n├⊷ *Aliases:* mf, mfdl, mediafiredl\n│\n╰⊷ *Powered by ${getBotName()}*`
       }, { quoted: m });
     }
 
@@ -64,11 +64,18 @@ export default {
 
       const detectedMime = mimeType || 'application/octet-stream';
 
+      const BOT_NAME = getBotName();
       await sock.sendMessage(jid, {
         document: fileBuffer,
         fileName: fileName || 'mediafire_file',
         mimetype: detectedMime,
-        caption: `📁 *${fileName}*\n📦 *Size:* ${fileSize || fileSizeMB + 'MB'}\n📂 *Type:* ${fileType || detectedMime}${uploadedOn ? `\n📅 *Uploaded:* ${uploadedOn}` : ''}\n\n🐺 *Downloaded by ${getBotName()}*`
+        caption:
+          `╭─⌈ 📁 *MEDIAFIRE* ⌋\n` +
+          `├⊷ 📄 *File:* ${fileName || 'Unknown'}\n` +
+          `├⊷ 📏 *Size:* ${fileSize || fileSizeMB + 'MB'}\n` +
+          `├⊷ 🗂️ *Type:* ${fileType || detectedMime}\n` +
+          `${uploadedOn ? `├⊷ 📅 *Uploaded:* ${uploadedOn}\n` : ''}` +
+          `╰⊷ *Powered by ${BOT_NAME}*`
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
