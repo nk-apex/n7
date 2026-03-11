@@ -1,0 +1,50 @@
+{
+  "name": "SilentWolf Bot",
+  "description": "WOLFBOT — A feature-rich WhatsApp bot built with Baileys",
+  "keywords": ["whatsapp", "bot", "baileys", "wolfbot"],
+  "website": "https://github.com/7silent-wolf/silentwolf",
+  "repository": "https://github.com/7silent-wolf/silentwolf",
+  "logo": "https://avatars.githubusercontent.com/u/7silent-wolf",
+  "success_url": "/",
+  "env": {
+    "SESSION_ID": {
+      "description": "REQUIRED: Your session ID. Must begin with 'WOLF-BOT'",
+      "required": true
+    },
+    "OWNER_NUMBER": {
+      "description": "Your WhatsApp number with country code (e.g. 2547XXXXXXXX)",
+      "required": true
+    },
+    "BOT_NAME": {
+      "description": "Name for your bot",
+      "value": "WOLFBOT",
+      "required": false
+    },
+    "PREFIX": {
+      "description": "Command prefix (default: .)",
+      "value": ".",
+      "required": false
+    },
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production",
+      "required": false
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    },
+    "worker": {
+      "quantity": 0,
+      "size": "eco"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "stack": "heroku-22"
+}
