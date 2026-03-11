@@ -30,7 +30,7 @@ export default {
 
     if (!url || !url.includes('mediafire.com')) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 📁 *MEDIAFIRE DOWNLOADER* ⌋\n│\n├⊷ *Usage:* ${prefix}mediafire <url>\n├⊷ *Example:*\n│  └⊷ ${prefix}mediafire https://www.mediafire.com/file/abc123/file.zip/file\n├⊷ *Aliases:* mf, mfdl, mediafiredl\n│\n╰⊷ *Powered by ${getBotName()}*`
+        text: `╭─⌈ 📁 *MEDIAFIRE DOWNLOADER* ⌋\n│\n├─⊷ *Usage:* ${prefix}mediafire <url>\n├─⊷ *Example:*\n│  └⊷ ${prefix}mediafire https://www.mediafire.com/file/abc123/file.zip/file\n├─⊷ *Aliases:* mf, mfdl, mediafiredl\n│\n╰─⊷ *Powered by ${getBotName()}*`
       }, { quoted: m });
     }
 
@@ -71,11 +71,11 @@ export default {
         mimetype: detectedMime,
         caption:
           `╭─⌈ 📁 *MEDIAFIRE* ⌋\n` +
-          `├⊷ 📄 *File:* ${fileName || 'Unknown'}\n` +
-          `├⊷ 📏 *Size:* ${fileSize || fileSizeMB + 'MB'}\n` +
-          `├⊷ 🗂️ *Type:* ${fileType || detectedMime}\n` +
-          `${uploadedOn ? `├⊷ 📅 *Uploaded:* ${uploadedOn}\n` : ''}` +
-          `╰⊷ *Powered by ${BOT_NAME}*`
+          `├─⊷ 📄 *File:* ${fileName || 'Unknown'}\n` +
+          `├─⊷ 📏 *Size:* ${fileSize || fileSizeMB + 'MB'}\n` +
+          `├─⊷ 🗂️ *Type:* ${fileType || detectedMime}\n` +
+          `${uploadedOn ? `├─⊷ 📅 *Uploaded:* ${uploadedOn}\n` : ''}` +
+          `╰─⊷ *Powered by ${BOT_NAME}*`
       }, { quoted: m });
 
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
