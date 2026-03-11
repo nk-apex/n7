@@ -64,10 +64,10 @@ export default {
 
             const caption =
                 `╭─⌈ 🔞 *XNXX* ⌋\n` +
-                `├─⊷ 📌 *Title:* ${title || 'Unknown'}\n` +
-                `├─⊷ ⏱️ *Duration:* ${formatDuration(duration)}\n` +
-                `├─⊷ ℹ️ *Info:* ${(info || 'N/A').replace(/\n/g, ' | ')}\n` +
-                `╰─⊷ *Powered by ${BOT_NAME}*`;
+                `├⊷ 📌 *Title:* ${title || 'Unknown'}\n` +
+                `├⊷ ⏱️ *Duration:* ${formatDuration(duration)}\n` +
+                `├⊷ ℹ️ *Info:* ${(info || 'N/A').replace(/\n/g, ' | ')}\n` +
+                `╰⊷ *Powered by ${BOT_NAME}*`;
 
             const thumbUrl = image || files?.thumb;
             if (thumbUrl) {
