@@ -53,7 +53,7 @@ _🐺 The pack survives together..._
       await sock.sendMessage(jid, {
         text: aliveText
       }, {
-        quoted: m
+        quoted: fkontak
       });
 
       await sock.sendMessage(jid, {

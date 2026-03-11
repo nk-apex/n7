@@ -88,11 +88,11 @@ export default {
 _🌕 The Moon Watches..._
 `;
 
-      // Send the ping results directly (no testing message)
+      // Send the ping results quoted by fake contact
       await sock.sendMessage(jid, {
         text: pingText
       }, { 
-        quoted: m 
+        quoted: fkontak 
       });
 
       // Send reaction

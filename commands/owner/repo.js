@@ -110,7 +110,7 @@ export default {
           ...imagePayload,
           caption: txt,
           mentions: [sender]
-        }, { quoted: m });
+        }, { quoted: fkontak });
 
         await sock.sendMessage(jid, {
           react: { text: '✅', key: m.key }
@@ -143,7 +143,7 @@ export default {
           ...imagePayload,
           caption: fallbackText,
           mentions: [sender]
-        }, { quoted: m });
+        }, { quoted: fkontak });
 
         await sock.sendMessage(jid, {
           react: { text: '⚠️', key: m.key }
