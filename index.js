@@ -2883,6 +2883,15 @@ const memoryMonitor = {
             trimMap(viewOnceCache, Math.floor(50 * factor), Math.floor(25 * factor), null);
             trimMap(_lidResolveAttempts, 100, 50, null);
             trimMap(_pendingGroupFetches, 20, 10, null);
+            // Clean stale antispam tracker entries (older than 5 minutes)
+            if (globalThis._antispamTracker instanceof Map && globalThis._antispamTracker.size > 0) {
+                const _antispamNow = Date.now();
+                for (const [key, val] of globalThis._antispamTracker.entries()) {
+                    const ts = val?.lastTime || 0;
+                    if (_antispamNow - ts > 5 * 60 * 1000) globalThis._antispamTracker.delete(key);
+                }
+                trimMap(globalThis._antispamTracker, 2000, 1000, null);
+            }
             if (global.gc) { global.gc(); }
             if (aggressive) {
                 const memAfter = Math.round(process.memoryUsage().rss / 1024 / 1024);
@@ -7551,13 +7560,25 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
+let _isRecoveringFromException = false;
 process.on('uncaughtException', (error) => {
     UltraCleanLogger.error(`Uncaught exception: ${error.message}`);
     UltraCleanLogger.error(error.stack);
     if (!error.message?.includes('SIGINT') && !error.message?.includes('shutdown')) {
+        if (_isRecoveringFromException) {
+            UltraCleanLogger.error('Recovery already in progress, skipping duplicate recovery attempt.');
+            return;
+        }
+        _isRecoveringFromException = true;
         setTimeout(async () => {
             UltraCleanLogger.info('🔄 Auto-recovering from uncaught exception...');
-            try { await main(); } catch (e) { UltraCleanLogger.error(`Recovery failed: ${e.message}`); }
+            try {
+                await main();
+            } catch (e) {
+                UltraCleanLogger.error(`Recovery failed: ${e.message}`);
+            } finally {
+                _isRecoveringFromException = false;
+            }
         }, 5000);
     }
 });
