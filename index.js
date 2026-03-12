@@ -1291,12 +1291,13 @@ let AUTO_CONNECT_COMMAND_ENABLED = true;
 let AUTO_ULTIMATE_FIX_ENABLED = true;
 let isWaitingForPairingCode = false;
 let RESTART_AUTO_FIX_ENABLED = true;
-let hasSentRestartMessage = false;
+let _lastRestartMsgTime = 0;
+const _MSG_COOLDOWN_MS = 5 * 60 * 1000;
 let hasAutoConnectedOnStart = false;
 let hasSentWelcomeMessage = false;
 let initialCommandsLoaded = false;
 let commandsLoaded = false;
-let hasSentConnectionMessage = false;
+let _lastConnectionMsgTime = 0;
 let conflictCount = 0;
 let isConflictRecovery = false;
 let connectionOpenTime = 0;
@@ -4385,7 +4386,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
             await new Promise(r => setTimeout(r, 1000));
         }
 
-        hasSentConnectionMessage = false;
         connectionOpenTime = 0;
 
         UltraCleanLogger.info('🚀 Initializing WhatsApp connection...');
@@ -4795,10 +4795,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 
                 setTimeout(() => {
                     if (!isConnected || isConflictRecovery) return;
-                    if (!hasSentRestartMessage) {
+                    if (Date.now() - _lastRestartMsgTime > _MSG_COOLDOWN_MS) {
                         triggerRestartAutoFix(sock).catch(() => {});
                     }
-                    if (AUTO_CONNECT_ON_START && !hasSentRestartMessage) {
+                    if (AUTO_CONNECT_ON_START && Date.now() - _lastRestartMsgTime > _MSG_COOLDOWN_MS) {
                         autoConnectOnStart.trigger(sock).catch(() => {});
                     }
                 }, 3000);
@@ -4876,7 +4876,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 
                 // ====== THE ONLY SUCCESS MESSAGE ======
                 setTimeout(async () => {
-                    if (!isConnected || hasSentConnectionMessage || isConflictRecovery) return;
+                    if (!isConnected || isConflictRecovery || Date.now() - _lastConnectionMsgTime < _MSG_COOLDOWN_MS) return;
                     try {
                         const ownerInfo = jidManager.getOwnerInfo();
                         const displayOwnerNumber = ownerInfo?.ownerNumber ? ownerInfo.ownerNumber.split(':')[0] : 'Not set';
@@ -4888,10 +4888,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
                         await Promise.race([sendPromise, timeoutPromise]);
                         console.log(chalk.green(`✅ Connection message sent to owner`));
-                        hasSentConnectionMessage = true;
+                        _lastConnectionMsgTime = Date.now();
                     } catch (sendError) {
                         console.log(chalk.red('❌ Could not send connection message:'), sendError.message);
-                        hasSentConnectionMessage = true;
+                        _lastConnectionMsgTime = Date.now();
                     }
                 }, 5000);
                 
@@ -5868,7 +5868,7 @@ async function triggerRestartAutoFix(sock) {
             const ownerJid = sock.user.id;
             const cleaned = jidManager.cleanJid(ownerJid);
             
-            if (!hasSentRestartMessage) {
+            if (Date.now() - _lastRestartMsgTime > _MSG_COOLDOWN_MS) {
                 const currentPrefix = getCurrentPrefix();
                 const prefixDisplay = isPrefixless ? 'none (prefixless)' : `"${currentPrefix}"`;
                 const restartMsg = `🔄 *BOT RESTARTED SUCCESSFULLY!*\n\n` +
@@ -5882,7 +5882,7 @@ async function triggerRestartAutoFix(sock) {
                                  `💬 Try using ${currentPrefix ? currentPrefix + 'ping' : 'ping'} to verify.`;
                 
                 await sock.sendMessage(ownerJid, { text: restartMsg });
-                hasSentRestartMessage = true;
+                _lastRestartMsgTime = Date.now();
                 UltraCleanLogger.success('✅ Restart message sent to owner');
             }
             
@@ -6048,7 +6048,6 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
     
     connectionAttempts++;
     isConnected = false;
-    hasSentRestartMessage = false;
     
     const loggedOut = statusCode === DisconnectReason.loggedOut;
     
