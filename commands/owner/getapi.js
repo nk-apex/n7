@@ -78,10 +78,10 @@ export default {
                 footer: BOT_NAME,
                 interactiveButtons: [
                     {
-                        name: 'cta_reply',
+                        name: 'cta_copy',
                         buttonParamsJson: JSON.stringify({
-                            display_text: '📡 Fetch API',
-                            id: `${PREFIX}fetchapi ${cmdName}`
+                            display_text: '📡 FETCH API',
+                            copy_code: `${PREFIX}fetchapi ${cmdName}`
                         })
                     },
                     {
@@ -90,13 +90,6 @@ export default {
                             display_text: '🌐 Open API URL',
                             url: info.currentUrl,
                             merchant_url: info.currentUrl
-                        })
-                    },
-                    {
-                        name: 'cta_reply',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: '🔄 Replace API',
-                            id: `${PREFIX}replaceapi ${cmdName}`
                         })
                     }
                 ]
