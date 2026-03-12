@@ -9,7 +9,7 @@ export default {
     name: 'getapi',
     aliases: ['apiinfo', 'checkapi'],
     category: 'owner',
-    desc: 'View the API endpoint used by a specific command',
+    desc: 'View the API endpoint used by a specific command and auto-fetch its response',
     usage: '.getapi <command> | .getapi (list all)',
     ownerOnly: true,
 
@@ -54,7 +54,7 @@ export default {
             ? `├─⊷ 🔁 *Default:*\n│   └⊷ ${info.defaultUrl}\n│\n`
             : '';
 
-        const text =
+        const infoText =
             `╭─⌈ 🌐 *API INFO — ${cmdName.toUpperCase()}* ⌋\n` +
             `│\n` +
             `├─⊷ 📦 *Command:* ${PREFIX}${info.cmd}\n` +
@@ -67,28 +67,109 @@ export default {
             `├─⊷ 📊 *Status:* ${statusTag}\n` +
             `│\n` +
             overrideLine +
-            `├─⊷ 📡 *Test API:* ${PREFIX}fetchapi ${cmdName}\n` +
             `├─⊷ 🔄 *Replace:* ${PREFIX}replaceapi ${cmdName} <newurl>\n` +
             `├─⊷ ♻️ *Reset:* ${PREFIX}replaceapi ${cmdName} reset\n` +
             `│\n` +
             `╰⊷ *Powered by ${BOT_NAME.toUpperCase()}*`;
 
-        if (_giftedBtns?.sendButtons) {
+        if (_giftedBtns?.sendInteractiveMessage) {
             try {
-                await _giftedBtns.sendButtons(sock, chatJid, {
-                    text,
+                await _giftedBtns.sendInteractiveMessage(sock, chatJid, {
+                    text: infoText,
                     footer: BOT_NAME,
-                    buttons: [
-                        { type: 'reply', title: '📡 FETCH API', payload: `${PREFIX}fetchapi ${cmdName}` },
-                        { type: 'reply', title: '🔄 REPLACE API', payload: `${PREFIX}replaceapi ${cmdName} ` }
-                    ],
-                    headerType: 1
-                }, msg);
+                    interactiveButtons: [
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '🌐 Open API URL',
+                                url: info.currentUrl,
+                                merchant_url: info.currentUrl
+                            })
+                        },
+                        {
+                            name: 'cta_copy',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '📋 Copy URL',
+                                copy_code: info.currentUrl
+                            })
+                        }
+                    ]
+                });
             } catch {
-                await reply(text);
+                await reply(infoText);
             }
         } else {
-            await reply(text);
+            await reply(infoText);
         }
+
+        await _fetchAndShowJson(sock, chatJid, msg, cmdName, info, PREFIX, BOT_NAME);
     }
 };
+
+async function _fetchAndShowJson(sock, chatJid, msg, cmdName, info, PREFIX, BOT_NAME) {
+    const reply = (text) => sock.sendMessage(chatJid, { text }, { quoted: msg });
+
+    await reply(`⏳ *Fetching API response...*\n🔗 ${info.currentUrl}`);
+
+    try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10000);
+        const start = Date.now();
+
+        let responseData = null;
+        let status = 0;
+        let ok = false;
+
+        try {
+            const res = await fetch(info.currentUrl, {
+                method: 'GET',
+                signal: controller.signal,
+                headers: { 'User-Agent': 'WolfBot/1.0', Accept: 'application/json' }
+            });
+            status = res.status;
+            ok = res.ok || res.status < 500;
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('application/json') || contentType.includes('text')) {
+                responseData = await res.text();
+            } else {
+                responseData = `[Binary / non-text response — Content-Type: ${contentType}]`;
+            }
+        } finally {
+            clearTimeout(timer);
+        }
+
+        const ms = Date.now() - start;
+        const speedTag = ms < 500 ? '🟢 Fast' : ms < 1500 ? '🟡 Normal' : '🔴 Slow';
+        const statusEmoji = ok ? '✅' : '❌';
+
+        let prettyJson = responseData;
+        try {
+            prettyJson = JSON.stringify(JSON.parse(responseData), null, 2);
+        } catch {}
+
+        const maxLen = 3000;
+        const truncated = prettyJson.length > maxLen;
+        const display = truncated ? prettyJson.slice(0, maxLen) + '\n...[truncated]' : prettyJson;
+
+        await reply(
+            `╭─⌈ 📡 *API RESPONSE — ${cmdName.toUpperCase()}* ⌋\n` +
+            `│\n` +
+            `├─⊷ ${statusEmoji} *HTTP:* ${status} | ⚡ ${ms}ms (${speedTag})\n` +
+            `│\n` +
+            `╰⊷ *JSON Response:*\n\n` +
+            `\`\`\`\n${display}\n\`\`\``
+        );
+    } catch (err) {
+        const isTimeout = err.name === 'AbortError';
+        await reply(
+            `╭─⌈ 📡 *API RESPONSE — ${cmdName.toUpperCase()}* ⌋\n` +
+            `│\n` +
+            `├─⊷ ❌ *${isTimeout ? 'Timed out (10s)' : 'Unreachable'}*\n` +
+            `├─⊷ 💬 *Error:* ${err.message}\n` +
+            `│\n` +
+            `├─⊷ 💡 *Fix:* ${PREFIX}replaceapi ${cmdName} <newurl>\n` +
+            `│\n` +
+            `╰⊷ *Powered by ${BOT_NAME.toUpperCase()}*`
+        );
+    }
+}

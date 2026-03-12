@@ -5,7 +5,7 @@ export default {
     name: 'fetchapi',
     aliases: ['testapi', 'pingapi'],
     category: 'owner',
-    desc: 'Test if a command API is reachable and measure latency',
+    desc: 'Fetch a command API and show the raw JSON response',
     usage: '.fetchapi <command>',
     ownerOnly: true,
 
@@ -22,8 +22,8 @@ export default {
                 `├─⊷ *Usage:* ${PREFIX}fetchapi <command>\n` +
                 `├─⊷ *Example:* ${PREFIX}fetchapi ytmp3\n` +
                 `│\n` +
-                `├─⊷ Tests if a command's API is online\n` +
-                `├─⊷ Shows HTTP status & response time\n` +
+                `├─⊷ Fetches the command's API URL\n` +
+                `├─⊷ Shows HTTP status, latency & JSON response\n` +
                 `│\n` +
                 `╰⊷ *Powered by ${BOT_NAME.toUpperCase()}*`
             );
@@ -39,36 +39,31 @@ export default {
             return;
         }
 
-        await sock.sendMessage(chatJid, {
-            text: `⏳ *Testing API...*\n\n📦 Command: ${PREFIX}${cmdName}\n🔗 URL: ${info.currentUrl}`,
-        }, { quoted: msg });
+        await reply(`⏳ *Fetching API...*\n\n📦 Command: ${PREFIX}${cmdName}\n🔗 URL: ${info.currentUrl}`);
 
         try {
-            const start = Date.now();
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 10000);
+            const start = Date.now();
+
+            let responseData = null;
             let status = 0;
-            let statusText = '';
             let ok = false;
 
             try {
                 const res = await fetch(info.currentUrl, {
-                    method: 'HEAD',
-                    signal: controller.signal,
-                    headers: { 'User-Agent': 'WolfBot/1.0' },
-                });
-                status = res.status;
-                statusText = res.statusText || '';
-                ok = res.ok || res.status < 500;
-            } catch (headErr) {
-                const res2 = await fetch(info.currentUrl, {
                     method: 'GET',
                     signal: controller.signal,
-                    headers: { 'User-Agent': 'WolfBot/1.0' },
+                    headers: { 'User-Agent': 'WolfBot/1.0', Accept: 'application/json' }
                 });
-                status = res2.status;
-                statusText = res2.statusText || '';
-                ok = res2.ok || res2.status < 500;
+                status = res.status;
+                ok = res.ok || res.status < 500;
+                const contentType = res.headers.get('content-type') || '';
+                if (contentType.includes('application/json') || contentType.includes('text')) {
+                    responseData = await res.text();
+                } else {
+                    responseData = `[Binary / non-text response — Content-Type: ${contentType}]`;
+                }
             } finally {
                 clearTimeout(timer);
             }
@@ -77,24 +72,33 @@ export default {
             const speedTag = ms < 500 ? '🟢 Fast' : ms < 1500 ? '🟡 Normal' : '🔴 Slow';
             const statusEmoji = ok ? '✅' : '❌';
 
+            let prettyJson = responseData;
+            try {
+                prettyJson = JSON.stringify(JSON.parse(responseData), null, 2);
+            } catch {}
+
+            const maxLen = 3000;
+            const truncated = prettyJson.length > maxLen;
+            const display = truncated ? prettyJson.slice(0, maxLen) + '\n...[truncated]' : prettyJson;
+
             await reply(
-                `╭─⌈ 📡 *API TEST — ${cmdName.toUpperCase()}* ⌋\n` +
+                `╭─⌈ 📡 *API RESPONSE — ${cmdName.toUpperCase()}* ⌋\n` +
                 `│\n` +
                 `├─⊷ 📦 *Command:* ${PREFIX}${cmdName}\n` +
                 `├─⊷ 🔗 *URL:* ${info.currentUrl}\n` +
                 `│\n` +
-                `├─⊷ ${statusEmoji} *HTTP Status:* ${status} ${statusText}\n` +
+                `├─⊷ ${statusEmoji} *HTTP Status:* ${status}\n` +
                 `├─⊷ ⚡ *Latency:* ${ms}ms (${speedTag})\n` +
                 `├─⊷ ${ok ? '🟢 *API is ONLINE*' : '🔴 *API may be DOWN*'}\n` +
+                (info.isOverridden ? `├─⊷ 🔄 *Using override* (not default)\n` : '') +
                 `│\n` +
-                (info.isOverridden ? `├─⊷ 🔄 *Using override* (not default)\n│\n` : '') +
-                (ok ? '' : `├─⊷ 💡 Replace: ${PREFIX}replaceapi ${cmdName} <newurl>\n│\n`) +
-                `╰⊷ *Powered by ${BOT_NAME.toUpperCase()}*`
+                `╰⊷ *JSON Response:*\n\n` +
+                `\`\`\`\n${display}\n\`\`\``
             );
         } catch (err) {
             const isTimeout = err.name === 'AbortError';
             await reply(
-                `╭─⌈ 📡 *API TEST — ${cmdName.toUpperCase()}* ⌋\n` +
+                `╭─⌈ 📡 *API RESPONSE — ${cmdName.toUpperCase()}* ⌋\n` +
                 `│\n` +
                 `├─⊷ 📦 *Command:* ${PREFIX}${cmdName}\n` +
                 `├─⊷ 🔗 *URL:* ${info.currentUrl}\n` +
