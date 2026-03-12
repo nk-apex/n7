@@ -1,11 +1,5 @@
-import { createRequire } from 'module';
 import { getCommandInfo, setCommandApi, resetCommandApi } from '../../lib/apiRegistry.js';
-import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { getBotName } from '../../lib/botname.js';
-
-const _req = createRequire(import.meta.url);
-let giftedBtns;
-try { giftedBtns = _req('gifted-btns'); } catch {}
 
 export default {
     name: 'replaceapi',
@@ -19,12 +13,11 @@ export default {
         const chatJid = msg.key.remoteJid;
         const reply = (text) => sock.sendMessage(chatJid, { text }, { quoted: msg });
         const BOT_NAME = extra?.BOT_NAME || getBotName() || 'WOLFBOT';
-        const buttonMode = await isButtonModeEnabled();
         const cmdName = (args[0] || '').toLowerCase().trim();
         const newUrl = (args[1] || '').trim();
 
         if (!cmdName) {
-            const text =
+            await reply(
                 `╭─⌈ 🔄 *REPLACE API* ⌋\n` +
                 `│\n` +
                 `├─⊷ *Usage:*\n` +
@@ -37,8 +30,8 @@ export default {
                 `│\n` +
                 `├─⊷ 📋 List all APIs: *${PREFIX}getapi*\n` +
                 `│\n` +
-                `╰⊷ *Powered by ${BOT_NAME.toUpperCase()}*`;
-            await reply(text);
+                `╰⊷ *Powered by ${BOT_NAME.toUpperCase()}*`
+            );
             return;
         }
 
@@ -107,21 +100,32 @@ export default {
             `│\n` +
             `╰⊷ *Powered by ${BOT_NAME.toUpperCase()}*`;
 
-        if (buttonMode && giftedBtns) {
-            try {
-                await giftedBtns.sendButtons(sock, chatJid, {
-                    text,
-                    footer: BOT_NAME,
-                    buttons: [
-                        { type: 'reply', title: '📡 Fetch API', payload: `${PREFIX}fetchapi ${cmdName}` },
-                        { type: 'reply', title: '♻️ Reset to Default', payload: `${PREFIX}replaceapi ${cmdName} reset` },
-                    ],
-                    headerType: 1,
-                }, msg);
-                return;
-            } catch {}
+        try {
+            const { createRequire } = await import('module');
+            const require = createRequire(import.meta.url);
+            const { sendInteractiveMessage } = require('gifted-btns');
+            await sendInteractiveMessage(sock, chatJid, {
+                text,
+                footer: BOT_NAME,
+                interactiveButtons: [
+                    {
+                        name: 'cta_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '📡 Fetch API',
+                            id: `${PREFIX}fetchapi ${cmdName}`
+                        })
+                    },
+                    {
+                        name: 'cta_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '♻️ Reset to Default',
+                            id: `${PREFIX}replaceapi ${cmdName} reset`
+                        })
+                    }
+                ]
+            });
+        } catch {
+            await reply(text);
         }
-
-        await reply(text);
     }
 };

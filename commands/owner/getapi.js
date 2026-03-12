@@ -1,11 +1,5 @@
-import { createRequire } from 'module';
 import { getCommandInfo, getAllApiCommands } from '../../lib/apiRegistry.js';
-import { isButtonModeEnabled } from '../../lib/buttonMode.js';
 import { getBotName } from '../../lib/botname.js';
-
-const _req = createRequire(import.meta.url);
-let giftedBtns;
-try { giftedBtns = _req('gifted-btns'); } catch {}
 
 export default {
     name: 'getapi',
@@ -19,7 +13,6 @@ export default {
         const chatJid = msg.key.remoteJid;
         const reply = (text) => sock.sendMessage(chatJid, { text }, { quoted: msg });
         const BOT_NAME = extra?.BOT_NAME || getBotName() || 'WOLFBOT';
-        const buttonMode = await isButtonModeEnabled();
         const cmdName = (args[0] || '').toLowerCase().trim();
 
         if (!cmdName) {
@@ -76,21 +69,40 @@ export default {
             `│\n` +
             `╰⊷ *Powered by ${BOT_NAME.toUpperCase()}*`;
 
-        if (buttonMode && giftedBtns) {
-            try {
-                await giftedBtns.sendButtons(sock, chatJid, {
-                    text,
-                    footer: BOT_NAME,
-                    buttons: [
-                        { type: 'reply', title: '📡 Fetch API', payload: `${PREFIX}fetchapi ${cmdName}` },
-                        { type: 'reply', title: '🔄 Replace API', payload: `${PREFIX}replaceapi ${cmdName}` },
-                    ],
-                    headerType: 1,
-                }, msg);
-                return;
-            } catch {}
+        try {
+            const { createRequire } = await import('module');
+            const require = createRequire(import.meta.url);
+            const { sendInteractiveMessage } = require('gifted-btns');
+            await sendInteractiveMessage(sock, chatJid, {
+                text,
+                footer: BOT_NAME,
+                interactiveButtons: [
+                    {
+                        name: 'cta_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '📡 Fetch API',
+                            id: `${PREFIX}fetchapi ${cmdName}`
+                        })
+                    },
+                    {
+                        name: 'cta_url',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '🌐 Open API URL',
+                            url: info.currentUrl,
+                            merchant_url: info.currentUrl
+                        })
+                    },
+                    {
+                        name: 'cta_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '🔄 Replace API',
+                            id: `${PREFIX}replaceapi ${cmdName}`
+                        })
+                    }
+                ]
+            });
+        } catch {
+            await reply(text);
         }
-
-        await reply(text);
     }
 };
