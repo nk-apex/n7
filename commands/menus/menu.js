@@ -1486,18 +1486,22 @@ case 1: {
   // Get real RAM usage
   const ramUsage = getRAMUsage();
   
-  // ========== UPDATED MENU WITH NEW BOX STYLE ==========
-  let infoSection = `╭─⌈ ${currentBotName} ⌋
-▌ Owner: ${ownerName}
-▌ Mode: ${botMode}
-▌ Prefix: [ ${botPrefix} ]
-▌ Version: ${botVersion}
-▌ Panel: ${deploymentPlatform.name}
-▌ Status: ${deploymentPlatform.status}
-▌ Uptime: ${formatUptime(process.uptime())}
-▌ RAM: ${ramUsage.bar} ${ramUsage.percent}%
-▌ Memory: ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB
-╰─⊷`;
+// ========== UPDATED MENU WITH NEW INFO STYLE ==========
+let infoSection = `╭──⌈ 🐺 ${currentBotName} ⌋
+┃ ◆ User: ▣ ${pushname || 'Silent Wolf'}
+┃ ◆ Owner: ${ownerName}
+┃ ◆ Mode: ${botMode}
+┃ ◆ Prefix: [ ${botPrefix} ]
+┃ ◆ Version: ${botVersion}
+┃ ◆ Platform: ${deploymentPlatform.name}
+┃ ◆ Status: ${deploymentPlatform.status}
+┃ ◆ Uptime: ${formatUptime(process.uptime())}
+┃ ◆ RAM: ${ramUsage.bar} ${ramUsage.percent}%
+┃ ◆ Memory: ${ramUsage.usedMB}MB / ${ramUsage.totalMB}MB
+╰────────────────`;
+
+// Apply faded effect to the info section
+const fadedInfoSection = createFadedEffect(infoSection);
 
   // Apply faded effect to the info section
   const fadedInfoSection = createFadedEffect(infoSection);
