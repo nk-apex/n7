@@ -4,19 +4,19 @@
   "logo": "https://raw.githubusercontent.com/SuhailTechInfo/Suhail-Md/main/src/logo.jpg",
   "keywords": ["whatsapp", "bot", "wolfbot", "baileys", "session"],
   "repository": "https://github.com/7silent-wolf/silentwolf.git",
-  "addons": [
-    {
-      "plan": "heroku-postgresql"
-    }
-  ],
   "scripts": {
-    "start": "node index.js"
+    "start": "node --no-warnings --experimental-global-webcrypto index.js"
   },
   "env": {
     "SESSION_ID": {
-      "description": "REQUIRED: Your session ID. Must begin with 'WOLF-BOT'",
+      "description": "REQUIRED: Your WhatsApp session ID. Must begin with 'WOLF-BOT:'",
       "value": "",
       "required": true
+    },
+    "NODE_ENV": {
+      "description": "Environment mode",
+      "value": "production",
+      "required": false
     }
   },
   "formation": {
