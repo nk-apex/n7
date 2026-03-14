@@ -2894,6 +2894,7 @@ const memoryMonitor = {
             try { this.trimCaches(false); } catch {}
         }, 3 * 60 * 1000);
         // Emergency GC every 10 seconds when memory is high
+        this._lastEmergencyGCLog = 0;
         this._emergencyInterval = setInterval(() => {
             try {
                 const memMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
@@ -2901,7 +2902,11 @@ const memoryMonitor = {
                     if (global.gc) { global.gc(); global.gc(); }
                     setImmediate(() => this.trimCaches(true));
                     if (memMB > 700) {
-                        UltraCleanLogger.warning(`Emergency GC: ${memMB}MB - forcing collection`);
+                        const now = Date.now();
+                        if (now - this._lastEmergencyGCLog > 60 * 1000) {
+                            UltraCleanLogger.warning(`Emergency GC: ${memMB}MB - forcing collection`);
+                            this._lastEmergencyGCLog = now;
+                        }
                     }
                 }
             } catch {}
@@ -2955,14 +2960,7 @@ const memoryMonitor = {
                 trimMap(globalThis._antispamTracker, 1500, 750, null);
             }
             if (global.gc) { global.gc(); }
-            if (aggressive) {
-                const mu = process.memoryUsage();
-                const rss   = Math.round(mu.rss / 1024 / 1024);
-                const heap  = Math.round(mu.heapUsed / 1024 / 1024);
-                const ext   = Math.round(mu.external / 1024 / 1024);
-                const abuf  = Math.round(mu.arrayBuffers / 1024 / 1024);
-                UltraCleanLogger.info(`Aggressive trim: ${rss}MB (heap:${heap} ext:${ext} abuf:${abuf})`);
-            }
+            // Aggressive trim runs silently — no console spam
         } catch {}
     }
 };
