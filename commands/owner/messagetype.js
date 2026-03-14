@@ -1,25 +1,21 @@
 import { normalizeMessageContent } from '@whiskeysockets/baileys';
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ─── helpers ────────────────────────────────────────────────────────────────
 
-function safeJson(obj, indent = 2) {
-    return JSON.stringify(obj, (key, val) => {
-        if (val instanceof Uint8Array || Buffer.isBuffer(val)) {
-            return `<Buffer ${val.length}B>`;
-        }
-        if (typeof val === 'bigint') return val.toString();
-        return val;
-    }, indent);
+function safeJson(obj) {
+    return JSON.stringify(obj, (k, v) => {
+        if (v instanceof Uint8Array || Buffer.isBuffer(v)) return `<Buffer ${v.length}B>`;
+        if (typeof v === 'bigint') return v.toString();
+        return v;
+    }, 2);
 }
 
 function detectVoMethod(raw) {
     if (!raw) return null;
     const media = ['imageMessage', 'videoMessage', 'audioMessage'];
-
     for (const mt of media) {
         if (raw[mt]?.viewOnce) return { method: 'direct-flag', mt };
     }
-
     const wrapperMsg = raw.viewOnceMessage?.message
         || raw.viewOnceMessageV2?.message
         || raw.viewOnceMessageV2Extension?.message;
@@ -28,13 +24,11 @@ function detectVoMethod(raw) {
             if (wrapperMsg[mt]) return { method: 'wrapper', mt };
         }
     }
-
     const eph = raw.ephemeralMessage?.message;
     if (eph) {
         const r = detectVoMethod(eph);
-        if (r) return { method: `ephemeral>${r.method}`, mt: r.mt };
+        if (r) return { method: `ephemeral→${r.method}`, mt: r.mt };
     }
-
     const norm = normalizeMessageContent(raw);
     if (norm && norm !== raw) {
         for (const mt of media) {
@@ -47,27 +41,33 @@ function detectVoMethod(raw) {
             }
         }
     }
-
     return null;
 }
 
-// Extract context info from any message type
-function getContextInfo(msgObj) {
+function getCtxInfo(msgObj) {
     if (!msgObj) return null;
     for (const key of Object.keys(msgObj)) {
-        const sub = msgObj[key];
-        if (sub?.contextInfo) return sub.contextInfo;
+        const ctx = msgObj[key]?.contextInfo;
+        if (ctx) return ctx;
     }
     return null;
 }
 
-// ── command ──────────────────────────────────────────────────────────────────
+// Check whether a media object has all required fields to attempt decryption
+function checkDownloadReady(mediaObj) {
+    if (!mediaObj) return { ready: false, missing: ['media object is null'] };
+    const required = ['url', 'mediaKey', 'directPath', 'fileEncSha256'];
+    const missing = required.filter(f => !mediaObj[f]);
+    return { ready: missing.length === 0, missing };
+}
+
+// ─── command ────────────────────────────────────────────────────────────────
 
 export default {
     name: 'messagetype',
     aliases: ['msgtype', 'mtype'],
     category: 'owner',
-    description: 'Debug: dump full message structure of the replied-to message (DM + group)',
+    description: 'Debug: full JSON structure + view-once analysis of any replied-to message',
     ownerOnly: true,
 
     async execute(sock, msg, args, PREFIX, extra) {
@@ -78,108 +78,140 @@ export default {
             return sock.sendMessage(chatId, { text: '❌ *Owner Only Command!*' }, { quoted: msg });
         }
 
-        // ── 1. Get quoted message id + partial content ─────────────────────
-        const ctxInfo = getContextInfo(msg.message);
+        // ── 1. Extract context info ──────────────────────────────────────
+        const ctxInfo = getCtxInfo(msg.message);
         const quotedPartial = ctxInfo?.quotedMessage;
         const quotedId = ctxInfo?.stanzaId;
         const quotedParticipant = ctxInfo?.participant || msg.key.remoteJid;
 
         if (!quotedPartial && !quotedId) {
             return sock.sendMessage(chatId, {
-                text: '↩️ *Reply to any message* with `.messagetype` to inspect its structure.\n\n' +
-                      'Works in both *DMs* and *Groups*.'
+                text: '↩️ *Reply to any message* with `.messagetype` to inspect its full structure.\n\nWorks in *DMs* and *Groups*.'
             }, { quoted: msg });
         }
 
-        // ── 2. Try to get the FULL original message from store ─────────────
-        let fullMsg = null;
+        // ── 2. Full message from store (most accurate — present for fresh messages) ──
+        let rawFull = null;
         try {
             if (store && quotedId) {
-                fullMsg = store.getMessage(chatId, quotedId)
-                    || store.getMessage(quotedParticipant, quotedId)
-                    || null;
+                const found = store.getMessage(chatId, quotedId)
+                    || store.getMessage(quotedParticipant, quotedId);
+                rawFull = found?.message || null;
             }
         } catch {}
 
-        const rawFull = fullMsg?.message || null;
         const rawQuoted = quotedPartial || null;
+        const source = rawFull ? 'store (full)' : 'contextInfo (partial)';
+        const raw = rawFull || rawQuoted;
 
-        // ── 3. Build analysis for a given raw message object ───────────────
-        function analyse(raw, label) {
-            if (!raw) return `${label}: not available`;
+        // ── 3. Analysis ──────────────────────────────────────────────────
+        const topKeys = raw ? Object.keys(raw) : [];
+        const norm = raw ? normalizeMessageContent(raw) : null;
+        const normKeys = norm ? Object.keys(norm) : [];
 
-            const topKeys = Object.keys(raw);
-            const norm = normalizeMessageContent(raw);
-            const normKeys = norm ? Object.keys(norm) : [];
+        const wrappers = ['viewOnceMessage', 'viewOnceMessageV2', 'viewOnceMessageV2Extension', 'ephemeralMessage'];
+        const foundWrappers = raw ? wrappers.filter(w => raw[w]) : [];
 
-            const wrappers = ['viewOnceMessage', 'viewOnceMessageV2', 'viewOnceMessageV2Extension', 'ephemeralMessage'];
-            const foundWrappers = wrappers.filter(w => raw[w]);
+        const innerKeys = [];
+        for (const w of foundWrappers) {
+            const inner = raw[w]?.message;
+            if (inner) Object.keys(inner).forEach(k => innerKeys.push(`${w}.message.${k}`));
+        }
 
-            const innerLines = [];
-            for (const w of foundWrappers) {
-                const inner = raw[w]?.message;
-                if (inner) {
-                    Object.keys(inner).forEach(k => innerLines.push(`${w}.message.${k}`));
-                }
+        const mediaTypes = ['imageMessage', 'videoMessage', 'audioMessage'];
+        const directVo = raw ? mediaTypes.filter(mt => raw[mt]?.viewOnce === true) : [];
+        const normVo = norm ? mediaTypes.filter(mt => norm[mt]?.viewOnce === true) : [];
+
+        const det = raw ? detectVoMethod(raw) : null;
+
+        // Determine the actual media object for download check
+        let mediaObj = null;
+        let mediaType = null;
+        if (det) {
+            if (det.method === 'direct-flag' || det.method === 'normalize-flag') {
+                mediaObj = (rawFull || rawQuoted)?.[det.mt] || norm?.[det.mt];
+            } else if (det.method.startsWith('wrapper') || det.method.startsWith('ephemeral')) {
+                const wrapMsg = raw?.viewOnceMessage?.message
+                    || raw?.viewOnceMessageV2?.message
+                    || raw?.viewOnceMessageV2Extension?.message
+                    || norm;
+                mediaObj = wrapMsg?.[det.mt];
             }
-
-            const mediaTypes = ['imageMessage', 'videoMessage', 'audioMessage'];
-            const directVo = mediaTypes.filter(mt => raw[mt]?.viewOnce === true);
-            const normVo = mediaTypes.filter(mt => norm?.[mt]?.viewOnce === true);
-
-            const det = detectVoMethod(raw);
-
-            const lines = [
-                `*${label}*`,
-                `top keys: [${topKeys.join(', ')}]`,
-            ];
-            if (foundWrappers.length) lines.push(`wrappers: [${foundWrappers.join(', ')}]`);
-            if (innerLines.length) lines.push(`inner keys: [${innerLines.join(', ')}]`);
-            if (normKeys.join(',') !== topKeys.join(',')) lines.push(`normalized: [${normKeys.join(', ')}]`);
-            if (directVo.length) lines.push(`viewOnce=true on: ${directVo.join(', ')}`);
-            if (normVo.length) lines.push(`normalized viewOnce=true on: ${normVo.join(', ')}`);
-            lines.push(det
-                ? `✅ DETECTED — method: ${det.method}, type: ${det.mt}`
-                : `❌ NOT detected as view-once`
-            );
-            return lines.join('\n');
+            mediaType = det.mt?.replace('Message', '');
         }
+        const dlCheck = checkDownloadReady(mediaObj);
 
-        // ── 4. Deep JSON dump of the raw structure (buffer-safe) ──────────
-        function jsonDump(raw, label) {
-            if (!raw) return null;
-            const stripped = JSON.parse(safeJson(raw));
-            return `*${label} (JSON)*\n\`\`\`json\n${safeJson(stripped)}\n\`\`\``;
-        }
-
-        // ── 5. Compose reply ───────────────────────────────────────────────
+        // ── 4. Summary message ───────────────────────────────────────────
         const isGroup = chatId.endsWith('@g.us');
-        const senderShort = quotedParticipant.split('@')[0].split(':')[0];
+        const senderNum = quotedParticipant.split('@')[0].split(':')[0];
 
-        let out = `*🔍 MESSAGE TYPE INSPECTOR*\n`;
-        out += `Chat: ${isGroup ? 'Group' : 'DM'} | From: +${senderShort}\n`;
-        if (quotedId) out += `MsgID: ${quotedId}\n`;
-        out += `\n`;
+        let summary = `*🔍 MESSAGE TYPE INSPECTOR*\n`;
+        summary += `━━━━━━━━━━━━━━━━━━━━━\n`;
+        summary += `*Chat:* ${isGroup ? '👥 Group' : '💬 DM'}\n`;
+        summary += `*From:* +${senderNum}\n`;
+        if (quotedId) summary += `*MsgID:* ${quotedId}\n`;
+        summary += `*Source:* ${source}\n`;
+        summary += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-        // Full message analysis first (most accurate)
-        if (rawFull) {
-            out += analyse(rawFull, '📦 Full message (from store)') + '\n\n';
+        summary += `*📦 Top-level keys (${topKeys.length}):*\n`;
+        summary += topKeys.map(k => `  • \`${k}\``).join('\n') + '\n\n';
+
+        if (foundWrappers.length) {
+            summary += `*🔐 View-once wrappers found:*\n`;
+            summary += foundWrappers.map(w => `  • \`${w}\``).join('\n') + '\n\n';
         }
 
-        // Quoted partial (always available)
-        out += analyse(rawQuoted, rawFull ? '📎 Quoted partial (contextInfo)' : '📦 Message (contextInfo only)') + '\n';
+        if (innerKeys.length) {
+            summary += `*📂 Inner keys inside wrapper:*\n`;
+            summary += innerKeys.map(k => `  • \`${k}\``).join('\n') + '\n\n';
+        }
 
-        // JSON dump — prefer full, fall back to quoted partial
-        const dumpTarget = rawFull || rawQuoted;
-        const dumpLabel = rawFull ? 'Full message' : 'Quoted partial';
-        const jsonSection = jsonDump(dumpTarget, dumpLabel);
+        if (normKeys.join(',') !== topKeys.join(',')) {
+            summary += `*🔄 Normalized keys (${normKeys.length}):*\n`;
+            summary += normKeys.map(k => `  • \`${k}\``).join('\n') + '\n\n';
+        }
 
-        // Send summary first
-        await sock.sendMessage(chatId, { text: out }, { quoted: msg });
+        if (directVo.length) {
+            summary += `*👁 viewOnce=true (direct):* ${directVo.join(', ')}\n`;
+        }
+        if (normVo.length && normVo.join(',') !== directVo.join(',')) {
+            summary += `*👁 viewOnce=true (normalized):* ${normVo.join(', ')}\n`;
+        }
+        if (directVo.length || normVo.length) summary += '\n';
 
-        // Send JSON dump as separate message (can be long)
-        if (jsonSection) {
-            await sock.sendMessage(chatId, { text: jsonSection });
+        if (det) {
+            summary += `*✅ VIEW-ONCE DETECTED*\n`;
+            summary += `  Method: \`${det.method}\`\n`;
+            summary += `  Media type: \`${det.mt}\`\n\n`;
+            summary += `*📥 Download readiness:*\n`;
+            if (dlCheck.ready) {
+                summary += `  ✅ All required fields present\n`;
+                summary += `  (url, mediaKey, directPath, fileEncSha256)\n`;
+            } else {
+                summary += `  ❌ Missing fields: ${dlCheck.missing.join(', ')}\n`;
+            }
+        } else {
+            summary += `*❌ NOT detected as view-once*\n`;
+            if (topKeys.some(k => mediaTypes.includes(k))) {
+                summary += `  (has media but no viewOnce flag or wrapper)\n`;
+            }
+        }
+
+        await sock.sendMessage(chatId, { text: summary }, { quoted: msg });
+
+        // ── 5. JSON dump of the raw structure ────────────────────────────
+        if (raw) {
+            const jsonText = safeJson(JSON.parse(safeJson(raw)));
+            const jsonMsg = `*📋 Raw Structure JSON* _(${source})_\n\`\`\`json\n${jsonText}\n\`\`\``;
+            await sock.sendMessage(chatId, { text: jsonMsg });
+        }
+
+        // ── 6. If two sources available, dump the other one too ──────────
+        if (rawFull && rawQuoted && rawFull !== rawQuoted) {
+            const q = safeJson(JSON.parse(safeJson(rawQuoted)));
+            await sock.sendMessage(chatId, {
+                text: `*📋 Quoted partial (contextInfo) JSON*\n\`\`\`json\n${q}\n\`\`\``
+            });
         }
     }
 };
