@@ -327,7 +327,6 @@ class AutoReactManager {
             this.lastReactionTime = Date.now();
             this.markReacted(statusKey);
             this.addLog(displayId, emoji, statusKey.id);
-            console.log(`\x1b[32m✅ Reacted to ${displayId} with ${emoji}\x1b[0m`);
 
         } catch (error) {
             if (error.message?.includes('rate-overlimit') || error.message?.includes('rate limit')) {

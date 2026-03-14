@@ -233,7 +233,6 @@ class AutoViewManager {
             await sock.readMessages([readKey]);
             this.lastViewTime = Date.now();
             this.addLog(displayId);
-            console.log(`${G}✅ Viewed ${displayId}${X}`);
         } catch (err) {
             console.log(`${R}${B}❌ VIEW FAILED for ${displayId}: ${err.message}${X}`);
         }
