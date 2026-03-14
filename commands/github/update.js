@@ -1381,14 +1381,14 @@ async function checkRepoSize() {
       packs: sizeData['packs'] || 0
     };
   } catch (error) {
-    console.error('Could not check repo size:', error);
+    // (suppressed)
     return { sizeMB: 'unknown', objects: 0 };
   }
 }
 
 /* -------------------- Deep Git History Cleaner -------------------- */
 async function deepCleanGitHistory(options = {}) {
-  console.log('🚀 Starting deep Git history cleanup...');
+  // (suppressed)
   
   const {
     preserveBranches = true,
@@ -1408,11 +1408,11 @@ async function deepCleanGitHistory(options = {}) {
       .filter(b => b && !b.includes('detached') && !b.includes('->'))
       .map(b => b.replace('* ', '').replace('remotes/', ''));
     
-    console.log(`Found ${branches.length} branches: ${branches.join(', ')}`);
+    // (suppressed)
     
     // Preserve essential files
     const { preserveDir, preserved } = await preserveEssentialFiles();
-    console.log(`Preserved ${preserved.length} items`);
+    // (suppressed)
     
     // Create a temporary directory for fresh start
     const tempDir = path.join(process.cwd(), 'tmp_git_fresh');
@@ -1440,7 +1440,7 @@ async function deepCleanGitHistory(options = {}) {
       try {
         await fsPromises.rename(path.join(process.cwd(), '.git'), gitBackup);
       } catch {
-        console.log('Could not backup .git folder');
+        // (suppressed)
       }
     }
     
@@ -1448,17 +1448,17 @@ async function deepCleanGitHistory(options = {}) {
     try {
       await fsPromises.rm(path.join(process.cwd(), '.git'), { recursive: true, force: true });
     } catch (error) {
-      console.log('Old .git folder already removed or inaccessible');
+      // (suppressed)
     }
     
     // Initialize fresh repository
-    console.log('Initializing fresh Git repository...');
+    // (suppressed)
     await run('git init');
     await run('git config user.email "bot@silentwolf.com"');
     await run('git config user.name "SilentWolf Bot"');
     
     // Copy files back from temp directory
-    console.log('Restoring essential files...');
+    // (suppressed)
     const copyResult = await copyDirectoryContents(tempDir, process.cwd());
     
     // Add and commit
@@ -1474,9 +1474,9 @@ async function deepCleanGitHistory(options = {}) {
         if (branch !== currentBranch && !branch.includes('origin/')) {
           try {
             await run(`git checkout -b ${branch} ${currentBranch}`);
-            console.log(`Created branch: ${branch}`);
+            // (suppressed)
           } catch {
-            console.log(`Could not create branch: ${branch}`);
+            // (suppressed)
           }
         }
       }
@@ -1500,7 +1500,7 @@ async function deepCleanGitHistory(options = {}) {
     }, 60000); // Delete backup after 1 minute
     
     const newSize = await checkRepoSize();
-    console.log(`✅ Git history deep cleaned! New size: ${newSize.sizeMB} MB`);
+    // (suppressed)
     
     return {
       success: true,
@@ -1512,14 +1512,14 @@ async function deepCleanGitHistory(options = {}) {
     };
     
   } catch (error) {
-    console.error('Deep Git cleanup failed:', error);
+    // (suppressed)
     
     // Try to restore from backup
     try {
       if (fs.existsSync(path.join(process.cwd(), '.git_backup'))) {
         await fsPromises.rm(path.join(process.cwd(), '.git'), { recursive: true, force: true });
         await fsPromises.rename(path.join(process.cwd(), '.git_backup'), path.join(process.cwd(), '.git'));
-        console.log('Restored from backup');
+        // (suppressed)
       }
     } catch {}
     
@@ -1594,7 +1594,7 @@ async function getEssentialFiles() {
         }
       }
     } catch (error) {
-      console.warn(`Could not scan directory ${dir}:`, error.message);
+      // (suppressed)
     }
     
     return files;
@@ -1623,7 +1623,7 @@ async function copyDirectoryContents(src, dest) {
         filesCount++;
         
         if (filesCount % 50 === 0) {
-          console.log(`Copied ${filesCount} files...`);
+          // (suppressed)
         }
       }
     }
@@ -1642,18 +1642,18 @@ async function smartGitUpdate(options = {}) {
     preserveEssential = true
   } = options;
   
-  console.log('Starting smart Git update...');
+  // (suppressed)
   
   try {
     // Check repo size before update
     const sizeBefore = await checkRepoSize();
-    console.log(`Current repository size: ${sizeBefore.sizeMB} MB`);
+    // (suppressed)
     
     // Check if we need to clean based on threshold
     const shouldClean = autoCleanHistory && parseFloat(sizeBefore.sizeMB) > cleanThresholdMB;
     
     if (shouldClean) {
-      console.log(`Repository size (${sizeBefore.sizeMB} MB) exceeds threshold (${cleanThresholdMB} MB), performing cleanup...`);
+      // (suppressed)
       await deepCleanGitHistory({
         preserveBranches: true,
         maxHistoryDepth: maxHistoryDepth
@@ -1669,14 +1669,14 @@ async function smartGitUpdate(options = {}) {
     // If still too large or grew significantly, do another cleanup
     if (autoCleanHistory && (parseFloat(sizeAfter.sizeMB) > cleanThresholdMB || 
         (parseFloat(sizeAfter.sizeMB) - parseFloat(sizeBefore.sizeMB) > 50))) {
-      console.log('Post-update cleanup triggered...');
+      // (suppressed)
       await deepCleanGitHistory({
         preserveBranches: true,
         maxHistoryDepth: 10
       });
       
       const finalSize = await checkRepoSize();
-      console.log(`Final repository size: ${finalSize.sizeMB} MB`);
+      // (suppressed)
       
       return {
         ...updateResult,
@@ -1695,7 +1695,7 @@ async function smartGitUpdate(options = {}) {
     };
     
   } catch (error) {
-    console.error('Smart Git update failed:', error);
+    // (suppressed)
     throw error;
   }
 }
@@ -1703,7 +1703,7 @@ async function smartGitUpdate(options = {}) {
 /* -------------------- Git Update (Modified with Clean Option) -------------------- */
 async function updateViaGit(cleanAfter = false) {
   try {
-    console.log('Starting Git update...');
+    // (suppressed)
     
     try {
       await run('git --version');
@@ -1712,12 +1712,12 @@ async function updateViaGit(cleanAfter = false) {
     }
     
     const sizeBefore = await checkRepoSize();
-    console.log(`Current size: ${sizeBefore.sizeMB} MB`);
+    // (suppressed)
     
     const oldRev = await run('git rev-parse HEAD').catch(() => 'unknown');
-    console.log(`Current revision: ${oldRev.slice(0, 7)}`);
+    // (suppressed)
     
-    console.log('Pre-fetch cleanup...');
+    // (suppressed)
     await run('git prune --expire=now').catch(() => {});
     await run('git gc --auto').catch(() => {});
     
@@ -1729,7 +1729,7 @@ async function updateViaGit(cleanAfter = false) {
       await run(`git remote add n7-upstream ${GIT_REPO_URL}`);
     }
     
-    console.log('Fetching updates (limited history: depth=20)...');
+    // (suppressed)
     await run('git fetch n7-upstream --depth=20 --prune');
     
     const currentBranch = await run('git rev-parse --abbrev-ref HEAD').catch(() => 'main');
@@ -1742,12 +1742,12 @@ async function updateViaGit(cleanAfter = false) {
     }
     
     if (oldRev === newRev) {
-      console.log('Already up to date');
+      // (suppressed)
       await run('git gc --auto').catch(() => {});
       
       // Optionally clean even if up to date
       if (cleanAfter) {
-        console.log('Performing cleanup as requested...');
+        // (suppressed)
         await deepCleanGitHistory();
       }
       
@@ -1760,31 +1760,31 @@ async function updateViaGit(cleanAfter = false) {
       };
     }
     
-    console.log(`Updating to: ${newRev.slice(0, 7)}`);
+    // (suppressed)
     
     const timestamp = Date.now();
     const backupBranch = `backup-${timestamp}`;
     await run(`git branch ${backupBranch}`).catch(() => {
-      console.log('Could not create backup branch');
+      // (suppressed)
     });
     
     await run(`git merge --ff-only ${newRev}`);
     
-    console.log('Post-merge cleanup...');
+    // (suppressed)
     await run('git prune --expire=now').catch(() => {});
     await run('git gc --aggressive --prune=now').catch(() => {});
     
     const sizeAfter = await checkRepoSize();
     const sizeDiff = (parseFloat(sizeAfter.sizeMB) - parseFloat(sizeBefore.sizeMB)).toFixed(2);
     
-    console.log(`Size after update: ${sizeAfter.sizeMB} MB (${sizeDiff >= 0 ? '+' : ''}${sizeDiff} MB)`);
+    // (suppressed)
     
     // Perform deep clean if requested
     if (cleanAfter) {
-      console.log('Performing deep history cleanup...');
+      // (suppressed)
       await deepCleanGitHistory();
       const finalSize = await checkRepoSize();
-      console.log(`Final size after cleanup: ${finalSize.sizeMB} MB`);
+      // (suppressed)
     }
     
     return {
@@ -1801,7 +1801,7 @@ async function updateViaGit(cleanAfter = false) {
     };
     
   } catch (error) {
-    console.error('Git update failed:', error);
+    // (suppressed)
     
     try {
       const branches = await run('git branch --list backup-*');
@@ -1809,12 +1809,12 @@ async function updateViaGit(cleanAfter = false) {
         const backupList = branches.split('\n').filter(b => b.trim());
         if (backupList.length > 0) {
           const latestBackup = backupList[backupList.length - 1].trim();
-          console.log(`Reverting to backup: ${latestBackup}`);
+          // (suppressed)
           await run(`git reset --hard ${latestBackup}`);
         }
       }
     } catch (revertError) {
-      console.error('Could not revert:', revertError);
+      // (suppressed)
     }
     
     throw error;
@@ -1901,7 +1901,7 @@ async function clearModuleCache(modulePath) {
 async function hotReloadCommands(commandDir = 'commands') {
   const commandsPath = path.join(process.cwd(), commandDir);
   if (!fs.existsSync(commandsPath)) {
-    console.log('Commands directory not found');
+    // (suppressed)
     return { reloaded: 0, errors: 0 };
   }
   
@@ -1924,10 +1924,10 @@ async function hotReloadCommands(commandDir = 'commands') {
             const commandName = module.default.name || file.name.replace('.js', '');
             commandCache.set(commandName, module.default);
             reloaded++;
-            console.log(`Hot-reloaded command: ${commandName}`);
+            // (suppressed)
           }
         } catch (error) {
-          console.error(`Failed to hot-reload ${file.name}:`, error.message);
+          // (suppressed)
           errors++;
         }
       } else if (file.isDirectory()) {
@@ -1947,10 +1947,10 @@ async function hotReloadCommands(commandDir = 'commands') {
                 const commandName = module.default.name || subFile.name.replace('.js', '');
                 commandCache.set(commandName, module.default);
                 reloaded++;
-                console.log(`Hot-reloaded command: ${file.name}/${commandName}`);
+                // (suppressed)
               }
             } catch (error) {
-              console.error(`Failed to hot-reload ${file.name}/${subFile.name}:`, error.message);
+              // (suppressed)
               errors++;
             }
           }
@@ -1958,18 +1958,18 @@ async function hotReloadCommands(commandDir = 'commands') {
       }
     }
     
-    console.log(`Hot reload complete: ${reloaded} commands reloaded, ${errors} errors`);
+    // (suppressed)
     return { reloaded, errors };
     
   } catch (error) {
-    console.error('Error during hot reload:', error);
+    // (suppressed)
     return { reloaded: 0, errors: 1 };
   }
 }
 
 /* -------------------- Fast Preserve Files -------------------- */
 async function preserveEssentialFiles() {
-  console.log('Preserving essential files...');
+  // (suppressed)
   
   const essentialFiles = [
     'settings.js',
@@ -2007,10 +2007,10 @@ async function preserveEssentialFiles() {
         await fsPromises.mkdir(preserveDirPath, { recursive: true });
         await fsPromises.copyFile(filePath, preservePath);
         preserved.push(file);
-        console.log(`Preserved file: ${file}`);
+        // (suppressed)
       }
     } catch (error) {
-      console.warn(`Could not preserve ${file}:`, error.message);
+      // (suppressed)
     }
   }
   
@@ -2023,11 +2023,11 @@ async function preserveEssentialFiles() {
           const preservePath = path.join(preserveDir, dir);
           await copyDirectoryFast(dirPath, preservePath);
           preserved.push(dir);
-          console.log(`Preserved directory: ${dir}`);
+          // (suppressed)
         }
       }
     } catch (error) {
-      console.warn(`Could not preserve ${dir}:`, error.message);
+      // (suppressed)
     }
   }
   
@@ -2060,7 +2060,7 @@ async function copyDirectoryFast(src, dest, timeout = PRESERVE_TIMEOUT) {
             setTimeout(() => reject(new Error('Copy timeout')), timeout)
           )
         ]).catch(error => {
-          console.warn(`Failed to copy ${srcPath}:`, error.message);
+          // (suppressed)
         })
       );
     }
@@ -2073,7 +2073,7 @@ async function copyDirectoryFast(src, dest, timeout = PRESERVE_TIMEOUT) {
 
 /* -------------------- ZIP Update -------------------- */
 async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
-  console.log('Starting update download...');
+  // (suppressed)
   
   const tmpDir = path.join(process.cwd(), 'tmp_update_fast_' + Date.now());
   const zipPath = path.join(tmpDir, 'update.zip');
@@ -2087,14 +2087,14 @@ async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
     await fsPromises.mkdir(extractTo, { recursive: true });
     
     const { preserveDir, preserved } = await preserveEssentialFiles();
-    console.log(`Preserved ${preserved.length} items: ${preserved.join(', ')}`);
+    // (suppressed)
     
-    console.log('Downloading update...');
+    // (suppressed)
     let lastProgress = 0;
     
     await downloadWithProgress(zipUrl, zipPath, (percent, downloaded, total) => {
       if (percent >= lastProgress + 10 || percent === 100) {
-        console.log(`Download: ${percent}%`);
+        // (suppressed)
         lastProgress = percent;
       }
     });
@@ -2103,9 +2103,9 @@ async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
     if (stat.size === 0) {
       throw new Error('Downloaded file is empty');
     }
-    console.log(`Downloaded ${stat.size} bytes`);
+    // (suppressed)
     
-    console.log('Extracting ZIP...');
+    // (suppressed)
     await Promise.race([
       extractZip(zipPath, extractTo),
       new Promise((_, reject) => 
@@ -2125,13 +2125,13 @@ async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
       }
     }
     
-    console.log('Copying files...');
+    // (suppressed)
     const copied = await copyEssentialFiles(root, process.cwd());
     
-    console.log('Restoring preserved files...');
+    // (suppressed)
     await restorePreservedFiles(preserveDir);
     
-    console.log('Cleaning up...');
+    // (suppressed)
     await fsPromises.rm(tmpDir, { recursive: true, force: true });
     
     return {
@@ -2142,14 +2142,14 @@ async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
     };
     
   } catch (error) {
-    console.error('ZIP update failed:', error);
+    // (suppressed)
     
     try {
       if (fs.existsSync(tmpDir)) {
         await fsPromises.rm(tmpDir, { recursive: true, force: true });
       }
     } catch (cleanupError) {
-      console.warn('Failed to cleanup temp dir:', cleanupError);
+      // (suppressed)
     }
     
     throw error;
@@ -2211,13 +2211,13 @@ async function copyEssentialFiles(src, dest) {
             copied.push(entryRelative);
             
             if (copied.length % 10 === 0) {
-              console.log(`Copied ${copied.length} files...`);
+              // (suppressed)
             }
           }
         }
       }
     } catch (error) {
-      console.warn(`Error copying from ${srcPath}:`, error.message);
+      // (suppressed)
     }
   }
   
@@ -2244,12 +2244,12 @@ async function restorePreservedFiles(preserveDir) {
       } else {
         await fsPromises.copyFile(srcPath, destPath);
       }
-      console.log(`Restored: ${entry.name}`);
+      // (suppressed)
     }
     
     await fsPromises.rm(preserveDir, { recursive: true, force: true });
   } catch (error) {
-    console.warn('Failed to restore preserved files:', error.message);
+    // (suppressed)
   }
 }
 
@@ -2269,7 +2269,7 @@ async function extractZip(zipPath, outDir) {
   for (const tool of tools) {
     try {
       await run(`which ${tool.cmd}`);
-      console.log(`Extracting with ${tool.cmd}...`);
+      // (suppressed)
       await run(`${tool.cmd} ${tool.args}`);
       return;
     } catch {
@@ -2443,16 +2443,10 @@ export default {
         await editStatus('📦 **Installing dependencies...**');
         
         try {
-          await run('npm ci --no-audit --no-fund --silent', 180000);
+          await run('npm install --no-audit --no-fund --loglevel=error', 180000);
           await editStatus('✅ **Dependencies installed**');
-        } catch (npmError) {
-          console.warn('npm install failed, trying fallback:', npmError.message);
-          try {
-            await run('npm install --no-audit --no-fund --loglevel=error', 180000);
-            await editStatus('⚠️ **Dependencies installed with warnings**');
-          } catch {
-            await editStatus('⚠️ **Could not install all dependencies**\nContinuing anyway...');
-          }
+        } catch {
+          await editStatus('⚠️ **Could not install all dependencies**\nContinuing anyway...');
         }
       }
       
@@ -2471,7 +2465,7 @@ export default {
           }
           
         } catch (reloadError) {
-          console.error('Hot reload failed:', reloadError);
+          // (suppressed)
           await editStatus('⚠️ **Hot reload failed**\nFalling back to normal update...');
           
           await editStatus('✅ **Update Complete!**\nRestarting bot in 3 seconds...');
@@ -2485,7 +2479,7 @@ export default {
           try {
             await run('pm2 restart all', 10000);
           } catch {
-            console.log('PM2 restart failed, exiting process...');
+            // (suppressed)
             process.exit(0);
           }
         }
@@ -2502,13 +2496,13 @@ export default {
         try {
           await run('pm2 restart all', 10000);
         } catch {
-          console.log('PM2 restart failed, exiting process...');
+          // (suppressed)
           process.exit(0);
         }
       }
       
     } catch (err) {
-      console.error('Update failed:', err);
+      // (suppressed)
       
       let errorText = `❌ **Update Failed**\nError: ${err.message || err}\n\n`;
       
