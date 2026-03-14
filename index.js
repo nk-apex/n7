@@ -7649,34 +7649,16 @@ async function main() {
 
         // 4. If all else fails, show login options — but skip readline on any headless/cloud env
         const isRailway = !!(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_NAME || process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_SERVICE_NAME);
-        const isReplit = !!(process.env.REPL_ID || process.env.REPLIT_DEV_DOMAIN);
-        const isCloudEnv = isHeroku || isRailway || isReplit ||
+        const isCloudEnv = isHeroku || isRailway ||
             !!(process.env.RENDER || process.env.RENDER_SERVICE_ID) ||
-            !!(process.env.KOYEB_APP || process.env.KOYEB_REGION) ||
-            !process.stdin.isTTY;
+            !!(process.env.KOYEB_APP || process.env.KOYEB_REGION);
 
         if (isCloudEnv) {
-            console.log(chalk.yellowBright(`
-╔══════════════════════════════════════════════════════════════════════╗
-║              🔐  NO SESSION — CHOOSE A LOGIN METHOD              ║
-╠══════════════════════════════════════════════════════════════════════╣
-║                                                                      ║
-║  OPTION 1 — Pairing Code (pair a new number)                        ║
-║  ─────────────────────────────────────────────                       ║
-║  1. Go to Replit Secrets                                             ║
-║  2. Add:  PHONE_NUMBER = 254712345678  (your number, no +)           ║
-║  3. Restart the bot → pairing code will appear here                  ║
-║                                                                      ║
-║  OPTION 2 — Session ID (restore existing session)                    ║
-║  ─────────────────────────────────────────────────                   ║
-║  1. Go to Replit Secrets                                             ║
-║  2. Add:  SESSION_ID = WOLF-BOT:eyJ...  (your session string)        ║
-║  3. Restart the bot → connects instantly                             ║
-║                                                                      ║
-╚══════════════════════════════════════════════════════════════════════╝`));
-            // Remind once every 10 minutes — not every minute
+            const platformLabel = isRailway ? 'Railway' : isHeroku ? 'Heroku' : 'Cloud';
+            UltraCleanLogger.error(`❌ ${platformLabel} deployment: No valid session found`);
+            UltraCleanLogger.info('💡 Set SESSION_ID in your environment/service variables and restart.');
             setInterval(() => {
-                UltraCleanLogger.warning('⏳ Still waiting for PHONE_NUMBER or SESSION_ID in Secrets — then restart.');
+                UltraCleanLogger.warning('⏳ Waiting for SESSION_ID to be configured — set it in env vars and restart.');
             }, 600000);
             return;
         }
