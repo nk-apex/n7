@@ -22,19 +22,16 @@ function parseVcardNumbers(vcard) {
 function extractNumbersFromQuotedVcf(m) {
     const msgContent = m.message || {};
 
-    // Unwrap ephemerals / view-once wrappers
     const inner =
         msgContent.ephemeralMessage?.message ||
         msgContent.viewOnceMessage?.message ||
         msgContent.documentWithCaptionMessage?.message ||
         msgContent;
 
-    // Direct contact message (single contact shared)
     if (inner.contactMessage?.vcard) {
         return parseVcardNumbers(inner.contactMessage.vcard);
     }
 
-    // Multiple contacts shared at once
     if (inner.contactsArrayMessage?.contacts?.length) {
         const nums = [];
         for (const c of inner.contactsArrayMessage.contacts) {
@@ -43,7 +40,6 @@ function extractNumbersFromQuotedVcf(m) {
         return nums;
     }
 
-    // Reply to a contact/VCF — check contextInfo of text message
     const ctxMsg =
         inner.extendedTextMessage?.contextInfo?.quotedMessage ||
         inner.imageMessage?.contextInfo?.quotedMessage ||
@@ -65,18 +61,58 @@ function extractNumbersFromQuotedVcf(m) {
     return [];
 }
 
+async function sendGroupLinkButton(sock, targetJid, quotedMsg, groupName, inviteLink, memberCount) {
+    const caption =
+        `╭─⌈ ✅ *GROUP CREATED* ⌋\n│\n` +
+        `│ ✧ *Name:* ${groupName}\n` +
+        `│ ✧ *Members:* ${memberCount}\n` +
+        `│ ✧ *Link:* ${inviteLink}\n│\n` +
+        `╰⊷ *Powered by ${getBotName().toUpperCase()}*`;
+
+    const buttons = [
+        {
+            name: 'cta_url',
+            buttonParamsJson: JSON.stringify({
+                display_text: '👥 View Group',
+                url: inviteLink,
+                merchant_url: inviteLink
+            })
+        },
+        {
+            name: 'cta_copy',
+            buttonParamsJson: JSON.stringify({
+                display_text: '📋 Copy Link',
+                copy_code: inviteLink
+            })
+        }
+    ];
+
+    try {
+        const { createRequire } = await import('module');
+        const require = createRequire(import.meta.url);
+        const { sendInteractiveMessage } = require('gifted-btns');
+
+        await sendInteractiveMessage(sock, targetJid, {
+            text: caption,
+            footer: `🐺 ${getBotName()}`,
+            interactiveButtons: buttons
+        });
+    } catch {
+        await sock.sendMessage(targetJid, { text: caption }, { quoted: quotedMsg });
+    }
+}
+
 export default {
   name: "creategroup",
   description: "Create WhatsApp groups automatically",
   category: "owner",
   ownerOnly: true,
   aliases: ["cg", "makegroup", "newgroup"],
-  usage: "<GroupName>  (reply to VCF)  or  <number(s)> <GroupName>",
+  usage: "<GroupName>  or  reply to VCF: <GroupName>  or  <number(s)> <GroupName>",
 
   async execute(sock, m, args, PREFIX, extra) {
     const jid = m.key.remoteJid;
     const { jidManager } = extra;
-    const senderJid = m.key.participant || jid;
 
     const reply = (text) => sock.sendMessage(jid, { text }, { quoted: m });
 
@@ -86,9 +122,10 @@ export default {
     if (args.length === 0 || args[0].toLowerCase() === "help") {
       return reply(
         `╭─⌈ 👥 *CREATE GROUP* ⌋\n│\n` +
-        `├─⊷ *Reply to a VCF/contact:*\n│  └⊷ ${PREFIX}creategroup GroupName\n` +
-        `├─⊷ *Manual numbers:*\n│  └⊷ ${PREFIX}creategroup 254xxx GroupName\n` +
-        `├─⊷ *Multiple numbers:*\n│  └⊷ ${PREFIX}creategroup 254xxx 254yyy GroupName\n` +
+        `├─⊷ *Name only (just you):*\n│  └⊷ \`${PREFIX}creategroup WOLF\`\n` +
+        `├─⊷ *Reply to VCF contact:*\n│  └⊷ \`${PREFIX}creategroup GroupName\`\n` +
+        `├─⊷ *Manual numbers:*\n│  └⊷ \`${PREFIX}creategroup 254xxx GroupName\`\n` +
+        `├─⊷ *Multiple numbers:*\n│  └⊷ \`${PREFIX}creategroup 254xxx 254yyy GroupName\`\n` +
         `│\n` +
         `├─⊷ *-d "description"*\n│  └⊷ Set group description\n` +
         `├─⊷ *-a*\n│  └⊷ Announce-only mode\n` +
@@ -127,13 +164,10 @@ export default {
 
       const groupName = nameWords.join(' ').trim() || `${getBotName()} Group`;
 
-      // ====== VCF EXTRACTION ======
-      // Try to pull numbers from a quoted/attached VCF if no manual numbers given
+      // ====== VCF EXTRACTION (merges with any manual numbers) ======
       const vcfNumbers = extractNumbersFromQuotedVcf(m);
-      if (vcfNumbers.length > 0) {
-        for (const n of vcfNumbers) {
-          if (!rawNumbers.includes(n)) rawNumbers.push(n);
-        }
+      for (const n of vcfNumbers) {
+        if (!rawNumbers.includes(n)) rawNumbers.push(n);
       }
 
       // ====== VALIDATION ======
@@ -141,41 +175,26 @@ export default {
         return reply(
           `❌ *Group name too long!*\n\n` +
           `Maximum 25 characters — yours has ${groupName.length}.\n` +
-          `💡 Shorten: \`${PREFIX}cg ${groupName.slice(0, 20)} ${rawNumbers.join(' ')}\``
-        );
-      }
-
-      if (rawNumbers.length === 0) {
-        return reply(
-          `❌ *No phone numbers found!*\n\n` +
-          `*Option 1:* Reply to a VCF contact and run:\n` +
-          `\`${PREFIX}creategroup GroupName\`\n\n` +
-          `*Option 2:* Provide numbers manually:\n` +
-          `\`${PREFIX}creategroup 254703397679 Wolf Group\``
+          `💡 Shorten: \`${PREFIX}cg ${groupName.slice(0, 20)}\``
         );
       }
 
       // ====== PREPARE PARTICIPANTS ======
-      const processingMsg = await reply(
-        `⏳ *Creating "${groupName}"…*\n` +
-        (vcfNumbers.length > 0 ? `📋 Loaded ${vcfNumbers.length} number(s) from VCF` : '')
-      );
+      // NOTE: Creator (bot) is added by WhatsApp automatically — do NOT include bot/owner JID
+      // in the participants array or WhatsApp will reject with bad-request.
+      const participants = rawNumbers.map(n => n + '@s.whatsapp.net');
 
-      const validParticipants = [];
+      const srcLabel = vcfNumbers.length > 0
+        ? `📋 ${vcfNumbers.length} contact(s) from VCF`
+        : participants.length > 0
+          ? `📞 ${participants.length} number(s)`
+          : `👤 Just you (solo group)`;
 
-      // Always include the owner
-      const ownerJid = senderJid.includes('@') ? senderJid : senderJid + '@s.whatsapp.net';
-      validParticipants.push(ownerJid);
-
-      for (const num of rawNumbers) {
-        const participantJid = num + '@s.whatsapp.net';
-        if (!validParticipants.includes(participantJid)) {
-          validParticipants.push(participantJid);
-        }
-      }
+      await reply(`⏳ *Creating "${groupName}"…*\n${srcLabel}`);
 
       // ====== CREATE GROUP ======
-      const group = await sock.groupCreate(groupName, validParticipants);
+      // Pass participants array — can be empty (solo group with just creator)
+      const group = await sock.groupCreate(groupName, participants);
 
       if (!group || !group.gid) throw new Error("No group ID returned — creation may have failed.");
 
@@ -183,7 +202,6 @@ export default {
 
       // ====== CONFIGURE GROUP ======
       const botJid = sock.user?.id || sock.userID;
-
       try {
         if (botJid) await sock.groupParticipantsUpdate(groupJid, [botJid], "promote");
       } catch {}
@@ -197,74 +215,66 @@ export default {
         await sock.groupSettingUpdate(groupJid, restrict ? 'locked' : 'unlocked');
       } catch {}
 
+      // Welcome message inside new group
       await sock.sendMessage(groupJid, {
         text: `👋 *Welcome to ${groupName}!*\n\nCreated with ${getBotName()}.\n🤖 Prefix: ${PREFIX}`
       });
 
-      let inviteLink = "Unavailable";
+      // ====== GET INVITE LINK ======
+      let inviteLink = null;
       try {
         const code = await sock.groupInviteCode(groupJid);
         if (code) inviteLink = `https://chat.whatsapp.com/${code}`;
       } catch {}
 
-      // ====== SUCCESS REPORT ======
-      let successMsg =
-        `╭─⌈ ✅ *GROUP CREATED* ⌋\n│\n` +
-        `├─⊷ *Name:* ${groupName}\n` +
-        `├─⊷ *Members:* ${validParticipants.length}\n`;
-
-      if (vcfNumbers.length > 0) {
-        successMsg += `├─⊷ *Source:* 📋 VCF (${vcfNumbers.length} contacts)\n`;
+      // ====== SEND VIEW GROUP BUTTON ======
+      const memberCount = participants.length + 1; // +1 for creator
+      if (inviteLink) {
+        await sendGroupLinkButton(sock, jid, m, groupName, inviteLink, memberCount);
+      } else {
+        await reply(
+          `╭─⌈ ✅ *GROUP CREATED* ⌋\n│\n` +
+          `│ ✧ *Name:* ${groupName}\n` +
+          `│ ✧ *Members:* ${memberCount}\n` +
+          `│ ✧ *Link:* Unavailable (promote bot to admin)\n│\n` +
+          `╰⊷ *Powered by ${getBotName().toUpperCase()}*`
+        );
       }
-
-      if (description) successMsg += `├─⊷ *Description:* ${description}\n`;
-
-      successMsg += `├─⊷ *Members added:*\n`;
-      validParticipants.forEach(p => {
-        const num = p.split('@')[0];
-        const tag = p === ownerJid ? ' 👤 (you)' : '';
-        successMsg += `│  └⊷ +${num}${tag}\n`;
-      });
-
-      successMsg +=
-        `├─⊷ *Link:* ${inviteLink}\n│\n` +
-        `╰⊷ *Powered by ${getBotName().toUpperCase()}*`;
-
-      await reply(successMsg);
 
       // ====== LOG ======
       try {
         const logDir = path.join(__dirname, "../../logs");
         if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
         const logFile = path.join(logDir, "groups.json");
-        const groups = fs.existsSync(logFile) ? JSON.parse(fs.readFileSync(logFile, 'utf8')) : [];
-        groups.push({
+        const existing = fs.existsSync(logFile) ? JSON.parse(fs.readFileSync(logFile, 'utf8')) : [];
+        existing.push({
           id: groupJid, name: groupName,
-          createdBy: senderJid.split('@')[0],
           created: new Date().toISOString(),
-          members: validParticipants.length,
+          members: memberCount,
           vcfSource: vcfNumbers.length > 0,
-          invite: inviteLink
+          invite: inviteLink || 'unavailable'
         });
-        fs.writeFileSync(logFile, JSON.stringify(groups, null, 2));
+        fs.writeFileSync(logFile, JSON.stringify(existing, null, 2));
       } catch {}
 
     } catch (error) {
-      console.error("❌ [CREATEGROUP]", error.message);
-
       let msg = `❌ *Failed to create group*\n\n`;
+
       if (error.message?.includes("bad-request") || error.message?.includes("400")) {
-        msg += `WhatsApp rejected the request.\n\n*Common fixes:*\n• Make sure numbers are registered on WhatsApp\n• Include country code (e.g. 254703397679)\n• Try with fewer members first`;
+        msg +=
+          `WhatsApp rejected the request.\n\n` +
+          `*Common fixes:*\n` +
+          `• Numbers must be registered on WhatsApp\n` +
+          `• Include country code (e.g. \`254703397679\`)\n` +
+          `• Try creating with just a name first:\n` +
+          `  \`${PREFIX}creategroup ${args.filter(a => !/^\d/.test(a)).join(' ') || 'MyGroup'}\``;
       } else if (error.message?.includes("rate") || error.message?.includes("429")) {
         msg += `Rate limited — wait 1–2 minutes and retry.`;
-      } else if (error.message?.includes("participant")) {
-        msg += `One or more numbers are invalid or not on WhatsApp.`;
       } else {
         msg += error.message;
       }
 
-      msg += `\n\n💡 *Example:*\n\`${PREFIX}creategroup 254703397679 Wolf Group\``;
-      await sock.sendMessage(jid, { text: msg }, { quoted: m });
+      await reply(msg);
     }
   },
 };
