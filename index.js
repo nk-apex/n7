@@ -7520,7 +7520,17 @@ async function main() {
             }
         }
         
-        // 3. Check for saved owner number to attempt pairing
+        // 3. Check for PHONE_NUMBER env var (explicit override for pairing)
+        if (process.env.PHONE_NUMBER && process.env.PHONE_NUMBER.trim() !== '') {
+            const envPhone = process.env.PHONE_NUMBER.replace(/[^0-9]/g, '');
+            if (envPhone.length >= 10) {
+                UltraCleanLogger.info(`📱 PHONE_NUMBER env var found: ${envPhone}, auto-pairing...`);
+                await startBot('pair', envPhone);
+                return;
+            }
+        }
+
+        // 3b. Check cache for saved owner number
         if (_cache_owner_data) {
             try {
                 const ownerData = _cache_owner_data;
@@ -7533,7 +7543,25 @@ async function main() {
                 UltraCleanLogger.warning(`Could not load owner data: ${error.message}`);
             }
         }
-        
+
+        // 3c. Direct synchronous SQLite lookup for owner number (cache may not be ready yet)
+        try {
+            const { default: Database } = await import('better-sqlite3');
+            const _db = new Database('./data/bot.sqlite');
+            const row = _db.prepare("SELECT value FROM bot_configs WHERE key='owner_data' LIMIT 1").get();
+            _db.close();
+            if (row && row.value) {
+                const ownerData = JSON.parse(row.value);
+                if (ownerData && ownerData.OWNER_NUMBER) {
+                    UltraCleanLogger.info(`📱 Loaded owner number from DB: ${ownerData.OWNER_NUMBER}, auto-pairing...`);
+                    await startBot('pair', ownerData.OWNER_NUMBER);
+                    return;
+                }
+            }
+        } catch (dbErr) {
+            UltraCleanLogger.warning(`⚠️ Could not read owner number from DB: ${dbErr.message}`);
+        }
+
         // 4. If all else fails, show login options — but skip readline on any headless/cloud env
         const isRailway = !!(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_NAME || process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_SERVICE_NAME);
         const isCloudEnv = isHeroku || isRailway ||
