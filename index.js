@@ -1914,14 +1914,20 @@ class JidManager {
 
         try {
             if (!chatJid.includes('@g.us') && sock && senderJid.includes('@lid')) {
-                const groups = await sock.groupFetchAllParticipating();
-                if (groups) {
-                    for (const [groupId, groupData] of Object.entries(groups)) {
-                        const participants = groupData.participants || [];
-                        for (const p of participants) {
-                            const { phoneNum, lidNum } = extractParticipantInfo(p, sock);
-                            if (phoneNum && lidNum && phoneNum !== lidNum) {
-                                cacheLidPhone(lidNum, phoneNum);
+                const _cooldownKey = `gfap_${senderLidNum}`;
+                const _lastScan = isSudoAsync._scanCooldown?.get(_cooldownKey) || 0;
+                if (Date.now() - _lastScan > 10 * 60 * 1000) {
+                    if (!isSudoAsync._scanCooldown) isSudoAsync._scanCooldown = new Map();
+                    isSudoAsync._scanCooldown.set(_cooldownKey, Date.now());
+                    const groups = await sock.groupFetchAllParticipating();
+                    if (groups) {
+                        for (const [groupId, groupData] of Object.entries(groups)) {
+                            const participants = groupData.participants || [];
+                            for (const p of participants) {
+                                const { phoneNum, lidNum } = extractParticipantInfo(p, sock);
+                                if (phoneNum && lidNum && phoneNum !== lidNum) {
+                                    cacheLidPhone(lidNum, phoneNum);
+                                }
                             }
                         }
                         const resolved = lidPhoneCache.get(senderLidNum) || lidPhoneCache.get(senderFull) || getPhoneFromLid(senderLidNum) || getPhoneFromLid(senderFull);
