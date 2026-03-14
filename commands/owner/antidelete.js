@@ -476,7 +476,8 @@ export async function antideleteStoreMessage(message) {
 
 const recentlyProcessedDeletions = new Map();
 const publicModeChatCooldowns = new Map();
-const PUBLIC_MODE_COOLDOWN_MS = 5000;
+const PUBLIC_MODE_COOLDOWN_MS = 30000; // 30s between sends per group in public mode
+const _groupAdminCache = new Map(); // cache bot admin status per group (5 min TTL)
 
 export async function antideleteHandleUpdate(update) {
     try {
@@ -757,10 +758,41 @@ async function sendToOwnerDM(messageData, deletedByNumber) {
     }
 }
 
+async function isBotAdminInGroup(chatJid) {
+    if (!chatJid?.endsWith('@g.us') || !antideleteState.sock) return false;
+    const now = Date.now();
+    const cached = _groupAdminCache.get(chatJid);
+    if (cached && now - cached.ts < 5 * 60 * 1000) return cached.isAdmin;
+    try {
+        const meta = await antideleteState.sock.groupMetadata(chatJid);
+        const botNum = antideleteState.sock.user?.id?.split('@')[0]?.split(':')[0];
+        const isAdmin = !!meta?.participants?.some(p => {
+            const pNum = p.id?.split('@')[0]?.split(':')[0];
+            return pNum === botNum && (p.admin === 'admin' || p.admin === 'superadmin');
+        });
+        _groupAdminCache.set(chatJid, { isAdmin, ts: now });
+        if (_groupAdminCache.size > 100) {
+            const oldest = _groupAdminCache.keys().next().value;
+            _groupAdminCache.delete(oldest);
+        }
+        return isAdmin;
+    } catch {
+        return false;
+    }
+}
+
 async function sendToChat(messageData, chatJid, deletedByNumber) {
     try {
         if (!antideleteState.sock) return false;
-        
+
+        // If bot is not admin in this group, it cannot send — fall back to owner DM silently
+        if (chatJid?.endsWith('@g.us')) {
+            const botIsAdmin = await isBotAdminInGroup(chatJid);
+            if (!botIsAdmin) {
+                return await sendToOwnerDM(messageData, deletedByNumber);
+            }
+        }
+
         const time = new Date(messageData.timestamp).toLocaleString();
         
         const senderNumber = messageData.realNumber || getRealWhatsAppNumber(messageData.senderJid);
