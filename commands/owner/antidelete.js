@@ -11,6 +11,8 @@ try { giftedBtns = _require('gifted-btns'); } catch (e) {}
 
 const CACHE_CLEAN_INTERVAL = 2 * 60 * 60 * 1000;
 const MAX_MESSAGE_CACHE = 500;
+const MAX_CONCURRENT_DOWNLOADS = 3;
+let _activeDownloads = 0;
 
 let antideleteState = {
     enabled: true,
@@ -281,6 +283,8 @@ function getExtensionFromMime(mimetype) {
 }
 
 async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
+    if (_activeDownloads >= MAX_CONCURRENT_DOWNLOADS) return null;
+    _activeDownloads++;
     try {
         const buffer = await downloadMediaMessage(
             message,
@@ -291,20 +295,15 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
                 reuploadRequest: antideleteState.sock?.updateMediaMessage
             }
         );
-        
-        if (!buffer || buffer.length === 0) {
-            return null;
-        }
-        
-        const maxSize = 10 * 1024 * 1024;
-        if (buffer.length > maxSize) {
-            return null;
-        }
-        
+
+        if (!buffer || buffer.length === 0) return null;
+
+        const maxSize = 3 * 1024 * 1024; // 3MB cap (was 10MB)
+        if (buffer.length > maxSize) return null;
+
         const timestamp = Date.now();
         const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
-        const base64Data = buffer.toString('base64');
-        
+
         antideleteState.mediaCache.set(msgId, {
             type: messageType,
             mimetype: mimetype,
@@ -312,25 +311,25 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
             savedAt: timestamp,
             dbPath: `messages/${msgId}`
         });
-        
-        if (antideleteState.mediaCache.size > 200) {
+
+        if (antideleteState.mediaCache.size > 100) {
             const oldest = antideleteState.mediaCache.keys().next().value;
             antideleteState.mediaCache.delete(oldest);
         }
-        
+
         db.uploadMedia(msgId, buffer, mimetype, 'messages').catch(err => {
             console.error('❌ Antidelete: DB media upload error:', err.message);
         });
-        
+
         console.log(`💾 [ANTIDELETE] Media stored ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
-        
         antideleteState.stats.mediaCaptured++;
-        
         return 'db';
-        
+
     } catch (error) {
         console.error('❌ Antidelete: Media download error:', error.message);
         return null;
+    } finally {
+        _activeDownloads--;
     }
 }
 

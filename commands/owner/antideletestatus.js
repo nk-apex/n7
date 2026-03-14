@@ -12,6 +12,9 @@ try { giftedBtnsAds = _requireAds('gifted-btns'); } catch (e) {}
 
 const CACHE_CLEAN_INTERVAL = 1 * 60 * 60 * 1000;
 const MAX_CACHE_AGE = 3 * 60 * 60 * 1000;
+const MAX_STATUS_AGE_FOR_DOWNLOAD = 120 * 1000; // skip media older than 2 min (backlog)
+const MAX_CONCURRENT_DOWNLOADS = 2;
+let _activeDownloads = 0;
 
 let statusAntideleteState = {
     enabled: true,
@@ -259,7 +262,14 @@ function getRealWhatsAppNumber(jid) {
     }
 }
 
-async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype) {
+async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype, statusTimestamp) {
+    // Skip media for old statuses (backlog from initial sync) — prevents memory bomb on restart
+    if (statusTimestamp && (Date.now() - statusTimestamp) > MAX_STATUS_AGE_FOR_DOWNLOAD) {
+        return null;
+    }
+    // Concurrency cap — never download more than MAX_CONCURRENT_DOWNLOADS at once
+    if (_activeDownloads >= MAX_CONCURRENT_DOWNLOADS) return null;
+    _activeDownloads++;
     try {
         const buffer = await downloadMediaMessage(
             message,
@@ -271,19 +281,14 @@ async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype)
             }
         );
 
-        if (!buffer || buffer.length === 0) {
-            return null;
-        }
+        if (!buffer || buffer.length === 0) return null;
 
-        const maxSize = 5 * 1024 * 1024;
-        if (buffer.length > maxSize) {
-            return null;
-        }
+        const maxSize = 2 * 1024 * 1024; // 2MB cap per status (was 5MB)
+        if (buffer.length > maxSize) return null;
 
         const timestamp = Date.now();
         const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
-        const base64Data = buffer.toString('base64');
-        
+
         let storagePath = null;
         try {
             storagePath = await db.uploadMedia(msgId, buffer, mimetype, 'statuses');
@@ -298,20 +303,20 @@ async function downloadAndSaveStatusMedia(msgId, message, messageType, mimetype)
             dbPath: storagePath || `statuses/${msgId}`
         });
 
-        if (statusAntideleteState.mediaCache.size > 100) {
+        if (statusAntideleteState.mediaCache.size > 50) {
             const oldest = statusAntideleteState.mediaCache.keys().next().value;
             statusAntideleteState.mediaCache.delete(oldest);
         }
-        
-        console.log(`💾 [STATUS ANTIDELETE] Media stored in DB ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
-        
+
+        console.log(`💾 [STATUS ANTIDELETE] Media stored ✅ | Type: ${messageType} | Size: ${sizeMB}MB | ID: ${msgId.slice(0, 12)}...`);
         statusAntideleteState.stats.mediaCaptured++;
-        
         return 'db';
 
     } catch (error) {
         console.error('❌ Status Antidelete: Media download error:', error.message);
         return null;
+    } finally {
+        _activeDownloads--;
     }
 }
 
@@ -425,6 +430,9 @@ export async function statusAntideleteStoreMessage(message) {
         };
 
         statusAntideleteState.statusCache.set(msgId, statusData);
+        if (statusAntideleteState.statusCache.size > 300) {
+            statusAntideleteState.statusCache.delete(statusAntideleteState.statusCache.keys().next().value);
+        }
         statusAntideleteState.stats.totalStatuses++;
 
         try {
@@ -433,9 +441,10 @@ export async function statusAntideleteStoreMessage(message) {
 
         if (statusInfo.hasMedia && statusInfo.mediaInfo) {
             const delay = Math.random() * 2000 + 1000;
+            const _statusTs = statusInfo.timestamp || Date.now();
             setTimeout(async () => {
                 try {
-                    await downloadAndSaveStatusMedia(msgId, statusInfo.mediaInfo.message, statusInfo.type, statusInfo.mimetype);
+                    await downloadAndSaveStatusMedia(msgId, statusInfo.mediaInfo.message, statusInfo.type, statusInfo.mimetype, _statusTs);
                 } catch (error) {
                     console.error('❌ Status Antidelete: Async media download failed:', error.message);
                 }
