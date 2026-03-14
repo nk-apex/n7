@@ -12,11 +12,6 @@
       "description": "REQUIRED: Your WhatsApp session ID. Must begin with 'WOLF-BOT:'",
       "value": "",
       "required": true
-    },
-    "NODE_ENV": {
-      "description": "Environment mode",
-      "value": "production",
-      "required": false
     }
   },
   "formation": {
