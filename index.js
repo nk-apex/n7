@@ -6335,6 +6335,7 @@ async function handleViewOnceDetection(sock, msg) {
         const sender = msg.key.participant || msg.key.remoteJid;
         const senderShort = sender.split('@')[0].split(':')[0];
 
+        originalConsoleMethods.log(`🔐 [AV] Detected ${type} viewOnce from ${senderShort}, downloading...`);
 
         const cleanMedia = { ...media };
         delete cleanMedia.viewOnce;
@@ -6359,6 +6360,7 @@ async function handleViewOnceDetection(sock, msg) {
                 new Promise((_, rej) => setTimeout(() => rej(new Error('dl_timeout')), DL_TIMEOUT))
             ]);
         } catch (dlErr1) {
+            originalConsoleMethods.log(`⚠️ [AV] DL method 1 failed (${dlErr1.message}), trying fallback 2...`);
             try {
                 const stream = await Promise.race([
                     downloadContentFromMessage(cleanMedia, type),
@@ -6371,6 +6373,7 @@ async function handleViewOnceDetection(sock, msg) {
                 }
                 buffer = Buffer.concat(chunks);
             } catch (dlErr2) {
+                originalConsoleMethods.log(`⚠️ [AV] DL method 2 failed (${dlErr2.message}), trying fallback 3...`);
                 try {
                     const stream2 = await Promise.race([
                         downloadContentFromMessage(media, type),
@@ -6383,14 +6386,17 @@ async function handleViewOnceDetection(sock, msg) {
                     }
                     buffer = Buffer.concat(chunks2);
                 } catch (dlErr3) {
+                    originalConsoleMethods.log(`❌ [AV] All 3 download methods failed: ${dlErr3.message}`);
                     return;
                 }
             }
         }
 
         if (!buffer || buffer.length === 0) {
+            originalConsoleMethods.log(`❌ [AV] Download returned empty buffer`);
             return;
         }
+        originalConsoleMethods.log(`✅ [AV] Downloaded ${type} (${Math.round(buffer.length / 1024)}KB), sending to owner...`);
 
         const sizeKB = Math.round(buffer.length / 1024);
         const timestamp = Date.now();
