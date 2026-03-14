@@ -5281,13 +5281,27 @@ async function startBot(loginMode = 'auto', loginData = null) {
                 || msg.message?.viewOnceMessage || msg.message?.viewOnceMessageV2 || msg.message?.viewOnceMessageV2Extension);
             if (_isOldMsg && !_msgHasMedia) return;
 
-            // Log every incoming text message immediately — nothing should block this
+            // Log every incoming message immediately — covers text AND media
             if (msg.message && msg.key?.remoteJid && !msg.key.fromMe) {
                 const _iJid = msg.key.remoteJid;
                 if (_iJid !== 'status@broadcast') {
                     const _iSenderJid = msg.key.participant || _iJid;
                     const _iRawSender = _iSenderJid.split('@')[0].split(':')[0];
-                    const _iText = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
+                    const _iM = msg.message;
+                    // Determine display text — fall back to media type label if no text
+                    const _iText =
+                        _iM?.conversation ||
+                        _iM?.extendedTextMessage?.text ||
+                        (_iM?.imageMessage   ? `[Image${_iM.imageMessage.caption   ? ': ' + _iM.imageMessage.caption   : ''}]` : null) ||
+                        (_iM?.videoMessage   ? `[Video${_iM.videoMessage.caption   ? ': ' + _iM.videoMessage.caption   : ''}]` : null) ||
+                        (_iM?.audioMessage   ? (_iM.audioMessage.ptt ? '[Voice Note]' : '[Audio]')                              : null) ||
+                        (_iM?.stickerMessage ? '[Sticker]'                                                                      : null) ||
+                        (_iM?.documentMessage ? `[Document: ${_iM.documentMessage.fileName || 'file'}]`                        : null) ||
+                        (_iM?.reactionMessage ? `[Reaction: ${_iM.reactionMessage.text || '?'} → ${(_iM.reactionMessage.key?.id || '').substring(0,8)}]` : null) ||
+                        (_iM?.viewOnceMessage || _iM?.viewOnceMessageV2 || _iM?.viewOnceMessageV2Extension ? '[View-Once Media]' : null) ||
+                        (_iM?.locationMessage ? '[Location]'                                                                    : null) ||
+                        (_iM?.contactMessage  ? `[Contact: ${_iM.contactMessage.displayName || '?'}]`                          : null) ||
+                        null;
                     if (_iText) {
                         const _iIsGroup = _iJid.endsWith('@g.us');
                         const _iResolved = resolvePhoneFromLid(_iSenderJid) || _iRawSender;
