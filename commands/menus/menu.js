@@ -110,7 +110,6 @@ export default {
     
     setLastMenu(style);
 
-    console.log(`\n🐺 [MENU] Command received from: ${jid} | Using style: ${style}`);
 
     try {
       switch (style) {
@@ -2122,7 +2121,6 @@ case 1: {
     await sock.sendMessage(jid, { image: media.buffer, caption: finalCaption, mimetype: "image/jpeg" }, { quoted: fkontak });
   }
   
-  console.log(`✅ ${currentBotName} menu sent with new box style, faded effect, and "Read more" effect`);
   break;
 }
 
@@ -8914,7 +8912,7 @@ case 8: {
    
       }
 
-      console.log("✅ Menu sent successfully");
+      console.log(`\x1b[32m✅ Menu sent\x1b[0m`);
 
     } catch (err) {
       console.error("❌ [MENU] ERROR:", err);
