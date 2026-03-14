@@ -1468,7 +1468,7 @@ const DiskManager = {
         try {
             if (!fs.existsSync(dirPath)) return 0;
             const now = Date.now();
-            const maxAge = (aggressive ? 1 : maxAgeDays) * 24 * 60 * 60 * 1000;
+            const maxAge = aggressive ? 30 * 60 * 1000 : maxAgeDays * 24 * 60 * 60 * 1000;
             const files = await fs.promises.readdir(dirPath);
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
