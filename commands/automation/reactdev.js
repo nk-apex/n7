@@ -24,6 +24,9 @@ export async function handleReactDev(sock, msg) {
     try {
         if (!msg?.key || !msg.message) return;
 
+        // Never react to a reaction message — avoids echo loops
+        if (msg.message.reactionMessage) return;
+
         const ts = msg.messageTimestamp ? Number(msg.messageTimestamp) * 1000 : 0;
         if (ts > 0 && Date.now() - ts > 30000) return;
 

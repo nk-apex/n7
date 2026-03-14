@@ -5305,7 +5305,6 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         (_iM?.audioMessage   ? (_iM.audioMessage.ptt ? '[Voice Note]' : '[Audio]')                              : null) ||
                         (_iM?.stickerMessage ? '[Sticker]'                                                                      : null) ||
                         (_iM?.documentMessage ? `[Document: ${_iM.documentMessage.fileName || 'file'}]`                        : null) ||
-                        (_iM?.reactionMessage ? `[Reaction: ${_iM.reactionMessage.text || '?'} → ${(_iM.reactionMessage.key?.id || '').substring(0,8)}]` : null) ||
                         (_iM?.viewOnceMessage || _iM?.viewOnceMessageV2 || _iM?.viewOnceMessageV2Extension ? '[View-Once Media]' : null) ||
                         (_iM?.locationMessage ? '[Location]'                                                                    : null) ||
                         (_iM?.contactMessage  ? `[Contact: ${_iM.contactMessage.displayName || '?'}]`                          : null) ||
