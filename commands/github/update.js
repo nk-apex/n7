@@ -867,7 +867,7 @@
 //       const stat = await fsPromises.stat(singleEntry);
 //       if (stat.isDirectory()) {
 //         root = singleEntry;
-//         console.log(`Found root directory: ${entries[0]}`);
+//         // root directory found
 //       }
 //     }
     
@@ -1723,9 +1723,9 @@ async function updateViaGit(cleanAfter = false) {
     
     try {
       await run('git remote get-url n7-upstream');
-      console.log('Using existing n7-upstream remote');
+      // existing upstream remote confirmed
     } catch {
-      console.log('Adding n7-upstream remote...');
+      // adding upstream remote
       await run(`git remote add n7-upstream ${GIT_REPO_URL}`);
     }
     
@@ -2073,7 +2073,7 @@ async function copyDirectoryFast(src, dest, timeout = PRESERVE_TIMEOUT) {
 
 /* -------------------- ZIP Update -------------------- */
 async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
-  console.log(`Starting fast ZIP update from: ${zipUrl}`);
+  console.log('Starting update download...');
   
   const tmpDir = path.join(process.cwd(), 'tmp_update_fast_' + Date.now());
   const zipPath = path.join(tmpDir, 'update.zip');
@@ -2121,7 +2121,7 @@ async function updateViaZip(zipUrl = UPDATE_ZIP_URL) {
       const stat = await fsPromises.stat(singleEntry);
       if (stat.isDirectory()) {
         root = singleEntry;
-        console.log(`Found root directory: ${entries[0]}`);
+        // root directory found
       }
     }
     
@@ -2283,7 +2283,7 @@ async function extractZip(zipPath, outDir) {
 /* -------------------- Main Command -------------------- */
 export default {
   name: "update",
-  description: "Update bot from n7 repository with automatic history cleaning",
+  description: "Update bot to the latest version with automatic history cleaning",
   category: "owner",
   ownerOnly: true,
 
