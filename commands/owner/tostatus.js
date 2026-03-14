@@ -69,29 +69,67 @@ async function processQuoted(quoted, captionOverride) {
     };
 }
 
-// Build the statusJidList from all known contacts so every contact
-// receives the sender key and can actually see/decrypt the posted status.
-function buildStatusJidList(sock) {
-    const rawId = globalThis.OWNER_JID || sock.user?.id || '';
+// ─── Contact list cache (rebuilt max once per hour) ──────────────────────────
+let _statusContactsCache = null;
+let _statusContactsCacheTs  = 0;
+const STATUS_CONTACTS_TTL   = 60 * 60 * 1000; // 1 hour
+
+const isValidPnJid = (jid) =>
+    typeof jid === 'string' &&
+    jid.endsWith('@s.whatsapp.net') &&
+    !jid.includes(':');
+
+async function buildStatusJidList(sock) {
+    const rawId   = globalThis.OWNER_JID || sock.user?.id || '';
     const numPart = rawId.split('@')[0].split(':')[0];
     const ownerJid = numPart ? `${numPart}@s.whatsapp.net` : null;
 
+    const now = Date.now();
+    if (_statusContactsCache && (now - _statusContactsCacheTs) < STATUS_CONTACTS_TTL) {
+        const cached = new Set(_statusContactsCache);
+        if (ownerJid) cached.add(ownerJid);
+        return Array.from(cached);
+    }
+
     const jidSet = new Set();
 
-    // Pull from global.contactNames (populated via contacts.upsert events)
+    // Source 1: global.contactNames
     const contactMap = global.contactNames || new Map();
     for (const [jid] of contactMap) {
-        // Only individual @s.whatsapp.net JIDs (no groups, no lid, no device suffix)
-        if (typeof jid === 'string' && jid.endsWith('@s.whatsapp.net') && !jid.includes(':')) {
-            jidSet.add(jid);
+        if (isValidPnJid(jid)) jidSet.add(jid);
+    }
+
+    // Source 2: in-memory groupMetadataCache (fast, populated on-demand)
+    const groupCache = globalThis.groupMetadataCache || new Map();
+    for (const [, entry] of groupCache) {
+        for (const p of (entry?.data?.participants || [])) {
+            if (isValidPnJid(p.id)) jidSet.add(p.id);
         }
     }
 
-    // Always include the owner's own JID
+    // Source 3: live fetch of ALL participating groups (definitive, ~3-5s)
+    try {
+        const groups = await Promise.race([
+            sock.groupFetchAllParticipating(),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000))
+        ]);
+        for (const [, group] of Object.entries(groups)) {
+            for (const p of (group.participants || [])) {
+                if (isValidPnJid(p.id)) jidSet.add(p.id);
+            }
+        }
+        console.log(`📱 [toStatus] Fetched ${Object.keys(groups).length} groups for contact list`);
+    } catch (e) {
+        console.log(`📱 [toStatus] groupFetchAllParticipating skipped: ${e.message}`);
+    }
+
     if (ownerJid) jidSet.add(ownerJid);
 
     const list = Array.from(jidSet);
-    console.log(`📱 [toStatus] statusJidList built: ${list.length} contacts`);
+    _statusContactsCache  = list;
+    _statusContactsCacheTs = now;
+
+    console.log(`📱 [toStatus] statusJidList built: ${list.length} contacts — cached for 1h`);
     return list.length > 0 ? list : (ownerJid ? [ownerJid] : ['0@s.whatsapp.net']);
 }
 
@@ -193,7 +231,7 @@ export default {
 
             await sock.sendMessage(chatId, { react: { text: '⏳', key: msg.key } });
 
-            const statusJidList = buildStatusJidList(sock);
+            const statusJidList = await buildStatusJidList(sock);
             console.log(`📱 [toStatus] Posting ${mediaType} to ${statusJidList.length} contacts`);
 
             const extraOpts = mediaType === 'Text' ? { backgroundColor: bgColor, font } : {};
