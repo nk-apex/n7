@@ -44,10 +44,10 @@ function formatStatus(raw) {
         if (cols.length >= 5) {
             const [id, name, , status, cpu, mem] = cols;
             const icon = status === 'online' ? '🟢' : status === 'stopped' ? '🔴' : '🟡';
-            out.push(`${icon} *${name}* (id:${id}) — ${status.toUpperCase()}\n   CPU: ${cpu || '?'}  MEM: ${mem || '?'}`);
+            out.push(`├⊷ ${icon} *${name}* · ${status} · CPU:${cpu || '?'} · MEM:${mem || '?'}`);
         }
     }
-    return out.length ? out.join('\n\n') : raw.replace(/\x1b\[[0-9;]*m/g, '').trim();
+    return out.length ? out.join('\n') : raw.replace(/\x1b\[[0-9;]*m/g, '').trim();
 }
 
 export default {
@@ -102,7 +102,7 @@ export default {
                 case 'ls': {
                     const raw = await runPm2('pm2 list');
                     const formatted = formatStatus(raw);
-                    const text = `╭─⌈ 📊 *PM2 STATUS* ⌋\n│\n${formatted}\n│\n╰───────────────\n> *${ownerName.toUpperCase()} TECH*`;
+                    const text = `╭─⌈ 📊 *PM2 STATUS* ⌋\n│\n${formatted}\n│\n╰⊷ *${ownerName.toUpperCase()} TECH*`;
                     await sock.sendMessage(chatId, { text }, { quoted: msg });
                     break;
                 }
