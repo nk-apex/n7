@@ -229,7 +229,7 @@ import { exec, execSync } from 'child_process';
 import axios from "axios";
 import { normalizeMessageContent, downloadContentFromMessage, downloadMediaMessage, jidNormalizedUser, generateWAMessageFromContent, proto } from '@whiskeysockets/baileys';
 import NodeCache from 'node-cache';
-import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList } from './lib/sudo-store.js';
+import { isSudoNumber, isSudoJid, getSudoMode, addSudoJid, mapLidToPhone, isSudoByLid, getPhoneFromLid, getSudoList, hasUnmappedSudos } from './lib/sudo-store.js';
 import supabaseDb, { setConfigBotId } from './lib/database.js';
 import { useSQLiteAuthState, getSessionStats } from './lib/authState.js';
 import { getBotName as _getBotName, clearBotNameCache } from './lib/botname.js';
@@ -1914,6 +1914,17 @@ class JidManager {
 
         try {
             if (!chatJid.includes('@g.us') && sock && senderJid.includes('@lid')) {
+                const _alreadyResolved = lidPhoneCache.get(senderLidNum) || lidPhoneCache.get(senderFull) || getPhoneFromLid(senderLidNum) || getPhoneFromLid(senderFull);
+                if (_alreadyResolved) {
+                    if (isSudoNumber(_alreadyResolved)) {
+                        UltraCleanLogger.info(`🔑 Sudo LID resolved from cache: +${_alreadyResolved}`);
+                        return true;
+                    }
+                    return false;
+                }
+
+                if (!hasUnmappedSudos()) return false;
+
                 const _now = Date.now();
                 const _lastGlobalScan = isSudoAsync._lastGlobalScan || 0;
                 const _scanning = isSudoAsync._scanning || false;
@@ -1929,6 +1940,7 @@ class JidManager {
                                     const { phoneNum, lidNum } = extractParticipantInfo(p, sock);
                                     if (phoneNum && lidNum && phoneNum !== lidNum) {
                                         cacheLidPhone(lidNum, phoneNum);
+                                        mapLidToPhone(lidNum, phoneNum);
                                     }
                                 }
                             }
@@ -1937,6 +1949,7 @@ class JidManager {
                         isSudoAsync._scanning = false;
                     }
                 }
+
                 const resolved = lidPhoneCache.get(senderLidNum) || lidPhoneCache.get(senderFull) || getPhoneFromLid(senderLidNum) || getPhoneFromLid(senderFull);
                 if (resolved && isSudoNumber(resolved)) {
                     UltraCleanLogger.info(`🔑 Sudo LID resolved from group scan: +${resolved}`);
