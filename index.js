@@ -2112,13 +2112,8 @@ class NewMemberDetector {
             if (action === 'add' || action === 'invite') {
                 const participants = groupUpdate.participants || [];
                 
-                let groupName = 'Unknown Group';
-                try {
-                    const metadata = await sock.groupMetadata(groupId);
-                    groupName = metadata.subject || 'Unknown Group';
-                } catch {
-                    return null;
-                }
+                const _cachedMeta = groupMetadataCache.get(groupId);
+                const groupName = _cachedMeta?.data?.subject || _cachedMeta?.subject || 'Unknown Group';
                 
                 let cachedMembers = this.groupMembersCache.get(groupId) || new Set();
                 
@@ -2142,7 +2137,8 @@ class NewMemberDetector {
                             if (!sock?.ws?.isOpen) return null;
                             let userName = userJid.split('@')[0];
                             try {
-                                const userInfo = await sock.onWhatsApp(userJid);
+                                const _timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
+                                const userInfo = await Promise.race([sock.onWhatsApp(userJid), _timeout]);
                                 userName = userInfo[0]?.name || userName;
                             } catch {}
                             const userNumber = userJid.split('@')[0];
@@ -5149,10 +5145,11 @@ async function startBot(loginMode = 'auto', loginData = null) {
         sock.ev.on('group-participants.update', async (update) => {
             try {
                 if (memberDetector && memberDetector.enabled && sock?.ws?.isOpen) {
-                    const newMembers = await memberDetector.detectNewMembers(sock, update);
-                    if (newMembers && newMembers.length > 0) {
-                        UltraCleanLogger.info(`👥 Detected ${newMembers.length} new members in group`);
-                    }
+                    memberDetector.detectNewMembers(sock, update).then(newMembers => {
+                        if (newMembers && newMembers.length > 0) {
+                            UltraCleanLogger.info(`👥 Detected ${newMembers.length} new members in group`);
+                        }
+                    }).catch(() => {});
                 }
             } catch (error) {
                 if (!error.message?.includes('Connection Closed')) {
