@@ -5232,8 +5232,11 @@ async function startBot(loginMode = 'auto', loginData = null) {
             
             const _upsertTs = msg.messageTimestamp ? (typeof msg.messageTimestamp === 'object' ? msg.messageTimestamp.low || 0 : Number(msg.messageTimestamp)) * 1000 : 0;
             const _isOldMsg = _upsertTs > 0 && (Date.now() - _upsertTs > 60000 || (connectionOpenTime > 0 && _upsertTs < connectionOpenTime - 30000));
-            
-            if (_isOldMsg) return;
+
+            // Never drop media/view-once messages as "old" — they can arrive slightly delayed
+            const _msgHasMedia = !!(msg.message?.imageMessage || msg.message?.videoMessage || msg.message?.audioMessage
+                || msg.message?.viewOnceMessage || msg.message?.viewOnceMessageV2 || msg.message?.viewOnceMessageV2Extension);
+            if (_isOldMsg && !_msgHasMedia) return;
 
             // Log every incoming text message immediately — nothing should block this
             if (msg.message && msg.key?.remoteJid && !msg.key.fromMe) {
