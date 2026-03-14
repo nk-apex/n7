@@ -7648,52 +7648,20 @@ async function main() {
             }
         }
 
-        // 3b. Check cache for saved owner number
-        if (_cache_owner_data) {
-            try {
-                const ownerData = _cache_owner_data;
-                if (ownerData.OWNER_NUMBER) {
-                    UltraCleanLogger.info(`📱 Found saved owner number: ${ownerData.OWNER_NUMBER}, attempting to reconnect...`);
-                    await startBot('pair', ownerData.OWNER_NUMBER);
-                    return;
-                }
-            } catch (error) {
-                UltraCleanLogger.warning(`Could not load owner data: ${error.message}`);
-            }
-        }
-
-        // 3c. Direct synchronous SQLite lookup for owner number (cache may not be ready yet)
-        try {
-            const { default: Database } = await import('better-sqlite3');
-            const _db = new Database('./data/bot.sqlite');
-            const row = _db.prepare("SELECT value FROM bot_configs WHERE key='owner_data' LIMIT 1").get();
-            _db.close();
-            if (row && row.value) {
-                const ownerData = JSON.parse(row.value);
-                if (ownerData && ownerData.OWNER_NUMBER) {
-                    UltraCleanLogger.info(`📱 Loaded owner number from DB: ${ownerData.OWNER_NUMBER}, auto-pairing...`);
-                    await startBot('pair', ownerData.OWNER_NUMBER);
-                    return;
-                }
-            }
-        } catch (dbErr) {
-            UltraCleanLogger.warning(`⚠️ Could not read owner number from DB: ${dbErr.message}`);
-        }
-
         // 4. If all else fails, show login options — but skip readline on any headless/cloud env
         const isRailway = !!(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_NAME || process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_SERVICE_NAME);
-        const isCloudEnv = isHeroku || isRailway ||
+        const isReplit = !!(process.env.REPL_ID || process.env.REPLIT_DEV_DOMAIN);
+        const isCloudEnv = isHeroku || isRailway || isReplit ||
             !!(process.env.RENDER || process.env.RENDER_SERVICE_ID) ||
             !!(process.env.KOYEB_APP || process.env.KOYEB_REGION) ||
             !process.stdin.isTTY;
 
         if (isCloudEnv) {
-            const platformLabel = isRailway ? 'Railway' : isHeroku ? 'Heroku' : 'Cloud';
-            UltraCleanLogger.error(`❌ ${platformLabel} deployment: No valid session found`);
-            UltraCleanLogger.info('💡 Set SESSION_ID in your environment/service variables and restart.');
-            UltraCleanLogger.info('💡 Example: SESSION_ID=WOLF-BOT:xxxxxxx');
+            UltraCleanLogger.warning('⚠️  No session found — bot is waiting for you to link a device.');
+            UltraCleanLogger.info('💡 To pair:   Set PHONE_NUMBER=<your number> in Secrets and restart.');
+            UltraCleanLogger.info('💡 To restore: Set SESSION_ID=WOLF-BOT:xxx in Secrets and restart.');
             setInterval(() => {
-                UltraCleanLogger.warning('⏳ Waiting for SESSION_ID to be configured — set it in env vars and restart.');
+                UltraCleanLogger.warning('⏳ Still waiting — set PHONE_NUMBER or SESSION_ID in Secrets and restart.');
             }, 60000);
             return;
         }
