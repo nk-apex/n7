@@ -125,7 +125,7 @@ export default {
 
             // ========== SEND WITH MENU IMAGE (WITH FALLBACK) ==========
             try {
-                const media = getMenuMedia ? getMenuMedia() : null;
+                const media = getMenuMedia ? await getMenuMedia() : null;
                 
                 if (media && media.buffer) {
                     if (media.type === 'gif' && media.mp4Buffer) {

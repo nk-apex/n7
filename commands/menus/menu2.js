@@ -134,7 +134,7 @@ export default {
 
     const caption = `${infoHeader}\n\n╭─⌈ 📋 *CATEGORY MENUS* ⌋\n│\n${catList}│\n╰─⊷ *🐺 ${botName}*`;
 
-    const media = getMenuMedia();
+    const media = await getMenuMedia();
     if (media) {
       if (media.type === 'gif' && media.mp4Buffer) {
         await sock.sendMessage(chatId, { video: media.mp4Buffer, gifPlayback: true, caption, mimetype: 'video/mp4' }, { quoted: m });
