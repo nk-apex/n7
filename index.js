@@ -5713,11 +5713,14 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     
                     const reactedKey = reaction.key;
                     const reactedMsgId = reactedKey.id;
-                    const reactedChatId = reactedKey.remoteJid;
+                    // reaction.key.remoteJid is null for fromMe (owner) reactions because Baileys'
+                    // normaliseKey only sets remoteJid for non-fromMe reactions.
+                    // Fallback to reaction.reaction.key.remoteJid (reactor's chat JID) which is always set.
+                    const reactedChatId = reactedKey.remoteJid || reaction.reaction.key?.remoteJid;
                     const reactionEmoji = reaction.reaction.text;
                     const reactorJid = reaction.reaction.key?.participant || reaction.reaction.key?.remoteJid;
                     
-                    if (!reactedChatId || !reactedMsgId) continue;
+                    if (!reactedMsgId) continue;
                     
                     let cachedMsg = getViewOnceFromCache(reactedChatId, reactedMsgId);
                     const fromVoCache = !!cachedMsg;
