@@ -333,6 +333,9 @@ async function downloadAndSaveMedia(msgId, message, messageType, mimetype) {
     }
 }
 
+// Skip messages older than this at startup — prevents backlog flood
+const MAX_ANTIDELETE_AGE_MS = 5 * 60 * 1000; // 5 minutes
+
 export async function antideleteStoreMessage(message) {
     try {
         if (!antideleteState.enabled || !antideleteState.sock) return;
@@ -345,6 +348,9 @@ export async function antideleteStoreMessage(message) {
         const senderJid = msgKey.participantAlt || msgKey.participant || chatJid;
         const pushName = message.pushName || 'Unknown';
         const timestamp = message.messageTimestamp * 1000 || Date.now();
+
+        // Age guard — skip backlog messages delivered at startup to avoid memory flood
+        if (timestamp > 0 && Date.now() - timestamp > MAX_ANTIDELETE_AGE_MS) return;
         
         if (chatJid?.endsWith('@lid') && !chatJid?.endsWith('@g.us')) return;
         
