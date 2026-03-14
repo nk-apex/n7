@@ -1,33 +1,49 @@
-================================================================================
+=========================
   by Silent Wolf
-================================================================================
+=========================
 
-================================================================================
-  TOSTATUS COMMAND — FULL DOCUMENTATION
-  For Baileys-based WhatsApp Bots (Node.js + @whiskeysockets/baileys)
-================================================================================
+=========================
+  TOSTATUS COMMAND
+  Full Documentation
+  Baileys WhatsApp Bots
+  Node.js
+=========================
 
 WHAT IT DOES
 ------------
-The .tostatus command lets the bot owner post content directly to their
-WhatsApp Status (Stories) from a chat. Supports text, images, videos, audio,
-and stickers — either sent directly or by replying to an existing message.
+The .tostatus command lets the bot owner post
+content directly to their WhatsApp Status
+(Stories) from a chat. Supports text, images,
+videos, audio, and stickers — either sent
+directly or by replying to an existing message.
 
 USAGE
 -----
-  .tostatus Hello World            → Post a text status
-  (reply to image) .tostatus       → Post that image as a status
-  (reply to image) .tostatus Hi    → Post that image with "Hi" as caption
-  (reply to video) .tostatus       → Post that video as a status
-  (reply to audio) .tostatus       → Post that audio as a status
-  (send image with caption) .tostatus [caption]  → Post the image
+  .tostatus Hello World
+    → Post a text status
 
-Aliases: .status, .setstatus, .updatestatus, .mystatus, .poststatus
+  (reply to image) .tostatus
+    → Post that image as a status
+
+  (reply to image) .tostatus Hi
+    → Post that image with "Hi" as caption
+
+  (reply to video) .tostatus
+    → Post that video as a status
+
+  (reply to audio) .tostatus
+    → Post that audio as a status
+
+  (send image + caption) .tostatus [caption]
+    → Post that image
+
+Aliases: .status .setstatus .updatestatus
+         .mystatus .poststatus
 Owner-only command.
 
-================================================================================
+=========================
   FILE: commands/owner/tostatus.js
-================================================================================
+=========================
 
 FULL SOURCE CODE
 ----------------
@@ -37,11 +53,12 @@ import { getOwnerName } from '../../lib/menuHelper.js';
 import { getPhoneFromLid } from '../../lib/sudo-store.js';
 
 // Core poster — sends to status@broadcast.
-// index.js bypasses the custom sendMessage wrapper for status@broadcast
-// and routes it straight to Baileys' original sendMessage so that:
-//   • backgroundColor is converted to ARGB int (Baileys' assertColor)
-//   • font is set as an enum number
-//   • messageContextInfo.messageSecret is NOT injected (only for events/polls)
+// index.js bypasses the custom sendMessage
+// wrapper for status@broadcast and routes it
+// straight to Baileys' original sendMessage so:
+//  • backgroundColor → ARGB int (assertColor)
+//  • font → set as enum number
+//  • messageContextInfo.messageSecret NOT added
 async function postPersonalStatus(sock, content, statusJidList, extraOpts = {}) {
     return sock.sendMessage('status@broadcast', content, {
         ...extraOpts,
@@ -49,7 +66,7 @@ async function postPersonalStatus(sock, content, statusJidList, extraOpts = {}) 
     });
 }
 
-// Download media from a quoted/direct message into a Buffer
+// Download media from a quoted/direct message
 async function downloadMedia(message, type) {
     const stream = await downloadContentFromMessage(message, type);
     const chunks = [];
@@ -66,7 +83,7 @@ async function downloadMedia(message, type) {
     };
 }
 
-// Detect the type of a quoted message and prepare the status content object
+// Detect quoted message type and prepare content
 async function processQuoted(quoted, captionOverride) {
     if (quoted.imageMessage) {
         const m = await downloadMedia(quoted.imageMessage, 'image');
@@ -104,24 +121,24 @@ async function processQuoted(quoted, captionOverride) {
     };
 }
 
-// ─── Contact list cache (rebuilt max once per hour) ──────────────────────────
+// Contact list cache — rebuilt max once per hour
 let _statusContactsCache = null;
 let _statusContactsCacheTs  = 0;
-const STATUS_CONTACTS_TTL   = 60 * 60 * 1000; // 1 hour
+const STATUS_CONTACTS_TTL   = 60 * 60 * 1000;
 
 const isValidPnJid = (jid) =>
     typeof jid === 'string' &&
     jid.endsWith('@s.whatsapp.net') &&
     !jid.includes(':');
 
-// Resolve a @lid JID → "phoneNumber@s.whatsapp.net"
-// WhatsApp uses LID (Linked ID) as a privacy-preserving identifier in group
-// participant lists on newer versions. These must be converted to real phone
-// JIDs before they can be used in statusJidList.
+// Resolve @lid JID → phoneNumber@s.whatsapp.net
+// WhatsApp uses LIDs (privacy identifiers) for
+// group participants on newer versions. Must be
+// converted to real phone JIDs for statusJidList.
 // Tries three sources in order:
-//   1. In-memory lidPhoneCache  (fastest, built up as messages arrive)
-//   2. sudo-store DB            (persistent, pre-loaded on startup)
-//   3. Baileys signal repo      (authoritative but slightly slower)
+//  1. lidPhoneCache  (in-memory, fastest)
+//  2. sudo-store DB  (persistent, pre-loaded)
+//  3. Baileys signal repo (authoritative)
 function resolveLidJid(jid, sock) {
     if (!jid || !jid.endsWith('@lid')) return null;
     const lidNum = jid.split('@')[0].split(':')[0];
@@ -141,7 +158,8 @@ function resolveLidJid(jid, sock) {
                     const pn = sig.getPNForLID(fmt);
                     if (pn) {
                         const num = String(pn).split('@')[0].replace(/[^0-9]/g, '');
-                        if (num.length >= 7 && num !== lidNum) return `${num}@s.whatsapp.net`;
+                        if (num.length >= 7 && num !== lidNum)
+                            return `${num}@s.whatsapp.net`;
                     }
                 } catch {}
             }
@@ -151,8 +169,7 @@ function resolveLidJid(jid, sock) {
     return null;
 }
 
-// Add a single participant JID to the set.
-// Handles both plain phone JIDs and LID JIDs transparently.
+// Add a participant JID (phone or lid) to set
 function addParticipant(jid, jidSet, sock) {
     if (!jid) return;
     if (isValidPnJid(jid)) { jidSet.add(jid); return; }
@@ -162,15 +179,16 @@ function addParticipant(jid, jidSet, sock) {
     }
 }
 
-// Build the full list of JIDs that should receive the status encryption key.
-// Without this list being correct, WhatsApp posts the status to its servers
-// but nobody can decrypt/view it — it silently appears to succeed.
-// Pulls from three sources and caches the result for 1 hour:
-//   Source 1 — global.contactNames   (sync events, grows over time)
-//   Source 2 — groupMetadataCache    (in-memory, populated on-demand)
-//   Source 3 — groupFetchAllParticipating() (live, definitive, ~3-10s)
+// Build full list of JIDs that receive the
+// status encryption key. Without this correct,
+// WhatsApp posts the status but nobody can see
+// it — it silently appears to succeed.
+// Sources (combined + cached 1 hour):
+//  1. global.contactNames  (contacts.upsert)
+//  2. groupMetadataCache   (in-memory)
+//  3. groupFetchAllParticipating() (live fetch)
 async function buildStatusJidList(sock) {
-    const rawId   = globalThis.OWNER_JID || sock.user?.id || '';
+    const rawId = globalThis.OWNER_JID || sock.user?.id || '';
     const numPart = rawId.split('@')[0].split(':')[0];
     const ownerJid = numPart ? `${numPart}@s.whatsapp.net` : null;
 
@@ -188,7 +206,8 @@ async function buildStatusJidList(sock) {
 
     const groupCache = globalThis.groupMetadataCache || new Map();
     for (const [, entry] of groupCache) {
-        for (const p of (entry?.data?.participants || [])) addParticipant(p.id, jidSet, sock);
+        for (const p of (entry?.data?.participants || []))
+            addParticipant(p.id, jidSet, sock);
     }
 
     let lidCount = 0, resolvedCount = 0;
@@ -331,208 +350,198 @@ export default {
     }
 };
 
-================================================================================
-  REQUIRED CHANGES IN index.js (main file)
-================================================================================
+=========================
+  REQUIRED CHANGES
+  in index.js (main file)
+=========================
 
-Your index.js needs the following things present for tostatus.js to work.
-If your bot already has them (common in most Baileys setups) you're good to go.
-Check each one and add any that are missing.
+Your index.js needs the following things for
+tostatus.js to work. Check each one and add
+any that are missing.
 
-─────────────────────────────────────────────────────────────────────────────
-1. STATUS@BROADCAST BYPASS (Critical — without this, statuses fail silently)
-─────────────────────────────────────────────────────────────────────────────
-When your bot wraps sock.sendMessage (e.g. to log or store messages), status
-posts break because the wrapper injects fields like messageContextInfo that
-WhatsApp rejects for status updates. You must bypass the wrapper for
-status@broadcast and call Baileys' original sendMessage directly.
+-------------------------
+1. STATUS@BROADCAST BYPASS
+   (Critical — without this, posts fail silently)
+-------------------------
+When your bot wraps sock.sendMessage (to log or
+store messages), status posts break because the
+wrapper injects fields WhatsApp rejects. You must
+bypass the wrapper for status@broadcast.
 
-Add this BEFORE any custom sendMessage wrapper:
+Add BEFORE your custom sendMessage wrapper:
 
     const originalSendMessage = sock.sendMessage.bind(sock);
 
-Then inside your wrapper, add this as the FIRST check:
+Then inside your wrapper as the FIRST check:
 
     sock.sendMessage = async (jid, content, options = {}, ...rest) => {
-        // Always bypass wrapper for status posts
         if (jid === 'status@broadcast') {
             return originalSendMessage(jid, content, options, ...rest);
         }
         // ... rest of your wrapper
     };
 
-─────────────────────────────────────────────────────────────────────────────
-2. GLOBAL LIDS PHONE CACHE (Required for LID resolution)
-─────────────────────────────────────────────────────────────────────────────
-WhatsApp's multi-device protocol uses LID JIDs (e.g. 12345@lid) in group
-participant lists instead of plain phone numbers. You need a global Map that
-translates LIDs to phone numbers, populated as messages come in.
-
-Add near the top of index.js (after sock is created):
+-------------------------
+2. GLOBAL LID PHONE CACHE
+   (Required for LID resolution)
+-------------------------
+WhatsApp uses LID JIDs (e.g. 12345@lid) in group
+participant lists. You need a global Map that
+translates LIDs to phone numbers.
 
     const lidPhoneCache = new Map();
     globalThis.lidPhoneCache = lidPhoneCache;
 
-Then populate it whenever you resolve a LID anywhere in your message handler:
+Populate it whenever you resolve a LID:
 
-    // Example: when you figure out a sender's phone from their LID
     const lidNum = senderJid.split('@')[0].split(':')[0];
     lidPhoneCache.set(lidNum, resolvedPhoneNumber);
 
-The more messages your bot processes, the more LIDs get resolved.
-
-─────────────────────────────────────────────────────────────────────────────
-3. GLOBAL GROUP METADATA CACHE (Speeds up contact list building)
-─────────────────────────────────────────────────────────────────────────────
-This is an in-memory cache of group metadata (including participant lists)
-already fetched during normal bot operation.
-
+-------------------------
+3. GLOBAL GROUP METADATA CACHE
+   (Speeds up contact list building)
+-------------------------
     const groupMetadataCache = new Map();
     globalThis.groupMetadataCache = groupMetadataCache;
 
-Populate it when fetching group metadata:
-
     async function getGroupMeta(chatId) {
         const cached = groupMetadataCache.get(chatId);
-        if (cached && Date.now() - cached.ts < 5 * 60 * 1000) return cached.data;
+        if (cached && Date.now() - cached.ts < 5 * 60 * 1000)
+            return cached.data;
         const metadata = await sock.groupMetadata(chatId);
         groupMetadataCache.set(chatId, { data: metadata, ts: Date.now() });
         return metadata;
     }
 
-─────────────────────────────────────────────────────────────────────────────
-4. GLOBAL OWNER JID (Required)
-─────────────────────────────────────────────────────────────────────────────
-The owner's JID must be exposed globally so the command can always include
-the owner in the recipient list regardless of how many contacts loaded.
-
-    global.OWNER_JID = '254712345678@s.whatsapp.net'; // use your number
+-------------------------
+4. GLOBAL OWNER JID
+   (Required)
+-------------------------
+    global.OWNER_JID = '254712345678@s.whatsapp.net';
     globalThis.OWNER_JID = global.OWNER_JID;
 
-─────────────────────────────────────────────────────────────────────────────
-5. GLOBAL CONTACT NAMES MAP (Optional but improves coverage)
-─────────────────────────────────────────────────────────────────────────────
-A Map populated via Baileys' contacts.upsert event. Gives extra contacts
-beyond group participants (e.g. people you've DM'd but share no group with).
-
+-------------------------
+5. GLOBAL CONTACT NAMES MAP
+   (Optional but improves coverage)
+-------------------------
     global.contactNames = global.contactNames || new Map();
 
     sock.ev.on('contacts.upsert', (contacts) => {
         for (const contact of contacts) {
             if (!contact.id) continue;
-            const jidKey = contact.id.includes('@') ? contact.id : `${contact.id}@s.whatsapp.net`;
-            const displayName = contact.notify || contact.name || contact.verifiedName || '';
+            const jidKey = contact.id.includes('@')
+                ? contact.id
+                : `${contact.id}@s.whatsapp.net`;
+            const displayName = contact.notify || contact.name || '';
             if (displayName) global.contactNames.set(jidKey, displayName);
         }
     });
 
-─────────────────────────────────────────────────────────────────────────────
-6. LID_MAP TABLE IN SQLITE (Required if using sudo-store.js's getPhoneFromLid)
-─────────────────────────────────────────────────────────────────────────────
-The tostatus.js imports getPhoneFromLid from lib/sudo-store.js. This function
-reads from an SQLite table called lid_map. Make sure this table exists:
-
+-------------------------
+6. LID_MAP SQLITE TABLE
+   (Required if using sudo-store.js)
+-------------------------
     CREATE TABLE IF NOT EXISTS lid_map (
         lid TEXT PRIMARY KEY,
         phone_number TEXT NOT NULL
     );
 
-If you don't use sudo-store.js, you can remove the import line from tostatus.js:
+If you don't use sudo-store.js, remove this
+from tostatus.js:
 
-    // Remove this line:
     import { getPhoneFromLid } from '../../lib/sudo-store.js';
 
-    // And remove the "Source 2" block in resolveLidJid:
+And remove the "Source 2" block in resolveLidJid:
+
     // const stored = getPhoneFromLid(lidNum);
     // if (stored) return `${stored}@s.whatsapp.net`;
 
-================================================================================
-  HOW IT ALL WORKS — THE FULL PICTURE
-================================================================================
+=========================
+  HOW IT ALL WORKS
+=========================
 
 WHY statusJidList EXISTS
 ------------------------
-When you post to WhatsApp Status, the message is end-to-end encrypted. WhatsApp
-uses a protocol called Signal (same as Signal messenger). To encrypt a group
-broadcast like a status, WhatsApp creates a "sender key" — a shared secret.
+WhatsApp Status is end-to-end encrypted using
+the Signal protocol. To encrypt a broadcast,
+WhatsApp creates a "sender key" — a shared
+secret distributed to all viewers.
 
-statusJidList tells Baileys: "send this sender key to all these people so they
-can decrypt and view my status."
+statusJidList tells Baileys:
+"send this key to all these people so they can
+decrypt and view my status."
 
 If the list is wrong or empty:
-  - The status posts successfully to WhatsApp's servers (you get a message ID)
+  - Status posts to WhatsApp servers (you get
+    a message ID — looks like success)
   - But nobody receives the decryption key
-  - So everyone's app silently shows nothing — the status is invisible
+  - Everyone's app shows nothing silently
 
-That's why "Posted successfully" in logs doesn't mean "visible to everyone."
+That's why "Posted successfully" in logs doesn't
+mean "visible to everyone."
 
 THE LID PROBLEM
 ---------------
-WhatsApp's newer multi-device protocol identifies group participants using
-LIDs (Linked IDs) — opaque numeric identifiers like 12345678@lid — instead
-of phone numbers. This is a privacy feature.
+WhatsApp's multi-device protocol identifies group
+participants using LIDs (Linked IDs) like
+12345678@lid instead of phone numbers.
 
-When this bot calls sock.groupFetchAllParticipating(), it gets back all groups.
-But every participant's id field looks like "98765432@lid" instead of
-"254712345678@s.whatsapp.net". So if you just filter for @s.whatsapp.net JIDs,
-you get 0 contacts from groups — exactly the bug that was happening here.
+When you call groupFetchAllParticipating(), every
+participant's id looks like "98765432@lid" not
+"254712345678@s.whatsapp.net". Filtering for
+@s.whatsapp.net gives 0 contacts — that was
+exactly the bug causing statuses to be invisible.
 
 THE FIX
 -------
-resolveLidJid() converts @lid → @s.whatsapp.net using three fallback sources:
-  1. globalThis.lidPhoneCache  — built up as the bot processes messages
-  2. getPhoneFromLid()         — queries the lid_map SQLite table (persistent)
-  3. sock.signalRepository.lidMapping.getPNForLID() — Baileys' built-in lookup
+resolveLidJid() converts @lid to @s.whatsapp.net:
+  1. globalThis.lidPhoneCache  (in-memory)
+  2. getPhoneFromLid()         (SQLite lid_map)
+  3. sock.signalRepository
+       .lidMapping.getPNForLID() (Baileys built-in)
 
-The more the bot runs, the more LIDs get resolved automatically.
+More bot runtime = more LIDs resolved.
 
 THE 1-HOUR CACHE
 ----------------
-Building the contact list means fetching all groups from WhatsApp (slow).
-The result is cached for 1 hour. First .tostatus call each hour takes ~3-10s.
-All subsequent calls within that hour are instant.
+Fetching all groups is slow. The contact list is
+cached for 1 hour. First call per hour takes
+~3-10s. All calls after that are instant.
 
 FIRST RUN BEHAVIOUR
 -------------------
   ⏳ reaction appears immediately
-  ~3-10 seconds: fetches all groups, resolves LIDs
-  ✅ reaction appears: status is posted
-  Bot replies: "✅ Status Posted! ... Recipients: 450"
+  ~3-10s: fetches groups, resolves LIDs
+  ✅ reaction: status is posted
+  Reply: "Status Posted! Recipients: 450"
 
-================================================================================
-  DEPENDENCIES
-================================================================================
-
-  @whiskeysockets/baileys   — WhatsApp Web API
-  lib/menuHelper.js         — getOwnerName() function (returns bot name string)
-  lib/sudo-store.js         — getPhoneFromLid() (SQLite LID→phone lookup)
-
-================================================================================
+=========================
   TROUBLESHOOTING
-================================================================================
+=========================
 
-Problem:  "Recipients: 1" or very low count
-Cause:    Most LIDs couldn't be resolved — DB doesn't have them yet
-Fix:      Let the bot run for a while processing messages to build up the cache.
-          More messages = more LID mappings saved. The count grows over time.
+Problem:  Recipients: 1 or very low number
+Cause:    LIDs not yet resolved — DB is new
+Fix:      Let bot run and process messages.
+          More messages = more LID mappings.
 
-Problem:  Status posts but not visible on phone
-Cause:    The phone itself isn't in the recipient list with the correct JID
-Fix:      Make sure globalThis.OWNER_JID is set to your exact phone number JID
-          e.g. "254712345678@s.whatsapp.net" (no +, no spaces, no :device)
+Problem:  Status posts but phone can't see it
+Cause:    Your phone JID not in recipient list
+Fix:      Make sure globalThis.OWNER_JID is set
+          e.g. "254712345678@s.whatsapp.net"
 
-Problem:  "groupFetchAllParticipating skipped: timeout"
-Cause:    WhatsApp took >15 seconds to return group list (rare)
-Fix:      Status still posts using whatever contacts were in sources 1 and 2.
-          Retry after a moment — next call hits the 1h cache if it built.
+Problem:  groupFetchAllParticipating timeout
+Cause:    WhatsApp took >15s (rare)
+Fix:      Status still posts with sources 1+2.
+          Retry — cache will build next call.
 
 Problem:  "connection closed" error
-Cause:    Bot disconnected mid-post (common if posting large video)
-Fix:      Reconnect and retry. Large videos (>16MB) will always fail.
+Cause:    Bot disconnected mid-post
+Fix:      Reconnect and retry. Large videos
+          (>16MB) will always fail.
 
 Problem:  Import error for getPhoneFromLid
-Cause:    Your project doesn't have lib/sudo-store.js or that export
-Fix:      Remove the import and the Source 2 block in resolveLidJid as
-          described in the REQUIRED CHANGES section above.
+Cause:    No lib/sudo-store.js in your project
+Fix:      Remove the import and Source 2 block
+          as described in REQUIRED CHANGES above.
 
-================================================================================
+=========================
