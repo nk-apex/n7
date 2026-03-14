@@ -102,6 +102,9 @@ async function sendGroupLinkButton(sock, targetJid, quotedMsg, groupName, invite
     }
 }
 
+const react = (sock, m, emoji) =>
+    sock.sendMessage(m.key.remoteJid, { react: { text: emoji, key: m.key } }).catch(() => {});
+
 export default {
   name: "creategroup",
   description: "Create WhatsApp groups automatically",
@@ -179,26 +182,23 @@ export default {
         );
       }
 
+      // ====== REACT: PROCESSING ======
+      await react(sock, m, '⚙️');
+
       // ====== PREPARE PARTICIPANTS ======
       // NOTE: Creator (bot) is added by WhatsApp automatically — do NOT include bot/owner JID
-      // in the participants array or WhatsApp will reject with bad-request.
       const participants = rawNumbers.map(n => n + '@s.whatsapp.net');
 
-      const srcLabel = vcfNumbers.length > 0
-        ? `📋 ${vcfNumbers.length} contact(s) from VCF`
-        : participants.length > 0
-          ? `📞 ${participants.length} number(s)`
-          : `👤 Just you (solo group)`;
-
-      await reply(`⏳ *Creating "${groupName}"…*\n${srcLabel}`);
-
       // ====== CREATE GROUP ======
-      // Pass participants array — can be empty (solo group with just creator)
       const group = await sock.groupCreate(groupName, participants);
 
-      if (!group || !group.gid) throw new Error("No group ID returned — creation may have failed.");
+      // Baileys may return gid or id depending on version
+      const groupJid = group?.gid || group?.id || group?.data?.id;
 
-      const groupJid = group.gid;
+      if (!groupJid) throw new Error("No group ID returned — creation may have failed.");
+
+      // ====== REACT: SUCCESS ======
+      await react(sock, m, '✅');
 
       // ====== CONFIGURE GROUP ======
       const botJid = sock.user?.id || sock.userID;
@@ -258,6 +258,8 @@ export default {
       } catch {}
 
     } catch (error) {
+      await react(sock, m, '❌');
+
       let msg = `❌ *Failed to create group*\n\n`;
 
       if (error.message?.includes("bad-request") || error.message?.includes("400")) {
