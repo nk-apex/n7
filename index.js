@@ -662,6 +662,7 @@ import { handleGroupParticipantUpdate as antidemoteHandler } from './commands/gr
 import { isWelcomeEnabled, getWelcomeMessage, sendWelcomeMessage } from './commands/group/welcome.js';
 import { isGoodbyeEnabled, getGoodbyeMessage, sendGoodbyeMessage } from './commands/group/goodbye.js';
 import { handleStatusMention as statusMentionHandler } from './commands/group/antistatusmention.js';
+import { setupAntiGroupStatusListener } from './commands/group/antigroupstatus.js';
 
 // Import antidelete system (listeners registered in index.js, always active)
 import { initAntidelete, antideleteStoreMessage, antideleteHandleUpdate, updateAntideleteSock } from './commands/owner/antidelete.js';
@@ -4763,6 +4764,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                     isConflictRecovery = false;
                 }, 300000);
                 startHeartbeat(sock);
+                setupAntiGroupStatusListener(sock);
                 setTimeout(() => {
                     if (isConnected && !isConflictRecovery) handleSuccessfulConnection(sock, loginMode, loginData).catch(() => {});
                 }, 2000);

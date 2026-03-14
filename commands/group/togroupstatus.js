@@ -109,31 +109,15 @@ export default {
     aliases: ['swgc', 'groupstatus', 'tosgroup', 'gs', 'gstatus', 'togroupstatus'],
     description: 'Send group status updates (text, images, videos, audio, stickers)',
     category: 'group',
-    adminOnly: true,
+    adminOnly: false,
 
     async execute(sock, m, args, PREFIX, extra) {
         try {
             const jid = m.key.remoteJid;
-            const sender = m.key.participant || m.key.remoteJid;
 
             if (!jid.endsWith('@g.us')) {
                 return sock.sendMessage(jid, {
                     text: '❌ This command only works in groups!'
-                }, { quoted: m });
-            }
-
-            try {
-                const groupMetadata = await sock.groupMetadata(jid);
-                const participant = groupMetadata.participants.find(p => p.id === sender);
-                const isAdmin = participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
-                if (!isAdmin) {
-                    return sock.sendMessage(jid, {
-                        text: '❌ Only group admins can use this command!'
-                    }, { quoted: m });
-                }
-            } catch {
-                return sock.sendMessage(jid, {
-                    text: '❌ Could not verify admin status.'
                 }, { quoted: m });
             }
 
