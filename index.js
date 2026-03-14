@@ -1914,31 +1914,37 @@ class JidManager {
 
         try {
             if (!chatJid.includes('@g.us') && sock && senderJid.includes('@lid')) {
-                const _cooldownKey = `gfap_${senderLidNum}`;
-                const _lastScan = isSudoAsync._scanCooldown?.get(_cooldownKey) || 0;
-                if (Date.now() - _lastScan > 10 * 60 * 1000) {
-                    if (!isSudoAsync._scanCooldown) isSudoAsync._scanCooldown = new Map();
-                    isSudoAsync._scanCooldown.set(_cooldownKey, Date.now());
-                    const groups = await sock.groupFetchAllParticipating();
-                    if (groups) {
-                        for (const [groupId, groupData] of Object.entries(groups)) {
-                            const participants = groupData.participants || [];
-                            for (const p of participants) {
-                                const { phoneNum, lidNum } = extractParticipantInfo(p, sock);
-                                if (phoneNum && lidNum && phoneNum !== lidNum) {
-                                    cacheLidPhone(lidNum, phoneNum);
+                const _now = Date.now();
+                const _lastGlobalScan = isSudoAsync._lastGlobalScan || 0;
+                const _scanning = isSudoAsync._scanning || false;
+                if (!_scanning && _now - _lastGlobalScan > 10 * 60 * 1000) {
+                    isSudoAsync._scanning = true;
+                    isSudoAsync._lastGlobalScan = _now;
+                    try {
+                        const groups = await sock.groupFetchAllParticipating();
+                        if (groups) {
+                            for (const [groupId, groupData] of Object.entries(groups)) {
+                                const participants = groupData.participants || [];
+                                for (const p of participants) {
+                                    const { phoneNum, lidNum } = extractParticipantInfo(p, sock);
+                                    if (phoneNum && lidNum && phoneNum !== lidNum) {
+                                        cacheLidPhone(lidNum, phoneNum);
+                                    }
                                 }
                             }
                         }
-                        const resolved = lidPhoneCache.get(senderLidNum) || lidPhoneCache.get(senderFull) || getPhoneFromLid(senderLidNum) || getPhoneFromLid(senderFull);
-                        if (resolved && isSudoNumber(resolved)) {
-                            UltraCleanLogger.info(`🔑 Sudo LID resolved from group scan: +${resolved}`);
-                            return true;
-                        }
+                    } finally {
+                        isSudoAsync._scanning = false;
                     }
+                }
+                const resolved = lidPhoneCache.get(senderLidNum) || lidPhoneCache.get(senderFull) || getPhoneFromLid(senderLidNum) || getPhoneFromLid(senderFull);
+                if (resolved && isSudoNumber(resolved)) {
+                    UltraCleanLogger.info(`🔑 Sudo LID resolved from group scan: +${resolved}`);
+                    return true;
                 }
             }
         } catch (err) {
+            isSudoAsync._scanning = false;
             UltraCleanLogger.info(`⚠️ isSudoAsync DM scan error: ${err.message}`);
         }
         
