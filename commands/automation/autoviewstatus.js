@@ -181,8 +181,8 @@ class AutoViewManager {
             const msgKey = message ? Object.keys(message)[0] : null;
             if (msgKey === 'reactionMessage' || msgKey === 'protocolMessage') return false;
 
-            const sender    = statusKey.participant || statusKey.remoteJid;
-            const displayId = sender.split('@')[0].split(':')[0];
+            const resolvedSender = statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
+            const displayId = '+' + resolvedSender.split('@')[0].split(':')[0];
             const msgType   = getMessageType(message);
 
             if (!this.config.enabled || !this.config.settings.markAsSeen) {
@@ -195,7 +195,6 @@ class AutoViewManager {
                 return false;
             }
 
-            logBox(displayId, msgType, `${G}${B}Attempting view...${X}`);
             this.queue.push({ sock, statusKey, displayId });
             this._drain();
             return true;
@@ -234,7 +233,7 @@ class AutoViewManager {
             await sock.readMessages([readKey]);
             this.lastViewTime = Date.now();
             this.addLog(displayId);
-            console.log(`${G}${B}✅ VIEWED${X}${G} [participantPn=${participantToUse?.split('@')[1] || '?'}] → ${displayId}${X}`);
+            console.log(`${G}✅ Viewed ${displayId}${X}`);
         } catch (err) {
             console.log(`${R}${B}❌ VIEW FAILED for ${displayId}: ${err.message}${X}`);
         }

@@ -262,8 +262,8 @@ class AutoReactManager {
         if (this.hasReacted(statusKey)) return;
         if (this.isExcluded(statusKey)) return;
 
-        const sender = statusKey.participant || statusKey.remoteJid;
-        const displayId = sender.split('@')[0].split(':')[0];
+        const resolvedSender = statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
+        const displayId = '+' + resolvedSender.split('@')[0].split(':')[0];
 
         this._queue.push({ sock, statusKey, displayId });
         this._drain();
@@ -327,7 +327,7 @@ class AutoReactManager {
             this.lastReactionTime = Date.now();
             this.markReacted(statusKey);
             this.addLog(displayId, emoji, statusKey.id);
-            console.log(`\x1b[32m\x1b[1m✅ REACTED\x1b[0m\x1b[32m ${emoji} → ${displayId}\x1b[0m`);
+            console.log(`\x1b[32m✅ Reacted to ${displayId} with ${emoji}\x1b[0m`);
 
         } catch (error) {
             if (error.message?.includes('rate-overlimit') || error.message?.includes('rate limit')) {
