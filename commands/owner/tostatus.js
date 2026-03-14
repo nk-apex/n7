@@ -1,202 +1,15 @@
-import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 import { getOwnerName } from '../../lib/menuHelper.js';
-import { getPhoneFromLid } from '../../lib/sudo-store.js';
-
-// ─── Core poster ─────────────────────────────────────────────────────────────
-// Uses sock.sendMessage (routed to Baileys' originalSendMessage for
-// status@broadcast by the index.js bypass) so that:
-//  • backgroundColor is correctly converted to ARGB int via Baileys' assertColor
-//  • font is correctly assigned as an enum number
-//  • messageContextInfo.messageSecret is NOT injected (only valid for events/polls)
-//  • media upload goes through sock.waUploadToServer as normal
-async function postPersonalStatus(sock, content, statusJidList, extraOpts = {}) {
-    return sock.sendMessage('status@broadcast', content, {
-        ...extraOpts,
-        statusJidList
-    });
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-async function downloadMedia(message, type) {
-    const stream = await downloadContentFromMessage(message, type);
-    const chunks = [];
-    for await (const chunk of stream) chunks.push(chunk);
-    return {
-        buffer: Buffer.concat(chunks),
-        mimetype: message.mimetype || (
-            type === 'image'   ? 'image/jpeg'  :
-            type === 'video'   ? 'video/mp4'   :
-            type === 'audio'   ? 'audio/mp4'   :
-            type === 'sticker' ? 'image/webp'  :
-            'application/octet-stream'
-        )
-    };
-}
-
-async function processQuoted(quoted, captionOverride) {
-    if (quoted.imageMessage) {
-        const m = await downloadMedia(quoted.imageMessage, 'image');
-        return {
-            content: { image: m.buffer, mimetype: m.mimetype, caption: captionOverride || quoted.imageMessage.caption || '' },
-            mediaType: 'Image'
-        };
-    }
-    if (quoted.videoMessage) {
-        const m = await downloadMedia(quoted.videoMessage, 'video');
-        return {
-            content: { video: m.buffer, mimetype: m.mimetype, caption: captionOverride || quoted.videoMessage.caption || '' },
-            mediaType: 'Video'
-        };
-    }
-    if (quoted.audioMessage) {
-        const m = await downloadMedia(quoted.audioMessage, 'audio');
-        return {
-            content: { audio: m.buffer, mimetype: m.mimetype || 'audio/mp4', ptt: quoted.audioMessage.ptt || false },
-            mediaType: 'Audio'
-        };
-    }
-    if (quoted.stickerMessage) {
-        const m = await downloadMedia(quoted.stickerMessage, 'sticker');
-        return {
-            content: { image: m.buffer, caption: captionOverride || '' },
-            mediaType: 'Sticker'
-        };
-    }
-    const text = quoted.conversation || quoted.extendedTextMessage?.text || '';
-    const finalText = captionOverride ? `${text}\n\n${captionOverride}` : text;
-    return {
-        content: { text: finalText },
-        mediaType: 'Text'
-    };
-}
-
-// ─── Contact list cache (rebuilt max once per hour) ──────────────────────────
-let _statusContactsCache = null;
-let _statusContactsCacheTs  = 0;
-const STATUS_CONTACTS_TTL   = 60 * 60 * 1000; // 1 hour
-
-const isValidPnJid = (jid) =>
-    typeof jid === 'string' &&
-    jid.endsWith('@s.whatsapp.net') &&
-    !jid.includes(':');
-
-// Resolve a @lid JID → "phoneNumber@s.whatsapp.net"
-// Tries: in-memory lidPhoneCache → sudo-store DB → Baileys signal repo
-function resolveLidJid(jid, sock) {
-    if (!jid || !jid.endsWith('@lid')) return null;
-    const lidNum = jid.split('@')[0].split(':')[0];
-
-    // 1. in-memory cache (globalThis.lidPhoneCache set by index.js)
-    const cached = globalThis.lidPhoneCache?.get(lidNum);
-    if (cached) return `${cached}@s.whatsapp.net`;
-
-    // 2. sudo-store DB (741 entries pre-loaded)
-    const stored = getPhoneFromLid(lidNum);
-    if (stored) return `${stored}@s.whatsapp.net`;
-
-    // 3. Baileys signal repository
-    try {
-        const sig = sock?.signalRepository?.lidMapping;
-        if (sig?.getPNForLID) {
-            const formats = [jid, `${lidNum}:0@lid`, `${lidNum}@lid`];
-            for (const fmt of formats) {
-                try {
-                    const pn = sig.getPNForLID(fmt);
-                    if (pn) {
-                        const num = String(pn).split('@')[0].replace(/[^0-9]/g, '');
-                        if (num.length >= 7 && num !== lidNum) return `${num}@s.whatsapp.net`;
-                    }
-                } catch {}
-            }
-        }
-    } catch {}
-
-    return null;
-}
-
-// Add a participant JID (pn or lid) to the set, resolving lids as needed
-function addParticipant(jid, jidSet, sock) {
-    if (!jid) return;
-    if (isValidPnJid(jid)) { jidSet.add(jid); return; }
-    if (jid.endsWith('@lid')) {
-        const resolved = resolveLidJid(jid, sock);
-        if (resolved) jidSet.add(resolved);
-    }
-}
-
-async function buildStatusJidList(sock) {
-    const rawId   = globalThis.OWNER_JID || sock.user?.id || '';
-    const numPart = rawId.split('@')[0].split(':')[0];
-    const ownerJid = numPart ? `${numPart}@s.whatsapp.net` : null;
-
-    const now = Date.now();
-    if (_statusContactsCache && (now - _statusContactsCacheTs) < STATUS_CONTACTS_TTL) {
-        const cached = new Set(_statusContactsCache);
-        if (ownerJid) cached.add(ownerJid);
-        return Array.from(cached);
-    }
-
-    const jidSet = new Set();
-
-    // Source 1: global.contactNames
-    const contactMap = global.contactNames || new Map();
-    for (const [jid] of contactMap) addParticipant(jid, jidSet, sock);
-
-    // Source 2: in-memory groupMetadataCache
-    const groupCache = globalThis.groupMetadataCache || new Map();
-    for (const [, entry] of groupCache) {
-        for (const p of (entry?.data?.participants || [])) addParticipant(p.id, jidSet, sock);
-    }
-
-    // Source 3: live fetch of ALL participating groups
-    let lidCount = 0, resolvedCount = 0;
-    try {
-        const groups = await Promise.race([
-            sock.groupFetchAllParticipating(),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000))
-        ]);
-        for (const [, group] of Object.entries(groups)) {
-            for (const p of (group.participants || [])) {
-                const before = jidSet.size;
-                if (p.id?.endsWith('@lid')) lidCount++;
-                addParticipant(p.id, jidSet, sock);
-                if (p.id?.endsWith('@lid') && jidSet.size > before) resolvedCount++;
-            }
-        }
-        console.log(`📱 [toStatus] Fetched ${Object.keys(groups).length} groups — ${lidCount} LIDs, resolved ${resolvedCount}`);
-    } catch (e) {
-        console.log(`📱 [toStatus] groupFetchAllParticipating skipped: ${e.message}`);
-    }
-
-    if (ownerJid) jidSet.add(ownerJid);
-
-    const list = Array.from(jidSet);
-    _statusContactsCache  = list;
-    _statusContactsCacheTs = now;
-
-    console.log(`📱 [toStatus] statusJidList built: ${list.length} contacts — cached for 1h`);
-    return list.length > 0 ? list : (ownerJid ? [ownerJid] : ['0@s.whatsapp.net']);
-}
-
-// Force-refresh the Signal session with device 0 before posting.
-// If the cached session is stale the phone silently drops the sender-key
-// distribution (no retry mechanism for <participants> nodes).
-async function refreshSessionForDevice0(sock, numPart) {
-    const device0Jid = `${numPart}:0@s.whatsapp.net`;
-    try {
-        if (sock.assertSessions) {
-            await sock.assertSessions([device0Jid], true);
-            console.log(`[toStatus] Refreshed Signal session for ${device0Jid}`);
-        }
-    } catch (e) {
-        console.warn(`[toStatus] assertSessions warning (non-fatal): ${e.message}`);
-    }
-}
+import {
+    postPersonalStatus,
+    downloadStatusMedia,
+    processQuotedForStatus,
+    buildStatusJidList
+} from '../../lib/statusHelper.js';
 
 // ─── Command ──────────────────────────────────────────────────────────────────
 export default {
     name: 'tostatus',
-    alias: ['status', 'setstatus', 'updatestatus', 'mystatus', 'poststatus'],
+    alias: ['setstatus', 'updatestatus', 'mystatus', 'poststatus'],
     category: 'owner',
     description: 'Post content to your WhatsApp Status (Stories)',
     ownerOnly: true,
@@ -218,7 +31,7 @@ export default {
             '';
 
         const textAfterCmd = rawText
-            .replace(/^[=!#?/.]?(tostatus|status|setstatus|updatestatus|mystatus|poststatus)\s*/i, '')
+            .replace(/^[=!#?/.]?(tostatus|setstatus|updatestatus|mystatus|poststatus)\s*/i, '')
             .trim();
 
         const directImage  = msg.message?.imageMessage;
@@ -246,23 +59,23 @@ export default {
             const font    = 0;
 
             if (directImage && !quotedMsg) {
-                const m = await downloadMedia(directImage, 'image');
+                const m = await downloadStatusMedia(directImage, 'image');
                 const cap = textAfterCmd ||
-                    directImage.caption?.replace(/^[=!#?/.]?(tostatus|status|setstatus|updatestatus|mystatus|poststatus)\s*/i, '').trim() || '';
+                    directImage.caption?.replace(/^[=!#?/.]?(tostatus|setstatus|updatestatus|mystatus|poststatus)\s*/i, '').trim() || '';
                 content   = { image: m.buffer, mimetype: m.mimetype, caption: cap };
                 mediaType = 'Image';
             } else if (directVideo && !quotedMsg) {
-                const m = await downloadMedia(directVideo, 'video');
+                const m = await downloadStatusMedia(directVideo, 'video');
                 const cap = textAfterCmd ||
-                    directVideo.caption?.replace(/^[=!#?/.]?(tostatus|status|setstatus|updatestatus|mystatus|poststatus)\s*/i, '').trim() || '';
+                    directVideo.caption?.replace(/^[=!#?/.]?(tostatus|setstatus|updatestatus|mystatus|poststatus)\s*/i, '').trim() || '';
                 content   = { video: m.buffer, mimetype: m.mimetype, caption: cap };
                 mediaType = 'Video';
             } else if (directAudio && !quotedMsg) {
-                const m = await downloadMedia(directAudio, 'audio');
+                const m = await downloadStatusMedia(directAudio, 'audio');
                 content   = { audio: m.buffer, mimetype: m.mimetype || 'audio/mp4', ptt: directAudio.ptt || false };
                 mediaType = 'Audio';
             } else if (quotedMsg) {
-                const r   = await processQuoted(quotedMsg, textAfterCmd);
+                const r   = await processQuotedForStatus(quotedMsg, textAfterCmd);
                 content   = r.content;
                 mediaType = r.mediaType;
             } else if (textAfterCmd) {
@@ -289,10 +102,6 @@ export default {
             if (content.text)    confirmMsg += `📄 Text: ${content.text.substring(0, 60)}${content.text.length > 60 ? '...' : ''}\n`;
             confirmMsg += `👥 Recipients: ${statusJidList.length}\n⏰ Visible for 24 hours`;
 
-            if (globalThis._debugStatusMode) {
-                confirmMsg += `\n\n🔬 *Debug:* msgId=${result?.key?.id}\nstatusJidList=${JSON.stringify(statusJidList)}`;
-            }
-
             await sock.sendMessage(chatId, { text: confirmMsg }, { quoted: msg });
             console.log(`✅ [toStatus] ${mediaType} posted — msgId: ${result?.key?.id}`);
 
@@ -301,9 +110,9 @@ export default {
             await sock.sendMessage(chatId, { react: { text: '❌', key: msg.key } }).catch(() => {});
 
             let errMsg = `❌ Failed to post status: ${err.message}`;
-            if (/connection closed/i.test(err.message))  errMsg = '❌ Connection dropped. Wait a moment and try again.';
-            else if (/timed?[\s-]?out/i.test(err.message)) errMsg = '❌ Request timed out. Try a smaller file.';
-            else if (/media/i.test(err.message))          errMsg = '❌ Media upload failed. File may be too large (max ~16 MB for video, 30 s max).';
+            if (/connection closed/i.test(err.message))     errMsg = '❌ Connection dropped. Wait a moment and try again.';
+            else if (/timed?[\s-]?out/i.test(err.message))  errMsg = '❌ Request timed out. Try a smaller file.';
+            else if (/media/i.test(err.message))             errMsg = '❌ Media upload failed. File may be too large.';
 
             await sock.sendMessage(chatId, { text: errMsg }, { quoted: msg });
         }
