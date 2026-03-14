@@ -109,7 +109,7 @@ export default {
 
     if (!searchQuery) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🎬 *VIDEO DOWNLOADER* ⌋\n│\n├─⊷ *${p}video <name/URL>*\n│  └⊷ Download from YouTube\n├─⊷ *${p}video <facebook URL>*\n│  └⊷ Download Facebook reel/video\n├─⊷ *Reply to a text message*\n│  └⊷ Uses replied text as search\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
+        text: `╭─⌈ 🎬 *VIDEO DOWNLOADER* ⌋\n│\n├─⊷ *${p}video <name or YouTube URL>*\n│  └⊷ Download YouTube video\n├─⊷ *${p}video <Facebook URL>*\n│  └⊷ Download Facebook reel/video\n├─⊷ Reply to a message to search\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 

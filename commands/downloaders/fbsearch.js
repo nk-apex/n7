@@ -1,15 +1,16 @@
 import axios from 'axios';
+import yts from 'yt-search';
 import { getBotName } from '../../lib/botname.js';
 import { getOwnerName } from '../../lib/menuHelper.js';
 
 const GIFTED_BASE = 'https://api.giftedtech.co.ke/api/download';
 
-function isFacebookUrl(url) {
-  return /facebook\.com|fb\.watch|fb\.com/i.test(url);
+function isFacebookUrl(s) {
+  return /facebook\.com|fb\.watch|fb\.com/i.test(s);
 }
 
 function formatViews(n) {
-  if (!n && n !== 0) return 'N/A';
+  if (!n && n !== 0) return null;
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + 'B';
   if (n >= 1_000_000)     return (n / 1_000_000).toFixed(1) + 'M';
   if (n >= 1_000)         return (n / 1_000).toFixed(1) + 'K';
@@ -26,18 +27,14 @@ async function fetchFbInfo(url) {
     if (res.data?.success && r && (r.links?.length || r.title)) {
       return {
         success: true,
-        title:      r.title     || 'Facebook Video',
-        uploader:   r.uploader  || null,
-        duration:   r.duration  || null,
-        views:      r.view_count ?? null,
-        thumbnail:  r.thumbnail || null,
-        url,
+        title:    r.title     || 'Facebook Video',
+        uploader: r.uploader  || null,
+        duration: r.duration  || null,
+        views:    r.view_count ?? null,
         links: (r.links || []).map(l => ({
-          quality: l.quality || l.resolution || 'Unknown',
-          ext:     l.ext     || 'mp4',
-          url:     l.url     || l.link || ''
-        })).filter(l => l.url),
-        source: 'v2'
+          quality: l.quality || 'Unknown',
+          url:     l.url || l.link || ''
+        })).filter(l => l.url)
       };
     }
   } catch {}
@@ -50,16 +47,13 @@ async function fetchFbInfo(url) {
     const r = res.data?.result;
     if (res.data?.success && (r?.hd_video || r?.sd_video)) {
       const links = [];
-      if (r.hd_video) links.push({ quality: 'HD', ext: 'mp4', url: r.hd_video });
-      if (r.sd_video) links.push({ quality: 'SD', ext: 'mp4', url: r.sd_video });
+      if (r.hd_video) links.push({ quality: 'HD', url: r.hd_video });
+      if (r.sd_video) links.push({ quality: 'SD', url: r.sd_video });
       return {
         success: true,
         title:    r.title    || 'Facebook Video',
         duration: r.duration || null,
-        thumbnail: r.thumbnail || null,
-        url,
-        links,
-        source: 'v1'
+        links
       };
     }
   } catch {}
@@ -70,54 +64,85 @@ async function fetchFbInfo(url) {
 export default {
   name: 'fbsearch',
   aliases: ['fbs', 'fbinfo', 'fbvid'],
-  description: 'Get Facebook video info and download links',
+  description: 'Search Facebook videos or get download links',
   category: 'Downloader',
 
   async execute(sock, m, args, prefix) {
-    const jid  = m.key.remoteJid;
-    const p    = prefix || '.';
+    const jid   = m.key.remoteJid;
+    const p     = prefix || '.';
     const input = args.join(' ').trim() || m.quoted?.text?.trim() || '';
 
     if (!input) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 📘 *FBSEARCH* ⌋\n│\n├─⊷ *${p}fbsearch <Facebook URL>*\n│  └⊷ Get video info + all quality links\n├─⊷ *Reply to a Facebook link*\n│  └⊷ Works with reels, posts & videos\n│\n├─⊷ *Example:*\n│  └⊷ ${p}fbsearch https://fb.watch/...\n│  └⊷ ${p}fbsearch https://www.facebook.com/reel/...\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
-      }, { quoted: m });
-    }
-
-    if (!isFacebookUrl(input)) {
-      return sock.sendMessage(jid, {
-        text: `❌ *Not a Facebook URL*\n\nPlease send a valid Facebook video/reel link.\n\n*Example:*\n• ${p}fbsearch https://www.facebook.com/reel/123456\n• ${p}fbsearch https://fb.watch/abc123`
+        text: `╭─⌈ 📘 *FBSEARCH* ⌋\n│\n├─⊷ *${p}fbsearch <Facebook URL>*\n│  └⊷ Get video info + download links\n├─⊷ *${p}fbsearch <keywords>*\n│  └⊷ Search for Facebook videos\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
     await sock.sendMessage(jid, { react: { text: '🔍', key: m.key } });
 
-    const info = await fetchFbInfo(input);
+    if (isFacebookUrl(input)) {
+      const info = await fetchFbInfo(input);
 
-    if (!info.success) {
-      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
-      return sock.sendMessage(jid, {
-        text: `❌ *Could not fetch video info.*\n\nMake sure the video is public and the URL is correct.\n\nTip: Copy the full URL from the Facebook app.`
-      }, { quoted: m });
+      if (!info.success) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+        return sock.sendMessage(jid, {
+          text: `❌ Could not fetch video info. Make sure the video is public.\n\nTip: Copy the full URL from the Facebook app.`
+        }, { quoted: m });
+      }
+
+      let text = `📘 *Facebook Video*\n\n`;
+      text += `*${info.title}*\n`;
+      if (info.uploader) text += `👤 ${info.uploader}\n`;
+      if (info.duration)  text += `⏱️ ${info.duration}\n`;
+      const v = formatViews(info.views);
+      if (v) text += `👁️ ${v} views\n`;
+
+      if (info.links.length) {
+        text += `\n*Download Links (${info.links.length}):*\n`;
+        info.links.forEach((l, i) => {
+          text += `${i + 1}. ${l.quality} — ${l.url.substring(0, 70)}...\n`;
+        });
+      } else {
+        text += `\n❌ No download links found.\n`;
+      }
+
+      text += `\n💡 Use *${p}video ${input}* to download directly`;
+
+      await sock.sendMessage(jid, { text }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+      console.log(`\x1b[32m✅ [FBSEARCH] ${info.title} — ${info.links.length} links\x1b[0m`);
+      return;
     }
 
-    const qualityList = info.links.length
-      ? info.links.map((l, i) => `│  ${i + 1}. 📹 *${l.quality}* — ${l.url.substring(0, 60)}...`).join('\n')
-      : '│  No download links found';
+    try {
+      const results = await yts(input);
+      const videos = results?.videos?.slice(0, 8) || [];
 
-    let text = `╭─⌈ 📘 *FACEBOOK VIDEO INFO* ⌋\n│\n`;
-    text += `├─⊷ 🎬 *Title:* ${info.title}\n`;
-    if (info.uploader) text += `├─⊷ 👤 *Uploader:* ${info.uploader}\n`;
-    if (info.duration)  text += `├─⊷ ⏱️ *Duration:* ${info.duration}\n`;
-    if (info.views !== null && info.views !== undefined) text += `├─⊷ 👁️ *Views:* ${formatViews(info.views)}\n`;
-    text += `├─⊷ 🔗 *URL:* ${input}\n`;
-    text += `│\n├─⌈ 📥 *Available Downloads (${info.links.length})* ⌋\n`;
-    text += qualityList + '\n';
-    text += `│\n├─⊷ 💡 *Tip:* Use *${p}video <url>* to download directly\n`;
-    text += `╰⊷ *Powered by ${getBotName()}*`;
+      if (!videos.length) {
+        await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+        return sock.sendMessage(jid, { text: `❌ No results found for "${input}"` }, { quoted: m });
+      }
 
-    await sock.sendMessage(jid, { text }, { quoted: m });
-    await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
-    console.log(`\x1b[32m✅ [FBSEARCH] ${info.title} — ${info.links.length} quality options\x1b[0m`);
+      const fbSearchUrl = `https://www.facebook.com/search/videos/?q=${encodeURIComponent(input)}`;
+
+      let text = `📘 *Facebook Search: "${input}"*\n`;
+      text += `🔗 Search on FB: ${fbSearchUrl}\n\n`;
+      text += `_Showing YouTube results for reference:_\n\n`;
+
+      videos.forEach((v, i) => {
+        text += `*${i + 1}. ${v.title}*\n`;
+        text += `🅦 ${v.url}\n`;
+        text += `⏱️ ${v.timestamp || 'N/A'} • 👤 ${v.author?.name || 'Unknown'}\n\n`;
+      });
+
+      text += `💡 Find a video on FB → use *${p}fbsearch <fb_url>* for download links`;
+
+      await sock.sendMessage(jid, { text }, { quoted: m });
+      await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
+      console.log(`\x1b[32m✅ [FBSEARCH] keyword: "${input}" — ${videos.length} YT results\x1b[0m`);
+    } catch (err) {
+      await sock.sendMessage(jid, { react: { text: '❌', key: m.key } });
+      await sock.sendMessage(jid, { text: `❌ Search failed: ${err.message}` }, { quoted: m });
+    }
   }
 };
