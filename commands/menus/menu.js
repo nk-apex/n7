@@ -21,7 +21,9 @@ import os from "os";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { execSync } from "child_process";
+import { exec as _execCb } from "child_process";
+import { promisify } from "util";
+const _execAsync = promisify(_execCb);
 import { getCurrentMenuStyle } from "./menustyle.js";
 import { setLastMenu, getAllFieldsStatus } from "../menus/menuToggles.js";
 import { getBotName as _getBotName } from '../../lib/botname.js';
@@ -38,9 +40,10 @@ let _cachedMenuImage = null;
 let _cachedMenuImageTime = 0;
 let _cachedMenuGif = null;
 let _cachedMenuGifMp4 = null;
+let _menuGifConversionInProgress = false;
 const CACHE_TTL = 10 * 60 * 1000;
 
-function getMenuMedia() {
+async function getMenuMedia() {
   const now = Date.now();
   const gifPath1 = path.join(__dirname, "media", "wolfbot.gif");
   const gifPath2 = path.join(__dirname, "../media/wolfbot.gif");
@@ -55,15 +58,20 @@ function getMenuMedia() {
       try {
         _cachedMenuGif = fs.readFileSync(gifPath);
         _cachedMenuGifMp4 = null;
-        const tmpDir = path.join(process.cwd(), 'tmp');
-        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-        const tmpMp4 = path.join(tmpDir, `menu_gif_cached.mp4`);
-        try {
-          execSync(`ffmpeg -y -i "${gifPath}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}" 2>/dev/null`, { timeout: 30000 });
-          _cachedMenuGifMp4 = fs.readFileSync(tmpMp4);
-          try { fs.unlinkSync(tmpMp4); } catch {}
-        } catch {}
         _cachedMenuImageTime = now;
+        if (!_menuGifConversionInProgress) {
+          _menuGifConversionInProgress = true;
+          const tmpDir = path.join(process.cwd(), 'tmp');
+          if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+          const tmpMp4 = path.join(tmpDir, 'menu_gif_cached.mp4');
+          _execAsync(`ffmpeg -y -i "${gifPath}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${tmpMp4}"`, { timeout: 25000 })
+            .then(() => {
+              try { _cachedMenuGifMp4 = fs.readFileSync(tmpMp4); } catch {}
+              try { fs.unlinkSync(tmpMp4); } catch {}
+            })
+            .catch(() => {})
+            .finally(() => { _menuGifConversionInProgress = false; });
+        }
       } catch {}
     }
     return { type: 'gif', buffer: _cachedMenuGif, mp4Buffer: _cachedMenuGifMp4 };
@@ -2103,7 +2111,7 @@ case 1: {
   finalCaption = createReadMoreEffect(fadedInfoSection, commandsText);
   // ========== END "READ MORE" EFFECT ==========
 
-  const media = getMenuMedia();
+  const media = await getMenuMedia();
   if (!media) {
     await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: fkontak });
     return;
@@ -7096,7 +7104,7 @@ case 6: {
   // Combine info section and commands with read more effect
   finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
 
-  const media = getMenuMedia();
+  const media = await getMenuMedia();
   if (!media) {
     await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: m });
     return;
@@ -8872,7 +8880,7 @@ case 7: {
   const commandsText = categorySections.join(`\n${readMoreSep}\n`);
   finalCaption = `${infoSection}${readMoreSep}\n${commandsText}`;
 
-  const media = getMenuMedia();
+  const media = await getMenuMedia();
   if (!media) {
     await sock.sendMessage(jid, { text: "⚠️ Menu media not found!" }, { quoted: m });
     return;
