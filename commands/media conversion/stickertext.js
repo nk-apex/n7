@@ -1,5 +1,7 @@
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+const execAsync = promisify(exec);
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -96,11 +98,12 @@ export default {
           fs.mkdirSync(framesDir, { recursive: true });
           fs.mkdirSync(outFramesDir, { recursive: true });
 
-          execSync(`ffmpeg -y -i "${inputPath}" -vsync 0 "${framesDir}/frame_%04d.png" 2>/dev/null`, { timeout: 15000 });
+          await execAsync(`ffmpeg -y -i "${inputPath}" -vsync 0 "${framesDir}/frame_%04d.png" 2>/dev/null`, { timeout: 15000 });
 
           let frameRate = '15';
           try {
-            const probeOut = execSync(`ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "${inputPath}" 2>/dev/null`, { timeout: 5000 }).toString().trim();
+            const { stdout: probeRaw } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of csv=p=0 "${inputPath}" 2>/dev/null`, { timeout: 5000 });
+            const probeOut = probeRaw.trim();
             if (probeOut && probeOut.includes('/')) {
               const [num, den] = probeOut.split('/').map(Number);
               if (num && den) frameRate = String(Math.round(num / den));
@@ -115,25 +118,25 @@ export default {
             const framePath = path.join(framesDir, frame);
             const outFramePath = path.join(outFramesDir, frame);
             try {
-              execSync(`ffmpeg -y -i "${framePath}" -vf "${filterStr}" "${outFramePath}" 2>/dev/null`, { timeout: 5000 });
+              await execAsync(`ffmpeg -y -i "${framePath}" -vf "${filterStr}" "${outFramePath}" 2>/dev/null`, { timeout: 5000 });
             } catch {
               fs.copyFileSync(framePath, outFramePath);
             }
           }
 
-          execSync(`ffmpeg -y -framerate ${frameRate} -i "${outFramesDir}/frame_%04d.png" -vcodec libwebp -lossless 0 -compression_level 4 -q:v 40 -loop 0 -preset default -an -vsync 0 -vf "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000" "${outputPath}" 2>/dev/null`, { timeout: 20000 });
+          await execAsync(`ffmpeg -y -framerate ${frameRate} -i "${outFramesDir}/frame_%04d.png" -vcodec libwebp -lossless 0 -compression_level 4 -q:v 40 -loop 0 -preset default -an -vsync 0 -vf "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000" "${outputPath}" 2>/dev/null`, { timeout: 20000 });
 
           fs.rmSync(framesDir, { recursive: true, force: true });
           fs.rmSync(outFramesDir, { recursive: true, force: true });
 
         } else {
-          execSync(`ffmpeg -y -i "${inputPath}" -vf "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000,${filterStr}" -vcodec libwebp -lossless 0 -compression_level 4 -q:v 70 "${outputPath}" 2>/dev/null`, { timeout: 15000 });
+          await execAsync(`ffmpeg -y -i "${inputPath}" -vf "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000,${filterStr}" -vcodec libwebp -lossless 0 -compression_level 4 -q:v 70 "${outputPath}" 2>/dev/null`, { timeout: 15000 });
         }
       } catch (ffErr) {
         console.error('❌ [STICKERTEXT] FFmpeg error:', ffErr.message);
 
         try {
-          execSync(`ffmpeg -y -i "${inputPath}" -vf "${filterStr}" -vcodec libwebp -lossless 0 -q:v 70 "${outputPath}" 2>/dev/null`, { timeout: 15000 });
+          await execAsync(`ffmpeg -y -i "${inputPath}" -vf "${filterStr}" -vcodec libwebp -lossless 0 -q:v 70 "${outputPath}" 2>/dev/null`, { timeout: 15000 });
         } catch {
           cleanup(inputPath, outputPath);
           await sock.sendMessage(jid, { react: { text: "❌", key: m.key } });

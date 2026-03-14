@@ -4117,8 +4117,9 @@ function setupHerokuKeepAlive() {
                 UltraCleanLogger.warning(`⚠️ High memory usage: ${memoryMB}MB`);
                 memoryMonitor.trimCaches(memoryMB > 400);
                 if (global.gc) {
-                    global.gc();
-                    UltraCleanLogger.info('🧹 Forced garbage collection');
+                    setImmediate(() => {
+                        try { global.gc({ type: 'minor' }); } catch { try { global.gc(); } catch {} }
+                    });
                 }
             }
         }, 5 * 60 * 1000); // Every 5 minutes

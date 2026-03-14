@@ -1,7 +1,9 @@
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 let sharp;
 try { sharp = (await import('sharp')).default; } catch { sharp = null; }
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+const execAsync = promisify(exec);
 import fs from 'fs';
 import path from 'path';
 import { getBotName } from '../../lib/botname.js';
@@ -60,7 +62,7 @@ export default {
         const inputPath = path.join(tmpDir, `togif_input_${ts}.mp4`);
         const outputPath = path.join(tmpDir, `togif_output_${ts}.mp4`);
 
-        fs.writeFileSync(inputPath, videoBuffer);
+        await fs.promises.writeFile(inputPath, videoBuffer);
 
         const duration = parseInt(args[0]) || 0;
         let timeLimit = '';
@@ -68,9 +70,9 @@ export default {
           timeLimit = `-t ${Math.min(duration, 60)}`;
         }
 
-        execSync(`ffmpeg -y -i "${inputPath}" ${timeLimit} -vf "fps=15,scale=320:-1:flags=lanczos" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 28 -movflags +faststart -an "${outputPath}" 2>/dev/null`, { timeout: 60000 });
+        await execAsync(`ffmpeg -y -i "${inputPath}" ${timeLimit} -vf "fps=15,scale=320:-1:flags=lanczos" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 28 -movflags +faststart -an "${outputPath}" 2>/dev/null`, { timeout: 60000 });
 
-        const mp4Buffer = fs.readFileSync(outputPath);
+        const mp4Buffer = await fs.promises.readFile(outputPath);
         const fileSizeKB = (mp4Buffer.length / 1024).toFixed(1);
 
         await sock.sendMessage(jid, {
@@ -107,11 +109,11 @@ export default {
           .gif()
           .toBuffer();
 
-        fs.writeFileSync(gifPath, gifBuffer);
+        await fs.promises.writeFile(gifPath, gifBuffer);
 
-        execSync(`ffmpeg -y -i "${gifPath}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${mp4Path}" 2>/dev/null`, { timeout: 20000 });
+        await execAsync(`ffmpeg -y -i "${gifPath}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 23 -movflags +faststart -an "${mp4Path}" 2>/dev/null`, { timeout: 20000 });
 
-        const mp4Buffer = fs.readFileSync(mp4Path);
+        const mp4Buffer = await fs.promises.readFile(mp4Path);
         const fileSizeKB = (mp4Buffer.length / 1024).toFixed(1);
 
         await sock.sendMessage(jid, {
