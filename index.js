@@ -4526,7 +4526,19 @@ async function startBot(loginMode = 'auto', loginData = null) {
             experimentalStore: true,
             fireInitQueries: !isConflictRecovery,
             msgRetryCounterCache,
+            shouldIgnoreJid: (jid) => {
+                // Drop newsletter JIDs and the status broadcast — they generate
+                // events constantly but WolfBot has no use for them at socket level.
+                // Returning true tells Baileys to skip all processing for that JID.
+                if (!jid) return false;
+                if (jid.endsWith('@newsletter')) return true;
+                if (jid === 'status@broadcast') return false; // handled by autoviewstatus
+                return false;
+            },
             getMessage: async (key) => {
+                // Return undefined when message is not cached — this is the correct
+                // Baileys behavior: undefined = "I don't have it, skip retry".
+                // Returning an empty proto object was triggering unnecessary retry logic.
                 try {
                     if (store) {
                         const storeMsg = store.getMessage(key.remoteJid, key.id);
@@ -4534,7 +4546,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
                         if (storeMsg && typeof storeMsg === 'object' && !storeMsg.message) return storeMsg;
                     }
                 } catch {}
-                return proto.Message.fromObject({});
+                return undefined;
             },
             patchMessageBeforeSending: (message) => {
                 const requiresPatch = !!(
