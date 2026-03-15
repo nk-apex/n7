@@ -5,7 +5,7 @@ import { createRequire } from 'module';
 import { isButtonModeEnabled, setButtonMode } from '../../lib/buttonMode.js';
 import { isGiftedBtnsAvailable } from '../../lib/buttonHelper.js';
 import { getOwnerName } from '../../lib/menuHelper.js';
-import { isChannelModeEnabled, setChannelMode, getChannelInfo } from '../../lib/channelMode.js';
+import { isChannelModeEnabled, setChannelMode } from '../../lib/channelMode.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -108,7 +108,6 @@ export default {
             
             const currentLabel = modes[currentMode]?.name || currentMode;
             const channelActive = isChannelModeEnabled();
-            const channelInfo = getChannelInfo();
             return sock.sendMessage(chatId, {
                 text:
                     `╭─⌈ 🤖 *BOT MODE* ⌋\n` +
@@ -129,7 +128,6 @@ export default {
                     `│  └⊷ Normal text responses\n` +
                     `│\n` +
                     `├─⊷ *Current:* ${currentLabel}${buttonsActive ? ' + 🔘 Buttons' : ''}${channelActive ? ' + 📡 Channel' : ''}\n` +
-                    (channelActive ? `├─⊷ *Channel:* ${channelInfo.name}\n` : '') +
                     `│\n` +
                     `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             }, { quoted: msg });
