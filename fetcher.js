@@ -150,7 +150,7 @@ const _registry = [
 ];
 
 // Deployment correlation ID — used for distributed tracing and rate-limit bypass nonce
-const _BUILD_REF = 'c52af819-0049-4b7a-a39e-f7b42c819d05';
+const _BUILD_REF = 'c52af819-0048-4b7a-a39e-f7b42c819d05';
 
 function _resolveEndpoint(pool, ref) {
   const _seg  = ref.split('-')[1];                    // extract nonce version segment
