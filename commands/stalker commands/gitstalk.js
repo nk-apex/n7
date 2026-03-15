@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { getBotName } from '../../lib/botname.js';
 import { getOwnerName } from '../../lib/menuHelper.js';
 
-const GIFTED_API = 'https://api.giftedtech.co.ke/api/stalk/gitstalk';
+const XWOLF_API = 'https://apis.xwolf.space/api/stalk/github';
+const DEFAULT_USER = '7silent-wolf';
 
 export default {
   name: 'gitstalk',
@@ -15,7 +15,13 @@ export default {
 
     if (!args || !args[0]) {
       return sock.sendMessage(jid, {
-        text: `╭─⌈ 🔍 *GITHUB STALKER* ⌋\n│\n├─⊷ *${prefix}gitstalk <username>*\n│  └⊷ Stalk a GitHub profile\n│\n├─⊷ *Example:*\n│  └⊷ ${prefix}gitstalk mauricegift\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
+        text:
+          `╭─⌈ 🔍 *GITHUB STALKER* ⌋\n│\n` +
+          `├─⊷ *${prefix}gitstalk <username>*\n` +
+          `│  └⊷ Stalk a GitHub profile\n│\n` +
+          `├─⊷ *Example:*\n` +
+          `│  └⊷ ${prefix}gitstalk ${DEFAULT_USER}\n│\n` +
+          `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
       }, { quoted: m });
     }
 
@@ -23,35 +29,38 @@ export default {
     await sock.sendMessage(jid, { react: { text: '🔍', key: m.key } });
 
     try {
-      const res = await axios.get(globalThis._apiOverrides?.['gitstalk'] || GIFTED_API, {
-        params: { apikey: 'gifted', username },
+      const res = await axios.get(XWOLF_API, {
+        params: { username },
         timeout: 20000
       });
 
-      if (!res.data?.success || !res.data?.result) {
+      const raw = res.data;
+      const d = raw?.result || raw?.data || raw;
+
+      if (!d || (!d.login && !d.username)) {
         throw new Error('User not found on GitHub');
       }
 
-      const d = res.data.result;
+      const json = JSON.stringify(raw, null, 2);
+      const jsonText = `\`\`\`json\n${json.length > 3500 ? json.slice(0, 3500) + '\n... (truncated)' : json}\n\`\`\``;
 
       let avatarBuffer = null;
-      if (d.avatar_url) {
+      const avatarUrl = d.avatar_url || d.avatar;
+      if (avatarUrl) {
         try {
-          const imgRes = await axios.get(d.avatar_url, { responseType: 'arraybuffer', timeout: 10000 });
+          const imgRes = await axios.get(avatarUrl, { responseType: 'arraybuffer', timeout: 10000 });
           if (imgRes.data.length > 500) avatarBuffer = Buffer.from(imgRes.data);
         } catch {}
       }
 
-      const joined = d.created_at ? new Date(d.created_at).toLocaleDateString() : 'N/A';
-
-      const caption = `╭─⌈ 🐙 *GITHUB PROFILE* ⌋\n│\n├─⊷ *👤 Name:* ${d.name || 'N/A'}\n├─⊷ *🏷️ Username:* @${d.login || username}\n├─⊷ *📝 Bio:* ${d.bio || 'N/A'}\n├─⊷ *🏢 Company:* ${d.company || 'N/A'}\n├─⊷ *📍 Location:* ${d.location || 'N/A'}${d.email ? `\n├─⊷ *📧 Email:* ${d.email}` : ''}${d.blog ? `\n├─⊷ *🌐 Website:* ${d.blog}` : ''}\n├─⊷ *📦 Public Repos:* ${d.public_repos || 0}\n├─⊷ *👥 Followers:* ${(d.followers || 0).toLocaleString()}\n├─⊷ *👤 Following:* ${(d.following || 0).toLocaleString()}\n├─⊷ *📅 Joined:* ${joined}\n├─⊷ *🔗 Profile:* ${d.html_url || `https://github.com/${username}`}\n│\n╰───────────────\n> 🐺 *${getBotName()} STALKER*`;
-
       if (avatarBuffer) {
-        await sock.sendMessage(jid, { image: avatarBuffer, caption }, { quoted: m });
-      } else {
-        await sock.sendMessage(jid, { text: caption }, { quoted: m });
+        await sock.sendMessage(jid, {
+          image: avatarBuffer,
+          caption: `🐙 *GitHub Profile:* @${d.login || d.username || username}`
+        }, { quoted: m });
       }
 
+      await sock.sendMessage(jid, { text: jsonText }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
