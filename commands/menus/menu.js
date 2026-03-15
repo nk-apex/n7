@@ -1014,6 +1014,9 @@ case 1: {
   // Create fake contact for quoted messages
   const fkontak = createFakeContact(m);
   
+  await sock.sendMessage(jid, { text: `⚡ ${currentBotName} menu loading...` }, { quoted: m });
+  await new Promise(resolve => setTimeout(resolve, 800));
+
   // ========== REST OF YOUR EXISTING CODE ==========
   // 🖼️ Full info + image + commands (with individual toggles)
   let finalCaption = "";
@@ -2174,6 +2177,8 @@ case 2: {
   
   // Load bot name and mode
   const botName = _getBotName();
+  await sock.sendMessage(jid, { text: `⚡ ${botName} menu loading...` }, { quoted: m });
+  await new Promise(resolve => setTimeout(resolve, 800));
   const botMode = getBotMode();
   
   // 📝 Text Only
@@ -2435,6 +2440,9 @@ case 3: {
   // Create fake contact for quoted messages
   const fkontak = createFakeContact(m);
   
+  await sock.sendMessage(jid, { text: `⚡ ${currentBotName} menu loading...` }, { quoted: m });
+  await new Promise(resolve => setTimeout(resolve, 800));
+
   // ========== REST OF YOUR EXISTING CODE ==========
   // 🖼️ Full info + commands (with individual toggles)
   let finalCaption = "";
@@ -3366,6 +3374,9 @@ case 4: {
   // Create fake contact for quoted messages
   const fkontak = createFakeContact(m);
   
+  await sock.sendMessage(jid, { text: `⚡ ${currentBotName} menu loading...` }, { quoted: m });
+  await new Promise(resolve => setTimeout(resolve, 800));
+
   // ========== REST OF YOUR EXISTING CODE ==========
   // 📝 Full info + commands (with individual toggles)
   let finalText = "";
@@ -5011,6 +5022,9 @@ case 5: {
   // Create fake contact for quoted messages
   const fkontak = createFakeContact(m);
   
+  await sock.sendMessage(jid, { text: `⚡ ${currentBotName} menu loading...` }, { quoted: m });
+  await new Promise(resolve => setTimeout(resolve, 800));
+
   // ========== REST OF YOUR EXISTING CODE ==========
   // 📝 Full info + commands (with individual toggles)
   let finalText = "";
@@ -6081,7 +6095,9 @@ case 5: {
 
 case 6: {
   const currentBotName = _getBotName();
-  
+  await sock.sendMessage(jid, { text: `⚡ ${currentBotName} menu loading...` }, { quoted: m });
+  await new Promise(resolve => setTimeout(resolve, 800));
+
   // ========== REST OF YOUR EXISTING CODE ==========
   // 🖼️ Full info + image + commands (with individual toggles)
   let finalCaption = "";
@@ -7862,7 +7878,9 @@ case 6: {
 
 case 7: {
   const currentBotName = _getBotName();
-  
+  await sock.sendMessage(jid, { text: `⚡ ${currentBotName} menu loading...` }, { quoted: m });
+  await new Promise(resolve => setTimeout(resolve, 800));
+
   // ========== REST OF YOUR EXISTING CODE ==========
   // 🖼️ Full info + image + commands (with individual toggles)
   let finalCaption = "";
@@ -8803,6 +8821,9 @@ case 7: {
 }
 
 case 8: {
+  const _botName8 = _getBotName();
+  await sock.sendMessage(jid, { text: `⚡ ${_botName8} menu loading...` }, { quoted: m });
+  await new Promise(resolve => setTimeout(resolve, 800));
   const { sendMainMenuButtons } = await import('../../lib/buttonHelper.js');
   const PREFIX = global.prefix || process.env.PREFIX || '.';
   await sendMainMenuButtons(sock, jid, m, PREFIX);

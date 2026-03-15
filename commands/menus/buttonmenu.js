@@ -35,6 +35,8 @@ export default {
             
             const buttonStatus = isButtonModeEnabled ? (isButtonModeEnabled() ? '🟢 ACTIVE' : '🔴 INACTIVE') : '⚪ UNKNOWN';
             const botName = getBotName ? getBotName() : 'WOLFBOT';
+            await sock.sendMessage(chatId, { text: `⚡ ${botName} menu loading...` }, { quoted: m });
+            await new Promise(resolve => setTimeout(resolve, 800));
 
             const categoryMap = {
                 'downloaders': ['play', 'song', 'video', 'tiktok', 'instagram', 'facebook', 'twitter', 'apk', 'mediafire', 'gdrive', 'spotify', 'soundcloud', 'pinterest', 'reddit', 'snack', 'likee', 'capcut'],

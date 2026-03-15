@@ -21,6 +21,8 @@ export default {
     const chatId = m.key.remoteJid;
     const prefix = PREFIX || global.prefix || '.';
     const botName = getBotName();
+    await sock.sendMessage(chatId, { text: `⚡ ${botName} menu loading...` }, { quoted: m });
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     const categories = [
       { name: 'aimenu', icon: '🤖', desc: 'AI commands & models' },

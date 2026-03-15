@@ -1,4 +1,4 @@
-import { sendSubMenu } from '../../lib/menuHelper.js';
+import { sendSubMenu, getBotName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'valentinemenu',
@@ -8,6 +8,9 @@ export default {
 
   async execute(sock, msg, args, PREFIX) {
     const chatId = msg.key.remoteJid;
+    const botName = getBotName();
+    await sock.sendMessage(chatId, { text: `⚡ ${botName} menu loading...` }, { quoted: msg });
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     const commandsText = `╭─⊷ *💕 VALENTINE'S DAY*
 │

@@ -1,4 +1,4 @@
-import { sendSubMenu } from '../../lib/menuHelper.js';
+import { sendSubMenu, getBotName } from '../../lib/menuHelper.js';
 
 export default {
   name: 'stalkermenu',
@@ -8,6 +8,9 @@ export default {
 
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
+    const botName = getBotName();
+    await sock.sendMessage(jid, { text: `⚡ ${botName} menu loading...` }, { quoted: m });
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     const commandsText = `╭─⊷ *📢 WHATSAPP CHANNEL*
 │
