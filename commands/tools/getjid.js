@@ -45,8 +45,12 @@ export default {
           }
         }
       } else {
-        const sender = m.key.participant || chatJid;
-        resolvedJid = await this.resolveJid(sock, sender);
+        if (chatJid.endsWith('@g.us')) {
+          resolvedJid = chatJid;
+        } else {
+          const sender = m.key.participant || chatJid;
+          resolvedJid = await this.resolveJid(sock, sender);
+        }
       }
 
       await this.sendJid(sock, m, resolvedJid);
@@ -81,18 +85,36 @@ export default {
   },
 
   async resolveJid(sock, inputJid) {
+    if (!inputJid) return inputJid;
+
+    if (inputJid.endsWith('@g.us')) return inputJid;
+    if (inputJid.endsWith('@newsletter')) return inputJid;
+
     if (inputJid.endsWith('@lid')) {
+      try {
+        if (sock.signalRepository?.lidMapping?.getPNForLID) {
+          const pn = sock.signalRepository.lidMapping.getPNForLID(inputJid);
+          if (pn) {
+            const num = String(pn).split('@')[0].replace(/\D/g, '');
+            if (num.length >= 7) return `${num}@s.whatsapp.net`;
+          }
+        }
+      } catch {}
+
       try {
         if (sock.store?.contacts) {
           for (const [contactJid, contact] of Object.entries(sock.store.contacts)) {
             if (contact.lid === inputJid || contact.lidJid === inputJid) {
-              return `${contactJid.split('@')[0].replace(/\D/g, '')}@s.whatsapp.net`;
+              const num = contactJid.split('@')[0].replace(/\D/g, '');
+              if (num.length >= 7) return `${num}@s.whatsapp.net`;
             }
           }
         }
       } catch {}
+
       return inputJid;
     }
+
     const number = inputJid.split('@')[0].split(':')[0].replace(/\D/g, '');
     return `${number}@s.whatsapp.net`;
   }
