@@ -10,7 +10,7 @@ export default {
   async execute(sock, m, args, PREFIX) {
     const jid = m.key.remoteJid;
     const botName = getBotName();
-    await sock.sendMessage(jid, { text: `⚡ ${botName} menu loading...` }, { quoted: m });
+    await sock.sendMessage(jid, { text: `funmenu loading...` }, { quoted: m });
     await new Promise(resolve => setTimeout(resolve, 800));
 
     const commandsText = `╭─⊷ *🎭 FUN & TOOLS*

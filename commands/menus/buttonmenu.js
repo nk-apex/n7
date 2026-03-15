@@ -35,7 +35,7 @@ export default {
             
             const buttonStatus = isButtonModeEnabled ? (isButtonModeEnabled() ? '🟢 ACTIVE' : '🔴 INACTIVE') : '⚪ UNKNOWN';
             const botName = getBotName ? getBotName() : 'WOLFBOT';
-            await sock.sendMessage(chatId, { text: `⚡ ${botName} menu loading...` }, { quoted: m });
+            await sock.sendMessage(chatId, { text: `buttonmenu loading...` }, { quoted: m });
             await new Promise(resolve => setTimeout(resolve, 800));
 
             const categoryMap = {
