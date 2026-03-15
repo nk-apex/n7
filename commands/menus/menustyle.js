@@ -76,7 +76,7 @@ const stylePath = path.join(__dirname, "current_style.json");
 export default {
   name: "menustyle",
   alias: ["setmenustyle", "sm", "changemenustyle","cm", "style"],
-  description: "Switch between Wolf menu styles (1–7)",
+  description: "Switch between Wolf menu styles (1–9)",
   category: "owner",
   ownerOnly: true,
   
@@ -127,7 +127,7 @@ export default {
       
       let styleList = `╭─⌈ 🎨 *MENU STYLE* ⌋\n│\n`;
       styleList += `│  📊 Current: Style ${currentStyle}\n│\n`;
-      styleList += `├─⊷ *${PREFIX}menustyle <1-8>*\n`;
+      styleList += `├─⊷ *${PREFIX}menustyle <1-9>*\n`;
       styleList += `│  └⊷ 1️⃣ Image Menu\n`;
       styleList += `│  └⊷ 2️⃣ Text Only\n`;
       styleList += `│  └⊷ 3️⃣ Full Descriptions\n`;
@@ -135,7 +135,8 @@ export default {
       styleList += `│  └⊷ 5️⃣ Faded\n`;
       styleList += `│  └⊷ 6️⃣ Faded + Image\n`;
       styleList += `│  └⊷ 7️⃣ Image + Text\n`;
-      styleList += `│  └⊷ 8️⃣ Buttons (Interactive)\n│\n`;
+      styleList += `│  └⊷ 8️⃣ Buttons (Interactive)\n`;
+      styleList += `│  └⊷ 9️⃣ Full List + Image\n│\n`;
       styleList += `╰───`;
       
       return sock.sendMessage(jid, { 
@@ -147,11 +148,11 @@ export default {
     
     const styleNum = parseInt(args[0]);
     
-    if (isNaN(styleNum) || styleNum < 1 || styleNum > 8) {
+    if (isNaN(styleNum) || styleNum < 1 || styleNum > 9) {
       return sock.sendMessage(
         jid,
         {
-          text: `╭─⌈ ❌ *INVALID STYLE* ⌋\n│\n├─⊷ *${PREFIX}menustyle <1-8>*\n│  └⊷ Valid styles: 1 to 8\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}menustyle 3\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
+          text: `╭─⌈ ❌ *INVALID STYLE* ⌋\n│\n├─⊷ *${PREFIX}menustyle <1-9>*\n│  └⊷ Valid styles: 1 to 9\n│\n├─⊷ *Example:*\n│  └⊷ ${PREFIX}menustyle 3\n│\n╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
         },
         { 
           quoted: m // Reply format
@@ -180,7 +181,8 @@ export default {
         5: 'Faded - Faded aesthetic design',
         6: 'Faded + Image - Faded with image',
         7: 'Image + Text - Balanced layout',
-        8: 'Buttons - Interactive button menus (gifted-btns)'
+        8: 'Buttons - Interactive button menus (gifted-btns)',
+        9: 'Full List + Image - Full command list with image header'
       };
       
       let successMsg = `✅ *Menu Style Updated*\n`;

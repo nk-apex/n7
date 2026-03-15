@@ -8832,6 +8832,777 @@ case 8: {
 }
 
 
+case 9: {
+  const currentBotName = _getBotName();
+  
+  const createFakeContact9 = (message) => {
+    const jid9 = message.key.participant?.split('@')[0] || message.key.remoteJid.split('@')[0];
+    return {
+      key: { remoteJid: "status@broadcast", fromMe: false, id: "WOLF-X" },
+      message: {
+        contactMessage: {
+          displayName: currentBotName,
+          vcard: `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${currentBotName}\nitem1.TEL;waid=${jid9}:${jid9}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`
+        }
+      },
+      participant: "0@s.whatsapp.net"
+    };
+  };
+  
+  const fkontak9 = createFakeContact9(m);
+  
+  await sock.sendMessage(jid, { text: `⚡ ${currentBotName} menu loading...` }, { quoted: m });
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  let finalText9 = "";
+  
+  const createFadedEffect9 = (text) => {
+    const fadeChars = ['\u200D', '\u200C', '\u2060', '\uFEFF'];
+    const initialFade = Array.from({ length: 90 }, (_, i) => fadeChars[i % fadeChars.length]).join('');
+    return `${initialFade}${text}`;
+  };
+  
+  const createReadMoreEffect9 = (text1, text2) => {
+    const invisibleChars = ['\u200E', '\u200F', '\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF'];
+    const invisibleString = Array.from({ length: 550 }, (_, i) => invisibleChars[i % invisibleChars.length]).join('');
+    return `${text1}${invisibleString}\n${text2}`;
+  };
+  
+  const getBotMode9 = () => {
+    try {
+      const possiblePaths = [
+        './bot_mode.json', path.join(__dirname, 'bot_mode.json'),
+        path.join(__dirname, '../bot_mode.json'), path.join(__dirname, '../../bot_mode.json'),
+        path.join(__dirname, '../../../bot_mode.json'), path.join(__dirname, '../commands/owner/bot_mode.json'),
+      ];
+      for (const modePath of possiblePaths) {
+        if (fs.existsSync(modePath)) {
+          try {
+            const modeData = JSON.parse(fs.readFileSync(modePath, 'utf8'));
+            if (modeData.mode) {
+              switch(modeData.mode.toLowerCase()) {
+                case 'public':      return '🌍 Public';
+                case 'silent':      return '🔇 Silent';
+                case 'private':     return '🔒 Private';
+                case 'group-only':  return '👥 Group Only';
+                case 'maintenance': return '🛠️ Maintenance';
+                default:            return `⚙️ ${modeData.mode.charAt(0).toUpperCase() + modeData.mode.slice(1)}`;
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      if (global.BOT_MODE)       return global.BOT_MODE === 'silent' ? '🔇 Silent' : '🌍 Public';
+      if (global.mode)           return global.mode === 'silent'     ? '🔇 Silent' : '🌍 Public';
+      if (process.env.BOT_MODE)  return process.env.BOT_MODE === 'silent' ? '🔇 Silent' : '🌍 Public';
+    } catch (e) {}
+    return '🌍 Public';
+  };
+  
+  const getOwnerName9 = () => {
+    try {
+      const bsPaths = ['./bot_settings.json', path.join(__dirname, 'bot_settings.json'), path.join(__dirname, '../bot_settings.json'), path.join(__dirname, '../../bot_settings.json')];
+      for (const p of bsPaths) {
+        if (fs.existsSync(p)) {
+          try { const s = JSON.parse(fs.readFileSync(p, 'utf8')); if (s.ownerName?.trim()) return s.ownerName.trim(); } catch (e) {}
+        }
+      }
+      const op = path.join(__dirname, '../../owner.json');
+      if (fs.existsSync(op)) {
+        const o = JSON.parse(fs.readFileSync(op, 'utf8'));
+        if (o.owner?.trim())   return o.owner.trim();
+        if (o.number?.trim())  return o.number.trim();
+        if (o.phone?.trim())   return o.phone.trim();
+        if (o.contact?.trim()) return o.contact.trim();
+        if (Array.isArray(o) && o.length > 0) return typeof o[0] === 'string' ? o[0] : 'Wolf';
+      }
+      if (global.OWNER_NAME)       return global.OWNER_NAME;
+      if (global.owner)            return global.owner;
+      if (process.env.OWNER_NUMBER) return process.env.OWNER_NUMBER;
+    } catch (e) {}
+    return 'Wolf';
+  };
+  
+  const getBotPrefix9 = () => {
+    try {
+      const bsPaths = ['./bot_settings.json', path.join(__dirname, 'bot_settings.json'), path.join(__dirname, '../bot_settings.json'), path.join(__dirname, '../../bot_settings.json')];
+      for (const p of bsPaths) {
+        if (fs.existsSync(p)) {
+          try { const s = JSON.parse(fs.readFileSync(p, 'utf8')); if (s.prefix?.trim()) return s.prefix.trim(); } catch (e) {}
+        }
+      }
+      if (global.prefix)      return global.prefix;
+      if (process.env.PREFIX) return process.env.PREFIX;
+    } catch (e) {}
+    return '.';
+  };
+  
+  const getBotVersion9 = () => {
+    try {
+      if (global.VERSION) return global.VERSION;
+      if (global.version) return global.version;
+      if (process.env.VERSION) return process.env.VERSION;
+      const op = path.join(__dirname, '../../owner.json');
+      if (fs.existsSync(op)) { const o = JSON.parse(fs.readFileSync(op, 'utf8')); if (o.version?.trim()) return o.version.trim(); }
+      const bsPaths = ['./bot_settings.json', path.join(__dirname, '../../bot_settings.json')];
+      for (const p of bsPaths) {
+        if (fs.existsSync(p)) { try { const s = JSON.parse(fs.readFileSync(p, 'utf8')); if (s.version?.trim()) return s.version.trim(); } catch (e) {} }
+      }
+    } catch (e) {}
+    return '1.1.5';
+  };
+  
+  const ownerName9        = getOwnerName9();
+  const botPrefix9        = getBotPrefix9();
+  const botVersion9       = getBotVersion9();
+  const botMode9          = getBotMode9();
+  const deploymentPlatform9 = getPlatformInfo();
+  
+  const formatUptime9 = (seconds) => {
+    const h = Math.floor(seconds / 3600), mn = Math.floor((seconds % 3600) / 60), s = Math.floor(seconds % 60);
+    if (h > 0)  return `${h}h ${mn}m ${s}s`;
+    if (mn > 0) return `${mn}m ${s}s`;
+    return `${s}s`;
+  };
+  
+  const getRAMUsage9 = () => {
+    try {
+      const mem = process.memoryUsage();
+      const used = mem.heapUsed / 1024 / 1024, total = mem.heapTotal / 1024 / 1024;
+      const percent = Math.round((used / total) * 100);
+      const filled = Math.round((percent / 100) * 10);
+      return { bar: '█'.repeat(filled) + '░'.repeat(10 - filled), percent, usedMB: Math.round(used * 100) / 100, totalMB: Math.round(total * 100) / 100 };
+    } catch (e) { return { bar: '░░░░░░░░░░', percent: 0, usedMB: 0, totalMB: 0 }; }
+  };
+  
+  const ramUsage9 = getRAMUsage9();
+  
+  const infoSection9 = `╭─⌈ \`${currentBotName}\` ⌋
+│  ╭⊷ *User:* ${m.pushName || "Anonymous"}
+│  ├⊷ *Owner:* ${ownerName9}
+│  ├⊷ *Mode:* ${botMode9}
+│  ├⊷ *Prefix:* [ ${botPrefix9} ]
+│  ├⊷ *Version:* ${botVersion9}
+│  ├⊷ *Platform:* ${deploymentPlatform9.name}
+│  ├⊷ *Status:* ${deploymentPlatform9.status}
+│  ├⊷ *Uptime:* ${formatUptime9(process.uptime())}
+│  ├⊷ *RAM Usage:* ${ramUsage9.percent}%
+│  │  ${ramUsage9.bar}
+│  ╰⊷ *Memory:* ${ramUsage9.usedMB}MB / ${ramUsage9.totalMB}MB
+╰─⊷`;
+
+  const fadedInfoSection9 = createFadedEffect9(infoSection9);
+
+  const commandsText9 = `╭─⊷ *🏠 GROUP MANAGEMENT*
+│
+├─⊷ *🛡️ ADMIN & MODERATION*
+│  • add
+│  • promote
+│  • promoteall
+│  • demote
+│  • demoteall
+│  • kick
+│  • kickall
+│  • ban
+│  • unban
+│  • ex
+│  • clearbanlist
+│  • warn
+│  • resetwarn
+│  • setwarn
+│  • warnings
+│  • mute
+│  • unmute
+│  • gctime
+│  • antileave
+│  • antilink
+│  • addbadword
+│  • removebadword
+│  • listbadword
+│  • welcome
+│  • goodbye
+│  • leave
+│  • creategroup
+│
+├─⊷ *🚫 AUTO-MODERATION*
+│  • antisticker
+│  • antiimage
+│  • antivideo
+│  • antiaudio
+│  • antimention
+│  • antistatusmention
+│  • antigrouplink
+│  • antidemote
+│  • antipromote
+│  • antiviewonce
+│  • antibadword
+│  • antigroupcall
+│  • antispam
+│
+├─⊷ *📊 GROUP INFO & TOOLS*
+│  • groupinfo
+│  • grouplink
+│  • tagadmin
+│  • tagall
+│  • hidetag
+│  • link
+│  • invite
+│  • revoke
+│  • setdesc
+│  • fangtrace
+│  • getgpp
+│  • togstatus
+│  • getparticipants
+│  • listonline
+│  • listinactive
+│  • approveall
+│  • rejectall
+│  • stickerpack
+│
+╰─⊷
+
+╭─⊷ *🎨 MENU COMMANDS*
+│
+│  • menu
+│  • menustyle
+│  • togglemenuinfo
+│  • setmenuimage
+│  • restoremenuimage
+│
+╰─⊷
+
+╭─⊷ *👑 OWNER CONTROLS*
+│
+├─⊷ *⚡ CORE MANAGEMENT*
+│  • setbotname
+│  • resetbotname
+│  • setowner
+│  • resetowner
+│  • setprefix
+│  • prefix
+│  • iamowner
+│  • about
+│  • owner
+│  • block
+│  • unblock
+│  • blockdetect
+│  • blockall
+│  • unblockall
+│  • silent
+│  • anticall
+│  • mode
+│  • setpp
+│  • setfooter
+│  • repo
+│  • pair
+│  • antidelete
+│  • antideletestatus
+│  • antiedit
+│  • chatbot
+│  • shutdown
+│
+├─⊷ *🔄 SYSTEM & MAINTENANCE*
+│  • restart
+│  • workingreload
+│  • reloadenv
+│  • getsettings
+│  • setsetting
+│  • test
+│  • disk
+│  • hostip
+│  • findcommands
+│  • latestupdates
+│  • platform
+│  • debugchat
+│
+├─⊷ *🔒 PRIVACY CONTROLS*
+│  • online
+│  • privacy
+│  • receipt
+│  • profilepic
+│  • viewer
+│  • lastseen
+│
+╰─⊷
+
+╭─⊷ *👥 SUDO*
+│
+│  • addsudo
+│  • delsudo
+│  • listsudo
+│  • checksudo
+│  • clearsudo
+│  • sudomode
+│  • sudoinfo
+│  • mysudo
+│  • sudodebug
+│  • linksudo
+│
+╰─⊷
+
+╭─⊷ *⚙️ AUTOMATION*
+│
+│  • autoread
+│  • autotyping
+│  • autorecording
+│  • autoreact
+│  • autoreactstatus
+│  • autoviewstatus
+│  • autobio
+│  • autorec
+│  • reactowner
+│
+╰─⊷
+
+╭─⊷ *✨ GENERAL UTILITIES*
+│
+├─⊷ *🔍 INFO & SEARCH*
+│  • alive
+│  • ping
+│  • ping2
+│  • time
+│  • uptime
+│  • define
+│  • news
+│  • covid
+│  • weather
+│  • wiki
+│  • translate
+│  • iplookup
+│  • getip
+│  • getpp
+│  • getgpp
+│  • prefixinfo
+│  • platform
+│
+├─⊷ *🔗 CONVERSION & MEDIA*
+│  • shorturl
+│  • url
+│  • fetch
+│  • qrencode
+│  • take
+│  • imgbb
+│  • tiktok
+│  • save
+│  • screenshot
+│  • inspect
+│  • toimage
+│  • tosticker
+│  • toaudio
+│  • tovoice
+│  • tts
+│  • trebleboost
+│  • jarvis
+│
+├─⊷ *📇 CONTACT TOOLS*
+│  • vcf
+│  • viewvcf
+│  • vv
+│  • vv2
+│
+╰─⊷
+
+╭─⊷ *🎵 MUSIC & MEDIA*
+│
+│  • play
+│  • song
+│  • video
+│  • videodoc
+│  • lyrics
+│  • shazam
+│  • spotify
+│
+╰─⊷
+
+╭─⊷ *⬇️ MEDIA DOWNLOADS*
+│
+│  • tiktok
+│  • instagram
+│  • facebook
+│  • snapchat
+│  • apk
+│  • yts
+│  • ytplay
+│  • ytmp3
+│  • ytv
+│  • ytmp4
+│  • ytvdoc
+│  • videodl
+│  • playlist
+│  • xvideos
+│  • xnxx
+│  • mediafire
+│
+╰─⊷
+
+╭─⊷ *🤖 AI COMMANDS*
+│
+├─⊷ *💬 MAJOR AI MODELS*
+│  • gpt
+│  • chatgpt
+│  • gemini
+│  • cohere
+│  • copilot
+│  • bing
+│  • bard
+│  • claudeai
+│  • grok
+│  • groq
+│  • blackbox
+│  • mistral
+│  • metai
+│  • perplexity
+│  • qwenai
+│  • ilama
+│  • venice
+│  • wormgpt
+│  • deepseek
+│  • chatbot
+│
+├─⊷ *🧠 OPEN SOURCE AI*
+│  • falcon     • wizard
+│  • vicuna     • zephyr
+│  • mixtral    • dolphin
+│  • phi        • nous
+│  • openchat   • orca
+│  • codellama  • solar
+│  • starcoder  • yi
+│  • internlm   • chatglm
+│  • nemotron   • neural
+│  • openhermes • command
+│  • tinyllama  • replitai
+│
+├─⊷ *🎨 AI GENERATION*
+│  • imagine
+│  • imagegen
+│  • flux
+│  • analyze
+│  • suno
+│  • speechwriter
+│  • humanizer
+│  • summarize
+│  • totext
+│  • removebg
+│  • vision
+│
+├─⊷ *🎬 AI TOOLS*
+│  • videogen
+│  • aiscanner
+│  • aimenu
+│  • brandlogo
+│  • companylogo
+│  • logoai
+│
+╰─⊷
+
+╭─⊷ *🎬 AI VIDEO EFFECTS*
+│
+│  • tigervideo
+│  • introvideo
+│  • lightningpubg
+│  • lovevideo
+│  • videogen
+│
+╰─⊷
+
+╭─⊷ *🖼️ IMAGE TOOLS*
+│
+│  • image
+│  • imagegen
+│  • imagine
+│  • anime
+│  • art
+│  • real
+│  • remini
+│  • vision
+│
+╰─⊷
+
+╭─⊷ *🏆 SPORTS*
+│
+│  • football
+│  • matchstats
+│  • sportsnews
+│  • teamnews
+│  • basketball
+│  • cricket
+│  • f1
+│  • nfl
+│  • mma
+│  • tennis
+│  • baseball
+│  • hockey
+│  • golf
+│  • sportsmenu
+│
+╰─⊷
+
+╭─⊷ *🛡️ ETHICAL HACKING*
+│
+│  • whois
+│  • dnslookup
+│  • subdomain
+│  • reverseip
+│  • geoip
+│  • portscan
+│  • headers
+│  • traceroute
+│  • asnlookup
+│  • shodan
+│  • pinghost
+│  • latency
+│  • sslcheck
+│  • tlsinfo
+│  • openports
+│  • firewallcheck
+│  • maclookup
+│  • bandwidthtest
+│  • securityheaders
+│  • wafdetect
+│  • robotscheck
+│  • sitemap
+│  • cmsdetect
+│  • techstack
+│  • cookiescan
+│  • redirectcheck
+│  • xsscheck
+│  • sqlicheck
+│  • csrfcheck
+│  • clickjackcheck
+│  • directoryscan
+│  • exposedfiles
+│  • misconfigcheck
+│  • cvecheck
+│  • hashidentify
+│  • hashcheck
+│  • bcryptcheck
+│  • passwordstrength
+│  • leakcheck
+│  • metadata
+│  • filehash
+│  • malwarecheck
+│  • urlscan
+│  • phishcheck
+│  • nmap
+│  • ipinfo
+│  • nglattack
+│  • securitymenu
+│
+╰─⊷
+
+╭─⊷ *🕵️ STALKER COMMANDS*
+│
+│  • wachannel
+│  • tiktokstalk
+│  • twitterstalk
+│  • ipstalk
+│  • igstalk
+│  • npmstalk
+│  • gitstalk
+│  • stalkermenu
+│
+╰─⊷
+
+╭─⊷ *🎨 LOGO DESIGN STUDIO*
+│
+│  • goldlogo
+│  • silverlogo
+│  • platinumlogo
+│  • chromelogo
+│  • diamondlogo
+│  • bronzelogo
+│  • steelogo
+│  • copperlogo
+│  • titaniumlogo
+│  • firelogo
+│  • icelogo
+│  • iceglowlogo
+│  • lightninglogo
+│  • rainbowlogo
+│  • sunlogo
+│  • moonlogo
+│  • dragonlogo
+│  • phoenixlogo
+│  • wizardlogo
+│  • crystallogo
+│  • darkmagiclogo
+│  • shadowlogo
+│  • smokelogo
+│  • bloodlogo
+│  • neonlogo
+│  • glowlogo
+│  • gradientlogo
+│  • matrixlogo
+│  • aqualogo
+│  • logomenu
+│
+╰─⊷
+
+╭─⊷ *🐙 GITHUB COMMANDS*
+│
+│  • gitclone
+│  • gitinfo
+│  • repanalyze
+│  • zip
+│  • update
+│  • repo
+│
+╰─⊷
+
+╭─⊷ *🌸 ANIME COMMANDS*
+│
+│  • animemenu
+│  • awoo
+│  • bully
+│  • cringe
+│  • cry
+│  • cuddle
+│  • dance
+│  • glomp
+│  • highfive
+│  • hug
+│  • kill
+│  • kiss
+│  • lick
+│  • megumin
+│  • neko
+│  • pat
+│  • shinobu
+│  • trap
+│  • trap2
+│  • waifu
+│  • wink
+│  • yeet
+│
+╰─⊷
+
+╭─⊷ *🎮 GAMES*
+│
+│  • coinflip
+│  • dare
+│  • dice
+│  • emojimix
+│  • joke
+│  • quiz
+│  • rps
+│  • snake
+│  • tetris
+│  • truth
+│  • tictactoe
+│  • quote
+│
+╰─⊷
+
+╭─⊷ *🎭 FUN & TOOLS*
+│
+│  • bf
+│  • gf
+│  • couple
+│  • gay
+│  • getjid
+│  • movie
+│  • trailer
+│  • goodmorning
+│  • goodnight
+│  • channelstatus
+│  • hack
+│
+╰─⊷
+
+╭─⊷ *⚡ QUICK COMMANDS*
+│
+│  • p
+│  • up
+│
+╰─⊷
+
+╭─⊷ *✨ EPHOTO TEXT EFFECTS*
+│
+├─⊷ *💡 NEON & GLOW*
+│  • neon
+│  • colorfulglow
+│  • advancedglow
+│  • neononline
+│  • blueneon
+│  • neontext
+│  • neonlight
+│  • greenneon
+│  • greenlightneon
+│  • blueneonlogo
+│  • galaxyneon
+│  • retroneon
+│  • multicolorneon
+│  • hackerneon
+│  • devilwings
+│  • glowtext
+│  • blackpinkneon
+│  • neonglitch
+│  • colorfulneonlight
+│
+├─⊷ *🧊 3D TEXT EFFECTS*
+│  • wooden3d
+│  • cubic3d
+│  • wooden3donline
+│  • water3d
+│  • cuongthi3d
+│  • text3d
+│  • graffiti3d
+│  • silver3d
+│  • style3d
+│  • metal3d
+│  • ruby3d
+│  • birthday3d
+│  • metallogo3d
+│  • pig3d
+│  • avengers3d
+│  • hologram3d
+│  • gradient3d
+│  • stone3d
+│  • space3d
+│  • sand3d
+│  • gradienttext3d
+│  • lightbulb3d
+│  • snow3d
+│  • papercut3d
+│  • underwater3d
+│  • shinymetallic3d
+│  • gradientstyle3d
+│  • beach3d
+│  • crack3d
+│  • wood3d
+│  • americanflag3d
+│  • christmas3d
+│  • nigeriaflag3d
+│  • christmassnow3d
+│  • goldenchristmas3d
+│  • decorativemetal3d
+│  • colorfulpaint3d
+│  • glossysilver3d
+│  • balloon3d
+│  • comic3d
+│
+├─⊷ *📋 MENU:* ephotomenu
+│
+╰─⊷
+
+🐺 *POWERED BY ${ownerName9.toUpperCase()} TECH* 🐺`;
+
+  finalText9 = createReadMoreEffect9(fadedInfoSection9, commandsText9);
+
+  const media9 = await getMenuMedia();
+  if (!media9) {
+    await sock.sendMessage(jid, { text: finalText9 }, { quoted: m });
+  } else if (media9.type === 'gif' && media9.mp4Buffer) {
+    await sock.sendMessage(jid, { video: media9.mp4Buffer, gifPlayback: true, caption: finalText9, mimetype: "video/mp4" }, { quoted: m });
+  } else {
+    await sock.sendMessage(jid, { image: media9.buffer, caption: finalText9, mimetype: "image/jpeg" }, { quoted: m });
+  }
+  
+  console.log(`✅ ${currentBotName} menu sent with faded effect + image (style 9)`);
+  break;
+}
+
+
 
 
 

@@ -73,7 +73,7 @@ export default {
 
     if (!hasReplyImage && !hasDirectImage && !hasUrl && !hasReplyPerson && !hasReplyGif && !hasDirectGif) {
       await sock.sendMessage(jid, {
-        text: `🖼️ *Set Menu Image*\n\nUsage:\n• Reply to an image: \`${PREFIX}smi\`\n• Reply to a GIF: \`${PREFIX}smi\` (animated menu!)\n• Reply to a person: \`${PREFIX}smi\` (uses their profile pic)\n• Mention someone: \`${PREFIX}smi @user\`\n• Send with image: attach image with caption \`${PREFIX}smi\`\n• Use URL: \`${PREFIX}smi <image_url>\`\n\n⚠️ Supports JPG/PNG/WebP/GIF (max 10MB)`
+        text: `🖼️ *Set Menu Image*\n\nUsage:\n• Reply to an image: \`${PREFIX}smi\`\n• Reply to a GIF: \`${PREFIX}smi\` (animated menu!)\n• Reply to a person: \`${PREFIX}smi\` (uses their profile pic)\n• Mention someone: \`${PREFIX}smi @user\`\n• Send with image: attach image with caption \`${PREFIX}smi\`\n• Use URL: \`${PREFIX}smi <image_url>\`\n\n⚠️ Supports JPG/PNG/WebP/GIF (max 10MB)\n\n📋 *Styles that use this image (1–9):*\n• Style 1 — Image Menu\n• Style 6 — Faded + Image\n• Style 7 — Image + Text\n• Style 9 — Full List + Image\n\n💡 Use \`${PREFIX}menustyle\` to switch styles.`
       }, { quoted: m });
       return;
     }
