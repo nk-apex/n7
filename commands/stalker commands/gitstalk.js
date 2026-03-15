@@ -42,7 +42,8 @@ export default {
       }
 
       const json = JSON.stringify(raw, null, 2);
-      const jsonText = `\`\`\`json\n${json.length > 3500 ? json.slice(0, 3500) + '\n... (truncated)' : json}\n\`\`\``;
+      const jsonTruncated = json.length > 900 ? json.slice(0, 900) + '\n... (truncated)' : json;
+      const jsonCaption = `\`\`\`json\n${jsonTruncated}\n\`\`\``;
 
       let avatarBuffer = null;
       const avatarUrl = d.avatar_url || d.avatar;
@@ -56,11 +57,12 @@ export default {
       if (avatarBuffer) {
         await sock.sendMessage(jid, {
           image: avatarBuffer,
-          caption: `🐙 *GitHub Profile:* @${d.login || d.username || username}`
+          caption: jsonCaption
         }, { quoted: m });
+      } else {
+        await sock.sendMessage(jid, { text: jsonCaption }, { quoted: m });
       }
 
-      await sock.sendMessage(jid, { text: jsonText }, { quoted: m });
       await sock.sendMessage(jid, { react: { text: '✅', key: m.key } });
 
     } catch (error) {
