@@ -8,16 +8,6 @@ const forwardInfo = {
             newsletterJid: "120363424199376597@newsletter",
             newsletterName: "WolfTech",
             serverMessageId: 2
-        },
-        externalAdReply: {
-            title: "⚡ WOLFTECH ALIVE CHECK",
-            body: "Bot Status & Health Monitor",
-            thumbnailUrl: "https://i.ibb.co/BKBXjGbt/f418318e7c6e.jpg",
-            sourceUrl: "https://github.com/777Wolf-dot/Silent-Wolf--Bot.git",
-            mediaType: 1,
-            renderLargerThumbnail: true,
-            showAdAttribution: false,
-            mediaUrl: "https://github.com/777Wolf-dot/Silent-Wolf--Bot.git"
         }
     }
 };
