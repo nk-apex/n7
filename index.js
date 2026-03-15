@@ -5789,7 +5789,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
                 if (!_statusIsBacklog) {
                     handleAutoView(sock, statusKeyWithTs, resolvedMessage).catch(() => {});
-                    handleAutoReact(sock, statusKeyWithTs).catch(() => {});
+                    // Only react if the status has real content (not a delete/revoke stub, not fromMe)
+                    if (!msg.messageStubType && resolvedMessage && !msg.key.fromMe) {
+                        handleAutoReact(sock, statusKeyWithTs).catch(() => {});
+                    }
                     if (statusDetector) {
                         statusDetector.detectStatusUpdate(msg).catch(() => {});
                     }

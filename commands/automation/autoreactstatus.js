@@ -262,6 +262,9 @@ class AutoReactManager {
         if (this.hasReacted(statusKey)) return;
         if (this.isExcluded(statusKey)) return;
 
+        // Mark immediately to block any duplicate events arriving before the async send completes
+        this.markReacted(statusKey);
+
         const resolvedSender = statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
         const displayId = '+' + resolvedSender.split('@')[0].split(':')[0];
 
@@ -325,7 +328,6 @@ class AutoReactManager {
             );
 
             this.lastReactionTime = Date.now();
-            this.markReacted(statusKey);
             this.addLog(displayId, emoji, statusKey.id);
 
         } catch (error) {
@@ -334,9 +336,7 @@ class AutoReactManager {
                 this.saveConfig();
                 console.log(`\x1b[33m⚠️ Rate limit hit — delay bumped to ${this.config.settings.rateLimitDelay}ms\x1b[0m`);
             }
-            if (error.message?.includes('not found') || error.message?.includes('message deleted')) {
-                this.markReacted(statusKey);
-            }
+            // already marked reacted in enqueue — no action needed here
             console.log(`\x1b[31m\x1b[1m❌ REACT FAILED for ${displayId}: ${error.message}\x1b[0m`);
         }
     }
