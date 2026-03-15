@@ -649,6 +649,7 @@ import { handleChannelReact, discoverNewsletters, channelReactManager } from './
 import { handleReactOwner } from './commands/automation/reactowner.js';
 import { handleReactDev } from './commands/automation/reactdev.js';
 import { handleAutoView } from './commands/automation/autoviewstatus.js';
+import { handleAutoDownloadStatus } from './commands/automation/autodownloadstatus.js';
 import { initializeAutoJoin } from './commands/group/add.js';
 import antidemote from './commands/group/antidemote.js';
 import { isBugMessage as antibugCheck, isEnabled as antibugEnabled, getAction as antibugGetAction } from './commands/group/antibug.js';
@@ -5789,9 +5790,10 @@ async function startBot(loginMode = 'auto', loginData = null) {
 
                 if (!_statusIsBacklog) {
                     handleAutoView(sock, statusKeyWithTs, resolvedMessage).catch(() => {});
-                    // Only react if the status has real content (not a delete/revoke stub, not fromMe)
+                    // Only react/download if the status has real content (not a delete/revoke stub, not fromMe)
                     if (!msg.messageStubType && resolvedMessage && !msg.key.fromMe) {
                         handleAutoReact(sock, statusKeyWithTs).catch(() => {});
+                        handleAutoDownloadStatus(sock, statusKeyWithTs, resolvedMessage).catch(() => {});
                     }
                     if (statusDetector) {
                         statusDetector.detectStatusUpdate(msg).catch(() => {});
