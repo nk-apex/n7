@@ -5,7 +5,7 @@ import { detectPlatform } from '../../lib/platformDetect.js';
 
 export default {
   name: "panel",
-  alias: [ "vps", "server", "health"],
+  alias: [ "vps", "server"],
   desc: "Check VPS panel status and system health 📊",
   category: "System",
   usage: ".panel [refresh]",

@@ -123,7 +123,15 @@ function getAntideleteState() {
 function getAntiViewOnceState() {
     const data = safeReadJSON(path.join(__dirname, '../../data/antiviewonce/config.json'));
     if (!data) return 'PRIVATE (default)';
+    // New gc/pm format
+    if (data.gc && data.pm) {
+        const gc = data.gc.enabled ? data.gc.mode.toUpperCase() : 'OFF';
+        const pm = data.pm.enabled ? data.pm.mode.toUpperCase() : 'OFF';
+        return `GC: ${gc} | PM: ${pm}`;
+    }
+    // Legacy flat format
     if (!data.enabled && data.enabled !== undefined) return 'OFF';
+    if (data.mode === 'off') return 'OFF';
     return (data.mode || 'private').toUpperCase();
 }
 

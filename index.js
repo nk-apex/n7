@@ -5197,7 +5197,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             UltraCleanLogger.success(`✅ All ${commands.size} commands loaded successfully`);
             commandsLoaded = true;
         }
-        updateWebStatus({ commands: commands.size, botName: getCurrentBotName(), version: VERSION, botMode: BOT_MODE, prefix: getCurrentPrefix(), owner: global.OWNER_NUMBER || 'Unknown', antispam: !!(globalThis._antispamConfig?.enabled), antibug: !!(globalThis._antibugConfig?.enabled), antilink: !!(globalThis._antilinkConfig?.enabled) });
+        updateWebStatus({ commands: commands.size, botName: getCurrentBotName(), version: VERSION, botMode: BOT_MODE, prefix: getCurrentPrefix(), owner: global.OWNER_NUMBER || 'Unknown', antispam: !!(globalThis._antispamConfig?.enabled), antibug: !!(globalThis._antibugConfig?.enabled), antilink: !!(globalThis._antilinkConfig?.enabled), antidelete: true, antiviewonce: !!(globalThis._webStatus?.antiviewonce), autoread: false });
 
         sock.ev.on('group-participants.update', async (update) => {
             try {
@@ -6007,7 +6007,7 @@ async function startBot(loginMode = 'auto', loginData = null) {
             UltraCleanLogger.success(`✅ All ${commands.size} commands loaded successfully`);
             commandsLoaded = true;
         }
-        updateWebStatus({ commands: commands.size, botName: getCurrentBotName(), version: VERSION, botMode: BOT_MODE, prefix: getCurrentPrefix(), owner: global.OWNER_NUMBER || 'Unknown', antispam: !!(globalThis._antispamConfig?.enabled), antibug: !!(globalThis._antibugConfig?.enabled), antilink: !!(globalThis._antilinkConfig?.enabled) });
+        updateWebStatus({ commands: commands.size, botName: getCurrentBotName(), version: VERSION, botMode: BOT_MODE, prefix: getCurrentPrefix(), owner: global.OWNER_NUMBER || 'Unknown', antispam: !!(globalThis._antispamConfig?.enabled), antibug: !!(globalThis._antibugConfig?.enabled), antilink: !!(globalThis._antilinkConfig?.enabled), antidelete: true, antiviewonce: !!(globalThis._webStatus?.antiviewonce), autoread: false });
 
         setTimeout(() => {
             if (!isConnected) {
