@@ -54,19 +54,7 @@ export default {
         setChannelInfo(jid, name, cleaned.cleanNumber || 'Unknown');
 
         return sock.sendMessage(chatId, {
-            text:
-                `╭─⌈ ✅ *CHANNEL ID UPDATED* ⌋\n` +
-                `│\n` +
-                `├─⊷ *Name:* ${name}\n` +
-                `├─⊷ *JID:* ${jid}\n` +
-                `│\n` +
-                `├─⊷ All forwarded messages will now\n` +
-                `│  show as coming from *${name}*\n` +
-                `│\n` +
-                `├─⊷ Channel mode is currently: ${isChannelModeEnabled() ? '✅ ON' : '❌ OFF'}\n` +
-                `│  Use *${PREFIX}mode channel* to enable it\n` +
-                `│\n` +
-                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
+            text: `✅ *Channel updated*\n\`${jid}\``
         }, { quoted: msg });
     }
 };
