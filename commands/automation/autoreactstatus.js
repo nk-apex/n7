@@ -353,6 +353,16 @@ export async function handleAutoReact(sock, statusKey) {
 
 export { autoReactManager };
 
+// Returns true if the bot auto-reacted to this status message ID
+export function wasAutoReacted(msgId) {
+    if (!msgId) return false;
+    for (const k of autoReactManager.reactedStatuses) {
+        // key format: "participant|msgId|timestamp"
+        if (k.split('|')[1] === msgId) return true;
+    }
+    return false;
+}
+
 export default {
     name: "autoreactstatus",
     alias: ["reactstatus", "statusreact", "sr", "reacts"],
