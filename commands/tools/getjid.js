@@ -93,9 +93,9 @@ export default {
     if (inputJid.endsWith('@lid')) {
       try {
         if (sock.signalRepository?.lidMapping?.getPNForLID) {
-          const pn = sock.signalRepository.lidMapping.getPNForLID(inputJid);
+          const pn = await sock.signalRepository.lidMapping.getPNForLID(inputJid);
           if (pn) {
-            const num = String(pn).split('@')[0].replace(/\D/g, '');
+            const num = String(pn).split('@')[0].split(':')[0].replace(/\D/g, '');
             if (num.length >= 7) return `${num}@s.whatsapp.net`;
           }
         }

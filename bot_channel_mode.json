@@ -1,10 +1,10 @@
 {
-  "enabled": false,
+  "enabled": true,
   "channelJid": "120363424199376597@newsletter",
   "channelName": "WOLF TECH",
   "setBy": "165507219083469",
-  "setAt": "2026-03-15T09:28:18.343Z",
-  "timestamp": 1773566898343,
+  "setAt": "2026-03-15T09:37:42.533Z",
+  "timestamp": 1773567462533,
   "updatedBy": "reset",
   "updatedAt": "2026-03-15T09:08:44.552Z"
 }
