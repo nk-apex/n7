@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { downloadMediaMessage, normalizeMessageContent, jidNormalizedUser } from '@whiskeysockets/baileys';
 import supabase from '../../lib/database.js';
-import { getBotName } from '../../lib/botname.js';
+import { getOwnerName } from '../../lib/menuHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -257,7 +257,7 @@ export async function handleAutoDownloadStatus(sock, statusKey, resolvedMessage)
             if (mediaInfo.caption) caption += `│ 💬 *Caption:* ${mediaInfo.caption}\n`;
             caption += `│ 📁 *Type:* ${mediaType}\n`;
             caption += `│ ⏰ *Time:* ${timeStr}\n`;
-            caption += `╰⊷ *${getBotName().toUpperCase()} AUTO-DOWNLOAD*`;
+            caption += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
 
             const payload = {};
             if (mediaType === 'sticker') {
@@ -284,7 +284,7 @@ export async function handleAutoDownloadStatus(sock, statusKey, resolvedMessage)
             msg += `│ 👤 *From:* ${nameLabel}\n`;
             msg += `│ 📝 *Text:* ${textInfo.text}\n`;
             msg += `│ ⏰ *Time:* ${timeStr}\n`;
-            msg += `╰⊷ *${getBotName().toUpperCase()} AUTO-DOWNLOAD*`;
+            msg += `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`;
             await sock.sendMessage(destJid, { text: msg });
         }
 
@@ -342,7 +342,7 @@ export default {
                 `├─⊷ *${prefix}ads include <number>*\n` +
                 `├─⊷ *${prefix}ads skipown on/off*\n` +
                 `├─⊷ *${prefix}ads stats*\n` +
-                `╰⊷ *Powered by ${getBotName().toUpperCase()} TECH*`
+                `╰⊷ *Powered by ${getOwnerName().toUpperCase()} TECH*`
             );
         }
 
