@@ -1609,6 +1609,10 @@ case 1: {
 │  • chatbot
 │  • shutdown
 │
+├─⊷ *📡 CHANNEL MODE*
+│  • setchannel
+│  • resetchannel
+│
 ├─⊷ *🔄 SYSTEM & MAINTENANCE*
 │  • restart
 │  • workingreload
@@ -2245,6 +2249,8 @@ case 2: {
 > • unblockall — unblock all contacts
 > • silent — silent mode
 > • mode — change bot mode (${botMode})
+> • setchannel — set channel JID
+> • resetchannel — reset channel JID
 > • restart — restart bot
 > • setpp — set bot profile
 > • resetbotname — reset to default
@@ -2893,6 +2899,10 @@ case 3: {
 │ antiedit
 │ chatbot
 │ shutdown
+└───────────────`,
+`┌──⌈ \`CHANNEL MODE\` ⌋
+│ setchannel
+│ resetchannel
 └───────────────`,
 `┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
 │ restart
@@ -3824,6 +3834,10 @@ case 4: {
 │  • online
 │  • setpp
 │  • repo
+│
+├─⊷ *📡 CHANNEL MODE*
+│  • setchannel
+│  • resetchannel
 │
 ├─⊷ *🔄 SYSTEM & MAINTENANCE*
 │  • restart
@@ -5591,6 +5605,10 @@ case 5: {
 │  • chatbot
 │  • shutdown
 │
+├─⊷ *📡 CHANNEL MODE*
+│  • setchannel
+│  • resetchannel
+│
 ├─⊷ *🔄 SYSTEM & MAINTENANCE*
 │  • restart
 │  • workingreload
@@ -6624,6 +6642,10 @@ case 6: {
 > │ antiedit
 > │ chatbot
 > │ shutdown
+> └───────────────`,
+`> ┌──⌈ \`CHANNEL MODE\` ⌋
+> │ setchannel
+> │ resetchannel
 > └───────────────`,
 `> ┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
 > │ restart
@@ -8399,6 +8421,10 @@ case 7: {
 │ chatbot
 │ shutdown
 └───────────────`,
+`┌──⌈ \`CHANNEL MODE\` ⌋
+│ setchannel
+│ resetchannel
+└───────────────`,
 `┌──⌈ \`SYSTEM & MAINTENANCE\` ⌋
 │ restart
 │ workingreload
@@ -9100,6 +9126,10 @@ case 9: {
 │  • antiedit
 │  • chatbot
 │  • shutdown
+│
+├─⊷ *📡 CHANNEL MODE*
+│  • setchannel
+│  • resetchannel
 │
 ├─⊷ *🔄 SYSTEM & MAINTENANCE*
 │  • restart
