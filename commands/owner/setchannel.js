@@ -27,22 +27,10 @@ export default {
                 text:
                     `╭─⌈ 📡 *CHANNEL ID SETTINGS* ⌋\n` +
                     `│\n` +
-                    `├─⊷ *Current Channel*\n` +
-                    `│  └⊷ Name: ${current.name}\n` +
-                    `│  └⊷ JID: ${current.jid}\n` +
+                    `├─⊷ *Usage:* ${PREFIX}setchannel (JID) (Name)\n` +
                     `│\n` +
-                    `├─⊷ *Channel Mode:* ${modeOn ? '✅ ON' : '❌ OFF'}\n` +
-                    `│\n` +
-                    `├─⊷ *Usage:*\n` +
-                    `│  └⊷ ${PREFIX}setchannel <JID> <Name>\n` +
-                    `│  └⊷ Example:\n` +
-                    `│     ${PREFIX}setchannel 120363424199376597@newsletter WolfTech\n` +
-                    `│\n` +
-                    `├─⊷ *How to get your channel JID:*\n` +
-                    `│  └⊷ 1. Create a WhatsApp Channel\n` +
-                    `│  └⊷ 2. Forward any message from it\n` +
-                    `│  └⊷ 3. The JID is in the forward info\n` +
-                    `│  └⊷    (ends with @newsletter)\n` +
+                    `├─⊷ *Example:*\n` +
+                    `│  └⊷ ${PREFIX}setchannel 120363424199376597@newsletter WolfTech\n` +
                     `│\n` +
                     `╰⊷ *Powered by ${getBotName().toUpperCase()}*`
             }, { quoted: msg });
