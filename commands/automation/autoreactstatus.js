@@ -281,8 +281,8 @@ class AutoReactManager {
     async _processNext() {
         while (this._queue.length > 0) {
             const { sock, statusKey, displayId } = this._queue.shift();
-
-            if (this.hasReacted(statusKey)) continue;
+            // Note: hasReacted check is intentionally omitted here —
+            // we already marked reacted in enqueue() to block duplicate events.
 
             const wait = this.config.settings.rateLimitDelay - (Date.now() - this.lastReactionTime);
             if (wait > 0) await new Promise(r => setTimeout(r, wait));
@@ -294,50 +294,53 @@ class AutoReactManager {
 
     async _sendReaction(sock, statusKey, displayId) {
         try {
+            // Prefer phone-number JID over LID — WhatsApp requires @s.whatsapp.net for status reactions
+            const resolvedJid = statusKey.participantPn
+                || statusKey.remoteJidAlt
+                || (statusKey.participant && !statusKey.participant.includes('@lid') ? statusKey.participant : null)
+                || statusKey.participant
+                || statusKey.remoteJid;
+
             if (this.config.viewMode === 'view+react') {
                 try {
-                    const participantToUse = statusKey.remoteJidAlt || statusKey.participantPn || statusKey.participant || statusKey.remoteJid;
                     await sock.readMessages([{
-                        remoteJid: statusKey.remoteJid,
-                        id: statusKey.id,
-                        fromMe: false,
-                        participant: participantToUse
+                        remoteJid:   'status@broadcast',
+                        id:          statusKey.id,
+                        fromMe:      false,
+                        participant: resolvedJid
                     }]);
                 } catch (_) {}
             }
 
             const emoji = this.getReaction();
 
-            await sock.relayMessage(
+            await sock.sendMessage(
                 'status@broadcast',
                 {
-                    reactionMessage: {
+                    react: {
+                        text: emoji,
                         key: {
                             remoteJid:   'status@broadcast',
                             id:          statusKey.id,
-                            participant: statusKey.participant || statusKey.remoteJid,
+                            participant: resolvedJid,
                             fromMe:      false
-                        },
-                        text: emoji
+                        }
                     }
                 },
-                {
-                    messageId:     statusKey.id,
-                    statusJidList: [statusKey.remoteJid, statusKey.participant || statusKey.remoteJid]
-                }
+                { statusJidList: [resolvedJid] }
             );
 
             this.lastReactionTime = Date.now();
             this.addLog(displayId, emoji, statusKey.id);
+            console.log(`\x1b[32m✅ [AUTOREACT] Reacted ${emoji} to status from ${displayId}\x1b[0m`);
 
         } catch (error) {
             if (error.message?.includes('rate-overlimit') || error.message?.includes('rate limit')) {
                 this.config.settings.rateLimitDelay = Math.min(this.config.settings.rateLimitDelay * 2, 10000);
                 this.saveConfig();
-                console.log(`\x1b[33m⚠️ Rate limit hit — delay bumped to ${this.config.settings.rateLimitDelay}ms\x1b[0m`);
+                console.log(`\x1b[33m⚠️ [AUTOREACT] Rate limit hit — delay bumped to ${this.config.settings.rateLimitDelay}ms\x1b[0m`);
             }
-            // already marked reacted in enqueue — no action needed here
-            console.log(`\x1b[31m\x1b[1m❌ REACT FAILED for ${displayId}: ${error.message}\x1b[0m`);
+            console.log(`\x1b[31m❌ [AUTOREACT] REACT FAILED for ${displayId}: ${error.message}\x1b[0m`);
         }
     }
 }
