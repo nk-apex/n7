@@ -44,17 +44,19 @@ export default {
 
         const json = JSON.stringify(data, null, 2);
 
+        const footer = '\n\n*Powered by WOLF TECH*';
+
         if (json.length > 3500) {
             const buf = Buffer.from(json, 'utf8');
             await sock.sendMessage(chatId, {
                 document: buf,
                 fileName: `botstatus_${Date.now()}.json`,
                 mimetype: 'application/json',
-                caption: '📄 Bot status (full JSON)'
+                caption: `📄 Bot status (full JSON)${footer}`
             }, { quoted: msg });
         } else {
             await sock.sendMessage(chatId, {
-                text: `\`\`\`json\n${json}\n\`\`\``
+                text: `\`\`\`json\n${json}\n\`\`\`${footer}`
             }, { quoted: msg });
         }
     }
