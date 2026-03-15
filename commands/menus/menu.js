@@ -1642,6 +1642,7 @@ case 1: {
 │  • addsudo
 │  • delsudo
 │  • listsudo
+│  • getsudo
 │  • checksudo
 │  • clearsudo
 │  • sudomode
@@ -2922,6 +2923,7 @@ case 3: {
 │ addsudo
 │ delsudo
 │ listsudo
+│ getsudo
 │ checksudo
 │ clearsudo
 │ sudomode
@@ -5638,6 +5640,7 @@ case 5: {
 │  • addsudo
 │  • delsudo
 │  • listsudo
+│  • getsudo
 │  • checksudo
 │  • clearsudo
 │  • sudomode
@@ -6665,6 +6668,7 @@ case 6: {
 > │ addsudo
 > │ delsudo
 > │ listsudo
+> │ getsudo
 > │ checksudo
 > │ clearsudo
 > │ sudomode
@@ -8443,6 +8447,7 @@ case 7: {
 │ addsudo
 │ delsudo
 │ listsudo
+│ getsudo
 │ checksudo
 │ clearsudo
 │ sudomode
@@ -9160,6 +9165,7 @@ case 9: {
 │  • addsudo
 │  • delsudo
 │  • listsudo
+│  • getsudo
 │  • checksudo
 │  • clearsudo
 │  • sudomode
